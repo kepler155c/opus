@@ -1,0 +1,29 @@
+turtle.run(function()
+  local GPS = require('gps')
+  local Socket = require('socket')
+
+  local id = {COMPUTER_ID}
+
+  local pt = GPS.getPointAndHeading()
+  if not pt or not pt.heading then
+    error('turtle: No GPS found')
+  end
+
+  turtle.setPoint(pt)
+
+  local socket = Socket.connect(id, 161)
+  if not socket then
+    error('turtle: Unable to connect to ' .. id)
+  end
+
+  socket:write({ type = 'gps' })
+
+  local pt = socket:read(3)
+  if not pt then
+    error('turtle: No GPS response')
+  end
+
+  if not turtle.pathfind(pt, nil, 64) then
+    error('Unable to go to location')
+  end
+end)

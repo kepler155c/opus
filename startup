@@ -1,0 +1,45 @@
+local bootOptions = {
+  { prompt = 'Default Shell', file = '/sys/boot/default.boot' },
+  { prompt = 'Multishell'   , file = '/sys/boot/multishell.boot' },
+  { prompt = 'TLCO'         , file = '/sys/boot/tlco.boot' },
+}
+local bootOption = 2
+
+local function startupMenu()
+  while true do
+    term.clear()
+    term.setCursorPos(1, 1)
+    print('Select startup mode')
+    print()
+    for k,option in pairs(bootOptions) do
+      print(k .. ' : ' .. option.prompt)
+    end
+    print('')
+    term.write('> ')
+    local ch = tonumber(read())
+    if ch and bootOptions[ch] then
+      return ch
+    end
+  end
+  term.clear()
+  term.setCursorPos(1, 1)
+end
+
+term.clear()
+term.setCursorPos(1, 1)
+print('Starting OS')
+print()
+print('Press any key for menu')
+local timerId = os.startTimer(.75)
+while true do
+  local e, id = os.pullEvent()
+  if e == 'timer' and id == timerId then
+    break
+  end
+  if e == 'char' then
+    bootOption = startupMenu()
+    break
+  end
+end
+
+os.run(getfenv(1), bootOptions[bootOption].file)
