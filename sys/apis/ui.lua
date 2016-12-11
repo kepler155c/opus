@@ -1590,9 +1590,11 @@ end
 function UI.ViewportWindow:setScrollPosition(offset)
   local oldOffset = self.offy
   self.offy = math.max(offset, 0)
-  local max = self.height
-  for _, child in ipairs(self.children) do
-    max = math.max(child.y + child.height - 1, max)
+  local max = self.ymax or self.height
+  if self.children then
+    for _, child in ipairs(self.children) do
+      max = math.max(child.y + child.height - 1, max)
+    end
   end
   self.offy = math.min(self.offy, max - self.height)
   if self.offy ~= oldOffset then
