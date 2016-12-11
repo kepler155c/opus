@@ -1,5 +1,6 @@
 local function summon(id)
 
+  require = requireInjector(getfenv(1))
   local GPS = require('gps')
   local Socket = require('socket')
   local Point = require('point')
