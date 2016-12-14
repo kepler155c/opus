@@ -455,7 +455,7 @@ end)
 local function startup()
   local hasError
 
-  local function runDir(directory, open)
+  local function runDir(directory, desc, open)
     if not fs.exists(directory) then
       return
     end
@@ -464,8 +464,8 @@ local function startup()
     table.sort(files)
 
     for _,file in ipairs(files) do
-      print('Autorunning: ' .. file)
-
+      print(desc .. file)
+      os.sleep(0)
       local result, err = open(directory .. '/' .. file)
       if not result then
         printError(err)
@@ -474,7 +474,7 @@ local function startup()
     end
   end
 
-  runDir('/sys/extensions', shell.run)
+  runDir('/sys/extensions', '[ ext ] ', shell.run)
 
   local overviewId = multishell.openTab({
     path = '/apps/Overview.lua',
@@ -484,8 +484,8 @@ local function startup()
   })
   overviewTab = tabs[overviewId]
 
-  runDir('/sys/services', shell.openHiddenTab)
-  runDir('/autorun', shell.run)
+  runDir('/sys/services', '[ svc ] ', shell.openHiddenTab)
+  runDir('/autorun', '[ aut ] ', shell.run)
 
   if hasError then
     error('An autorun program has errored')
