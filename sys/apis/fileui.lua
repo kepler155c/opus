@@ -15,9 +15,9 @@ return function()
 
   local selectFile = UI.Page({
     x  =  3,
-    y  =  3,
-    ex = -3,
-    ey = -3,
+    y  =  2,
+    rex = -3,
+    rey = -3,
     backgroundColor = colors.brown,
     titleBar = UI.TitleBar({
       title = 'Select file',
@@ -27,16 +27,16 @@ return function()
     grid = UI.ScrollingGrid({
       x  =  2,
       y  =  2,
-      ex = -2,
-      ey = -4,
+      rex = -2,
+      rey = -4,
       path = '',
       sortColumn = 'name',
       columns = columns,
     }),
     path = UI.TextEntry({
       x  =  2,
-      oy = -1,
-      ex = -11,
+      ry = -1,
+      rex = -11,
       limit = 256,
       accelerators = {
         enter = 'path_enter',
@@ -44,8 +44,8 @@ return function()
     }),
     cancel = UI.Button({
       text = 'Cancel',
-      ox = -8,
-      oy = -1,
+      rx = -8,
+      ry = -1,
       event = 'cancel',
     }),
   })
