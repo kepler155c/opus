@@ -811,6 +811,8 @@ local __actions = {
     local nx = nextWord(tLines[y], x)
     if nx then
       x = nx
+    elseif x < #tLines[y] + 1 then
+      x = #tLines[y] + 1
     elseif y < #tLines then
       x = 1
       y = y + 1

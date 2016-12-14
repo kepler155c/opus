@@ -261,6 +261,13 @@ function page:eventHandler(event)
       event.focused.parent:scrollIntoView()
     end
 
+  elseif event.type == 'tab_change' then
+    if event.current > event.last then
+      self.container:setTransition('left')
+    else
+      self.container:setTransition('right')
+    end
+
   elseif event.type == 'refresh' then
     applications = { }
     Config.load('apps', applications)

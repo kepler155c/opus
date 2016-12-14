@@ -11,73 +11,79 @@ local env = {
   aliases = shell.aliases(),
   lua_path = LUA_PATH,
 }
-
 Config.load('multishell', env)
 
 UI.TextEntry.defaults.backgroundFocusColor = colors.black
 
-local systemPage = UI.Page({
+local systemPage = UI.Page {
   backgroundColor = colors.blue,
-  tabs = UI.Tabs({
-    pathTab = UI.Window({
+  tabs = UI.Tabs {
+    pathTab = UI.Window {
       tabTitle = 'Path',
-      entry = UI.TextEntry({
-        y = 2, x = 2, limit = 256,
-        width = UI.term.width - 2,
+      entry = UI.TextEntry {
+        x = 2, y = 2, rex = -2,
+        limit = 256,
         value = shell.path(),
         shadowText = 'enter system path',
         accelerators = {
           enter = 'update_path',
         },
-      }),
-      grid = UI.Grid({
+      },
+      grid = UI.Grid {
         y = 4,
         values = paths,
         disableHeader = true,
         columns = { { key = 'value' } },
         autospace = true,
-      }),
-    }),
+      },
+    },
 
-    aliasTab = UI.Window({
+    aliasTab = UI.Window {
       tabTitle = 'Aliases',
-      alias = UI.TextEntry({
-        y = 2, x = 2, width = UI.term.width - 2, 
+      alias = UI.TextEntry {
+        x = 2, y = 2, rex = -2, 
         limit = 32,
         shadowText = 'Alias',
-      }),
-      path = UI.TextEntry({
-        y = 3, x = 2, width = UI.term.width - 2, limit = 256,
+      },
+      path = UI.TextEntry {
+        y = 3, x = 2, rex = -2,
+        limit = 256,
         shadowText = 'Program path',
         accelerators = {
           enter = 'new_alias',
         },
-      }),
-      grid = UI.Grid({
-        y = 5, values = aliases, autospace = true,
+      },
+      grid = UI.Grid {
+        y = 5,
+        values = aliases,
+        autospace = true,
+        sortColumn = 'alias',
         columns = {
           { heading = 'Alias',   key = 'alias' },
           { heading = 'Program', key = 'path'  },
         },
-        sortColumn = 'alias',
         accelerators = {
           delete = 'delete_alias',
         },
-      }),
-    }),
+      },
+    },
 
-    infoTab = UI.Window({
+    infoTab = UI.Window {
       tabTitle = 'Info',
-      labelText = UI.Text({ y = 2, x = 3, value = 'Label' }),
-      label = UI.TextEntry({
-        y = 2, x = 9, width = UI.term.width - 12,
-        limit = 32, value = os.getComputerLabel(),
+      labelText = UI.Text {
+        x = 3, y = 2,
+        value = 'Label'
+      },
+      label = UI.TextEntry {
+        x = 9, y = 2, rex = -12,
+        limit = 32,
+        value = os.getComputerLabel(),
         backgroundFocusColor = colors.black,
         accelerators = {
           enter = 'update_label',
         },
-      }),
-      grid = UI.ScrollingGrid({
+      },
+      grid = UI.ScrollingGrid {
         y = 4,
         values = {
           { name = 'CC version',  value = os.version()                       },
@@ -93,15 +99,14 @@ local systemPage = UI.Page({
           { key = 'name',  width = 12                 },
           { key = 'value', width = UI.term.width - 15 },
         },
-      }),
-    }),
-  }),
---  statusBar = UI.StatusBar(),
+      },
+    },
+  },
   notification = UI.Notification(),
   accelerators = {
     q = 'quit',
   },
-})
+}
 
 function systemPage.tabs.pathTab.grid:draw()
   self.values = { }
@@ -120,10 +125,8 @@ function systemPage.tabs.pathTab:eventHandler(event)
     self.grid:draw()
     Config.update('multishell', env)
     systemPage.notification:success('reboot to take effect')
-  else
-    return UI.Window.eventHandler(self, event)
+    return true
   end
-  return true
 end
 
 function systemPage.tabs.aliasTab.grid:draw()
@@ -144,6 +147,7 @@ function systemPage.tabs.aliasTab:eventHandler(event)
     self.grid:draw()
     Config.update('multishell', env)
     systemPage.notification:success('reboot to take effect')
+    return true
 
   elseif event.type == 'new_alias' then
     env.aliases[self.alias.value] = self.path.value
@@ -153,10 +157,8 @@ function systemPage.tabs.aliasTab:eventHandler(event)
     self:setFocus(self.alias)
     Config.update('multishell', env)
     systemPage.notification:success('reboot to take effect')
-  else
-    return UI.Window.eventHandler(self, event)
+    return true
   end
-  return true
 end
 
 function systemPage.tabs.infoTab:eventHandler(event)
@@ -164,21 +166,15 @@ function systemPage.tabs.infoTab:eventHandler(event)
     os.setComputerLabel(self.label.value)
     systemPage.notification:success('Label updated')
     return true
-  else
-    return UI.Window.eventHandler(self, event)
   end
-  return true
 end
 
 function systemPage:eventHandler(event)
 
   if event.type == 'quit' then
     Event.exitPullEvents()
-
   elseif event.type == 'tab_activate' then
     event.activated:focusFirst()
-    --self.statusBar:setValue('')
-    --self.statusBar:draw()
   else
     return UI.Page.eventHandler(self, event)
   end

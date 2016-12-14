@@ -267,9 +267,6 @@ function Manager:inputEvent(parent, event)
       if parent:emit({ type = acc, element = parent }) then
         return true
       end
---      if parent:eventHandler({ type = acc, element = parent }) then
---        return true
---      end
     end
     if parent.eventHandler then
       if parent:eventHandler(event) then
@@ -521,18 +518,26 @@ end
 function UI.Window:setParent()
   self.oh, self.ow = self.height, self.width
 
-  if self.ox then
-    self.x = self.parent.width + self.ox
+  if self.rx then
+    if self.rx > 0 then
+      self.x = self.rx
+    else
+      self.x = self.parent.width + self.rx
+    end
   end
-  if self.oy then
-    self.y = self.parent.height + self.oy
+  if self.ry then
+    if self.ry > 0 then
+      self.y = self.ry
+    else
+      self.y = self.parent.height + self.ry
+    end
   end
 
-  if self.ex then
-    self.width = self.parent.width - self.x + self.ex + 2
+  if self.rex then
+    self.width = self.parent.width - self.x + self.rex + 2
   end
-  if self.ey then
-    self.height = self.parent.height - self.y + self.ey + 2
+  if self.rey then
+    self.height = self.parent.height - self.y + self.rey + 2
   end
 
   if not self.width then
@@ -583,21 +588,29 @@ end
 
 function UI.Window:resize()
 
-  if self.ox then
-    self.x = self.parent.width + self.ox
+  if self.rx then
+    if self.rx > 0 then
+      self.x = self.rx
+    else
+      self.x = self.parent.width + self.rx
+    end
   end
-  if self.oy then
-    self.y = self.parent.height + self.oy
+  if self.ry then
+    if self.ry > 0 then
+      self.y = self.ry
+    else
+      self.y = self.parent.height + self.ry
+    end
   end
 
-  if self.ex then
-    self.width = self.parent.width - self.x + self.ex + 2
+  if self.rex then
+    self.width = self.parent.width - self.x + self.rex + 2
   elseif not self.ow and self.parent then
     self.width = self.parent.width - self.x + 1
   end
 
-  if self.ey then
-    self.oh = self.parent.height - self.y + self.ey + 2
+  if self.rey then
+    self.height = self.parent.height - self.y + self.rey + 2
   elseif not self.oh and self.parent then
     self.height = self.parent.height - self.y + 1
   end
@@ -700,11 +713,16 @@ function UI.Window:print(text, bg, fg, indent)
     end
   end
 
-  for _,line in pairs(Util.split(text)) do
+  local lines = Util.split(text)
+  for k,line in pairs(lines) do
     local lx = 1
     while true do
       local word = nextWord(line, lx)
       if not word then
+        if lines[k + 1] then
+          self.cursorX = indent
+          self.cursorY = self.cursorY + 1
+        end
         break
       end
       local w = word
@@ -783,6 +801,14 @@ function UI.Window:scrollIntoView()
   end
 end
 
+function UI.Window:setTransition(effect, y, height)
+  if self.parent then
+    y = y or 1
+    height = height or self.height
+    self.parent:setTransition(effect, y + self.y - 1, height)
+  end
+end
+
 function UI.Window:emit(event)
   local parent = self
   --debug(self.UIElement .. ' emitting ' .. event.type)
@@ -809,6 +835,7 @@ UI.Device.defaults = {
   textColor = colors.white,
   textScale = 1,
   lines = { },
+  transitionsEnabled = true,
 }
 
 function UI.Device:init(args)
@@ -834,6 +861,7 @@ end
 
 function UI.Device:resize()
   self.width, self.height = self.device.getSize()
+  self.lines = { }
   UI.Window.resize(self)
 end
 
@@ -863,14 +891,112 @@ function UI.Device:reset()
   self.device.setCursorPos(1, 1)
 end
 
-function UI.Device:sync()
-  for y, line in pairs(self.lines) do
-    if line.dirty then
-      self.device.setCursorPos(1, y)
-      self.device.blit(line.text, line.fg, line.bg)
-      line.dirty = false
+function UI.Device:setTransition(effect, y, height)
+  if not self.transition then
+    self.transition = effect
+    for i = y, y + height - 1 do
+      local line = self.lines[i]
+      if line then
+        line.transition = true
+      end
     end
   end
+end
+
+function UI.Device:runTransition(transition)
+  if transition == 'left' or transition == 'right' then
+    for y, line in ipairs(self.lines) do
+      if not line.transition then
+        self.device.setCursorPos(1, y)
+        self.device.blit(line.text, line.fg, line.bg)
+      end
+    end
+
+    local c = os.clock()
+    local steps = math.floor(self.width * .34) -- 150 ms
+
+    for i = 1, self.width do
+      for y, line in pairs(self.lines) do
+        if line.transition then
+          if transition == 'left' then
+            local text = self.lastScreen[y].text .. line.text
+            local bg = self.lastScreen[y].bg .. line.bg 
+            local fg = self.lastScreen[y].fg .. line.fg
+            self.device.setCursorPos(1 - i, y)
+            self.device.blit(text, fg, bg)
+          else
+            local text = line.text .. self.lastScreen[y].text
+            local bg = line.bg .. self.lastScreen[y].bg 
+            local fg = line.fg .. self.lastScreen[y].fg
+            self.device.setCursorPos(-self.width + i + 1, y)
+            self.device.blit(text, fg, bg)
+          end
+        end
+      end
+      if (i + math.floor(steps / 2)) % steps == 0 then
+        if c == os.clock() then
+          os.sleep(0)
+          c = os.clock()
+        end
+      end
+    end
+
+  elseif transition == 'explode' then
+    local half = math.floor(self.width / 2)
+    local c = os.clock()
+    local steps = math.floor(self.width * .5)
+    for i = 1, half do
+      for y, line in pairs(self.lines) do
+        local width = i * 2
+        local mid = half - i + 1
+        self.device.setCursorPos(mid, y)
+        self.device.blit(
+          line.text:sub(mid, mid + width),
+          line.fg:sub(mid, mid + width),
+          line.bg:sub(mid, mid + width))
+      end
+      if (i + math.floor(steps / 2)) % steps == 0 then
+        if c == os.clock() then
+          os.sleep(0)
+          c = os.clock()
+        end
+      end
+    end
+  end
+
+  for y, line in ipairs(self.lines) do
+    line.dirty = false
+    line.transition = false
+  end
+end
+
+function UI.Device:sync()
+
+  local transition
+  if self.transition then
+    for y, line in pairs(self.lines) do
+      if line.dirty then
+        transition = self.transition
+        break
+      end
+    end
+    self.transition = nil
+  end
+
+  if transition and self.transitionsEnabled then
+    self:runTransition(transition)
+  else
+    for y, line in pairs(self.lines) do
+      if line.dirty then
+        self.device.setCursorPos(1, y)
+        self.device.blit(line.text, line.fg, line.bg)
+        line.dirty = false
+      end
+    end
+  end
+
+  self.lastScreen = Util.deepCopy(self.lines)
+
   if self:getCursorBlink() then
     self.device.setCursorPos(self.cursorX, self.cursorY)
   end
@@ -1596,10 +1722,14 @@ function UI.ViewportWindow:setScrollPosition(offset)
       max = math.max(child.y + child.height - 1, max)
     end
   end
-  self.offy = math.min(self.offy, max - self.height)
+  self.offy = math.min(self.offy, math.max(max, self.height) - self.height)
   if self.offy ~= oldOffset then
     self:draw()
   end
+end
+
+function UI.ViewportWindow:reset()
+  self.offy = 0
 end
 
 function UI.ViewportWindow:eventHandler(event)
@@ -1731,7 +1861,7 @@ function UI.MenuBar:init(args)
   if self.showBackButton then
     table.insert(self.children, UI.Button({
       x = UI.term.width - 2,
-      width = 4,
+      width = 3,
       backgroundColor = self.backgroundColor,
       textColor = self.textColor,
       text = '^-',
@@ -1758,7 +1888,6 @@ function UI.MenuBar:eventHandler(event)
       end
     end
   end
-  return false
 end
 
 --[[-- DropMenu --]]--
@@ -1834,6 +1963,7 @@ function UI.DropMenu:eventHandler(event)
   else
     return UI.MenuBar.eventHandler(self, event)
   end
+  return true
 end
 
 --[[-- TabBar --]]--
@@ -1849,16 +1979,23 @@ function UI.TabBar:init(args)
 end
 
 function UI.TabBar:selectTab(text)
-  for _,child in pairs(self.children) do
-    if child.text == text then
-      child.selected = true
+  local selected, lastSelected
+  for k,child in pairs(self.children) do
+    if child.selected then
+      lastSelected = k
+    end
+    child.selected = child.text == text
+    if child.selected then
+      selected = k
       child.backgroundColor = self.selectedBackgroundColor
       child.backgroundFocusColor = self.selectedBackgroundColor
     else
-      child.selected = false
       child.backgroundColor = self.backgroundColor
       child.backgroundFocusColor = self.backgroundColor
     end
+  end
+  if selected and lastSelected and selected ~= lastSelected then
+    self:emit({ type = 'tab_change', current = selected, last = lastSelected })
   end
   UI.MenuBar.draw(self)
 end
@@ -1929,9 +2066,62 @@ function UI.Tabs:eventHandler(event)
         break
       end
     end
-    return true
+  elseif event.type == 'tab_change' then
+    for _,tab in ipairs(self.children) do
+      if tab ~= self.tabBar then
+        if event.current > event.last then
+          tab:setTransition('left')
+        else
+          tab:setTransition('right')
+        end
+        break
+      end
+    end
   end
-  return UI.Window.eventHandler(self, event)
+end
+
+--[[-- WindowScroller --]]--
+UI.WindowScroller = class(UI.Window)
+UI.WindowScroller.defaults = {
+  UIElement = 'WindowScroller',
+  children = { },
+}
+function UI.WindowScroller:init(args)
+  local defaults = UI:getDefaults(UI.WindowScroller, args)
+  UI.Window.init(self, defaults)
+end
+
+function UI.WindowScroller:enable()
+  self.enabled = true
+  if #self.children > 0 then
+    self.children[1]:enable()
+  end
+end
+
+function UI.WindowScroller:nextChild()
+  for i = 1, #self.children do
+    if self.children[i].enabled then
+      if i < #self.children then
+        self:setTransition('left')
+        self.children[i]:disable()
+        self.children[i + 1]:enable()
+      end
+      break
+    end
+  end
+end
+
+function UI.WindowScroller:prevChild()
+  for i = 1, #self.children do
+    if self.children[i].enabled then
+      if i - 1 > 0 then
+        self:setTransition('right')
+        self.children[i]:disable()
+        self.children[i - 1]:enable()
+      end
+      break
+    end
+  end
 end
 
 --[[-- Notification --]]--

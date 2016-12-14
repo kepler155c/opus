@@ -6,23 +6,23 @@ local UI = require('ui')
 multishell.setTitle(multishell.getCurrent(), 'Devices')
 
 --[[ -- PeripheralsPage  -- ]] --
-local peripheralsPage = UI.Page({
-  grid = UI.ScrollingGrid({
+local peripheralsPage = UI.Page {
+  grid = UI.ScrollingGrid {
     columns = { 
       { heading = 'Type', key = 'type' },
-      { heading = 'Side', key = 'side' }
+      { heading = 'Side', key = 'side' },
     },  
     sortColumn = 'type',
     height = UI.term.height - 1,
     autospace = true,
-  }),
-  statusBar = UI.StatusBar({
+  },
+  statusBar = UI.StatusBar {
     status = 'Select peripheral'
-  }),
+  },
   accelerators = {
     q = 'quit',
   },
-})
+}
 
 function peripheralsPage.grid:draw()
   local sides = peripheral.getNames()
@@ -40,7 +40,6 @@ function peripheralsPage.grid:draw()
 end
 
 function peripheralsPage:updatePeripherals()
-
   if UI:getCurrentPage() == self then
     self.grid:draw()
     self:sync()
@@ -59,29 +58,27 @@ function peripheralsPage:eventHandler(event)
 end
 
 --[[ -- MethodsPage  -- ]] --
-local methodsPage = UI.Page({
-  grid = UI.ScrollingGrid({
+local methodsPage = UI.Page {
+  grid = UI.ScrollingGrid {
     columns = { 
       { heading = 'Name', key = 'name', width = UI.term.width }
     },  
     sortColumn = 'name',
     height = 7,
-  }), 
-  container = UI.Window({
+  },
+  viewportConsole = UI.ViewportWindow {
     y = 8,
-    height = UI.term.height-8,
-    viewportConsole = UI.ViewportWindow({
-      backgroundColor = colors.brown
-    }),
-  }),
-  statusBar = UI.StatusBar({
+    height = UI.term.height - 8,
+    backgroundColor = colors.brown,
+  },
+  statusBar = UI.StatusBar {
     status = 'q to return',
-  }),
+  },
   accelerators = {
     q = 'back',
     backspace = 'back',
   },
-})
+}
 
 function methodsPage:enable(p)
 
@@ -103,6 +100,8 @@ function methodsPage:enable(p)
     end
   end
 
+  self.viewportConsole.offy = 0
+
   self.grid:update()
   self.grid:setIndex(1)
 
@@ -110,31 +109,26 @@ function methodsPage:enable(p)
   UI.Page.enable(self)
 end
 
-function methodsPage.container.viewportConsole:draw()
-  if methodsPage.grid:getSelected() then
-    methodsPage:drawMethodInfo(self, methodsPage.grid:getSelected())
-  end
-end
-
 function methodsPage:eventHandler(event)
   if event.type == 'back' then
     UI:setPage(peripheralsPage)
     return true
   elseif event.type == 'grid_focus_row' then
-    self.container.viewportConsole.height = 1
-    self.container.viewportConsole.offset = 0
-    self.container.viewportConsole.y = 1
-    self:drawMethodInfo(self.container.viewportConsole, event.selected)
+    self.viewportConsole.offy = 0
+    self.viewportConsole:draw()
   end
   return UI.Page.eventHandler(self, event)
 end
 
-function methodsPage:drawMethodInfo(c, method)
+function methodsPage.viewportConsole:draw()
+  local c = self
+  local method = methodsPage.grid:getSelected()
 
   c:clear()
   c:setCursorPos(1, 1)
 
   if method.noext then
+    c.cursorY = 2
     c:print('No extended Information')
     return 2
   end
@@ -189,10 +183,7 @@ function methodsPage:drawMethodInfo(c, method)
     end
   end
 
-  c.height = c.cursorY + 1
-
-  term.setBackgroundColor(colors.black)
-  return y
+  c.ymax = c.cursorY + 1
 end
 
 Event.addHandler('peripheral', function()
