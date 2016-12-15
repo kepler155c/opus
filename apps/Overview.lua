@@ -6,6 +6,7 @@ local Config = require('config')
 local NFT = require('nft')
 local class = require('class')
 local FileUI = require('fileui')
+local Tween = require('tween')
 
 multishell.setTitle(multishell.getCurrent(), 'Overview')
 UI:configure('Overview', ...)
@@ -190,8 +191,9 @@ function page.container:setCategory(categoryName)
 
   -- reposition all children
   for k,child in ipairs(self.children) do
-    child.x = col
-    child.y = row
+    child.x = -10
+    child.y = math.floor(self.height)
+    child.tween = Tween.new(6, child, { x = col, y = row }, 'outSine')
 
     if k < count then
       col = col + child.width
@@ -203,6 +205,25 @@ function page.container:setCategory(categoryName)
   end
 
   self:initChildren()
+  self.animate = true
+end
+
+function page.container:draw()
+  if self.animate then
+    self.animate = false
+    for i = 1, 6 do
+      for _,child in ipairs(self.children) do
+        child.tween:update(1)
+        child.x = math.floor(child.x)
+        child.y = math.floor(child.y)
+      end
+      UI.ViewportWindow.draw(self)
+      self:sync()
+      os.sleep()
+    end
+  else
+    UI.ViewportWindow.draw(self)
+  end
 end
 
 function page:refresh()
@@ -223,6 +244,8 @@ function page:eventHandler(event)
     self.tabBar:selectTab(event.button.text)
     self.container:setCategory(event.button.text)
     self.container:draw()
+    self:sync()
+
     config.currentCategory = event.button.text
     Config.update('Overview', config)
 
@@ -263,9 +286,9 @@ function page:eventHandler(event)
 
   elseif event.type == 'tab_change' then
     if event.current > event.last then
-      self.container:setTransition('left')
+      --self.container:setTransition(UI.effect.slideLeft)
     else
-      self.container:setTransition('right')
+      --self.container:setTransition(UI.effect.slideRight)
     end
 
   elseif event.type == 'refresh' then
@@ -391,7 +414,9 @@ function editor:eventHandler(event)
     self.statusBar:draw()
 
   elseif event.type == 'loadIcon' then
-    UI:setPage(FileUI(), fs.getDir(self.iconFile), function(fileName)
+    local fileui = FileUI()
+    --fileui:setTransition(UI.effect.explode)
+    UI:setPage(fileui, fs.getDir(self.iconFile), function(fileName)
       if fileName then
         self.iconFile = fileName
         local s, m = pcall(function()

@@ -102,14 +102,17 @@ Manager.effect = {
     ticks = 12,
     easing = 'outBounce',
   },
+  explode = {
+    type = 'explode',
+    ticks = 12,
+    easing = 'outBounce',
+  },
 }
 
 function Manager:init(args)
   local control = false
   local shift = false
   local pages = { }
-
-  self.effectsEnabled = true
 
   Event.addHandler('term_resize', function(h, side)
     if self.currentPage then
@@ -256,7 +259,7 @@ function Manager:configure(appName, ...)
 end
 
 function Manager:disableEffects()
-  self.effectsEnabled = false
+  self.defaultDevice.effectsEnabled = false
 end
 
 function Manager:loadTheme(filename)
@@ -819,11 +822,13 @@ function UI.Window:scrollIntoView()
   end
 end
 
-function UI.Window:setTransition(effect, y, height)
+function UI.Window:setTransition(effect, x, y, width, height)
   if self.parent then
+    x = x or 1
     y = y or 1
+    width = width or self.width
     height = height or self.height
-    self.parent:setTransition(effect, y + self.y - 1, height)
+    self.parent:setTransition(effect, x + self.x, y + self.y - 1, width, height)
   end
 end
 
@@ -852,6 +857,7 @@ UI.Device.defaults = {
   backgroundColor = colors.black,
   textColor = colors.white,
   textScale = 1,
+  effectsEnabled = true,
   lines = { },
 }
 
@@ -908,9 +914,13 @@ function UI.Device:reset()
   self.device.setCursorPos(1, 1)
 end
 
-function UI.Device:setTransition(effect, y, height)
+function UI.Device:setTransition(effect, x, y, width, height)
   if not self.transition then
     self.transition = effect
+    effect.x = x
+    effect.y = y
+    effect.width = width
+    effect.height = height
     for i = y, y + height - 1 do
       local line = self.lines[i]
       if line then
@@ -965,26 +975,36 @@ function UI.Device:runTransition(effect)
     until pos.x == self.width
 
   elseif effect.type == 'explode' then
-    local half = math.floor(self.width / 2)
-    local c = os.clock()
-    local steps = math.floor(self.width * .5)
-    for i = 1, half do
-      for y, line in pairs(self.lines) do
-        local width = i * 2
-        local mid = half - i + 1
-        self.device.setCursorPos(mid, y)
-        self.device.blit(
-          line.text:sub(mid, mid + width),
-          line.fg:sub(mid, mid + width),
-          line.bg:sub(mid, mid + width))
+    local pos = { x = 1 }
+    local tween = self.Tween.new(effect.ticks, pos, { x = 100 }, effect.easing)
+    local mx = math.floor(effect.width / 2)
+    local my = math.floor(effect.height / 2)
+
+      local function replace(sstr, pos, rstr, width)
+        return sstr:sub(1, pos-1) .. rstr .. sstr:sub(pos+width)
       end
-      if (i + math.floor(steps / 2)) % steps == 0 then
-        if c == os.clock() then
-          os.sleep(0)
-          c = os.clock()
+
+debug('running')
+    repeat
+      tween:update(1)
+      local ux = math.floor(effect.width * pos.x / 200)
+      local uy = math.floor(effect.height * pos.x / 200)
+      local width = ux * 2
+      local sx = mx - ux + 1
+debug({ pos.x, ux, uy })
+      for y = my - uy, my + uy do
+        local line = self.lines[y]
+        if line then
+          self.device.setCursorPos(1, y)
+          self.device.blit(
+            replace(self.lastScreen[y].text, sx, line.text:sub(sx, sx + width - 1), width),
+            replace(self.lastScreen[y].fg, sx, line.fg:sub(sx, sx + width - 1), width),
+            replace(self.lastScreen[y].bg, sx, line.bg:sub(sx, sx + width - 1), width))
         end
       end
-    end
+      os.sleep(.4)
+    until pos.x == 100
+debug('done running')
   end
 
   for y, line in ipairs(self.lines) do
@@ -996,7 +1016,7 @@ end
 function UI.Device:sync()
 
   local transition
-  if self.transition and UI.effectsEnabled then
+  if self.transition and self.effectsEnabled then
     for y, line in pairs(self.lines) do
       if line.dirty then
         transition = self.transition
