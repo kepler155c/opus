@@ -15,7 +15,7 @@ local version = "Version 1.1.6"
 -- Modified to integrate with opus os
 
 local calls, recTerm, oldTerm, arg, showInput, skipLast, lastDelay, curInput, callCount, callListCount = {{["delay"] = 0}}, {}, Util.shallowCopy(multishell.term), {...}, false, false, 2, "", 1, 2
-local curBlink, oldBlink, curCalls, tTerm, buffer, colourNum, xPos, yPos, oldXPos, oldYPos, tCol, bCol, xSize, ySize = false, false, calls[1], {}, {}, {}, 1, 1, 1, 1, colours.white, colours.black, term.getSize()
+local curBlink, oldBlink, curCalls, tTerm, buffer, colourNum, xPos, yPos, oldXPos, oldYPos, tCol, bCol, xSize, ySize = false, false, calls[1], {}, {}, {}, 1, 1, 1, 1, colours.white, colours.black, oldTerm.getSize()
 local greys, buttons = {["0"] = true, ["7"] = true, ["8"] = true, ["f"] = true}, {"l", "r", "m"}
 local charW, charH, chars, resp
 local filename

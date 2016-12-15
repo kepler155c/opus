@@ -91,10 +91,25 @@ end
 
 --[[-- Top Level Manager --]]--
 local Manager = class()
+Manager.effect = {
+  slideLeft = {
+    type = 'slideLeft',
+    ticks = 12,
+    easing = 'outBounce',
+  },
+  slideRight = {
+    type = 'slideRight',
+    ticks = 12,
+    easing = 'outBounce',
+  },
+}
+
 function Manager:init(args)
   local control = false
   local shift = false
   local pages = { }
+
+  self.effectsEnabled = true
 
   Event.addHandler('term_resize', function(h, side)
     if self.currentPage then
@@ -198,7 +213,6 @@ function Manager:configure(appName, ...)
     textScale  = { arg = 't', type = 'number',
                    desc = 'Text scale' },
   }
-
   local defaults = Util.loadTable('/config/' .. appName) or { }
   if not defaults.device then
     defaults.device = { }
@@ -241,10 +255,14 @@ function Manager:configure(appName, ...)
   end
 end
 
+function Manager:disableEffects()
+  self.effectsEnabled = false
+end
+
 function Manager:loadTheme(filename)
   local theme, err = Util.loadTable(filename)
   if not theme then
-    error(theme)
+    error(err)
   end
   for k,v in pairs(theme) do
     if self[k] and self[k].defaults then
@@ -835,7 +853,6 @@ UI.Device.defaults = {
   textColor = colors.white,
   textScale = 1,
   lines = { },
-  transitionsEnabled = true,
 }
 
 function UI.Device:init(args)
@@ -903,8 +920,13 @@ function UI.Device:setTransition(effect, y, height)
   end
 end
 
-function UI.Device:runTransition(transition)
-  if transition == 'left' or transition == 'right' then
+function UI.Device:runTransition(effect)
+
+  if not self.Tween then
+    self.Tween = require('tween')
+  end
+
+  if effect.type == 'slideLeft' or effect.type == 'slideRight' then
     for y, line in ipairs(self.lines) do
       if not line.transition then
         self.device.setCursorPos(1, y)
@@ -912,36 +934,37 @@ function UI.Device:runTransition(transition)
       end
     end
 
-    local c = os.clock()
-    local steps = math.floor(self.width * .34) -- 150 ms
+    local pos = { x = 1 }
+    local tween = self.Tween.new(effect.ticks, pos, { x = self.width }, effect.easing)
 
-    for i = 1, self.width do
-      for y, line in pairs(self.lines) do
-        if line.transition then
-          if transition == 'left' then
-            local text = self.lastScreen[y].text .. line.text
-            local bg = self.lastScreen[y].bg .. line.bg 
-            local fg = self.lastScreen[y].fg .. line.fg
-            self.device.setCursorPos(1 - i, y)
-            self.device.blit(text, fg, bg)
-          else
-            local text = line.text .. self.lastScreen[y].text
-            local bg = line.bg .. self.lastScreen[y].bg 
-            local fg = line.fg .. self.lastScreen[y].fg
-            self.device.setCursorPos(-self.width + i + 1, y)
-            self.device.blit(text, fg, bg)
+    local lastx = 0
+    repeat
+      tween:update(1)
+      local x = math.floor(pos.x)
+      if x ~= lastx then
+        lastx = x
+        for y, line in pairs(self.lines) do
+          if line.transition then
+            if effect.type == 'slideLeft' then
+              local text = self.lastScreen[y].text .. line.text
+              local bg = self.lastScreen[y].bg .. line.bg 
+              local fg = self.lastScreen[y].fg .. line.fg
+              self.device.setCursorPos(1 - x, y)
+              self.device.blit(text, fg, bg)
+            else
+              local text = line.text .. self.lastScreen[y].text
+              local bg = line.bg .. self.lastScreen[y].bg 
+              local fg = line.fg .. self.lastScreen[y].fg
+              self.device.setCursorPos(-self.width + x + 1, y)
+              self.device.blit(text, fg, bg)
+            end
           end
         end
       end
-      if (i + math.floor(steps / 2)) % steps == 0 then
-        if c == os.clock() then
-          os.sleep(0)
-          c = os.clock()
-        end
-      end
-    end
+      os.sleep()
+    until pos.x == self.width
 
-  elseif transition == 'explode' then
+  elseif effect.type == 'explode' then
     local half = math.floor(self.width / 2)
     local c = os.clock()
     local steps = math.floor(self.width * .5)
@@ -973,7 +996,7 @@ end
 function UI.Device:sync()
 
   local transition
-  if self.transition then
+  if self.transition and UI.effectsEnabled then
     for y, line in pairs(self.lines) do
       if line.dirty then
         transition = self.transition
@@ -983,7 +1006,7 @@ function UI.Device:sync()
     self.transition = nil
   end
 
-  if transition and self.transitionsEnabled then
+  if transition then
     self:runTransition(transition)
   else
     for y, line in pairs(self.lines) do
@@ -2070,9 +2093,9 @@ function UI.Tabs:eventHandler(event)
     for _,tab in ipairs(self.children) do
       if tab ~= self.tabBar then
         if event.current > event.last then
-          tab:setTransition('left')
+          tab:setTransition(UI.effect.slideLeft)
         else
-          tab:setTransition('right')
+          tab:setTransition(UI.effect.slideRight)
         end
         break
       end
@@ -2102,7 +2125,7 @@ function UI.WindowScroller:nextChild()
   for i = 1, #self.children do
     if self.children[i].enabled then
       if i < #self.children then
-        self:setTransition('left')
+        self:setTransition(UI.effect.slideLeft)
         self.children[i]:disable()
         self.children[i + 1]:enable()
       end
@@ -2115,7 +2138,7 @@ function UI.WindowScroller:prevChild()
   for i = 1, #self.children do
     if self.children[i].enabled then
       if i - 1 > 0 then
-        self:setTransition('right')
+        self:setTransition(UI.effect.slideRight)
         self.children[i]:disable()
         self.children[i - 1]:enable()
       end
@@ -2924,7 +2947,7 @@ function UI.Image:setParent()
 end
 
 function UI.Image:draw()
-  self:clear(bg)
+  self:clear()
   if self.image then
     for y = 1, #self.image do
       local line = self.image[y]
@@ -2968,7 +2991,7 @@ function UI.NftImage:setParent()
 end
 
 function UI.NftImage:draw()
---  self:clear(bg)
+--  self:clear()
   if self.image then
     for y = 1, self.image.height do
       for x = 1, #self.image.text[y] do
@@ -2984,10 +3007,10 @@ function UI.NftImage:setImage(image)
   self.image = image
 end
 
-UI:setDefaultDevice(UI.Device({ device = term.current() }))
-
 if fs.exists('/config/ui.theme') then
   UI:loadTheme('/config/ui.theme')
 end
+
+UI:setDefaultDevice(UI.Device({ device = term.current() }))
 
 return UI
