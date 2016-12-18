@@ -120,6 +120,18 @@ function Terminal.toGrayscale(ct)
   end
 end
 
+function Terminal.getNullTerm(ct)
+  local nt = Terminal.copy(ct)
+
+  local methods = { 'blit', 'clear', 'clearLine', 'scroll',
+                    'setCursorBlink', 'setCursorPos', 'write' }
+  for _,v in pairs(methods) do
+    nt[v] = function() end
+  end
+
+  return nt
+end
+
 function Terminal.copy(ot)
   local ct = { }
   for k,v in pairs(ot) do

@@ -1,6 +1,8 @@
 local Util  = require('util')
 local class = require('class')
 local Event = require('event')
+local Tween = require('tween')
+local Region = require('region')
 
 local mapColorToGray = {
   [ colors.white     ] = colors.white,
@@ -21,43 +23,16 @@ local mapColorToGray = {
   [ colors.black     ] = colors.black,
 }
 
-local mapColorToPaint = {
-  [ colors.white     ] = '0',
-  [ colors.orange    ] = '1',
-  [ colors.magenta   ] = '2',
-  [ colors.lightBlue ] = '3',
-  [ colors.yellow    ] = '4',
-  [ colors.lime      ] = '5',
-  [ colors.pink      ] = '6',
-  [ colors.gray      ] = '7',
-  [ colors.lightGray ] = '8',
-  [ colors.cyan      ] = '9',
-  [ colors.purple    ] = 'a',
-  [ colors.blue      ] = 'b',
-  [ colors.brown     ] = 'c',
-  [ colors.green     ] = 'd',
-  [ colors.red       ] = 'e',
-  [ colors.black     ] = 'f',
-}
+local mapColorToPaint = { }
+for n = 1, 16 do
+  mapColorToPaint[2 ^ (n - 1)] = string.sub("0123456789abcdef", n, n)
+end
 
-local mapGrayToPaint = {
-  [ colors.white     ] = '0',
-  [ colors.orange    ] = '8',
-  [ colors.magenta   ] = '8',
-  [ colors.lightBlue ] = '8',
-  [ colors.yellow    ] = '8',
-  [ colors.lime      ] = '8',
-  [ colors.pink      ] = '8',
-  [ colors.gray      ] = '7',
-  [ colors.lightGray ] = '8',
-  [ colors.cyan      ] = '8',
-  [ colors.purple    ] = '7',
-  [ colors.blue      ] = '7',
-  [ colors.brown     ] = '7',
-  [ colors.green     ] = '8',
-  [ colors.red       ] = '7',
-  [ colors.black     ] = 'f',
-}
+local mapGrayToPaint = { }
+for n = 0, 15 do
+  local gs = mapColorToGray[2 ^ n]
+  mapGrayToPaint[2 ^ n] = mapColorToPaint[gs]
+end
 
 local function colorToGrayScale(c)
   return mapColorToGray[c]
@@ -91,24 +66,6 @@ end
 
 --[[-- Top Level Manager --]]--
 local Manager = class()
-Manager.effect = {
-  slideLeft = {
-    type = 'slideLeft',
-    ticks = 12,
-    easing = 'outBounce',
-  },
-  slideRight = {
-    type = 'slideRight',
-    ticks = 12,
-    easing = 'outBounce',
-  },
-  explode = {
-    type = 'explode',
-    ticks = 12,
-    easing = 'outBounce',
-  },
-}
-
 function Manager:init(args)
   local control = false
   local shift = false
@@ -153,7 +110,13 @@ function Manager:init(args)
   end)
 
   Event.addHandler('mouse_click', function(h, button, x, y)
-    if self.currentPage then
+
+    if button == 1 and shift and control then -- hack
+
+      local event = self:pointToChild(self.target, x, y)
+      multishell.openTab({ path = 'apps/Lua.lua', args = { event.element }, focused = true })
+
+    elseif self.currentPage then
       if not self.currentPage.parent.device.side then
         self:click(button, x, y)
       end
@@ -411,6 +374,7 @@ function Manager:setPage(pageOrName, ...)
   if page == self.currentPage then
     page:draw()
   else
+    local needSync
     if self.currentPage then
       if self.currentPage.focused then
         self.currentPage.focused.focused = false
@@ -418,6 +382,8 @@ function Manager:setPage(pageOrName, ...)
       end
       self.currentPage:disable()
       page.previousPage = self.currentPage
+    else
+      needSync = true
     end
     self.currentPage = page
     self.currentPage:clear(page.backgroundColor)
@@ -428,7 +394,9 @@ function Manager:setPage(pageOrName, ...)
       self.currentPage.focused:focus()
     end
     self:capture(self.currentPage)
-    page:sync()
+    if needSync then
+      page:sync() -- first time a page has been set
+    end
   end
 end
 
@@ -734,6 +702,17 @@ function UI.Window:print(text, bg, fg, indent)
     end
   end
 
+  --[[
+  TODO
+  local test = "\027[0;1;33mYou tell foo, \"// Test string.\"\027[0;37mbar"
+  for sequence, text in string.gmatch (test, "\027%[([0-9;]+)m([^\027]+)") do
+    for ansi in string.gmatch (sequence, "%d+") do
+      print ("ANSI code: ", ansi)
+    end -- for
+    print ("Text: ", text)
+  end
+  --]]
+
   local lines = Util.split(text)
   for k,line in pairs(lines) do
     local lx = 1
@@ -822,13 +801,13 @@ function UI.Window:scrollIntoView()
   end
 end
 
-function UI.Window:setTransition(effect, x, y, width, height)
+function UI.Window:addTransition(effect, x, y, width, height)
   if self.parent then
     x = x or 1
     y = y or 1
     width = width or self.width
     height = height or self.height
-    self.parent:setTransition(effect, x + self.x, y + self.y - 1, width, height)
+    self.parent:addTransition(effect, x + self.x - 1, y + self.y - 1, width, height)
   end
 end
 
@@ -850,6 +829,144 @@ function UI.Window:eventHandler(event)
   return false
 end
 
+--[[-- Blit data manipulation --]]--
+local Blob = class()
+function Blob:init(args)
+  self.x = 1
+  self.y = 1
+  self.lines = { }
+  Util.merge(self, args)
+
+  for i = 1, self.ey - self.y + 1 do
+    self.lines[i] = { }
+  end
+end
+
+function Blob:copy()
+  local b = Blob({ x = self.x, y = self.y, ex = self.ex, ey = self.ey })
+  for i = 1, self.ey - self.y + 1 do
+    b.lines[i].text = self.lines[i].text
+    b.lines[i].fg = self.lines[i].fg
+    b.lines[i].bg = self.lines[i].bg
+  end
+  return b
+end
+
+function Blob:write(y, text, fg, bg)
+  self.lines[y].dirty = true
+  self.lines[y].text = text
+  self.lines[y].fg = fg
+  self.lines[y].bg = bg
+end
+
+function Blob:reset()
+  self.region = nil
+end
+
+function Blob:punch(rect)
+  if not self.regions then
+    self.regions = Region.new(self.x, self.y, self.ex, self.ey)
+  end
+  self.regions:subRect(rect.x, rect.y, rect.ex, rect.ey)
+end
+
+function Blob:blitClipped(device)
+  for _,region in ipairs(self.regions.region) do
+    self:blit(device,
+      { x = region[1], y = region[2], ex = region[3], ey = region[4] },
+      { x = region[1], y = region[2] })
+  end
+end
+
+function Blob:blit(device, src, tgt)
+  for i = 0, src.ey - src.y do
+    local line = self.lines[src.y + i]
+    local t, fg, bg = line.text, line.fg, line.bg
+    if src.x > 1 or src.ex < self.ex then
+      t  = t:sub(src.x, src.ex)
+      fg = fg:sub(src.x, src.ex)
+      bg = bg:sub(src.x, src.ex)
+    end
+    device.setCursorPos(tgt.x, tgt.y + i)
+    device.blit(t, fg, bg)
+  end
+end
+
+--[[-- TransitionSlideLeft --]]--
+UI.TransitionSlideLeft = class()
+UI.TransitionSlideLeft.defaults = {
+  UIElement = 'TransitionSlideLeft',
+  ticks = 12,
+  easing = 'outBounce',
+}
+function UI.TransitionSlideLeft:init(args)
+  local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
+  UI.setProperties(self, defaults)
+
+  self.pos = { x = self.ex }
+  self.tween = Tween.new(self.ticks, self.pos, { x = self.x }, self.easing)
+  self.lastx = 0
+end
+
+function UI.TransitionSlideLeft:update(device, screen, lastScreen)
+  self.tween:update(1)
+  local x = math.floor(self.pos.x)
+  if x ~= self.lastx then
+    self.lastx = x
+    lastScreen:blit(device, {
+      x = self.ex - x + self.x,
+      y = self.y,
+      ex = self.ex,
+      ey = self.ey },
+      { x = self.x, y = self.y })
+
+    screen:blit(device, {
+      x = self.x,
+      y = self.y,
+      ex = self.ex - x + self.x + 1,
+      ey = self.ey },
+      { x = x, y = self.y })
+  end
+  return self.pos.x ~= self.x
+end
+
+--[[-- TransitionSlideRight --]]--
+UI.TransitionSlideRight = class()
+UI.TransitionSlideRight.defaults = {
+  UIElement = 'TransitionSlideRight',
+  ticks = 12,
+  easing = 'outBounce',
+}
+function UI.TransitionSlideRight:init(args)
+  local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
+  UI.setProperties(self, defaults)
+
+  self.pos = { x = self.x }
+  self.tween = Tween.new(self.ticks, self.pos, { x = self.ex }, self.easing)
+  self.lastx = 0
+end
+
+function UI.TransitionSlideRight:update(device, screen, lastScreen)
+  self.tween:update(1)
+  local x = math.floor(self.pos.x)
+  if x ~= self.lastx then
+    self.lastx = x
+    lastScreen:blit(device, {
+      x = self.x,
+      y = self.y,
+      ex = self.ex - x + self.x + 1,
+      ey = self.ey },
+      { x = x, y = self.y })
+    screen:blit(device, {
+      x = self.ex - x + self.x,
+      y = self.y,
+      ex = self.ex + 1,
+      ey = self.ey },
+      { x = self.x, y = self.y })
+  end
+  return self.pos.x ~= self.ex
+end
+
 --[[-- Terminal for computer / advanced computer / monitor --]]--
 UI.Device = class(UI.Window)
 UI.Device.defaults = {
@@ -858,9 +975,7 @@ UI.Device.defaults = {
   textColor = colors.white,
   textScale = 1,
   effectsEnabled = true,
-  lines = { },
 }
-
 function UI.Device:init(args)
   local defaults = UI:getDefaults(UI.Device)
   defaults.device = term.current()
@@ -878,6 +993,16 @@ function UI.Device:init(args)
   defaults.width, defaults.height = defaults.device.getSize()
 
   UI.Window.init(self, defaults)
+
+  self.blob = Blob({
+    x = 1, y = 1, ex = self.width, ey = self.height
+  })
+  for i = 1, self.height do
+    self.blob:write(i,
+      string.rep(' ', self.width),
+      string.rep(colorToPaintColor(self.backgroundColor, self.isColor), self.width),
+      string.rep(colorToPaintColor(self.textColor, self.isColor), self.width))
+  end
 
   self.isColor = self.device.isColor()
 end
@@ -914,131 +1039,74 @@ function UI.Device:reset()
   self.device.setCursorPos(1, 1)
 end
 
-function UI.Device:setTransition(effect, x, y, width, height)
-  if not self.transition then
-    self.transition = effect
-    effect.x = x
-    effect.y = y
-    effect.width = width
-    effect.height = height
-    for i = y, y + height - 1 do
-      local line = self.lines[i]
-      if line then
-        line.transition = true
-      end
-    end
+function UI.Device:addTransition(effect, x, y, width, height)
+  if not self.transitions then
+    self.transitions = { }
   end
+
+  if type(effect) == 'string' then
+    local c
+    if effect == 'slideLeft' then
+      c = UI.TransitionSlideLeft
+    else
+      c = UI.TransitionSlideRight
+    end
+    effect = c {
+      x = x,
+      y = y,
+      ex = x + width - 1,
+      ey = y + height - 1,
+    }
+  end
+  table.insert(self.transitions, effect)
 end
 
-function UI.Device:runTransition(effect)
+function UI.Device:runTransitions(transitions)
 
-  if not self.Tween then
-    self.Tween = require('tween')
+  for _,t in ipairs(transitions) do
+    self.blob:punch(t)               -- punch out the effect areas
   end
+  self.blob:blitClipped(self.device) -- and blit the remainder
+  self.blob:reset()
 
-  if effect.type == 'slideLeft' or effect.type == 'slideRight' then
-    for y, line in ipairs(self.lines) do
-      if not line.transition then
-        self.device.setCursorPos(1, y)
-        self.device.blit(line.text, line.fg, line.bg)
+  while true do
+    for _,k in ipairs(Util.keys(transitions)) do
+      local transition = transitions[k]
+      if not transition:update(self.device, self.blob, self.lastScreen) then
+        transitions[k] = nil
       end
     end
-
-    local pos = { x = 1 }
-    local tween = self.Tween.new(effect.ticks, pos, { x = self.width }, effect.easing)
-
-    local lastx = 0
-    repeat
-      tween:update(1)
-      local x = math.floor(pos.x)
-      if x ~= lastx then
-        lastx = x
-        for y, line in pairs(self.lines) do
-          if line.transition then
-            if effect.type == 'slideLeft' then
-              local text = self.lastScreen[y].text .. line.text
-              local bg = self.lastScreen[y].bg .. line.bg 
-              local fg = self.lastScreen[y].fg .. line.fg
-              self.device.setCursorPos(1 - x, y)
-              self.device.blit(text, fg, bg)
-            else
-              local text = line.text .. self.lastScreen[y].text
-              local bg = line.bg .. self.lastScreen[y].bg 
-              local fg = line.fg .. self.lastScreen[y].fg
-              self.device.setCursorPos(-self.width + x + 1, y)
-              self.device.blit(text, fg, bg)
-            end
-          end
-        end
-      end
-      os.sleep()
-    until pos.x == self.width
-
-  elseif effect.type == 'explode' then
-    local pos = { x = 1 }
-    local tween = self.Tween.new(effect.ticks, pos, { x = 100 }, effect.easing)
-    local mx = math.floor(effect.width / 2)
-    local my = math.floor(effect.height / 2)
-
-      local function replace(sstr, pos, rstr, width)
-        return sstr:sub(1, pos-1) .. rstr .. sstr:sub(pos+width)
-      end
-
-debug('running')
-    repeat
-      tween:update(1)
-      local ux = math.floor(effect.width * pos.x / 200)
-      local uy = math.floor(effect.height * pos.x / 200)
-      local width = ux * 2
-      local sx = mx - ux + 1
-debug({ pos.x, ux, uy })
-      for y = my - uy, my + uy do
-        local line = self.lines[y]
-        if line then
-          self.device.setCursorPos(1, y)
-          self.device.blit(
-            replace(self.lastScreen[y].text, sx, line.text:sub(sx, sx + width - 1), width),
-            replace(self.lastScreen[y].fg, sx, line.fg:sub(sx, sx + width - 1), width),
-            replace(self.lastScreen[y].bg, sx, line.bg:sub(sx, sx + width - 1), width))
-        end
-      end
-      os.sleep(.4)
-    until pos.x == 100
-debug('done running')
-  end
-
-  for y, line in ipairs(self.lines) do
-    line.dirty = false
-    line.transition = false
+    if Util.empty(transitions) then
+      break
+    end
+    Event.sleep()
   end
 end
 
 function UI.Device:sync()
 
-  local transition
-  if self.transition and self.effectsEnabled then
-    for y, line in pairs(self.lines) do
-      if line.dirty then
-        transition = self.transition
-        break
-      end
-    end
-    self.transition = nil
+  local transitions
+  if self.transitions and self.effectsEnabled then
+    transitions = self.transitions
+    self.transitions = nil
   end
 
-  if transition then
-    self:runTransition(transition)
+  if transitions then
+    self:runTransitions(transitions)
   else
-    for y, line in pairs(self.lines) do
+    for y, line in pairs(self.blob.lines) do
       if line.dirty then
         self.device.setCursorPos(1, y)
         self.device.blit(line.text, line.fg, line.bg)
-        line.dirty = false
       end
     end
   end
 
-  self.lastScreen = Util.deepCopy(self.lines)
+  self.lastScreen = self.blob:copy()
+
+  for y, line in ipairs(self.blob.lines) do
+    line.dirty = false
+  end
 
   if self:getCursorBlink() then
     self.device.setCursorPos(self.cursorX, self.cursorY)
@@ -1048,14 +1116,6 @@ end
 function UI.Device:write(x, y, text, bg, tc)
 
   if y > 0 and y <= self.height and x <= self.width then
-
-    if not self.lines[y] then
-      self.lines[y] = {
-        text = string.rep(' ', self.width),
-        bg = string.rep(colorToPaintColor(self.backgroundColor, self.isColor), self.width),
-        fg = string.rep(colorToPaintColor(self.textColor, self.isColor), self.width),
-      }
-    end
 
     local width = #text
 
@@ -1080,7 +1140,7 @@ function UI.Device:write(x, y, text, bg, tc)
         return sstr:sub(1, pos-1) .. string.rep(rstr, width) .. sstr:sub(pos+width)
       end
 
-      local line = self.lines[y]
+      local line = self.blob.lines[y]
       line.dirty = true
       line.text = replace(line.text, x, text, width)
       if bg then
@@ -2113,9 +2173,9 @@ function UI.Tabs:eventHandler(event)
     for _,tab in ipairs(self.children) do
       if tab ~= self.tabBar then
         if event.current > event.last then
-          tab:setTransition(UI.effect.slideLeft)
+          tab:addTransition('slideLeft')
         else
-          tab:setTransition(UI.effect.slideRight)
+          tab:addTransition('slideRight')
         end
         break
       end
@@ -2145,7 +2205,7 @@ function UI.WindowScroller:nextChild()
   for i = 1, #self.children do
     if self.children[i].enabled then
       if i < #self.children then
-        self:setTransition(UI.effect.slideLeft)
+        self:addTransition('slideLeft')
         self.children[i]:disable()
         self.children[i + 1]:enable()
       end
@@ -2158,7 +2218,7 @@ function UI.WindowScroller:prevChild()
   for i = 1, #self.children do
     if self.children[i].enabled then
       if i - 1 > 0 then
-        self:setTransition(UI.effect.slideRight)
+        self:addTransition('slideRight')
         self.children[i]:disable()
         self.children[i - 1]:enable()
       end

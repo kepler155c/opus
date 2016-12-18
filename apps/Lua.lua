@@ -15,7 +15,7 @@ UI:configure('Lua', ...)
 local command = ''
 local history = History.load('.lua_history', 25)
 
-local resultsPage = UI.Page({
+local page = UI.Page({
   menuBar = UI.MenuBar({
     buttons = {
       { text = 'Local',  event = 'local'  },
@@ -47,7 +47,7 @@ local resultsPage = UI.Page({
   notification = UI.Notification(),
 })
 
-function resultsPage:setPrompt(value, focus)
+function page:setPrompt(value, focus)
   self.prompt:setValue(value)
   self.prompt.scroll = 0
   self.prompt:setPosition(#value)
@@ -59,29 +59,29 @@ function resultsPage:setPrompt(value, focus)
 
   self.prompt:draw()
   if focus then
-    resultsPage:setFocus(self.prompt)
+    page:setFocus(self.prompt)
   end
 end
 
-function resultsPage:enable()
+function page:enable()
   self:setFocus(self.prompt)
   UI.Page.enable(self)
 end
 
-function resultsPage:eventHandler(event)
+function page:eventHandler(event)
 
   if event.type == 'global' then
-    resultsPage:setPrompt('', true)
+    page:setPrompt('', true)
     self:executeStatement('getfenv(0)')
     command = nil
 
   elseif event.type == 'local' then
-    resultsPage:setPrompt('', true)
+    page:setPrompt('', true)
     self:executeStatement('getfenv(1)')
     command = nil
 
   elseif event.type == 'device' then
-    resultsPage:setPrompt('device', true)
+    page:setPrompt('device', true)
     self:executeStatement('device')
 
   elseif event.type == 'history_back' then
@@ -128,7 +128,7 @@ function resultsPage:eventHandler(event)
   return true
 end
 
-function resultsPage:setResult(result)
+function page:setResult(result)
   local t = { }
 
   local function safeValue(v)
@@ -169,7 +169,7 @@ function resultsPage:setResult(result)
   self:draw()
 end
 
-function resultsPage.grid:eventHandler(event)
+function page.grid:eventHandler(event)
 
   local entry = self:getSelected()
 
@@ -199,18 +199,18 @@ function resultsPage.grid:eventHandler(event)
 
   if event.type == 'grid_focus_row' then
     if self.focused then
-      resultsPage:setPrompt(commandAppend())
+      page:setPrompt(commandAppend())
     end
   elseif event.type == 'grid_select' then
-    resultsPage:setPrompt(commandAppend(), true)
-    resultsPage:executeStatement(commandAppend())
+    page:setPrompt(commandAppend(), true)
+    page:executeStatement(commandAppend())
   else
     return UI.Grid.eventHandler(self, event)
   end
   return true
 end
 
-function resultsPage:rawExecute(s)
+function page:rawExecute(s)
 
   local fn, m = loadstring("return (" .. s .. ')', 'lua')
   if not fn then
@@ -225,7 +225,7 @@ function resultsPage:rawExecute(s)
   return fn, m
 end
 
-function resultsPage:executeStatement(statement)
+function page:executeStatement(statement)
 
   command = statement
 
@@ -242,6 +242,12 @@ function resultsPage:executeStatement(statement)
   end
 end
 
-UI:setPage(resultsPage)
+sandboxEnv.args = { ... }
+if sandboxEnv.args[1] then
+  command = 'args[1]'
+  page:setResult(sandboxEnv.args[1])
+end
+
+UI:setPage(page)
 Event.pullEvents()
 UI.term:reset()

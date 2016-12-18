@@ -1,67 +1,143 @@
-local resolver, loader
+local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis'
+local PASTEBIN_URL  = 'http://pastebin.com/raw'
+local GIT_URL       = 'https://raw.githubusercontent.com/'
 
-local function resolveFile(filename, dir, lua_path)
+local function shellSearcher(modname, env, shell)
+  local fname = modname:gsub('%.', '/') .. '.lua'
 
-  if filename:sub(1, 1) == "/" then
-    if not fs.exists(filename) then
-      error('Unable to load: ' .. filename, 2)
-    end
-    return filename
-  end
-
-  if dir then
-    local path = fs.combine(dir, filename)
+  if shell and type(shell.dir) == 'function' then
+    local path = shell.resolve(fname)
     if fs.exists(path) and not fs.isDir(path) then
-      return path
+      return loadfile(path, env)
     end
   end
+end
 
-  if lua_path then
-    for dir in string.gmatch(lua_path, "[^:]+") do
-      local path = fs.combine(dir, filename)
-      if fs.exists(path) and not fs.isDir(path) then
-        return path
+local function pathSearcher(modname, env, shell)
+  local fname = modname:gsub('%.', '/') .. '.lua'
+
+  for dir in string.gmatch(package.path, "[^:]+") do
+    local path = fs.combine(dir, fname)
+    if fs.exists(path) and not fs.isDir(path) then
+      return loadfile(path, env)
+    end
+  end
+end
+
+-- fix broken http get
+local syncLocks = { }
+
+local function sync(obj, fn)
+  local key = tostring(obj)
+  if syncLocks[key] then
+    local cos = tostring(coroutine.running())
+    table.insert(syncLocks[key], cos)
+    repeat
+      local _, co = os.pullEvent('sync_lock')
+    until co == cos
+  else
+    syncLocks[key] = { }
+  end
+  local s, m = pcall(fn)
+  local co = table.remove(syncLocks[key], 1)
+  if co then
+    os.queueEvent('sync_lock', co)
+  else
+    syncLocks[key] = nil
+  end
+  if not s then
+    error(m)
+  end
+end
+
+local function loadUrl(url)
+  local c
+  sync(url, function()
+    local h = http.get(url)
+    if h then
+      c = h.readAll()
+      h.close()
+    end
+  end)
+  if c and #c > 0 then
+    return c
+  end
+end
+
+-- require('BniCQPVf')
+local function pastebinSearcher(modname, env, shell)
+  if #modname == 8 and not modname:match('%W') then
+    local url = PASTEBIN_URL .. '/' .. modname
+    local c = loadUrl(url)
+    if c then
+      return load(c, modname, nil, env)
+    end
+  end
+end
+
+-- require('kepler155c.opus.master.sys.apis.util')
+local function gitSearcher(modname, env, shell)
+  local fname = modname:gsub('%.', '/') .. '.lua'
+  local _, count = fname:gsub("/", "")
+  if count >= 3 then
+    local url = GIT_URL .. '/' .. modname
+    local c = loadUrl(url)
+    if c then
+      return load(c, modname, nil, env)
+    end
+  end
+end
+
+local function urlSearcher(modname, env, shell)
+  local fname = modname:gsub('%.', '/') .. '.lua'
+
+  if fname:sub(1, 1) ~= '/' then
+    for entry in string.gmatch(package.upath, "[^;]+") do
+      local url = entry .. '/' .. fname
+      local c = loadUrl(url)
+      if c then
+        return load(c, modname, nil, env)
       end
     end
   end
-
-  error('Unable to load: ' .. filename, 2)
 end
+
+_G.package = {
+  path = LUA_PATH or 'sys/apis',
+  upath = LUA_UPATH or DEFAULT_UPATH,
+  loaders = {
+    shellSearcher,
+    pathSearcher,
+    pastebinSearcher,
+    gitSearcher,
+    urlSearcher,
+  }
+}
 
 local function requireWrapper(env)
 
-  local modules = { }
+  local loaded = { }
 
-  return function(filename)
+  return function(modname)
 
-    local dir = DIR
-    if not dir and shell and type(shell.dir) == 'function' then
-      dir = shell.dir()
+    if loaded[modname] then
+      return loaded[modname]
     end
 
-    local fname = resolver(filename:gsub('%.', '/') .. '.lua',
-      dir or '', LUA_PATH or '/sys/apis')
-
-    local rname = fname:gsub('%/', '.'):gsub('%.lua', '')
-
-    local module = modules[rname]
-    if not module then
-
-      local f, err = loader(fname, env)
-      if not f then
-        error(err)
-      end 
-      module = f(rname)
-      modules[rname] = module
+    for _,searcher in ipairs(package.loaders) do
+      local fn = searcher(modname, env, shell)
+      if fn then
+        local module, msg = fn(modname, env)
+        if not module then
+          error(msg)
+        end
+        loaded[modname] = module
+        return module
+      end
     end
-
-    return module
+    error('Unable to find module ' .. modname)
   end
 end
-
-local args = { ... }
-resolver = args[1] or resolveFile
-loader   = args[2] or loadfile
 
 return function(env)
   setfenv(requireWrapper, env)
