@@ -66,7 +66,7 @@ local keyMapping = {
   pageUp                    = 'pageUp',
   [ 'control-b'           ] = 'pageUp',
   pageDown                  = 'pageDown',
-  [ 'control-f'           ] = 'pageDown',
+--  [ 'control-f'           ] = 'pageDown',
   home                      = 'home',
   [ 'end'                 ] = 'toend',
   [ 'control-home'        ] = 'top',
@@ -101,6 +101,7 @@ local keyMapping = {
   paste                     = 'paste',
   tab                       = 'tab',
   [ 'control-z'           ] = 'undo',
+  [ 'control-space'       ] = 'autocomplete',
 
   -- copy/paste
   [ 'control-x'           ] = 'cut',
@@ -114,6 +115,7 @@ local keyMapping = {
   [ 'control-enter'       ] = 'run',
 
   -- search
+  [ 'control-f'           ] = 'find_prompt',
   [ 'control-slash'       ] = 'find_prompt',
   [ 'control-n'           ] = 'find_next',
 
@@ -476,6 +478,41 @@ local __actions = {
     end
   end,
 
+  autocomplete = function()
+    local sLine = tLines[y]:sub(1, x - 1)
+    local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
+    if nStartPos then
+      sLine = sLine:sub(nStartPos)
+    end
+    if #sLine > 0 then
+      local results = textutils.complete(sLine)
+
+      if #results == 0 then
+        setError('No completions available')
+
+      elseif #results == 1 then
+        actions.insertText(x, y, results[1])
+
+      elseif #results > 1 then
+        local prefix = results[1]
+        for n = 1, #results do
+          local result = results[n]
+          while #prefix > 0 do
+            if result:find(prefix, 1, true) == 1 then
+              break
+            end
+            prefix = prefix:sub(1, #prefix - 1)
+          end
+        end
+        if #prefix > 0 then
+          actions.insertText(x, y, prefix)
+        else
+          setStatus('Too many results')
+        end
+      end
+    end
+  end,
+
   refresh = function()
     actions.dirty_all()
     mark.continue = mark.active
@@ -528,7 +565,7 @@ local __actions = {
   find_prompt = function()
     local text = actions.input('/')
     if #text > 0 then
-      searchPattern = text
+      searchPattern = text:lower()
       if searchPattern then
         actions.unmark()
         actions.find(searchPattern, x)

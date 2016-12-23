@@ -1,4 +1,5 @@
-require = requireInjector(getfenv(1))
+local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
+require = injector(getfenv(1))
 local Util = require('util')
 local UI = require('ui')
 local Event = require('event')
@@ -6,7 +7,7 @@ local History = require('history')
 
 local sandboxEnv = Util.shallowCopy(getfenv(1))
 sandboxEnv.exit = function() Event.exitPullEvents() end
-sandboxEnv.require = requireInjector(sandboxEnv)
+sandboxEnv.require = injector(sandboxEnv)
 setmetatable(sandboxEnv, { __index = _G })
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
@@ -20,7 +21,7 @@ local page = UI.Page({
     buttons = {
       { text = 'Local',  event = 'local'  },
       { text = 'Global', event = 'global' },
-      { text = 'Device', event = 'device' },
+      { text = 'Device', event = 'device', name = 'Device' },
     },
   }),
   prompt = UI.TextEntry({
@@ -66,6 +67,9 @@ end
 function page:enable()
   self:setFocus(self.prompt)
   UI.Page.enable(self)
+  if not device then
+    self.menuBar.Device:disable()
+  end
 end
 
 function page:eventHandler(event)
@@ -233,6 +237,8 @@ function page:executeStatement(statement)
 
   if s and m then
     self:setResult(m)
+  elseif s and type(m) == 'boolean' then
+    self:setResult(m)
   else
     self.grid:setValues({ })
     self.grid:draw()
@@ -242,10 +248,11 @@ function page:executeStatement(statement)
   end
 end
 
-sandboxEnv.args = { ... }
-if sandboxEnv.args[1] then
+local args = { ... }
+if args[1] then
   command = 'args[1]'
-  page:setResult(sandboxEnv.args[1])
+  sandboxEnv.args = args
+  page:setResult(args[1])
 end
 
 UI:setPage(page)

@@ -35,26 +35,32 @@ local Browser = UI.Page {
   },
   fileMenu = UI.DropMenu {
     buttons = {
-      { text = 'Run',          event = 'run'     },
-      { text = 'Edit    e',    event = 'edit'    },
-      { text = 'Shell   s',    event = 'shell'   },
-      { text = 'Quit    q',    event = 'quit'    },
+      { text = 'Run',             event = 'run'    },
+      { text = 'Edit       e',    event = 'edit'   },
+      { text = 'Shell      s',    event = 'shell'  },
+      UI.Text { value = ' ------------ '           },
+      { text = 'Quit       q',    event = 'quit'   },
+      UI.Text { },
     }
   },
   editMenu = UI.DropMenu {
     buttons = {
-      { text = 'Mark        m', event = 'mark'   },
-      { text = 'Cut        ^x', event = 'cut'    },
-      { text = 'Copy       ^c', event = 'copy'   },
-      { text = 'Paste      ^v', event = 'paste'  },
-      { text = 'Delete    del', event = 'delete' },
-      { text = 'Unmark all  u', event = 'unmark' },
+      { text = 'Cut          ^x', event = 'cut'    },
+      { text = 'Copy         ^c', event = 'copy'   },
+      { text = 'Paste        ^v', event = 'paste'  },
+      UI.Text { value = ' --------------- '        },
+      { text = 'Mark          m', event = 'mark'   },
+      { text = 'Unmark all    u', event = 'unmark' },
+      UI.Text { value = ' --------------- '        },
+      { text = 'Delete      del', event = 'delete' },
+      UI.Text { },
     }
   },
   viewMenu = UI.DropMenu {
     buttons = {
-      { text = 'Refresh   r',   event = 'refresh'       },
-      { text = 'Hidden   ^h',   event = 'toggle_hidden' },
+      { text = 'Refresh     r',   event = 'refresh'       },
+      { text = 'Hidden     ^h',   event = 'toggle_hidden' },
+      UI.Text { },
     }
   },
   grid = UI.ScrollingGrid {
@@ -69,8 +75,8 @@ local Browser = UI.Page {
   },
   statusBar = UI.StatusBar {
     columns = { 
-      { '',       'status',    UI.term.width - 19 },
-      { '',       'info',      10                 },
+      { '',       'status',    UI.term.width - 8 },
+      --{ '',       'info',      10                 },
       { 'Size: ', 'totalSize', 8                  },
     },
   },

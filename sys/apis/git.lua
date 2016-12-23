@@ -1,4 +1,4 @@
-local json = require('json')
+local json = require('craigmj.json4lua.master.json.json')
 local Util = require('util')
 
 local TREE_URL = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1'

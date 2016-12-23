@@ -1,6 +1,14 @@
 local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis'
 local PASTEBIN_URL  = 'http://pastebin.com/raw'
-local GIT_URL       = 'https://raw.githubusercontent.com/'
+local GIT_URL       = 'https://raw.githubusercontent.com'
+
+local function standardSearcher(modname, env, shell)
+  if package.loaded[modname] then
+    return function()
+      return package.loaded[modname]
+    end
+  end
+end
 
 local function shellSearcher(modname, env, shell)
   local fname = modname:gsub('%.', '/') .. '.lua'
@@ -80,7 +88,8 @@ local function gitSearcher(modname, env, shell)
   local fname = modname:gsub('%.', '/') .. '.lua'
   local _, count = fname:gsub("/", "")
   if count >= 3 then
-    local url = GIT_URL .. '/' .. modname
+    local url = GIT_URL .. '/' .. fname
+    debug(url)
     local c = loadUrl(url)
     if c then
       return load(c, modname, nil, env)
@@ -105,7 +114,16 @@ end
 _G.package = {
   path = LUA_PATH or 'sys/apis',
   upath = LUA_UPATH or DEFAULT_UPATH,
+  config = '/\n:\n?\n!\n-',
+  loaded = {
+    math   = math,
+    string = string,
+    table  = table,
+    io     = io,
+    os     = os,
+  },
   loaders = {
+    standardSearcher,
     shellSearcher,
     pathSearcher,
     pastebinSearcher,
@@ -125,7 +143,7 @@ local function requireWrapper(env)
     end
 
     for _,searcher in ipairs(package.loaders) do
-      local fn = searcher(modname, env, shell)
+      local fn, msg = searcher(modname, env, shell)
       if fn then
         local module, msg = fn(modname, env)
         if not module then
@@ -133,6 +151,9 @@ local function requireWrapper(env)
         end
         loaded[modname] = module
         return module
+      end
+      if msg then
+        error(msg)
       end
     end
     error('Unable to find module ' .. modname)

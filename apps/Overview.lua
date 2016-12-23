@@ -331,64 +331,68 @@ function page:eventHandler(event)
 end
 
 local formWidth = math.max(UI.term.width - 14, 26)
-local gutter = math.floor((UI.term.width - formWidth) / 2) + 1
 
-local editor = UI.Page({
-  backgroundColor = colors.blue,
-  form = UI.Form({
-    fields = {
-      { label = 'Title', key = 'title', width = 15, limit = 11, display = UI.Form.D.entry,
-        help = 'Application title' },
-      { label = 'Run', key = 'run', width = formWidth - 11, limit = 100, display = UI.Form.D.entry,
-        help = 'Full path to application' },
-      { label = 'Category', key = 'category', width = 15, limit = 11, display = UI.Form.D.entry,
-        help = 'Category of application' },
-      { text = 'Accept', event = 'accept', display = UI.Form.D.button,
-          x = 1, y = 9, width = 10 },
-      { text = 'Cancel', event = 'cancel', display = UI.Form.D.button,
-          x = formWidth - 11, y = 9, width = 10 },
+local editor = UI.Page {
+  backgroundColor = colors.white,
+  x = math.ceil((UI.term.width - formWidth) / 2) + 1,
+  y = math.ceil((UI.term.height - 11) / 2) + 1,
+  z = 2,
+  height = 11,
+  width = formWidth,
+  titleBar = UI.TitleBar {
+    title = 'Edit application',
+  },
+  inset = UI.Window {
+    x = 2,
+    y = 3,
+    rex = -2,
+    rey = -3,
+    form = UI.Form {
+      textColor = colors.black,
+      fields = {
+        { label = 'Title', key = 'title', width = formWidth - 11, limit = 11, display = UI.Form.D.entry,
+          help = 'Application title' },
+        { label = 'Run', key = 'run', width = formWidth - 11, limit = 100, display = UI.Form.D.entry,
+          help = 'Full path to application' },
+        { label = 'Category', key = 'category', width = formWidth - 11, limit = 11, display = UI.Form.D.entry,
+          help = 'Category of application' },
+        { text = 'Icon', event = 'loadIcon', display = UI.Form.D.button,
+            x = 10, y = 5, textColor = colors.white, help = 'Select icon' },
+        { text = 'Ok', event = 'accept', display = UI.Form.D.button,
+            x = formWidth - 14, y = 7, textColor = colors.white },
+        { text = 'Cancel', event = 'cancel', display = UI.Form.D.button,
+            x = formWidth - 9, y = 7, textColor = colors.white },
+      },
+      labelWidth = 8,
+      image = UI.NftImage {
+        y = 5,
+        x = 1,
+        height = 3,
+        width = 8,
+      },
     },
-    labelWidth = 8,
-    x = gutter + 1,
-    y = math.max(2, math.floor((UI.term.height - 9) / 2)),
-    height = 9,
-    width = UI.term.width - (gutter * 2),
-    image = UI.NftImage({
-      y = 5,
-      x = 1,
-      height = 3,
-      width = 8,
-    }),
-    button = UI.Button({
-      x = 10,
-      y = 6,
-      text = 'Load icon',
-      width = 11,
-      event = 'loadIcon',
-    }),
-  }),
+  },
   statusBar = UI.StatusBar(),
   notification = UI.Notification(),
   iconFile = '',
-})
+}
 
 function editor:enable(app)
   if app then
     self.original = app
-    self.form:setValues(Util.shallowCopy(app))
+    self.inset.form:setValues(Util.shallowCopy(app))
 
     local icon
     if app.icon then
       icon = parseIcon(app.icon)
     end
-    self.form.image:setImage(icon)
-
-    self:setFocus(self.form.children[1])
+    self.inset.form.image:setImage(icon)
   end
   UI.Page.enable(self)
+  self:focusFirst()
 end
 
-function editor.form.image:draw()
+function editor.inset.form.image:draw()
   self:clear()
   UI.NftImage.draw(self)
 end
@@ -414,7 +418,13 @@ function editor:eventHandler(event)
     self.statusBar:draw()
 
   elseif event.type == 'loadIcon' then
-    local fileui = FileUI()
+    local fileui = FileUI({
+      x = self.x,
+      y = self.y,
+      z = 2,
+      width = self.width,
+      height = self.height,
+    })
     --fileui:setTransition(UI.effect.explode)
     UI:setPage(fileui, fs.getDir(self.iconFile), function(fileName)
       if fileName then
@@ -428,18 +438,19 @@ function editor:eventHandler(event)
           if not icon then
             error(m)
           end
-          self.form.values.icon = iconLines
-          self.form.image:setImage(icon)
-          self.form.image:draw()
+          self.inset.form.values.icon = iconLines
+          self.inset.form.image:setImage(icon)
+          self.inset.form.image:draw()
         end)
         if not s and m then
-          self.notification:error(m:gsub('.*: (.*)', '%1'))
+          local msg = m:gsub('.*: (.*)', '%1')
+          self.notification:error(msg)
         end
       end
     end)
 
   elseif event.type == 'accept' then
-    local values = self.form.values
+    local values = self.inset.form.values
     if #values.run > 0 and #values.title > 0 and #values.category > 0 then
       UI:setPreviousPage()
       self:updateApplications(values, self.original)

@@ -117,15 +117,19 @@ process:newThread('discovery_server', function()
   end
 end)
 
+local info = {
+  id = os.getComputerID()
+}
+
 local function sendInfo()
-  local info = {
-    id = os.getComputerID(),
-    label = os.getComputerLabel(),
-    uptime = math.floor(os.clock()),
-  }
+  info.label = os.getComputerLabel()
+  info.uptime = math.floor(os.clock())
   if turtle then
     info.fuel = turtle.getFuelLevel()
     info.status = turtle.status
+    info.point = turtle.point
+    info.inventory = turtle.getInventory()
+    info.coordSystem = turtle.getState().coordSystem
   end
   device.wireless_modem.transmit(999, os.getComputerID(), info)
 end
@@ -152,13 +156,11 @@ end)
 if os.isTurtle() then
   process:newThread('turtle_heartbeat', function()
 
-    local lastUpdate = os.clock()
     os.sleep(1)
-
     while true do
       os.pullEvent('turtle_response')
-      if os.clock() - lastUpdate >= 1 then
-        lastUpdate = os.clock()
+      if turtle.status ~= info.status or
+         turtle.fuel ~= info.fuel then
         sendInfo()
       end
     end
