@@ -17,6 +17,7 @@ local state = {
   moveDig = noop,
   moveCallback = noop,
   locations = {},
+  coordSystem = 'relative', -- type of coordinate system being used
 }
 
 function turtle.getState()
@@ -44,6 +45,7 @@ function turtle.reset()
   state.moveDig = noop
   state.moveCallback = noop
   state.locations = {}
+  state.coordSystem = 'relative'
 
   return true
 end
@@ -231,7 +233,6 @@ turtle.digPolicies = {
     if not turtle.isTurtleAtSide(action.side) then
       return action.dig()
     end
-
     return Util.tryTimes(6, function()
 --      if not turtle.isTurtleAtSide(action.side) then
 --        return true --action.dig()

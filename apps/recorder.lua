@@ -14,11 +14,16 @@ local version = "Version 1.1.6"
 -- Original code by Bomb Bloke
 -- Modified to integrate with opus os
 
-local calls, recTerm, oldTerm, arg, showInput, skipLast, lastDelay, curInput, callCount, callListCount = {{["delay"] = 0}}, {}, Util.shallowCopy(multishell.term), {...}, false, false, 2, "", 1, 2
-local curBlink, oldBlink, curCalls, tTerm, buffer, colourNum, xPos, yPos, oldXPos, oldYPos, tCol, bCol, xSize, ySize = false, false, calls[1], {}, {}, {}, 1, 1, 1, 1, colours.white, colours.black, term.getSize()
+local recTerm, oldTerm, arg, showInput, skipLast, lastDelay, curInput = {}, Util.shallowCopy(multishell.term), {...}, false, false, 2, ""
+local curBlink, oldBlink, tTerm, buffer, colourNum, xPos, yPos, oldXPos, oldYPos, tCol, bCol, xSize, ySize = false, false, {}, {}, {}, 1, 1, 1, 1, colours.white, colours.black, oldTerm.getSize()
 local greys, buttons = {["0"] = true, ["7"] = true, ["8"] = true, ["f"] = true}, {"l", "r", "m"}
 local charW, charH, chars, resp
 local filename
+
+local calls = { }
+local curCalls = { delay = 0 }
+local callListCount = 0
+local callCount = 0
 
 local function showSyntax()
 	print('Gif Recorder by Bomb Bloke\n')
@@ -123,13 +128,14 @@ recTerm = multishell.term
 
 for key, func in pairs(oldTerm) do
 	recTerm[key] = function(...)
-		local result = {pcall(func, ...)}
+		local result = { func(...) }
 		
-		if result[1] then
-			curCalls[callCount] = {key, ...}
-			callCount = callCount + 1
-			return unpack(result, 2)
-		else error(result[2], 2) end
+		if callCount == 0 then
+			os.queueEvent('capture_frame')
+		end
+		callCount = callCount + 1
+		curCalls[callCount] = { key, ... }
+		return unpack(result)
 	end
 end
 
@@ -149,36 +155,27 @@ for _,tab in pairs(tabs) do
 	end
 end
 
-do
-	local curTime = os.clock() - 1
+local curTime = os.clock() - 1
 
-	while true do
-		local event = { os.pullEventRaw() }
+while true do
+	local event = { os.pullEventRaw() }
 
-		if event[1] == 'recorder_stop' or event[1] == 'terminate' then
-			break
-  	end
+	if event[1] == 'recorder_stop' or event[1] == 'terminate' then
+		break
+	end
 
+	if event[1] == 'capture_frame' then
 		local newTime = os.clock()
 
-		if newTime ~= curTime then
-			local delay = curCalls.delay + (newTime - curTime)
-			curTime = newTime
-
-			if callCount > 1 then
-				curCalls.delay = curCalls.delay + delay
-				curCalls, callCount = {["delay"] = 0}, 1
-				calls[callListCount] = curCalls
-				callListCount = callListCount + 1
-			elseif callListCount > 2 then
-				calls[callListCount - 2].delay = calls[callListCount - 2].delay + delay
-			end
+		if callListCount > 0 then
+			calls[callListCount].delay = (newTime - curTime)
 		end
 
-		if showInput and (event[1] == "key" or event[1] == "mouse_click") then
-			curCalls[callCount] = {unpack(event)}
-			callCount = callCount + 1
-		end
+		curTime = newTime
+		callListCount = callListCount + 1
+		calls[callListCount] = curCalls
+
+		curCalls, callCount = { delay = 0 }, 0
 	end
 end
 
@@ -195,8 +192,6 @@ if #calls[#calls] == 0 then calls[#calls] = nil end
 if skipLast and #calls > 1 then calls[#calls] = nil end
 
 calls[#calls].delay = lastDelay
-
--- Recording done, bug user as to whether to encode it:
 
 print(string.format("Encoding %d frames...", #calls))
 --Util.writeTable('tmp/raw.txt', calls)
@@ -463,7 +458,14 @@ for i = 1, #calls do
 	
 	oldBlink, oldXPos, oldYPos = curBlink, xPos, yPos
 	
-	local thisFrame = {["xstart"] = (xMin - 1) * charW, ["ystart"] = (yMin - 1) * charH, ["xend"] = (xMax - xMin + 1) * charW, ["yend"] = (yMax - yMin + 1) * charH, ["delay"] = curCalls.delay, ["disposal"] = 1}
+	local thisFrame = {
+		["xstart"] = (xMin - 1) * charW,
+		["ystart"] = (yMin - 1) * charH,
+		["xend"] = (xMax - xMin + 1) * charW,
+		["yend"] = (yMax - yMin + 1) * charH,
+		["delay"] = curCalls.delay,
+		["disposal"] = 1
+	}
 	
 	for y = 1, (yMax - yMin + 1) * charH do
 		local row = {}
@@ -515,7 +517,11 @@ for i = 1, #calls do
 		snooze()
 	end
 	
-	if changed then image[#image + 1] = thisFrame else image[#image].delay = image[#image].delay + curCalls.delay end
+	if changed then 
+		image[#image + 1] = thisFrame
+	else
+		image[#image].delay = image[#image].delay + curCalls.delay
+	end
 end
 
 buffer = nil

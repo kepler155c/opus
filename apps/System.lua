@@ -75,7 +75,7 @@ local systemPage = UI.Page {
         value = 'Label'
       },
       label = UI.TextEntry {
-        x = 9, y = 2, rex = -12,
+        x = 9, y = 2, rex = -4,
         limit = 32,
         value = os.getComputerLabel(),
         backgroundFocusColor = colors.black,

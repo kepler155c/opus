@@ -452,51 +452,54 @@ function watchResources(items)
   return itemList
 end
 
-itemPage = UI.Page({
+itemPage = UI.Page {
   backgroundColor = colors.lightGray,
-  titleBar = UI.TitleBar({
+  titleBar = UI.TitleBar {
     title = 'Limit Resource',
     previousPage = true,
+    event = 'form_cancel',
     backgroundColor = colors.green
-  }),
-  idField = UI.Text({
-    x = 5,
-    y = 3,
-    width = UI.term.width - 10
-  }),
-  form = UI.Form({
-    fields = {
-      { label = 'Min', key = 'low', width = 7, display = UI.Form.D.entry,
-        help = 'Craft if below min' },
-      { label = 'Max', key = 'limit', width = 7, display = UI.Form.D.entry,
-        validation = UI.Form.V.number, dataType = UI.Form.T.number,
-        help = 'Eject if above max' },
-      { label = 'Autocraft', key = 'auto', width = 7, display = UI.Form.D.chooser,
-        nochoice = 'No',
-        choices = {
-          { name = 'Yes', value = 'yes' },
-          { name = 'No', value = 'no' },
-        },
-        help = 'Craft until out of ingredients' },
-      { label = 'Ignore Dmg', key = 'ignore_dmg', width = 7, display = UI.Form.D.chooser,
-        nochoice = 'No',
-        choices = {
-          { name = 'Yes', value = 'yes' },
-          { name = 'No', value = 'no' },
-        },
-        help = 'Ignore damage of item' },
-      { text = 'Accept', event = 'accept', display = UI.Form.D.button,
-          x = 1, y = 6, width = 10 },
-      { text = 'Cancel', event = 'cancel', display = UI.Form.D.button,
-          x = 21, y = 6, width = 10 },
+  },
+  idField = UI.Text {
+    x = 5, y = 3, width = UI.term.width - 10,
+  },
+  form = UI.Form {
+    x = 4, y = 4, height = 8, rex = -4,
+    [1] = UI.TextEntry {
+      width = 7,
+      backgroundColor = colors.gray,
+      backgroundFocusColor = colors.gray,
+      formLabel = 'Min', formKey = 'low', help = 'Craft if below min'
     },
-    labelWidth = 10,
-    x = 5,
-    y = 5,
-    height = 6
-  }),
-  statusBar = UI.StatusBar()
-})
+    [2] = UI.TextEntry {
+      width = 7,
+      backgroundColor = colors.gray,
+      backgroundFocusColor = colors.gray,
+      formLabel = 'Max', formKey = 'limit', help = 'Eject if above max'
+    },
+    [3] = UI.Chooser {
+      width = 7,
+      formLabel = 'Autocraft', formKey = 'auto',
+      nochoice = 'No',
+      choices = {
+        { name = 'Yes', value = 'yes' },
+        { name = 'No', value = 'no' },
+      },
+      help = 'Craft until out of ingredients'
+    },
+    [4] = UI.Chooser {
+      width = 7,
+      formLabel = 'Ignore Dmg', formKey = 'ignore_dmg',
+      nochoice = 'No',
+      choices = {
+        { name = 'Yes', value = 'yes' },
+        { name = 'No', value = 'no' },
+      },
+      help = 'Ignore damage of item'
+    },
+  },
+  statusBar = UI.StatusBar { }
+}
 
 function itemPage:enable()
   UI.Page.enable(self)
@@ -504,12 +507,14 @@ function itemPage:enable()
 end
  
 function itemPage:eventHandler(event)
-  if event.type == 'cancel' then
+  if event.type == 'form_cancel' then
     UI:setPreviousPage()
+
   elseif event.type == 'focus_change' then
     self.statusBar:setStatus(event.focused.help)
     self.statusBar:draw()
-  elseif event.type == 'accept' then
+
+  elseif event.type == 'form_complete' then
     local values = self.form.values
     local t = Util.readTable('resource.limits') or { }
     for k,v in pairs(t) do
@@ -527,55 +532,52 @@ function itemPage:eventHandler(event)
     table.insert(t, filtered)
     Util.writeTable('resource.limits', t)
     UI:setPreviousPage()
+
   else
     return UI.Page.eventHandler(self, event)
   end
   return true
 end
 
-listingPage = UI.Page({
-  menuBar = UI.MenuBar({
+listingPage = UI.Page {
+  menuBar = UI.MenuBar {
     buttons = {
       { text = 'Learn',  event = 'learn'  },
       { text = 'Forget', event = 'forget' },
     },
-  }),
-  grid = UI.Grid({
+  },
+  grid = UI.Grid {
+    y = 2, height = UI.term.height - 2,
     columns = {
       { heading = 'Name', key = 'name' , width = 22 },
       { heading = 'Qty',  key = 'qty'  , width = 5  },
       { heading = 'Min',  key = 'low'  , width = 4  },
       { heading = 'Max',  key = 'limit', width = 4  },
     },
-    y = 2,
     sortColumn = 'name',
-    height = UI.term.height-2,
-  }),
-  statusBar = UI.StatusBar({
+  },
+  statusBar = UI.StatusBar {
     backgroundColor = colors.gray,
     width = UI.term.width,
-    filterText = UI.Text({
+    filterText = UI.Text {
+      x = 2, width = 6,
       value = 'Filter',
-      x = 2,
-      width = 6,
-    }),
-    filter = UI.TextEntry({
-      width = 19,
+    },
+    filter = UI.TextEntry {
+      x = 9, width = 19,
       limit = 50,
-      x = 9,
-    }),
-    refresh = UI.Button({
+    },
+    refresh = UI.Button {
+      x = 31, width = 8,
       text = 'Refresh', 
       event = 'refresh',
-      x = 31,
-      width = 8
-    }),
-  }),
+    },
+  },
   accelerators = {
     r = 'refresh',
     q = 'quit',
   }
-})
+}
 
 function listingPage.grid:getRowTextColor(row, selected)
   if row.is_craftable then
@@ -622,24 +624,26 @@ end
 function listingPage:eventHandler(event)
   if event.type == 'quit' then
     Event.exitPullEvents()
+
   elseif event.type == 'grid_select' then
     local selected = event.selected
     itemPage.form:setValues(selected)
     itemPage.titleBar.title = selected.name
     itemPage.idField.value = selected.id
     UI:setPage('item')
+
   elseif event.type == 'refresh' then
     self:refresh()
     self.grid:draw()
+
   elseif event.type == 'learn' then
     if not duckAntenna then
       self.statusBar:timedStatus('Missing peripherals', 3)
     else
-      UI:getPage('craft').form:setValues( { ignore_dmg = 'no' } )
       UI:setPage('craft')
     end
-  elseif event.type == 'forget' then
 
+  elseif event.type == 'forget' then
     local item = self.grid:getSelected()
     if item then
       local recipes = Util.readTable('recipes') or { }
@@ -673,6 +677,7 @@ function listingPage:eventHandler(event)
     self:applyFilter()
     self.grid:draw()
     self.statusBar.filter:focus()
+
   else
     UI.Page.eventHandler(self, event)
   end
@@ -747,7 +752,7 @@ local function filter(t, filter)
   end
 end
 
-local function learnRecipe(page, ignore_dmg)
+local function learnRecipe(page)
   local t = Util.readTable('recipes') or { }
   local recipe = { }
   local ingredients = duckAntenna.getAllStacks(false) -- getTurtleInventory()
@@ -773,7 +778,7 @@ local function learnRecipe(page, ignore_dmg)
           end
         end
         recipe.ingredients = ingredients
-        recipe.ignore_dmg = 'no' -- ignore_dmg
+        recipe.ignore_dmg = 'no'
 
         t[key] = recipe
 
@@ -794,69 +799,52 @@ local function learnRecipe(page, ignore_dmg)
   end
 end
 
-craftPage = UI.Page({
-  x = 4,
-  y = math.floor((UI.term.height - 8) / 2) + 1,
-  height = 7,
-  width = UI.term.width - 6,
+craftPage = UI.Dialog {
+  height = 7, width = UI.term.width - 6,
   backgroundColor = colors.lightGray,
-  titleBar = UI.TitleBar({
+  titleBar = UI.TitleBar {
     title = 'Learn Recipe',
     previousPage = true,
-  }),
-  idField = UI.Text({
+  },
+  idField = UI.Text {
     x = 5,
     y = 3,
     width = UI.term.width - 10,
     value = 'Place recipe in turtle'
-  }),
-  form = UI.Form({
-    fields = {
-      --[[
-      { label = 'Ignore Damage', key = 'ignore_dmg', width = 7, display = UI.Form.D.chooser,
-        nochoice = 'No',
-        choices = {
-          { name = 'Yes', value = 'yes' },
-          { name = 'No', value = 'no' },
-        },
-        help = 'Ignore damage of ingredients' },
-      --]]
-      { text = 'Accept', event = 'accept', display = UI.Form.D.button,
-          x = 1, y = 1, width = 10 },
-      { text = 'Cancel', event = 'cancel', display = UI.Form.D.button,
-          x = 16, y = 1, width = 10 },
-    },
-    labelWidth = 13,
-    x = 5,
-    y = 5,
-    height = 2
-  }),
-  statusBar = UI.StatusBar({
+  },
+  accept = UI.Button {
+    rx = -13, ry = -2,
+    text = 'Ok', event = 'accept',
+  },
+  cancel = UI.Button {
+    rx = -8, ry = -2,
+    text = 'Cancel', event = 'cancel'
+  },
+  statusBar = UI.StatusBar {
     status = 'Crafting paused'
-  })
-})
+  }
+}
 
 function craftPage:enable()
   craftingPaused = true
   self:focusFirst()
-  UI.Page.enable(self)
+  UI.Dialog.enable(self)
 end
 
 function craftPage:disable()
   craftingPaused = false
+  UI.Dialog.disable(self)
 end
  
 function craftPage:eventHandler(event)
   if event.type == 'cancel' then
     UI:setPreviousPage()
   elseif event.type == 'accept' then
-    local values = self.form.values
-
-    if learnRecipe(self, values.ignore_dmg) then
+    if learnRecipe(self) then
       UI:setPreviousPage()
     end
   else
-    return UI.Page.eventHandler(self, event)
+    return UI.Dialog.eventHandler(self, event)
   end
   return true
 end

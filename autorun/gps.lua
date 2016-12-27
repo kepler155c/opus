@@ -36,6 +36,7 @@ if turtle and device.wireless_modem then
 
       Util.print('Setting turtle point to %d %d %d', pt.x, pt.y, pt.z)
       turtle.setPoint(pt)
+      turtle.getState().coordSystem = 'GPS'
 
       if not turtle.pathfind(homePt) then
         error('Failed to return home')

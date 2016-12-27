@@ -62,11 +62,6 @@ function page.grid:getDisplayValues(row)
   return row
 end
 
-function page.grid:draw()
-  self:adjustWidth()
-  UI.Grid.draw(self)
-end
-
 Event.addTimer(1, true, function()
   page.grid:update()
   page.grid:draw()

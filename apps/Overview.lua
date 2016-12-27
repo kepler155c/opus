@@ -6,6 +6,7 @@ local Config = require('config')
 local NFT = require('nft')
 local class = require('class')
 local FileUI = require('fileui')
+local Tween = require('tween')
 
 multishell.setTitle(multishell.getCurrent(), 'Overview')
 UI:configure('Overview', ...)
@@ -190,8 +191,9 @@ function page.container:setCategory(categoryName)
 
   -- reposition all children
   for k,child in ipairs(self.children) do
-    child.x = col
-    child.y = row
+    child.x = -10
+    child.y = math.floor(self.height)
+    child.tween = Tween.new(6, child, { x = col, y = row }, 'outSine')
 
     if k < count then
       col = col + child.width
@@ -203,6 +205,25 @@ function page.container:setCategory(categoryName)
   end
 
   self:initChildren()
+  self.animate = true
+end
+
+function page.container:draw()
+  if self.animate then
+    self.animate = false
+    for i = 1, 6 do
+      for _,child in ipairs(self.children) do
+        child.tween:update(1)
+        child.x = math.floor(child.x)
+        child.y = math.floor(child.y)
+      end
+      UI.ViewportWindow.draw(self)
+      self:sync()
+      os.sleep()
+    end
+  else
+    UI.ViewportWindow.draw(self)
+  end
 end
 
 function page:refresh()
@@ -223,6 +244,8 @@ function page:eventHandler(event)
     self.tabBar:selectTab(event.button.text)
     self.container:setCategory(event.button.text)
     self.container:draw()
+    self:sync()
+
     config.currentCategory = event.button.text
     Config.update('Overview', config)
 
@@ -263,9 +286,9 @@ function page:eventHandler(event)
 
   elseif event.type == 'tab_change' then
     if event.current > event.last then
-      self.container:setTransition('left')
+      --self.container:setTransition(UI.effect.slideLeft)
     else
-      self.container:setTransition('right')
+      --self.container:setTransition(UI.effect.slideRight)
     end
 
   elseif event.type == 'refresh' then
@@ -308,61 +331,53 @@ function page:eventHandler(event)
 end
 
 local formWidth = math.max(UI.term.width - 14, 26)
-local gutter = math.floor((UI.term.width - formWidth) / 2) + 1
 
-local editor = UI.Page({
-  backgroundColor = colors.blue,
-  form = UI.Form({
-    fields = {
-      { label = 'Title', key = 'title', width = 15, limit = 11, display = UI.Form.D.entry,
-        help = 'Application title' },
-      { label = 'Run', key = 'run', width = formWidth - 11, limit = 100, display = UI.Form.D.entry,
-        help = 'Full path to application' },
-      { label = 'Category', key = 'category', width = 15, limit = 11, display = UI.Form.D.entry,
-        help = 'Category of application' },
-      { text = 'Accept', event = 'accept', display = UI.Form.D.button,
-          x = 1, y = 9, width = 10 },
-      { text = 'Cancel', event = 'cancel', display = UI.Form.D.button,
-          x = formWidth - 11, y = 9, width = 10 },
-    },
-    labelWidth = 8,
-    x = gutter + 1,
-    y = math.max(2, math.floor((UI.term.height - 9) / 2)),
+local editor = UI.Dialog {
+  height = 11,
+  width = formWidth,
+  title = 'Edit application',
+  form = UI.Form {
+    y = 2,
     height = 9,
-    width = UI.term.width - (gutter * 2),
-    image = UI.NftImage({
-      y = 5,
-      x = 1,
+    title = UI.TextEntry {
+      formLabel = 'Title', formKey = 'title', limit = 11, help = 'Application title',
+      required = true,
+    },
+    run = UI.TextEntry {
+      formLabel = 'Run', formKey = 'run', limit = 100, help = 'Full path to application',
+      required = true,
+    },
+    category = UI.TextEntry {
+      formLabel = 'Category', formKey = 'category', limit = 11, help = 'Category of application',
+      required = true,
+    },
+    loadIcon = UI.Button {
+      x = 11, y = 6, 
+      text = 'Icon', event = 'loadIcon', help = 'Select icon'
+    },
+    image = UI.NftImage {
+      y = 6,
+      x = 2,
       height = 3,
       width = 8,
-    }),
-    button = UI.Button({
-      x = 10,
-      y = 6,
-      text = 'Load icon',
-      width = 11,
-      event = 'loadIcon',
-    }),
-  }),
+    },
+  },
   statusBar = UI.StatusBar(),
-  notification = UI.Notification(),
   iconFile = '',
-})
+}
 
 function editor:enable(app)
   if app then
-    self.original = app
-    self.form:setValues(Util.shallowCopy(app))
+    self.form:setValues(app)
 
     local icon
     if app.icon then
       icon = parseIcon(app.icon)
     end
     self.form.image:setImage(icon)
-
-    self:setFocus(self.form.children[1])
   end
   UI.Page.enable(self)
+  self:focusFirst()
 end
 
 function editor.form.image:draw()
@@ -370,11 +385,11 @@ function editor.form.image:draw()
   UI.NftImage.draw(self)
 end
 
-function editor:updateApplications(app, original)
-  if original.run then
-    local _,k = Util.find(applications, 'run', original.run)
-    if k then
+function editor:updateApplications(app)
+  for k,v in pairs(applications) do
+    if v == app then
       applications[k] = nil
+      break
     end
   end
   table.insert(applications, app)
@@ -383,7 +398,7 @@ end
 
 function editor:eventHandler(event)
 
-  if event.type == 'cancel' then
+  if event.type == 'form_cancel' or event.type == 'cancel' then
     UI:setPreviousPage()
 
   elseif event.type == 'focus_change' then
@@ -391,7 +406,15 @@ function editor:eventHandler(event)
     self.statusBar:draw()
 
   elseif event.type == 'loadIcon' then
-    UI:setPage(FileUI(), fs.getDir(self.iconFile), function(fileName)
+    local fileui = FileUI({
+      x = self.x,
+      y = self.y,
+      z = 2,
+      width = self.width,
+      height = self.height,
+    })
+    --fileui:setTransition(UI.effect.explode)
+    UI:setPage(fileui, fs.getDir(self.iconFile), function(fileName)
       if fileName then
         self.iconFile = fileName
         local s, m = pcall(function()
@@ -408,23 +431,21 @@ function editor:eventHandler(event)
           self.form.image:draw()
         end)
         if not s and m then
-          self.notification:error(m:gsub('.*: (.*)', '%1'))
+          local msg = m:gsub('.*: (.*)', '%1')
+          page.notification:error(msg)
         end
       end
     end)
 
-  elseif event.type == 'accept' then
+  elseif event.type == 'form_invalid' then
+    page.notification:error(event.message)
+
+  elseif event.type == 'form_complete' then
     local values = self.form.values
-    if #values.run > 0 and #values.title > 0 and #values.category > 0 then
-      UI:setPreviousPage()
-      self:updateApplications(values, self.original)
-      page:refresh()
-      page:draw()
-    else
-      self.notification:error('Require fields missing')
-      --self.statusBar:setStatus('Require fields missing')
-      --self.statusBar:draw()
-    end
+    UI:setPreviousPage()
+    self:updateApplications(values)
+    page:refresh()
+    page:draw()
   else
     return UI.Page.eventHandler(self, event)
   end

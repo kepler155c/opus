@@ -57,10 +57,12 @@ function turtle.run(fn, ...)
     local e, id, abort = os.pullEventRaw('turtle_ticket')
     if e == 'terminate' then
       releaseTicket(ticketId)
+      os.queueEvent('turtle_response')
       error('Terminated')
     end
     if abort then
       -- the function was queued, but the queue was cleared
+      os.queueEvent('turtle_response')
       return false, 'aborted'
     end
     if id == ticketId then
@@ -72,6 +74,7 @@ function turtle.run(fn, ...)
       if not s and m then
         printError(m)
       end
+      os.queueEvent('turtle_response')
       return s, m
     end
   end

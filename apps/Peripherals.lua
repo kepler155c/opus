@@ -1,4 +1,5 @@
-require = requireInjector(getfenv(1))
+local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
+require = injector(getfenv(1))
 local Util = require('util')
 local Event = require('event')
 local UI = require('ui')

@@ -1,4 +1,5 @@
-require = requireInjector(getfenv(1))
+local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
+require = injector(getfenv(1))
 local Util = require('util')
 local UI = require('ui')
 local Event = require('event')
@@ -6,7 +7,7 @@ local History = require('history')
 
 local sandboxEnv = Util.shallowCopy(getfenv(1))
 sandboxEnv.exit = function() Event.exitPullEvents() end
-sandboxEnv.require = requireInjector(sandboxEnv)
+sandboxEnv.require = injector(sandboxEnv)
 setmetatable(sandboxEnv, { __index = _G })
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
@@ -15,12 +16,12 @@ UI:configure('Lua', ...)
 local command = ''
 local history = History.load('.lua_history', 25)
 
-local resultsPage = UI.Page({
+local page = UI.Page({
   menuBar = UI.MenuBar({
     buttons = {
       { text = 'Local',  event = 'local'  },
       { text = 'Global', event = 'global' },
-      { text = 'Device', event = 'device' },
+      { text = 'Device', event = 'device', name = 'Device' },
     },
   }),
   prompt = UI.TextEntry({
@@ -29,10 +30,11 @@ local resultsPage = UI.Page({
     backgroundFocusColor = colors.black,
     limit = 256,
     accelerators = {
-      enter            = 'command_enter',
-      up               = 'history_back',
-      down             = 'history_forward',
-      mouse_rightclick = 'clear_prompt',
+      enter               = 'command_enter',
+      up                  = 'history_back',
+      down                = 'history_forward',
+      mouse_rightclick    = 'clear_prompt',
+--      [ 'control-space' ] = 'autocomplete',
     },
   }),
   grid = UI.ScrollingGrid({
@@ -47,7 +49,7 @@ local resultsPage = UI.Page({
   notification = UI.Notification(),
 })
 
-function resultsPage:setPrompt(value, focus)
+function page:setPrompt(value, focus)
   self.prompt:setValue(value)
   self.prompt.scroll = 0
   self.prompt:setPosition(#value)
@@ -59,29 +61,77 @@ function resultsPage:setPrompt(value, focus)
 
   self.prompt:draw()
   if focus then
-    resultsPage:setFocus(self.prompt)
+    page:setFocus(self.prompt)
   end
 end
 
-function resultsPage:enable()
+function page:enable()
   self:setFocus(self.prompt)
   UI.Page.enable(self)
+  if not device then
+    self.menuBar.Device:disable()
+  end
 end
 
-function resultsPage:eventHandler(event)
+local function autocomplete(env, oLine, x)
+
+  local sLine = oLine:sub(1, x)
+  local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
+  if nStartPos then
+    sLine = sLine:sub(nStartPos)
+  end
+
+  if #sLine > 0 then
+    local results = textutils.complete(sLine, env)
+
+    if #results == 0 then
+--      setError('No completions available')
+
+    elseif #results == 1 then
+      return Util.insertString(oLine, results[1], x + 1)
+
+    elseif #results > 1 then
+      local prefix = results[1]
+      for n = 1, #results do
+        local result = results[n]
+        while #prefix > 0 do
+          if result:find(prefix, 1, true) == 1 then
+            break
+          end
+          prefix = prefix:sub(1, #prefix - 1)
+        end
+      end
+      if #prefix > 0 then
+        return Util.insertString(oLine, prefix, x + 1)
+      else
+--        setStatus('Too many results')
+      end
+    end
+  end
+  return oLine
+end
+
+function page:eventHandler(event)
 
   if event.type == 'global' then
-    resultsPage:setPrompt('', true)
+    self:setPrompt('', true)
     self:executeStatement('getfenv(0)')
     command = nil
 
   elseif event.type == 'local' then
-    resultsPage:setPrompt('', true)
+    self:setPrompt('', true)
     self:executeStatement('getfenv(1)')
     command = nil
 
+  elseif event.type == 'autocomplete' then
+    local sz = #self.prompt.value
+    local pos = self.prompt.pos
+    self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.pos))
+    self.prompt:setPosition(pos + #self.prompt.value - sz)
+    self.prompt:updateCursor()
+
   elseif event.type == 'device' then
-    resultsPage:setPrompt('device', true)
+    self:setPrompt('device', true)
     self:executeStatement('device')
 
   elseif event.type == 'history_back' then
@@ -128,7 +178,7 @@ function resultsPage:eventHandler(event)
   return true
 end
 
-function resultsPage:setResult(result)
+function page:setResult(result)
   local t = { }
 
   local function safeValue(v)
@@ -169,7 +219,7 @@ function resultsPage:setResult(result)
   self:draw()
 end
 
-function resultsPage.grid:eventHandler(event)
+function page.grid:eventHandler(event)
 
   local entry = self:getSelected()
 
@@ -199,18 +249,18 @@ function resultsPage.grid:eventHandler(event)
 
   if event.type == 'grid_focus_row' then
     if self.focused then
-      resultsPage:setPrompt(commandAppend())
+      page:setPrompt(commandAppend())
     end
   elseif event.type == 'grid_select' then
-    resultsPage:setPrompt(commandAppend(), true)
-    resultsPage:executeStatement(commandAppend())
+    page:setPrompt(commandAppend(), true)
+    page:executeStatement(commandAppend())
   else
     return UI.Grid.eventHandler(self, event)
   end
   return true
 end
 
-function resultsPage:rawExecute(s)
+function page:rawExecute(s)
 
   local fn, m = loadstring("return (" .. s .. ')', 'lua')
   if not fn then
@@ -225,13 +275,15 @@ function resultsPage:rawExecute(s)
   return fn, m
 end
 
-function resultsPage:executeStatement(statement)
+function page:executeStatement(statement)
 
   command = statement
 
   local s, m = self:rawExecute(command)
 
   if s and m then
+    self:setResult(m)
+  elseif s and type(m) == 'boolean' then
     self:setResult(m)
   else
     self.grid:setValues({ })
@@ -242,6 +294,13 @@ function resultsPage:executeStatement(statement)
   end
 end
 
-UI:setPage(resultsPage)
+local args = { ... }
+if args[1] then
+  command = 'args[1]'
+  sandboxEnv.args = args
+  page:setResult(args[1])
+end
+
+UI:setPage(page)
 Event.pullEvents()
 UI.term:reset()

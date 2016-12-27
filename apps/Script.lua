@@ -8,7 +8,7 @@ local GROUPS_PATH = '/apps/groups'
 local SCRIPTS_PATH = '/apps/scripts'
 
 multishell.setTitle(multishell.getCurrent(), 'Script')
-UI:configure('Script', ...)
+UI:configure('script', ...)
 
 local config = {
   showGroups = false,
@@ -17,7 +17,7 @@ local config = {
   }]],
 }
 
-Config.load('Script', config)
+Config.load('script', config)
 
 local width = math.floor(UI.term.width / 2) - 1
 if UI.term.width % 2 ~= 0 then
@@ -453,7 +453,7 @@ function mainPage:eventHandler(event)
 --    self.statusBar.toggleButton.text = text
     self:draw()
 
-    Config.update('Script', config)
+    Config.update('script', config)
 
   elseif event.type == 'grid_focus_row' then
     local computer = self.computers:getSelected()

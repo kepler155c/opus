@@ -1,6 +1,6 @@
 local UI = require('ui')
 
-return function()
+return function(args)
 
   local columns = {
     { heading = 'Name', key = 'name', width = UI.term.width - 9 },
@@ -13,18 +13,19 @@ return function()
     )
   end
 
-  local selectFile = UI.Page({
-    x  =  3,
-    y  =  2,
-    rex = -3,
-    rey = -3,
+  args = args or { }
+
+  local selectFile = UI.Dialog {
+    x = args.x or 3,
+    y = args.y or 2,
+    z = args.z or 2,
+--    rex = args.rex or -3,
+--    rey = args.rey or -3,
+    height = args.height,
+    width = args.width,
     backgroundColor = colors.brown,
-    titleBar = UI.TitleBar({
-      title = 'Select file',
-      previousPage = true,
-      event = 'cancel',
-    }),
-    grid = UI.ScrollingGrid({
+    title = 'Select file',
+    grid = UI.ScrollingGrid {
       x  =  2,
       y  =  2,
       rex = -2,
@@ -32,8 +33,8 @@ return function()
       path = '',
       sortColumn = 'name',
       columns = columns,
-    }),
-    path = UI.TextEntry({
+    },
+    path = UI.TextEntry {
       x  =  2,
       ry = -1,
       rex = -11,
@@ -41,14 +42,14 @@ return function()
       accelerators = {
         enter = 'path_enter',
       }
-    }),
-    cancel = UI.Button({
+    },
+    cancel = UI.Button {
       text = 'Cancel',
       rx = -8,
       ry = -1,
       event = 'cancel',
-    }),
-  })
+    },
+  }
 
   function selectFile:enable(path, fn)
     self:setPath(path)

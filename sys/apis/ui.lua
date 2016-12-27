@@ -1,6 +1,8 @@
 local Util  = require('util')
 local class = require('class')
 local Event = require('event')
+local Tween = require('tween')
+local Region = require('region')
 
 local mapColorToGray = {
   [ colors.white     ] = colors.white,
@@ -21,43 +23,16 @@ local mapColorToGray = {
   [ colors.black     ] = colors.black,
 }
 
-local mapColorToPaint = {
-  [ colors.white     ] = '0',
-  [ colors.orange    ] = '1',
-  [ colors.magenta   ] = '2',
-  [ colors.lightBlue ] = '3',
-  [ colors.yellow    ] = '4',
-  [ colors.lime      ] = '5',
-  [ colors.pink      ] = '6',
-  [ colors.gray      ] = '7',
-  [ colors.lightGray ] = '8',
-  [ colors.cyan      ] = '9',
-  [ colors.purple    ] = 'a',
-  [ colors.blue      ] = 'b',
-  [ colors.brown     ] = 'c',
-  [ colors.green     ] = 'd',
-  [ colors.red       ] = 'e',
-  [ colors.black     ] = 'f',
-}
+local mapColorToPaint = { }
+for n = 1, 16 do
+  mapColorToPaint[2 ^ (n - 1)] = string.sub("0123456789abcdef", n, n)
+end
 
-local mapGrayToPaint = {
-  [ colors.white     ] = '0',
-  [ colors.orange    ] = '8',
-  [ colors.magenta   ] = '8',
-  [ colors.lightBlue ] = '8',
-  [ colors.yellow    ] = '8',
-  [ colors.lime      ] = '8',
-  [ colors.pink      ] = '8',
-  [ colors.gray      ] = '7',
-  [ colors.lightGray ] = '8',
-  [ colors.cyan      ] = '8',
-  [ colors.purple    ] = '7',
-  [ colors.blue      ] = '7',
-  [ colors.brown     ] = '7',
-  [ colors.green     ] = '8',
-  [ colors.red       ] = '7',
-  [ colors.black     ] = 'f',
-}
+local mapGrayToPaint = { }
+for n = 0, 15 do
+  local gs = mapColorToGray[2 ^ n]
+  mapGrayToPaint[2 ^ n] = mapColorToPaint[gs]
+end
 
 local function colorToGrayScale(c)
   return mapColorToGray[c]
@@ -87,6 +62,12 @@ local function getPosition(element)
     element = element.parent
   until not element
   return x, y
+end
+
+local function assertElement(el, msg)
+  if not el or not type(el) == 'table' or not el.UIElement then
+    error(msg, 3)
+  end
 end
 
 --[[-- Top Level Manager --]]--
@@ -135,7 +116,12 @@ function Manager:init(args)
   end)
 
   Event.addHandler('mouse_click', function(h, button, x, y)
-    if self.currentPage then
+
+    if button == 1 and shift and control then -- hack
+      local event = self:pointToChild(self.target, x, y)
+      multishell.openTab({ path = 'apps/Lua.lua', args = { event.element }, focused = true })
+
+    elseif self.currentPage then
       if not self.currentPage.parent.device.side then
         self:click(button, x, y)
       end
@@ -198,7 +184,6 @@ function Manager:configure(appName, ...)
     textScale  = { arg = 't', type = 'number',
                    desc = 'Text scale' },
   }
-
   local defaults = Util.loadTable('/config/' .. appName) or { }
   if not defaults.device then
     defaults.device = { }
@@ -241,14 +226,20 @@ function Manager:configure(appName, ...)
   end
 end
 
+function Manager:disableEffects()
+  self.defaultDevice.effectsEnabled = false
+end
+
 function Manager:loadTheme(filename)
-  local theme, err = Util.loadTable(filename)
-  if not theme then
-    error(theme)
-  end
-  for k,v in pairs(theme) do
-    if self[k] and self[k].defaults then
-      Util.merge(self[k].defaults, v)
+  if fs.exists(filename) then
+    local theme, err = Util.loadTable(filename)
+    if not theme then
+      error(err)
+    end
+    for k,v in pairs(theme) do
+      if self[k] and self[k].defaults then
+        Util.merge(self[k].defaults, v)
+      end
     end
   end
 end
@@ -308,7 +299,6 @@ function Manager:click(button, x, y)
     if x < self.target.x or y < self.target.y or
       x > self.target.x + self.target.width - 1 or
       y > self.target.y + self.target.height - 1 then
-
       target:emit({ type = 'mouse_out' })
 
       target = self.currentPage
@@ -390,6 +380,7 @@ function Manager:setPage(pageOrName, ...)
   if page == self.currentPage then
     page:draw()
   else
+    local needSync
     if self.currentPage then
       if self.currentPage.focused then
         self.currentPage.focused.focused = false
@@ -397,6 +388,8 @@ function Manager:setPage(pageOrName, ...)
       end
       self.currentPage:disable()
       page.previousPage = self.currentPage
+    else
+      needSync = true
     end
     self.currentPage = page
     self.currentPage:clear(page.backgroundColor)
@@ -407,7 +400,9 @@ function Manager:setPage(pageOrName, ...)
       self.currentPage.focused:focus()
     end
     self:capture(self.currentPage)
-    page:sync()
+    if needSync then
+      page:sync() -- first time a page has been set
+    end
   end
 end
 
@@ -439,6 +434,14 @@ function Manager:getDefaults(element, args)
     Util.merge(defaults, args)
   end
   return defaults
+end
+
+function Manager:pullEvents(...)
+  Event.pullEvents(...)
+end
+
+function Manager:exitPullEvents()
+  Event.exitPullEvents()
 end
 
 -- inconsistent
@@ -669,8 +672,12 @@ function UI.Window:write(x, y, text, bg, tc)
   x = x - self.offx
   y = y - self.offy
   if y <= self.height and y > 0 then
-    self.parent:write(
-      self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
+    if self.canvas then
+      self.canvas:write(x, y, text, bg, tc)
+    else
+      self.parent:write(
+        self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
+    end
   end
 end
 
@@ -713,6 +720,17 @@ function UI.Window:print(text, bg, fg, indent)
     end
   end
 
+  --[[
+  TODO
+  local test = "\027[0;1;33mYou tell foo, \"// Test string.\"\027[0;37mbar"
+  for sequence, text in string.gmatch (test, "\027%[([0-9;]+)m([^\027]+)") do
+    for ansi in string.gmatch (sequence, "%d+") do
+      print ("ANSI code: ", ansi)
+    end -- for
+    print ("Text: ", text)
+  end
+  --]]
+
   local lines = Util.split(text)
   for k,line in pairs(lines) do
     local lx = 1
@@ -739,6 +757,7 @@ function UI.Window:print(text, bg, fg, indent)
 end
 
 function UI.Window:setFocus(focus)
+  assertElement(focus, 'UI.Window:setFocus: Invalid element passed')
   if self.parent then
     self.parent:setFocus(focus)
   end
@@ -801,11 +820,13 @@ function UI.Window:scrollIntoView()
   end
 end
 
-function UI.Window:setTransition(effect, y, height)
+function UI.Window:addTransition(effect, x, y, width, height)
   if self.parent then
+    x = x or 1
     y = y or 1
+    width = width or self.width
     height = height or self.height
-    self.parent:setTransition(effect, y + self.y - 1, height)
+    self.parent:addTransition(effect, x + self.x - 1, y + self.y - 1, width, height)
   end
 end
 
@@ -827,192 +848,73 @@ function UI.Window:eventHandler(event)
   return false
 end
 
---[[-- Terminal for computer / advanced computer / monitor --]]--
-UI.Device = class(UI.Window)
-UI.Device.defaults = {
-  UIElement = 'Device',
-  backgroundColor = colors.black,
-  textColor = colors.white,
-  textScale = 1,
-  lines = { },
-  transitionsEnabled = true,
-}
+--[[-- Blit data manipulation --]]--
+local Canvas = class()
+function Canvas:init(args)
+  self.x = 1
+  self.y = 1
 
-function UI.Device:init(args)
-  local defaults = UI:getDefaults(UI.Device)
-  defaults.device = term.current()
-  UI.setProperties(defaults, args)
+  Util.merge(self, args)
 
-  if defaults.deviceType then
-    defaults.device = device[defaults.deviceType]
-  end
+  self.height = self.ey - self.y + 1
+  self.width = self.ex - self.x + 1
 
-  if not defaults.device.setTextScale then
-    defaults.device.setTextScale = function(...) end
-  end
-
-  defaults.device.setTextScale(defaults.textScale)
-  defaults.width, defaults.height = defaults.device.getSize()
-
-  UI.Window.init(self, defaults)
-
-  self.isColor = self.device.isColor()
-end
-
-function UI.Device:resize()
-  self.width, self.height = self.device.getSize()
   self.lines = { }
-  UI.Window.resize(self)
+  for i = 1, self.height do
+    self.lines[i] = { }
+  end
 end
 
-function UI.Device:setCursorPos(x, y)
-  self.cursorX = x
-  self.cursorY = y
+function Canvas:copy()
+  local b = Canvas({ x = self.x, y = self.y, ex = self.ex, ey = self.ey })
+  for i = 1, self.ey - self.y + 1 do
+    b.lines[i].text = self.lines[i].text
+    b.lines[i].fg = self.lines[i].fg
+    b.lines[i].bg = self.lines[i].bg
+  end
+  return b
 end
 
-function UI.Device:getCursorBlink()
-  return self.cursorBlink
+function Canvas:addLayer(layer, bg, fg)
+  local canvas = Canvas({
+    x = layer.x,
+    y = layer.y,
+    ex = layer.x + layer.width - 1,
+    ey = layer.y + layer.height - 1,
+    isColor = self.isColor,
+  })
+  canvas:clear(colorToPaintColor(bg, self.isColor),
+             colorToPaintColor(fg, self.isColor))
+
+  canvas.parent = self
+  if not self.layers then
+    self.layers = { }
+  end
+  table.insert(self.layers, canvas)
+  return canvas
 end
 
-function UI.Device:setCursorBlink(blink)
-  self.cursorBlink = blink
-  self.device.setCursorBlink(blink)
-end
-
-function UI.Device:setTextScale(textScale)
-  self.textScale = textScale
-  self.device.setTextScale(self.textScale)
-end
-
-function UI.Device:reset()
-  self.device.setBackgroundColor(colors.black)
-  self.device.setTextColor(colors.white)
-  self.device.clear()
-  self.device.setCursorPos(1, 1)
-end
-
-function UI.Device:setTransition(effect, y, height)
-  if not self.transition then
-    self.transition = effect
-    for i = y, y + height - 1 do
-      local line = self.lines[i]
-      if line then
-        line.transition = true
-      end
+function Canvas:removeLayer()
+  for k, layer in pairs(self.parent.layers) do
+    if layer == self then
+      self:setVisible(false)
+      table.remove(self.parent.layers, k)
+      break
     end
   end
 end
 
-function UI.Device:runTransition(transition)
-  if transition == 'left' or transition == 'right' then
-    for y, line in ipairs(self.lines) do
-      if not line.transition then
-        self.device.setCursorPos(1, y)
-        self.device.blit(line.text, line.fg, line.bg)
-      end
-    end
-
-    local c = os.clock()
-    local steps = math.floor(self.width * .34) -- 150 ms
-
-    for i = 1, self.width do
-      for y, line in pairs(self.lines) do
-        if line.transition then
-          if transition == 'left' then
-            local text = self.lastScreen[y].text .. line.text
-            local bg = self.lastScreen[y].bg .. line.bg 
-            local fg = self.lastScreen[y].fg .. line.fg
-            self.device.setCursorPos(1 - i, y)
-            self.device.blit(text, fg, bg)
-          else
-            local text = line.text .. self.lastScreen[y].text
-            local bg = line.bg .. self.lastScreen[y].bg 
-            local fg = line.fg .. self.lastScreen[y].fg
-            self.device.setCursorPos(-self.width + i + 1, y)
-            self.device.blit(text, fg, bg)
-          end
-        end
-      end
-      if (i + math.floor(steps / 2)) % steps == 0 then
-        if c == os.clock() then
-          os.sleep(0)
-          c = os.clock()
-        end
-      end
-    end
-
-  elseif transition == 'explode' then
-    local half = math.floor(self.width / 2)
-    local c = os.clock()
-    local steps = math.floor(self.width * .5)
-    for i = 1, half do
-      for y, line in pairs(self.lines) do
-        local width = i * 2
-        local mid = half - i + 1
-        self.device.setCursorPos(mid, y)
-        self.device.blit(
-          line.text:sub(mid, mid + width),
-          line.fg:sub(mid, mid + width),
-          line.bg:sub(mid, mid + width))
-      end
-      if (i + math.floor(steps / 2)) % steps == 0 then
-        if c == os.clock() then
-          os.sleep(0)
-          c = os.clock()
-        end
-      end
-    end
-  end
-
-  for y, line in ipairs(self.lines) do
-    line.dirty = false
-    line.transition = false
+function Canvas:setVisible(visible)
+  self.visible = visible
+  if not visible then
+    self.parent:dirty()
+    -- set parent's lines to dirty for each line in self
   end
 end
 
-function UI.Device:sync()
-
-  local transition
-  if self.transition then
-    for y, line in pairs(self.lines) do
-      if line.dirty then
-        transition = self.transition
-        break
-      end
-    end
-    self.transition = nil
-  end
-
-  if transition and self.transitionsEnabled then
-    self:runTransition(transition)
-  else
-    for y, line in pairs(self.lines) do
-      if line.dirty then
-        self.device.setCursorPos(1, y)
-        self.device.blit(line.text, line.fg, line.bg)
-        line.dirty = false
-      end
-    end
-  end
-
-  self.lastScreen = Util.deepCopy(self.lines)
-
-  if self:getCursorBlink() then
-    self.device.setCursorPos(self.cursorX, self.cursorY)
-  end
-end
-
-function UI.Device:write(x, y, text, bg, tc)
+function Canvas:write(x, y, text, bg, tc)
 
   if y > 0 and y <= self.height and x <= self.width then
-
-    if not self.lines[y] then
-      self.lines[y] = {
-        text = string.rep(' ', self.width),
-        bg = string.rep(colorToPaintColor(self.backgroundColor, self.isColor), self.width),
-        fg = string.rep(colorToPaintColor(self.textColor, self.isColor), self.width),
-      }
-    end
 
     local width = #text
 
@@ -1047,6 +949,333 @@ function UI.Device:write(x, y, text, bg, tc)
         line.fg = fill(line.fg, x, colorToPaintColor(tc, self.isColor), width)
       end
     end
+  end
+end
+
+function Canvas:writeLine(y, text, fg, bg)
+  self.lines[y].dirty = true
+  self.lines[y].text = text
+  self.lines[y].fg = fg
+  self.lines[y].bg = bg
+end
+
+function Canvas:reset()
+  self.region = nil
+end
+
+function Canvas:clear(bg, fg)
+  local width = self.ex - self.x + 1
+  local text = string.rep(' ', width)
+  fg = string.rep(fg, width)
+  bg = string.rep(bg, width)
+  for i = 1, self.ey - self.y + 1 do
+    self:writeLine(i, text, fg, bg)
+  end
+end
+
+function Canvas:punch(rect)
+  if not self.regions then
+    self.regions = Region.new(self.x, self.y, self.ex, self.ey)
+  end
+  self.regions:subRect(rect.x, rect.y, rect.ex, rect.ey)
+end
+
+function Canvas:blitClipped(device)
+  for _,region in ipairs(self.regions.region) do
+    self:blit(device,
+      { x = region[1] - self.x + 1,
+        y = region[2] - self.y + 1,
+        ex = region[3]- self.x + 1, 
+        ey = region[4] - self.y + 1 },
+      { x = region[1], y = region[2] })
+  end
+end
+
+function Canvas:dirty()
+  for _, line in pairs(self.lines) do
+    line.dirty = true
+  end
+end
+
+function Canvas:clean()
+  for y, line in ipairs(self.lines) do
+    line.dirty = false
+  end
+end
+
+function Canvas:render(device, layers)
+  layers = layers or self.layers
+  if layers then
+    self.regions = Region.new(self.x, self.y, self.ex, self.ey)
+    local l = Util.shallowCopy(layers)
+    for _, canvas in ipairs(layers) do
+      table.remove(l, 1)
+      if canvas.visible then
+        self:punch(canvas)
+        canvas:render(device, l)
+      end
+    end
+    self:blitClipped(device)
+    self:reset()
+  else
+    self:blit(device)
+  end
+  self:clean()
+end
+
+function Canvas:blit(device, src, tgt)
+  src = src or { x = 1, y = 1, ex = self.ex - self.x + 1, ey = self.ey - self.y + 1 }
+  tgt = tgt or self
+
+  for i = 0, src.ey - src.y do
+    local line = self.lines[src.y + i]
+    if line.dirty then
+      local t, fg, bg = line.text, line.fg, line.bg
+      if src.x > 1 or src.ex < self.ex then
+        t  = t:sub(src.x, src.ex)
+        fg = fg:sub(src.x, src.ex)
+        bg = bg:sub(src.x, src.ex)
+      end
+      device.setCursorPos(tgt.x, tgt.y + i)
+      device.blit(t, fg, bg)
+    end
+  end
+end
+
+--[[-- TransitionSlideLeft --]]--
+UI.TransitionSlideLeft = class()
+UI.TransitionSlideLeft.defaults = {
+  UIElement = 'TransitionSlideLeft',
+  ticks = 12,
+  easing = 'outBounce',
+}
+function UI.TransitionSlideLeft:init(args)
+  local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
+  UI.setProperties(self, defaults)
+
+  self.pos = { x = self.ex }
+  self.tween = Tween.new(self.ticks, self.pos, { x = self.x }, self.easing)
+  self.lastx = 0
+  self.lastScreen = self.canvas:copy()
+end
+
+function UI.TransitionSlideLeft:update(device)
+  self.tween:update(1)
+  local x = math.floor(self.pos.x)
+  if x ~= self.lastx then
+    self.lastx = x
+    self.lastScreen:dirty()
+    self.lastScreen:blit(device, {
+      x = self.ex - x + self.x,
+      y = self.y,
+      ex = self.ex,
+      ey = self.ey },
+      { x = self.x, y = self.y })
+
+    self.canvas:blit(device, {
+      x = self.x,
+      y = self.y,
+      ex = self.ex - x + self.x + 1,
+      ey = self.ey },
+      { x = x, y = self.y })
+  end
+  return self.pos.x ~= self.x
+end
+
+--[[-- TransitionSlideRight --]]--
+UI.TransitionSlideRight = class()
+UI.TransitionSlideRight.defaults = {
+  UIElement = 'TransitionSlideRight',
+  ticks = 12,
+  easing = 'outBounce',
+}
+function UI.TransitionSlideRight:init(args)
+  local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
+  UI.setProperties(self, defaults)
+
+  self.pos = { x = self.x }
+  self.tween = Tween.new(self.ticks, self.pos, { x = self.ex }, self.easing)
+  self.lastx = 0
+  self.lastScreen = self.canvas:copy()
+end
+
+function UI.TransitionSlideRight:update(device)
+  self.tween:update(1)
+  local x = math.floor(self.pos.x)
+  if x ~= self.lastx then
+    self.lastx = x
+    self.lastScreen:dirty()
+    self.lastScreen:blit(device, {
+      x = self.x,
+      y = self.y,
+      ex = self.ex - x + self.x + 1,
+      ey = self.ey },
+      { x = x, y = self.y })
+    self.canvas:blit(device, {
+      x = self.ex - x + self.x,
+      y = self.y,
+      ex = self.ex + 1,
+      ey = self.ey },
+      { x = self.x, y = self.y })
+  end
+  return self.pos.x ~= self.ex
+end
+
+--[[-- TransitionExpandUp --]]--
+UI.TransitionExpandUp = class()
+UI.TransitionExpandUp.defaults = {
+  UIElement = 'TransitionExpandUp',
+  ticks = 3,
+  easing = 'linear',
+}
+function UI.TransitionExpandUp:init(args)
+  local defaults = UI:getDefaults(UI.TransitionExpandUp, args)
+  UI.setProperties(self, defaults)
+  self.pos = { y = self.ey + 1 }
+  self.tween = Tween.new(self.ticks, self.pos, { y = self.y }, self.easing)
+end
+
+function UI.TransitionExpandUp:update(device)
+  self.tween:update(1)
+  self.canvas:blit(device, nil, { x = self.x, y = math.floor(self.pos.y) })
+  return self.pos.y ~= self.y
+end
+
+--[[-- Terminal for computer / advanced computer / monitor --]]--
+UI.Device = class(UI.Window)
+UI.Device.defaults = {
+  UIElement = 'Device',
+  backgroundColor = colors.black,
+  textColor = colors.white,
+  textScale = 1,
+  effectsEnabled = true,
+}
+function UI.Device:init(args)
+  local defaults = UI:getDefaults(UI.Device)
+  defaults.device = term.current()
+  UI.setProperties(defaults, args)
+
+  if defaults.deviceType then
+    defaults.device = device[defaults.deviceType]
+  end
+
+  if not defaults.device.setTextScale then
+    defaults.device.setTextScale = function(...) end
+  end
+
+  defaults.device.setTextScale(defaults.textScale)
+  defaults.width, defaults.height = defaults.device.getSize()
+
+  UI.Window.init(self, defaults)
+
+  self.isColor = self.device.isColor()
+
+  self.canvas = Canvas({
+    x = 1, y = 1, ex = self.width, ey = self.height,
+    isColor = self.isColor,
+  })
+  self.canvas:clear(colorToPaintColor(self.backgroundColor, self.isColor),
+             colorToPaintColor(self.textColor, self.isColor))
+end
+
+function UI.Device:resize()
+  self.width, self.height = self.device.getSize()
+  self.lines = { } -- TODO -- resize canvas
+  UI.Window.resize(self)
+end
+
+function UI.Device:setCursorPos(x, y)
+  self.cursorX = x
+  self.cursorY = y
+end
+
+function UI.Device:getCursorBlink()
+  return self.cursorBlink
+end
+
+function UI.Device:setCursorBlink(blink)
+  self.cursorBlink = blink
+  self.device.setCursorBlink(blink)
+end
+
+function UI.Device:setTextScale(textScale)
+  self.textScale = textScale
+  self.device.setTextScale(self.textScale)
+end
+
+function UI.Device:reset()
+  self.device.setBackgroundColor(colors.black)
+  self.device.setTextColor(colors.white)
+  self.device.clear()
+  self.device.setCursorPos(1, 1)
+end
+
+function UI.Device:addTransition(effect, x, y, width, height)
+  if not self.transitions then
+    self.transitions = { }
+  end
+
+  if type(effect) == 'string' then
+    local c
+    if effect == 'slideLeft' then
+      c = UI.TransitionSlideLeft
+    else
+      c = UI.TransitionSlideRight
+    end
+    effect = c {
+      x = x,
+      y = y,
+      ex = x + width - 1,
+      ey = y + height - 1,
+      canvas = self.canvas,
+    }
+  end
+  table.insert(self.transitions, effect)
+end
+
+function UI.Device:runTransitions(transitions, canvas)
+
+  for _,t in ipairs(transitions) do
+    canvas:punch(t)               -- punch out the effect areas
+  end
+  canvas:blitClipped(self.device) -- and blit the remainder
+  canvas:reset()
+
+  while true do
+    for _,k in ipairs(Util.keys(transitions)) do
+      local transition = transitions[k]
+      if not transition:update(self.device) then
+        transitions[k] = nil
+      end
+    end
+    if Util.empty(transitions) then
+      break
+    end
+    os.sleep() -- ?
+  end
+end
+
+function UI.Device:sync()
+
+  local transitions
+  if self.transitions and self.effectsEnabled then
+    transitions = self.transitions
+    self.transitions = nil
+  end
+
+  if self:getCursorBlink() then
+    self.device.setCursorBlink(false)
+  end
+
+  if transitions then
+    self:runTransitions(transitions, self.canvas)
+  else
+    self.canvas:render(self.device)
+  end
+
+  if self:getCursorBlink() then
+    self.device.setCursorBlink(true)
+    self.device.setCursorPos(self.cursorX, self.cursorY)
   end
 end
 
@@ -1095,13 +1324,26 @@ function UI.Page:init(args)
   defaults.parent = UI.defaultDevice
   UI.setProperties(defaults, args)
   UI.Window.init(self, defaults)
+
+  if self.z then
+    self.canvas = self.parent.canvas:addLayer(self, self.backgroundColor, self.textColor)
+  else
+    self.canvas = self.parent.canvas
+  end
 end
 
 function UI.Page:enable()
+  self.canvas.visible = true
   UI.Window.enable(self)
 
   if not self.focused or not self.focused.enabled then
     self:focusFirst()
+  end
+end
+
+function UI.Page:disable()
+  if self.z then
+    self.canvas.visible = false
   end
 end
 
@@ -1151,6 +1393,8 @@ function UI.Page:focusNext()
 end
 
 function UI.Page:setFocus(child)
+  assertElement(child, 'UI.Page:setFocus: Invalid element passed')
+
   if not child.focus then
     return
   end
@@ -1202,6 +1446,8 @@ UI.Grid.defaults = {
   unfocusedTextSelectedColor = colors.white,
   unfocusedBackgroundSelectedColor = colors.gray,
   focusIndicator = '>',
+  sortIndicator = ' ',
+  inverseSortIndicator = '^',
   values = { },
   columns = { },
 }
@@ -1214,16 +1460,12 @@ function UI.Grid:init(args)
       h.heading = ''
     end
   end
-  self:update()
-end
-
-function UI.Grid:enable()
-  UI.Window.enable(self)
 end
 
 function UI.Grid:setParent()
   UI.Window.setParent(self)
-  self:adjustWidth()
+  self:update()
+
   if not self.pageSize then
     if self.disableHeader then
       self.pageSize = self.height
@@ -1300,7 +1542,7 @@ end
 
 function UI.Grid:getSelected()
   if self.sorted then
-    return self.values[self.sorted[self.index]]
+    return self.values[self.sorted[self.index]], self.sorted[self.index]
   end
 end
 
@@ -1352,14 +1594,20 @@ function UI.Grid:update()
       return order(self.values[a], self.values[b])
     end)
   end
+
+  self:adjustWidth()
 end
 
 function UI.Grid:drawHeadings()
   local sb = UI.StringBuffer(self.width)
   for _,col in ipairs(self.columns) do
     local ind = ' '
-    if self.inverseSort and col.key == self.sortColumn then
-      ind = '^'
+    if col.key == self.sortColumn then
+      if self.inverseSort then
+        ind = self.inverseSortIndicator
+      else
+        ind = self.sortIndicator
+      end
     end
     sb:insert(ind .. col.heading, col.width + 1)
   end
@@ -1549,7 +1797,11 @@ end
 UI.ScrollingGrid = class(UI.Grid)
 UI.ScrollingGrid.defaults = {
   UIElement = 'ScrollingGrid',
-  scrollOffset = 1
+  scrollOffset = 1,
+  lineChar = '|',
+  sliderChar = '#',
+  upArrowChar = '^',
+  downArrowChar = 'v',
 }
 function UI.ScrollingGrid:init(args)
   local defaults = UI:getDefaults(UI.ScrollingGrid, args)
@@ -1580,25 +1832,25 @@ function UI.ScrollingGrid:drawScrollbar()
 
     local x = self.width
     if self.scrollOffset > 1 then
-      self:write(x, 2, '^')
+      self:write(x, 2, self.upArrowChar)
     else
       self:write(x, 2, ' ')
     end
     local row = 0
     for i = 1, sp - 1 do
-      self:write(x, row+3, '|')
+      self:write(x, row+3, self.lineChar)
       row = row + 1
     end
     for i = 1, sa do
-      self:write(x, row+3, '#')
+      self:write(x, row+3, self.sliderChar)
       row = row + 1
     end
     for i = row, sbSize do
-      self:write(x, row+3, '|')
+      self:write(x, row+3, self.lineChar)
       row = row + 1
     end
     if self.scrollOffset + self.pageSize - 1 < Util.size(self.values) then
-      self:write(x, self.pageSize + 1, 'v')
+      self:write(x, self.pageSize + 1, self.downArrowChar)
     else
       self:write(x, self.pageSize + 1, ' ')
     end
@@ -1843,19 +2095,23 @@ function UI.MenuBar:init(args)
 
   local x = 1
   for k,button in pairs(self.buttons) do
-    local buttonProperties = {
-      x = x,
-      width = #button.text + self.spacing,
-      backgroundColor = self.backgroundColor,
-      textColor = self.textColor,
-      centered = false,
-    }
-    x = x + buttonProperties.width
-    UI.setProperties(buttonProperties, button)
-    if button.name then
-      self[button.name] = UI.Button(buttonProperties)
+    if button.UIElement then
+      table.insert(self.children, button)
     else
-      table.insert(self.children, UI.Button(buttonProperties))
+      local buttonProperties = {
+        x = x,
+        width = #button.text + self.spacing,
+        backgroundColor = self.backgroundColor,
+        textColor = self.textColor,
+        centered = false,
+      }
+      x = x + buttonProperties.width
+      UI.setProperties(buttonProperties, button)
+      if button.name then
+        self[button.name] = UI.Button(buttonProperties)
+      else
+        table.insert(self.children, UI.Button(buttonProperties))
+      end
     end
   end
   if self.showBackButton then
@@ -1894,6 +2150,7 @@ end
 UI.DropMenu = class(UI.MenuBar)
 UI.DropMenu.defaults = {
   UIElement = 'DropMenu',
+  backgroundColor = colors.white,
 }
 function UI.DropMenu:init(args)
   local defaults = UI:getDefaults(UI.DropMenu, args)
@@ -1908,7 +2165,7 @@ function UI.DropMenu:setParent()
   for y,child in ipairs(self.children) do
     child.x = 1
     child.y = y
-    if #child.text > maxWidth then
+    if #(child.text or '') > maxWidth then
       maxWidth = #child.text
     end
   end
@@ -2052,9 +2309,9 @@ function UI.Tabs:activateTab(tab)
       child:disable()
     end
   end
+  self.tabBar:selectTab(tab.tabTitle)
   tab:enable()
   tab:draw()
-  self.tabBar:selectTab(tab.tabTitle)
   self:emit({ type = 'tab_activate', activated = tab, element = self })
 end
 
@@ -2070,9 +2327,9 @@ function UI.Tabs:eventHandler(event)
     for _,tab in ipairs(self.children) do
       if tab ~= self.tabBar then
         if event.current > event.last then
-          tab:setTransition('left')
+          tab:addTransition('slideLeft')
         else
-          tab:setTransition('right')
+          tab:addTransition('slideRight')
         end
         break
       end
@@ -2102,7 +2359,7 @@ function UI.WindowScroller:nextChild()
   for i = 1, #self.children do
     if self.children[i].enabled then
       if i < #self.children then
-        self:setTransition('left')
+        self:addTransition('slideLeft')
         self.children[i]:disable()
         self.children[i + 1]:enable()
       end
@@ -2115,7 +2372,7 @@ function UI.WindowScroller:prevChild()
   for i = 1, #self.children do
     if self.children[i].enabled then
       if i - 1 > 0 then
-        self:setTransition('right')
+        self:addTransition('slideRight')
         self.children[i]:disable()
         self.children[i - 1]:enable()
       end
@@ -2129,7 +2386,7 @@ UI.Notification = class(UI.Window)
 UI.Notification.defaults = {
   UIElement = 'Notification',
   backgroundColor = colors.gray,
-  height = 1,
+  height = 3,
 }
 function UI.Notification:init(args)
   local defaults = UI:getDefaults(UI.Notification, args)
@@ -2137,23 +2394,10 @@ function UI.Notification:init(args)
 end
 
 function UI.Notification:draw()
-  if self.enabled then
-    local lines = Util.wordWrap(self.value, self.width - 2)
-    self.height = #lines -- + 2
-    self.y = UI.term.height - self.height + 1
-    self:clear()
-    for k,v in pairs(lines) do
-      self:write(2, k, v)
-    end
-  end
 end
 
 function UI.Notification:enable()
   self.enabled = false
-end
-
-function UI.Notification:resize()
-  self.y = UI.term.height + 1
 end
 
 function UI.Notification:error(value, timeout)
@@ -2171,17 +2415,43 @@ function UI.Notification:success(value, timeout)
   self:display(value, timeout)
 end
 
-function UI.Notification:display(value, timeout)
-  self.value = value
-  self.enabled = true
-  self:draw()
-  Event.addNamedTimer('notificationTimer', timeout or 3, false, function()
---    self.y = UI.term.height + 1
+function UI.Notification:cancel()
+  if self.canvas then
+    Event.cancelNamedTimer('notificationTimer')
     self.enabled = false
-    if self.parent.enabled then
-      self.parent:draw()
-      self:sync()
-    end
+    self.canvas:removeLayer()
+    self.canvas = nil
+  end
+end
+
+function UI.Notification:display(value, timeout)
+  self.enabled = true
+  local lines = Util.wordWrap(value, self.width - 2)
+  self.height = #lines + 1
+  self.y = self.parent.height - self.height + 1
+  if self.canvas then
+    self.canvas:removeLayer()
+  end
+
+  -- need to get the current canvas - not ui.term.canvas
+  self.canvas = UI.term.canvas:addLayer(self, self.backgroundColor, self.textColor or colors.white)
+  self:addTransition(UI.TransitionExpandUp {
+    x = self.x,
+    y = self.y,
+    ex = self.x + self.width - 1,
+    ey = self.y + self.height - 1,
+    canvas = self.canvas,
+    ticks = self.height,
+  })
+  self.canvas:setVisible(true)
+  self:clear()
+  for k,v in pairs(lines) do
+    self:write(2, k, v)
+  end
+
+  Event.addNamedTimer('notificationTimer', timeout or 3, false, function()
+    self:cancel()
+    self:sync()
   end)
 end
 
@@ -2489,7 +2759,7 @@ UI.TextEntry.defaults = {
   shadowText = '',
   focused = false,
   backgroundColor = colors.lightGray,
-  backgroundFocusColor = colors.green,
+  backgroundFocusColor = colors.lightGray,
   height = 1,
   limit = 6,
   pos = 0,
@@ -2766,133 +3036,144 @@ UI.Form = class(UI.Window)
 UI.Form.defaults = {
   UIElement = 'Form',
   values = { },
-  fields = { },
-  labelWidth = 20,
-  accept = function() end,
-  cancel = function() end,
+  margin = 2,
+  event = 'form_complete',
 }
-
-UI.Form.D = { -- display
-  static = UI.Text,
-  entry = UI.TextEntry,
-  chooser = UI.Chooser,
-  button = UI.Button
-}
-
-UI.Form.V = { -- validation
-  number = function(value)
-    return type(value) == 'number'
-  end
-}
-
-UI.Form.T = { -- data types
-  number = function(value)
-    return tonumber(value)
-  end
-}
-
 function UI.Form:init(args)
   local defaults = UI:getDefaults(UI.Form, args)
   UI.Window.init(self, defaults)
+  self:createForm()
+end
 
-  self:createFields()
-  self:initChildren()
+function UI.Form:reset()
+  for _,child in pairs(self.children) do
+    if child.reset then
+      child:reset()
+    end
+  end
 end
 
 function UI.Form:setValues(values)
+  self:reset()
   self.values = values
   for k,child in pairs(self.children) do
-    if child.key then
-      child.value = self.values[child.key]
-      if not child.value then
-        child.value = ''
+    if child.formKey then
+      child.value = self.values[child.formKey] or ''
+    end
+  end
+end
+
+function UI.Form:createForm()
+  self.children = self.children or { }
+
+  if not self.labelWidth then
+    self.labelWidth = 1
+    for _, child in pairs(self) do
+      if type(child) == 'table' and child.UIElement then
+        if child.formLabel then
+          self.labelWidth = math.max(self.labelWidth, #child.formLabel + 2)
+        end
       end
     end
   end
+ 
+  local y = self.margin
+  for _, child in pairs(self) do
+    if type(child) == 'table' and child.UIElement then
+      if child.formKey then
+        child.x = self.labelWidth + self.margin - 1
+        child.y = y
+        if not child.width and not child.rex then
+          child.rex = -self.margin
+        end
+        child.value = self.values[child.formKey] or ''
+      end
+      if child.formLabel then
+        table.insert(self.children, UI.Text {
+          x = self.margin,
+          y = y,
+          textColor = colors.black,
+          width = #child.formLabel,
+          value = child.formLabel,
+        })
+      end
+      if child.formKey or child.formLabel then
+        y = y + 1
+      end
+    end
+  end
+
+  table.insert(self.children, UI.Button {
+    ry = -self.margin + 1, rx = -12 - self.margin + 1,
+    text = 'Ok',
+    event = 'form_ok',
+  })
+  table.insert(self.children, UI.Button {
+    ry = -self.margin + 1, rx = -7 - self.margin + 1,
+    text = 'Cancel',
+    event = 'form_cancel',
+  })
 end
 
-function UI.Form:createFields()
-
-  if not self.children then
-    self.children = { }
+function UI.Form:validateField(field)
+  if field.required then
+    if not field.value or #field.value == 0 then
+      return false, 'Field is required'
+    end
   end
-  for k,field in pairs(self.fields) do
-    if field.label then
-      table.insert(self.children, UI.Text({
-        x = 1,
-        y = k,
-        width = #field.label,
-        value = field.label,
-      }))
-    end
-    local value
-    if field.key then
-      value = self.values[field.key]
-    end
-    if not value then
-      value = ''
-    end
-    value = tostring(value)
-    local width = #value
-    if field.limit then
-       width = field.limit + 2
-    end
-    local fieldProperties = {
-      x = self.labelWidth + 2,
-      y = k,
-      width = width,
-      value = value,
-    }
-    UI.setProperties(fieldProperties, field)
-    table.insert(self.children, field.display(fieldProperties))
-  end
+  return true
 end
 
 function UI.Form:eventHandler(event)
-
-  if event.type == 'accept' then
+  if event.type == 'form_ok' then
     for _,child in pairs(self.children) do
-      if child.key then
-        self.values[child.key] = child.value
+      if child.formKey  then
+        local s, m = self:validateField(child)
+        if not s then
+          self:setFocus(child)
+          self:emit({ type = 'form_invalid', message = m, field = child })
+          return false
+        end
       end
     end
-    return false
+    for _,child in pairs(self.children) do
+      if child.formKey then
+        self.values[child.formKey] = child.value
+      end
+    end
+    self:emit({ type = self.event, UIElement = self })
+  else
+    return UI.Window.eventHandler(self, event)
   end
-
-  return false
+  return true
 end
 
 --[[-- Dialog --]]--
 UI.Dialog = class(UI.Page)
 UI.Dialog.defaults = {
+  UIElement = 'Dialog',
   x = 7,
   y = 4,
+  z = 2,
   height = 7,
-  backgroundColor = colors.lightBlue,
+  backgroundColor = colors.white,
 }
 function UI.Dialog:init(args)
-  local defaults = UI:getDefaults(UI.Dialog)
+  local defaults = UI:getDefaults(UI.Dialog, args)
 
   UI.setProperties(defaults, {
     width = UI.term.width-11,
-    titleBar = UI.TitleBar({ previousPage = true }),
-    acceptButton = UI.Button({
-      text = 'Accept',
-      event = 'accept',
-      x = 5,
-      y = 5
-    }),
-    cancelButton = UI.Button({
-      text = 'Cancel',
-      event = 'cancel',
-      x = 17,
-      y = 5
-    }),
-    statusBar = UI.StatusBar(),
+    titleBar = UI.TitleBar({ previousPage = true, title = defaults.title }),
   })
 
   UI.setProperties(defaults, args)
   UI.Page.init(self, defaults)
+end
+
+function UI.Dialog:setParent()
+  UI.Window.setParent(self)
+  self.x = math.floor((self.parent.width - self.width) / 2) + 1
+  self.y = math.floor((self.parent.height - self.height) / 2) + 1
 end
 
 function UI.Dialog:eventHandler(event)
@@ -2924,7 +3205,7 @@ function UI.Image:setParent()
 end
 
 function UI.Image:draw()
-  self:clear(bg)
+  self:clear()
   if self.image then
     for y = 1, #self.image do
       local line = self.image[y]
@@ -2968,7 +3249,7 @@ function UI.NftImage:setParent()
 end
 
 function UI.NftImage:draw()
---  self:clear(bg)
+--  self:clear()
   if self.image then
     for y = 1, self.image.height do
       for x = 1, #self.image.text[y] do
@@ -2984,10 +3265,11 @@ function UI.NftImage:setImage(image)
   self.image = image
 end
 
-UI:setDefaultDevice(UI.Device({ device = term.current() }))
-
-if fs.exists('/config/ui.theme') then
-  UI:loadTheme('/config/ui.theme')
+UI:loadTheme('config/ui.theme')
+if _HOST and string.find(_HOST, 'CCEmuRedux') then
+  UI:loadTheme('config/ccemuredux.theme')
 end
+
+UI:setDefaultDevice(UI.Device({ device = term.current() }))
 
 return UI

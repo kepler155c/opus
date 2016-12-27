@@ -212,7 +212,7 @@ function enderChestUnload()
  
     turtle.select(1)
     turtle.drop(64)
-    turtle.digDown()  
+    turtle.digDown()
   end
 end
 
@@ -246,8 +246,9 @@ function makeWalkableTunnel(action, tpt, pt)
   if action ~= 'turn' and not Point.compare(tpt, { x = 0, z = 0 }) then -- not at source
     if not Point.compare(tpt, pt) then                                  -- not at dest
       local r, block = turtle.inspectUp()
-      if r and block.name ~= 'minecraft:cobblestone' then
-        if block.name ~= 'minecraft:chest' then
+      if r and not turtle.isTurtleAtSide('top') then
+        if block.name ~= 'minecraft:cobblestone' and
+           block.name ~= 'minecraft:chest' then
           turtle.digUp()
         end
       end
@@ -483,7 +484,10 @@ function boreCommand()
 
   turtle.clearMoveCallback()
 
+  -- location is either mined, currently being mined or is the
+  -- dropoff point for a turtle
   if inspect(turtle.getAction('up'),   'minecraft:cobblestone') or
+     inspect(turtle.getAction('up'),   'minecraft:chest') or
      inspect(turtle.getAction('down'), 'minecraft:cobblestone') then
      return true
   end
