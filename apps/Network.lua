@@ -7,37 +7,37 @@ multishell.setTitle(multishell.getCurrent(), 'Network')
 UI:configure('Network', ...)
 
 local gridColumns = {
-  { heading = 'Label',  key = 'label'     },
-  { heading = 'Dist',   key = 'distance'  },
-  { heading = 'Status', key = 'status'    },
+  { heading = 'Label',  key = 'label'    },
+  { heading = 'Dist',   key = 'distance' },
+  { heading = 'Status', key = 'status'   },
 }
 
 if UI.term.width >= 30 then
-  table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel' })
+  table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel'   })
   table.insert(gridColumns, { heading = 'Uptime', key = 'uptime' })
 end
 
-local page = UI.Page({
-  menuBar = UI.MenuBar({
+local page = UI.Page {
+  menuBar = UI.MenuBar {
     buttons = {
       { text = 'Telnet', event = 'telnet' },
       { text = 'VNC',    event = 'vnc'    },
       { text = 'Reboot', event = 'reboot' },
     },
-  }),
-  grid = UI.ScrollingGrid({
+  },
+  grid = UI.ScrollingGrid {
     y = 2,
     values = network,
     columns = gridColumns,
     sortColumn = 'label',
     autospace = true,
-  }),
-  notification = UI.Notification(),
+  },
+  notification = UI.Notification { },
   accelerators = {
     q = 'quit',
     c = 'clear',
   },
-})
+}
 
 function sendCommand(host, command)
 
@@ -60,7 +60,7 @@ function sendCommand(host, command)
 end
 
 function page:eventHandler(event)
-  local t = self.grid.selected
+  local t = self.grid:getSelected()
   if t then
     if event.type == 'telnet' or event.type == 'grid_select' then
       multishell.openTab({
@@ -111,14 +111,6 @@ function page.grid:getDisplayValues(row)
     row.distance = Util.round(row.distance, 1)
   end
   return row
-end
-
-function page.grid:draw()
-  self:adjustWidth()
-  UI.Grid.draw(self)
-  if page.notification.enabled then
-    page.notification:draw()
-  end
 end
 
 Event.addThread(function()

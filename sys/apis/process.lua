@@ -87,8 +87,11 @@ function Process:resume(event, ...)
   return true, self.filter
 end
 
-function Process:pullEvent(filter)
+-- confusing...
 
+-- pull either one event if no filter or until event matches filter
+-- or until terminated (regardless of filter)
+function Process:pullEvent(filter)
   while true do
     local e = { os.pullEventRaw() }
     self:threadEvent(unpack(e))
@@ -99,12 +102,12 @@ function Process:pullEvent(filter)
   end
 end
 
+-- pull events until either the filter is matched or terminated
 function Process:pullEvents(filter)
-
   while true do
-    local e = { os.pullEventRaw(filter) }
+    local e = { os.pullEventRaw() }
     self:threadEvent(unpack(e))
-    if e[1] == 'terminate' then
+    if (filter and e[1] == filter) or e[1] == 'terminate' then
       return unpack(e)
     end
   end

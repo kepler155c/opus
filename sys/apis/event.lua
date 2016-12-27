@@ -121,14 +121,9 @@ end
 local exitPullEvents = false
 
 local function _pullEvents()
-
-  --exitPullEvents = false
   while true do
-    local e = { Process:pullEvent() }
+    local e = { os.pullEvent() }
     Event.processEvent(e)
-    if exitPullEvents or e[1] == 'terminate' then
-      break
-    end
   end
 end
 
@@ -144,13 +139,19 @@ function Event.addThread(fn)
 end
 
 function Event.pullEvents(...)
+  Process:addThread(_pullEvents)
   local routines = { ... }
   if #routines > 0 then
     for _, routine in ipairs(routines) do
       Process:addThread(routine)
     end
   end
-  _pullEvents()
+  while true do
+    local e = Process:pullEvent()
+    if exitPullEvents or e == 'terminate' then
+      break
+    end
+  end
 end
 
 function Event.exitPullEvents()

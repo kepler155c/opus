@@ -34,7 +34,7 @@ local page = UI.Page({
       up                  = 'history_back',
       down                = 'history_forward',
       mouse_rightclick    = 'clear_prompt',
-      [ 'control-space' ] = 'autocomplete',
+--      [ 'control-space' ] = 'autocomplete',
     },
   }),
   grid = UI.ScrollingGrid({
@@ -73,7 +73,7 @@ function page:enable()
   end
 end
 
-function autocomplete(env, oLine, x)
+local function autocomplete(env, oLine, x)
 
   local sLine = oLine:sub(1, x)
   local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
