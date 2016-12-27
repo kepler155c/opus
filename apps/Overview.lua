@@ -332,76 +332,64 @@ end
 
 local formWidth = math.max(UI.term.width - 14, 26)
 
-local editor = UI.Page {
-  backgroundColor = colors.white,
-  x = math.ceil((UI.term.width - formWidth) / 2) + 1,
-  y = math.ceil((UI.term.height - 11) / 2) + 1,
-  z = 2,
+local editor = UI.Dialog {
   height = 11,
   width = formWidth,
-  titleBar = UI.TitleBar {
-    title = 'Edit application',
-  },
-  inset = UI.Window {
-    x = 2,
-    y = 3,
-    rex = -2,
-    rey = -3,
-    form = UI.Form {
-      textColor = colors.black,
-      fields = {
-        { label = 'Title', key = 'title', width = formWidth - 11, limit = 11, display = UI.Form.D.entry,
-          help = 'Application title' },
-        { label = 'Run', key = 'run', width = formWidth - 11, limit = 100, display = UI.Form.D.entry,
-          help = 'Full path to application' },
-        { label = 'Category', key = 'category', width = formWidth - 11, limit = 11, display = UI.Form.D.entry,
-          help = 'Category of application' },
-        { text = 'Icon', event = 'loadIcon', display = UI.Form.D.button,
-            x = 10, y = 5, textColor = colors.white, help = 'Select icon' },
-        { text = 'Ok', event = 'accept', display = UI.Form.D.button,
-            x = formWidth - 14, y = 7, textColor = colors.white },
-        { text = 'Cancel', event = 'cancel', display = UI.Form.D.button,
-            x = formWidth - 9, y = 7, textColor = colors.white },
-      },
-      labelWidth = 8,
-      image = UI.NftImage {
-        y = 5,
-        x = 1,
-        height = 3,
-        width = 8,
-      },
+  title = 'Edit application',
+  form = UI.Form {
+    y = 2,
+    height = 9,
+    title = UI.TextEntry {
+      formLabel = 'Title', formKey = 'title', limit = 11, help = 'Application title',
+      required = true,
+    },
+    run = UI.TextEntry {
+      formLabel = 'Run', formKey = 'run', limit = 100, help = 'Full path to application',
+      required = true,
+    },
+    category = UI.TextEntry {
+      formLabel = 'Category', formKey = 'category', limit = 11, help = 'Category of application',
+      required = true,
+    },
+    loadIcon = UI.Button {
+      x = 11, y = 6, 
+      text = 'Icon', event = 'loadIcon', help = 'Select icon'
+    },
+    image = UI.NftImage {
+      y = 6,
+      x = 2,
+      height = 3,
+      width = 8,
     },
   },
   statusBar = UI.StatusBar(),
-  notification = UI.Notification(),
   iconFile = '',
 }
 
 function editor:enable(app)
   if app then
-    self.original = app
-    self.inset.form:setValues(Util.shallowCopy(app))
+    self.form:setValues(app)
 
     local icon
     if app.icon then
       icon = parseIcon(app.icon)
     end
-    self.inset.form.image:setImage(icon)
+    self.form.image:setImage(icon)
   end
   UI.Page.enable(self)
   self:focusFirst()
 end
 
-function editor.inset.form.image:draw()
+function editor.form.image:draw()
   self:clear()
   UI.NftImage.draw(self)
 end
 
-function editor:updateApplications(app, original)
-  if original.run then
-    local _,k = Util.find(applications, 'run', original.run)
-    if k then
+function editor:updateApplications(app)
+  for k,v in pairs(applications) do
+    if v == app then
       applications[k] = nil
+      break
     end
   end
   table.insert(applications, app)
@@ -410,7 +398,7 @@ end
 
 function editor:eventHandler(event)
 
-  if event.type == 'cancel' then
+  if event.type == 'form_cancel' or event.type == 'cancel' then
     UI:setPreviousPage()
 
   elseif event.type == 'focus_change' then
@@ -438,29 +426,26 @@ function editor:eventHandler(event)
           if not icon then
             error(m)
           end
-          self.inset.form.values.icon = iconLines
-          self.inset.form.image:setImage(icon)
-          self.inset.form.image:draw()
+          self.form.values.icon = iconLines
+          self.form.image:setImage(icon)
+          self.form.image:draw()
         end)
         if not s and m then
           local msg = m:gsub('.*: (.*)', '%1')
-          self.notification:error(msg)
+          page.notification:error(msg)
         end
       end
     end)
 
-  elseif event.type == 'accept' then
-    local values = self.inset.form.values
-    if #values.run > 0 and #values.title > 0 and #values.category > 0 then
-      UI:setPreviousPage()
-      self:updateApplications(values, self.original)
-      page:refresh()
-      page:draw()
-    else
-      self.notification:error('Require fields missing')
-      --self.statusBar:setStatus('Require fields missing')
-      --self.statusBar:draw()
-    end
+  elseif event.type == 'form_invalid' then
+    page.notification:error(event.message)
+
+  elseif event.type == 'form_complete' then
+    local values = self.form.values
+    UI:setPreviousPage()
+    self:updateApplications(values)
+    page:refresh()
+    page:draw()
   else
     return UI.Page.eventHandler(self, event)
   end

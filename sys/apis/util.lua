@@ -365,6 +365,10 @@ function Util.toBytes(n)
   return tostring(n)
 end
 
+function Util.insertString(os, is, pos)
+  return os:sub(1, pos - 1) .. is .. os:sub(pos)
+end
+
 function Util.split(str, pattern)
   pattern = pattern or "(.-)\n"
   local t = {}

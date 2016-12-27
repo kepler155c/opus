@@ -4,8 +4,8 @@ LUA_PATH = '/sys/apis'
 
 math.randomseed(os.clock())
 
-_G.debug = function() end
 _G.Util = dofile('/sys/apis/util.lua')
+_G.debug = function(...) Util.print(...) end
 _G.requireInjector = dofile('/sys/apis/injector.lua')
 
 os.run(Util.shallowCopy(getfenv(1)), '/sys/extensions/device.lua')
@@ -21,6 +21,7 @@ local mounts = Util.readFile('config/fstab')
 if mounts then
   for _,l in ipairs(Util.split(mounts)) do
     if l:sub(1, 1) ~= '#' then
+      print('mounting ' .. l)
       fs.mount(unpack(Util.matches(l)))
     end
   end

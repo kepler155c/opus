@@ -46,13 +46,13 @@ function urlfs.open(node, fn, fl)
     synchronized(node.url, function()
       c = Util.download(node.url)
     end)
-    if c and #c > 0 then
+    if c then
       node.cache = c
       node.size = #c
     end
   end
 
-  if not c or #c == 0 then
+  if not c then
     return
   end
 

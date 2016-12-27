@@ -15,7 +15,7 @@ return function(args)
 
   args = args or { }
 
-  local selectFile = UI.Page {
+  local selectFile = UI.Dialog {
     x = args.x or 3,
     y = args.y or 2,
     z = args.z or 2,
@@ -24,11 +24,7 @@ return function(args)
     height = args.height,
     width = args.width,
     backgroundColor = colors.brown,
-    titleBar = UI.TitleBar {
-      title = 'Select file',
-      previousPage = true,
-      event = 'cancel',
-    },
+    title = 'Select file',
     grid = UI.ScrollingGrid {
       x  =  2,
       y  =  2,

@@ -121,14 +121,14 @@ function page.grid:draw()
   end
 end
 
-function updateComputers()
+Event.addThread(function()
   while true do
     page.grid:update()
     page.grid:draw()
     page:sync()
     os.sleep(1)
   end
-end
+end)
 
 Event.addHandler('device_attach', function(h, deviceName)
   if deviceName == 'wireless_modem' then
@@ -149,5 +149,5 @@ if not device.wireless_modem then
 end
 
 UI:setPage(page)
-Event.pullEvents(updateComputers)
+Event.pullEvents()
 UI.term:reset()

@@ -1,4 +1,5 @@
 local Util = require('util')
+local Process = require('process')
 
 local Event = {
   uid = 1,  -- unique id for handlers
@@ -123,8 +124,9 @@ local function _pullEvents()
 
   --exitPullEvents = false
   while true do
-    local e = Event.pullEvent()
-    if exitPullEvents or e == 'terminate' then
+    local e = { Process:pullEvent() }
+    Event.processEvent(e)
+    if exitPullEvents or e[1] == 'terminate' then
       break
     end
   end
@@ -137,13 +139,18 @@ function Event.sleep(t)
   until event == 'timer' and id == timerId
 end
 
+function Event.addThread(fn)
+  return Process:addThread(fn)
+end
+
 function Event.pullEvents(...)
   local routines = { ... }
   if #routines > 0 then
-    parallel.waitForAny(_pullEvents, ...)
-  else
-    _pullEvents()
+    for _, routine in ipairs(routines) do
+      Process:addThread(routine)
+    end
   end
+  _pullEvents()
 end
 
 function Event.exitPullEvents()

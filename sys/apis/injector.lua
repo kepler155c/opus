@@ -89,7 +89,6 @@ local function gitSearcher(modname, env, shell)
   local _, count = fname:gsub("/", "")
   if count >= 3 then
     local url = GIT_URL .. '/' .. fname
-    debug(url)
     local c = loadUrl(url)
     if c then
       return load(c, modname, nil, env)
@@ -153,7 +152,7 @@ local function requireWrapper(env)
         return module
       end
       if msg then
-        error(msg)
+        error(msg, 2)
       end
     end
     error('Unable to find module ' .. modname)

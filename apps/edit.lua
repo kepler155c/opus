@@ -33,6 +33,12 @@ local clipboard = { size, internal }
 local searchPattern
 local undo      = { chain = { }, pointer = 0 }
 
+if _G.__CLIPBOARD then
+  clipboard = _G.__CLIPBOARD
+else
+  _G.__CLIPBOARD = clipboard
+end
+
 local color = {
   textColor       = '0',
   keywordColor    = '4',

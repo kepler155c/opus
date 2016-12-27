@@ -64,6 +64,12 @@ local function getPosition(element)
   return x, y
 end
 
+local function assertElement(el, msg)
+  if not el or not type(el) == 'table' or not el.UIElement then
+    error(msg, 3)
+  end
+end
+
 --[[-- Top Level Manager --]]--
 local Manager = class()
 function Manager:init(args)
@@ -430,6 +436,14 @@ function Manager:getDefaults(element, args)
   return defaults
 end
 
+function Manager:pullEvents(...)
+  Event.pullEvents(...)
+end
+
+function Manager:exitPullEvents()
+  Event.exitPullEvents()
+end
+
 -- inconsistent
 function Manager.setProperties(obj, args)
   if args then
@@ -743,6 +757,7 @@ function UI.Window:print(text, bg, fg, indent)
 end
 
 function UI.Window:setFocus(focus)
+  assertElement(focus, 'UI.Window:setFocus: Invalid element passed')
   if self.parent then
     self.parent:setFocus(focus)
   end
@@ -1378,6 +1393,8 @@ function UI.Page:focusNext()
 end
 
 function UI.Page:setFocus(child)
+  assertElement(child, 'UI.Page:setFocus: Invalid element passed')
+
   if not child.focus then
     return
   end
@@ -1443,16 +1460,12 @@ function UI.Grid:init(args)
       h.heading = ''
     end
   end
-  self:update()
-end
-
-function UI.Grid:enable()
-  UI.Window.enable(self)
 end
 
 function UI.Grid:setParent()
   UI.Window.setParent(self)
-  self:adjustWidth()
+  self:update()
+
   if not self.pageSize then
     if self.disableHeader then
       self.pageSize = self.height
@@ -1529,7 +1542,7 @@ end
 
 function UI.Grid:getSelected()
   if self.sorted then
-    return self.values[self.sorted[self.index]]
+    return self.values[self.sorted[self.index]], self.sorted[self.index]
   end
 end
 
@@ -1581,6 +1594,8 @@ function UI.Grid:update()
       return order(self.values[a], self.values[b])
     end)
   end
+
+  self:adjustWidth()
 end
 
 function UI.Grid:drawHeadings()
@@ -2376,7 +2391,6 @@ UI.Notification.defaults = {
 function UI.Notification:init(args)
   local defaults = UI:getDefaults(UI.Notification, args)
   UI.Window.init(self, defaults)
-  Util.print(self)
 end
 
 function UI.Notification:draw()
@@ -2401,6 +2415,15 @@ function UI.Notification:success(value, timeout)
   self:display(value, timeout)
 end
 
+function UI.Notification:cancel()
+  if self.canvas then
+    Event.cancelNamedTimer('notificationTimer')
+    self.enabled = false
+    self.canvas:removeLayer()
+    self.canvas = nil
+  end
+end
+
 function UI.Notification:display(value, timeout)
   self.enabled = true
   local lines = Util.wordWrap(value, self.width - 2)
@@ -2409,6 +2432,8 @@ function UI.Notification:display(value, timeout)
   if self.canvas then
     self.canvas:removeLayer()
   end
+
+  -- need to get the current canvas - not ui.term.canvas
   self.canvas = UI.term.canvas:addLayer(self, self.backgroundColor, self.textColor or colors.white)
   self:addTransition(UI.TransitionExpandUp {
     x = self.x,
@@ -2425,8 +2450,7 @@ function UI.Notification:display(value, timeout)
   end
 
   Event.addNamedTimer('notificationTimer', timeout or 3, false, function()
-    self.enabled = false
-    self.canvas:removeLayer()
+    self:cancel()
     self:sync()
   end)
 end
@@ -3012,132 +3036,144 @@ UI.Form = class(UI.Window)
 UI.Form.defaults = {
   UIElement = 'Form',
   values = { },
-  fields = { },
-  labelWidth = 20,
-  accept = function() end,
-  cancel = function() end,
+  margin = 2,
+  event = 'form_complete',
 }
-
-UI.Form.D = { -- display
-  static = UI.Text,
-  entry = UI.TextEntry,
-  chooser = UI.Chooser,
-  button = UI.Button
-}
-
-UI.Form.V = { -- validation
-  number = function(value)
-    return type(value) == 'number'
-  end
-}
-
-UI.Form.T = { -- data types
-  number = function(value)
-    return tonumber(value)
-  end
-}
-
 function UI.Form:init(args)
   local defaults = UI:getDefaults(UI.Form, args)
   UI.Window.init(self, defaults)
+  self:createForm()
+end
 
-  self:createFields()
-  self:initChildren()
+function UI.Form:reset()
+  for _,child in pairs(self.children) do
+    if child.reset then
+      child:reset()
+    end
+  end
 end
 
 function UI.Form:setValues(values)
+  self:reset()
   self.values = values
   for k,child in pairs(self.children) do
-    if child.key then
-      child.value = self.values[child.key]
-      if not child.value then
-        child.value = ''
+    if child.formKey then
+      child.value = self.values[child.formKey] or ''
+    end
+  end
+end
+
+function UI.Form:createForm()
+  self.children = self.children or { }
+
+  if not self.labelWidth then
+    self.labelWidth = 1
+    for _, child in pairs(self) do
+      if type(child) == 'table' and child.UIElement then
+        if child.formLabel then
+          self.labelWidth = math.max(self.labelWidth, #child.formLabel + 2)
+        end
       end
     end
   end
+ 
+  local y = self.margin
+  for _, child in pairs(self) do
+    if type(child) == 'table' and child.UIElement then
+      if child.formKey then
+        child.x = self.labelWidth + self.margin - 1
+        child.y = y
+        if not child.width and not child.rex then
+          child.rex = -self.margin
+        end
+        child.value = self.values[child.formKey] or ''
+      end
+      if child.formLabel then
+        table.insert(self.children, UI.Text {
+          x = self.margin,
+          y = y,
+          textColor = colors.black,
+          width = #child.formLabel,
+          value = child.formLabel,
+        })
+      end
+      if child.formKey or child.formLabel then
+        y = y + 1
+      end
+    end
+  end
+
+  table.insert(self.children, UI.Button {
+    ry = -self.margin + 1, rx = -12 - self.margin + 1,
+    text = 'Ok',
+    event = 'form_ok',
+  })
+  table.insert(self.children, UI.Button {
+    ry = -self.margin + 1, rx = -7 - self.margin + 1,
+    text = 'Cancel',
+    event = 'form_cancel',
+  })
 end
 
-function UI.Form:createFields()
-
-  if not self.children then
-    self.children = { }
+function UI.Form:validateField(field)
+  if field.required then
+    if not field.value or #field.value == 0 then
+      return false, 'Field is required'
+    end
   end
-  for k,field in pairs(self.fields) do
-    if field.label then
-      table.insert(self.children, UI.Text({
-        x = 1,
-        y = k,
-        width = #field.label,
-        value = field.label,
-      }))
-    end
-    local value
-    if field.key then
-      value = self.values[field.key]
-    end
-    if not value then
-      value = ''
-    end
-    value = tostring(value)
-    local width = #value
-    if field.limit then
-       width = field.limit + 2
-    end
-    if width == 0 then
-      width = nil
-    end
-    local fieldProperties = {
-      x = self.labelWidth + 2,
-      y = k,
-      width = width,
-      value = value,
-    }
-    UI.setProperties(fieldProperties, field)
-    table.insert(self.children, field.display(fieldProperties))
-  end
+  return true
 end
 
 function UI.Form:eventHandler(event)
-  if event.type == 'accept' then
+  if event.type == 'form_ok' then
     for _,child in pairs(self.children) do
-      if child.key then
-        self.values[child.key] = child.value
+      if child.formKey  then
+        local s, m = self:validateField(child)
+        if not s then
+          self:setFocus(child)
+          self:emit({ type = 'form_invalid', message = m, field = child })
+          return false
+        end
       end
     end
+    for _,child in pairs(self.children) do
+      if child.formKey then
+        self.values[child.formKey] = child.value
+      end
+    end
+    self:emit({ type = self.event, UIElement = self })
+  else
+    return UI.Window.eventHandler(self, event)
   end
+  return true
 end
 
 --[[-- Dialog --]]--
 UI.Dialog = class(UI.Page)
 UI.Dialog.defaults = {
+  UIElement = 'Dialog',
   x = 7,
   y = 4,
+  z = 2,
   height = 7,
-  backgroundColor = colors.lightBlue,
+  backgroundColor = colors.white,
 }
 function UI.Dialog:init(args)
-  local defaults = UI:getDefaults(UI.Dialog)
+  local defaults = UI:getDefaults(UI.Dialog, args)
 
   UI.setProperties(defaults, {
     width = UI.term.width-11,
-    titleBar = UI.TitleBar({ previousPage = true }),
-    acceptButton = UI.Button({
-      text = 'Accept',
-      event = 'accept',
-      x = 5,
-      y = 5
-    }),
-    cancelButton = UI.Button({
-      text = 'Cancel',
-      event = 'cancel',
-      x = 17,
-      y = 5
-    }),
-    statusBar = UI.StatusBar(),
+    titleBar = UI.TitleBar({ previousPage = true, title = defaults.title }),
   })
 
   UI.setProperties(defaults, args)
   UI.Page.init(self, defaults)
+end
+
+function UI.Dialog:setParent()
+  UI.Window.setParent(self)
+  self.x = math.floor((self.parent.width - self.width) / 2) + 1
+  self.y = math.floor((self.parent.height - self.height) / 2) + 1
 end
 
 function UI.Dialog:eventHandler(event)

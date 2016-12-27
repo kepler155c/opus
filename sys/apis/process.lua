@@ -27,6 +27,11 @@ function Process:threadEvent(...)
   end
 end
 
+function Process:addThread(fn, ...)
+  return self:newThread(nil, fn, ...)
+end
+
+-- deprecated
 function Process:newThread(name, fn, ...)
 
   self.uid = self.uid + 1
@@ -45,7 +50,7 @@ function Process:newThread(name, fn, ...)
     local s, m = pcall(function() fn(unpack(args)) end)
     if not s and m then
       if m == 'Terminated' then
-        printError(thread.name .. ' terminated')
+        --printError(thread.name .. ' terminated')
       else
         printError(m)
       end

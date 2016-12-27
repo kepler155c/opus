@@ -30,10 +30,11 @@ local page = UI.Page({
     backgroundFocusColor = colors.black,
     limit = 256,
     accelerators = {
-      enter            = 'command_enter',
-      up               = 'history_back',
-      down             = 'history_forward',
-      mouse_rightclick = 'clear_prompt',
+      enter               = 'command_enter',
+      up                  = 'history_back',
+      down                = 'history_forward',
+      mouse_rightclick    = 'clear_prompt',
+      [ 'control-space' ] = 'autocomplete',
     },
   }),
   grid = UI.ScrollingGrid({
@@ -72,20 +73,65 @@ function page:enable()
   end
 end
 
+function autocomplete(env, oLine, x)
+
+  local sLine = oLine:sub(1, x)
+  local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
+  if nStartPos then
+    sLine = sLine:sub(nStartPos)
+  end
+
+  if #sLine > 0 then
+    local results = textutils.complete(sLine, env)
+
+    if #results == 0 then
+--      setError('No completions available')
+
+    elseif #results == 1 then
+      return Util.insertString(oLine, results[1], x + 1)
+
+    elseif #results > 1 then
+      local prefix = results[1]
+      for n = 1, #results do
+        local result = results[n]
+        while #prefix > 0 do
+          if result:find(prefix, 1, true) == 1 then
+            break
+          end
+          prefix = prefix:sub(1, #prefix - 1)
+        end
+      end
+      if #prefix > 0 then
+        return Util.insertString(oLine, prefix, x + 1)
+      else
+--        setStatus('Too many results')
+      end
+    end
+  end
+  return oLine
+end
+
 function page:eventHandler(event)
 
   if event.type == 'global' then
-    page:setPrompt('', true)
+    self:setPrompt('', true)
     self:executeStatement('getfenv(0)')
     command = nil
 
   elseif event.type == 'local' then
-    page:setPrompt('', true)
+    self:setPrompt('', true)
     self:executeStatement('getfenv(1)')
     command = nil
 
+  elseif event.type == 'autocomplete' then
+    local sz = #self.prompt.value
+    local pos = self.prompt.pos
+    self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.pos))
+    self.prompt:setPosition(pos + #self.prompt.value - sz)
+    self.prompt:updateCursor()
+
   elseif event.type == 'device' then
-    page:setPrompt('device', true)
+    self:setPrompt('device', true)
     self:executeStatement('device')
 
   elseif event.type == 'history_back' then
