@@ -129,7 +129,7 @@ recTerm = multishell.term
 for key, func in pairs(oldTerm) do
 	recTerm[key] = function(...)
 		local result = { func(...) }
-		
+
 		if callCount == 0 then
 			os.queueEvent('capture_frame')
 		end
@@ -480,9 +480,15 @@ for i = 1, #calls do
 		
 		for xx = xMin, xMax do if buffer[yy][xx][1] ~= oldBuffer[yy][xx][1] or (buffer[yy][xx][2] ~= oldBuffer[yy][xx][2] and buffer[yy][xx][1] ~= " ") or buffer[yy][xx][3] ~= oldBuffer[yy][xx][3] or buffer[yy][xx][4] ~= oldBuffer[yy][xx][4] or  i == 1 then
 			local thisChar, thisT, thisB, xBump = chars[buffer[yy][xx][1]:byte()], buffer[yy][xx][2], buffer[yy][xx][3], (xx - xMin) * charW
-			
-			for y = 1, charH do for x = 1, charW do thisFrame[y + yBump][x + xBump] = thisChar[y][x] and thisT or thisB end end
-			
+if thisChar then
+			for y = 1, charH do
+				for x = 1, charW do
+					local ch = thisChar[y][x] and thisT or thisB
+					thisFrame[y + yBump][x + xBump] = ch
+				end
+			end
+end
+
 			if buffer[yy][xx][4] then
 				thisT, thisChar = colourNum[tCol], chars[95]
 				for y = 1, charH do for x = 1, charW do if thisChar[y][x] then thisFrame[y + yBump][x + xBump] = thisT end end end

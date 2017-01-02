@@ -32,6 +32,7 @@ local keyboard
 local clipboard = { size, internal }
 local searchPattern
 local undo      = { chain = { }, pointer = 0 }
+local complete  = { }
 
 if _G.__CLIPBOARD then
   clipboard = _G.__CLIPBOARD
@@ -485,36 +486,51 @@ local __actions = {
   end,
 
   autocomplete = function()
-    local sLine = tLines[y]:sub(1, x - 1)
-    local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
-    if nStartPos then
-      sLine = sLine:sub(nStartPos)
+    if keyboard.lastAction ~= 'autocomplete' or not complete.results then
+      local sLine = tLines[y]:sub(1, x - 1)
+      local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
+      if nStartPos then
+        sLine = sLine:sub(nStartPos)
+      end
+      if #sLine > 0 then
+        complete.results = textutils.complete(sLine)
+      else
+        complete.results = { }
+      end
+      complete.index = 0
+      complete.x = x
     end
-    if #sLine > 0 then
-      local results = textutils.complete(sLine)
 
-      if #results == 0 then
-        setError('No completions available')
+    if #complete.results == 0 then
+      setError('No completions available')
 
-      elseif #results == 1 then
-        actions.insertText(x, y, results[1])
+    elseif #complete.results == 1 then
+      actions.insertText(x, y, complete.results[1])
+      complete.results = nil
 
-      elseif #results > 1 then
-        local prefix = results[1]
-        for n = 1, #results do
-          local result = results[n]
-          while #prefix > 0 do
-            if result:find(prefix, 1, true) == 1 then
-              break
-            end
-            prefix = prefix:sub(1, #prefix - 1)
+    elseif #complete.results > 1 then
+      local prefix = complete.results[1]
+      for n = 1, #complete.results do
+        local result = complete.results[n]
+        while #prefix > 0 do
+          if result:find(prefix, 1, true) == 1 then
+            break
           end
+          prefix = prefix:sub(1, #prefix - 1)
         end
-        if #prefix > 0 then
-          actions.insertText(x, y, prefix)
-        else
-          setStatus('Too many results')
+      end
+      if #prefix > 0 then
+        actions.insertText(x, y, prefix)
+        complete.results = nil
+      else
+        if complete.index > 0 then
+          actions.deleteText(complete.x, y, complete.x + #complete.results[complete.index], y)
         end
+        complete.index = complete.index + 1
+        if complete.index > #complete.results then
+          complete.index = 1
+        end
+        actions.insertText(complete.x, y, complete.results[complete.index])
       end
     end
   end,
@@ -1203,6 +1219,9 @@ while bRunning do
     mark.continue = false
 
     actions[action](param, param2)
+    if action ~= 'menu' then
+      keyboard.lastAction = action
+    end
 
     if x ~= lastPos.x or y ~= lastPos.y then
       actions.setCursor()
