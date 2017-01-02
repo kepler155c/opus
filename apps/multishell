@@ -518,6 +518,10 @@ while true do
   local tEventData = { os.pullEventRaw() }
   local sEvent = table.remove(tEventData, 1)
 
+  if sEvent == 'key_up' then
+    processKeyEvent(sEvent, tEventData[1])
+  end
+
   if sEvent == "term_resize" then
     -- Resize event
     w,h = parentTerm.getSize()
