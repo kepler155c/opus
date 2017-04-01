@@ -14,7 +14,7 @@ end
 
 Event.addHandler('peripheral', function(event, side)
   if side then
-    local dev = Peripheral.addDevice(side)
+    local dev = Peripheral.addDevice(device, side)
     if dev then
       term.setTextColor(attachColor)
       Util.print('[%s] %s attached', dev.side, dev.name)

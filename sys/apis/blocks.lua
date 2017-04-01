@@ -96,15 +96,13 @@ function blockDB:seedDB(dir)
     end
     lastID = strId
 
-    local sep = string.find(line[2], ':')
-    if not sep then
-      nid = tonumber(line[2])
-      dmg = 0
-    else
-      nid = tonumber(string.sub(line[2], 1, sep - 1))
-      dmg = tonumber(string.sub(line[2], sep + 1, #line[2]))
+    local t = { }
+    string.gsub(line[2], '(%d+)', function(d) table.insert(t, d) end)
+    nid = tonumber(t[1])
+    dmg = 0
+    if t[2] then
+      dmg = tonumber(t[2])
     end
-
     self:add(nid, dmg, name, strId)
   end
 
@@ -653,13 +651,13 @@ function blockTypeDB:seedDB()
   })
   blockTypeDB:addTemp('piston', {  -- piston placement is broken in 1.7 -- need to add work around
     { 0, nil, 0, 'piston-down' },
-    { 1, nil, 0 },
+    { 1, nil, 0, 'piston-up' },
     { 2, nil, 0, 'piston-north' },
     { 3, nil, 0, 'piston-south' },
     { 4, nil, 0, 'piston-west' },
     { 5, nil, 0, 'piston-east' },
     { 8, nil, 0, 'piston-down' },
-    { 9, nil, 0 },
+    { 9, nil, 0, 'piston-up' },
     { 10, nil, 0, 'piston-north' },
     { 11, nil, 0, 'piston-south' },
     { 12, nil, 0, 'piston-west' },

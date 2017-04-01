@@ -1,6 +1,21 @@
 local Peripheral = { }
 
-function Peripheral.addDevice(side)
+local function getDeviceList()
+
+  if _G.device then
+    return _G.device
+  end
+
+  local deviceList = { }
+
+  for _,side in pairs(peripheral.getNames()) do
+    Peripheral.addDevice(deviceList, side)
+  end
+
+  return deviceList
+end
+
+function Peripheral.addDevice(deviceList, side)
   local name = side
   local ptype = peripheral.getType(side)
 
@@ -28,33 +43,33 @@ function Peripheral.addDevice(side)
   if sides[name] then
     local i = 1
     local uniqueName = ptype
-    while device[uniqueName] do
+    while deviceList[uniqueName] do
       uniqueName = ptype .. '_' .. i
       i = i + 1
     end
     name = uniqueName
   end
 
-  device[name] = peripheral.wrap(side)
-  Util.merge(device[name], {
+  deviceList[name] = peripheral.wrap(side)
+  Util.merge(deviceList[name], {
     name = name,
     type = ptype,
     side = side,
   })
 
-  return device[name]
+  return deviceList[name]
 end
 
 function Peripheral.getBySide(side)
-  return Util.find(device, 'side', side)
+  return Util.find(getDeviceList(), 'side', side)
 end
 
 function Peripheral.getByType(typeName)
-  return Util.find(device, 'type', typeName)
+  return Util.find(getDeviceList(), 'type', typeName)
 end
 
 function Peripheral.getByMethod(method)
-  for _,p in pairs(device) do
+  for _,p in pairs(getDeviceList()) do
     if p[method] then
       return p
     end

@@ -438,6 +438,7 @@ end
 
 function Manager:pullEvents(...)
   Event.pullEvents(...)
+  self.term:reset()
 end
 
 function Manager:exitPullEvents()
@@ -1075,7 +1076,7 @@ function UI.TransitionSlideLeft:update(device)
     self.canvas:blit(device, {
       x = self.x,
       y = self.y,
-      ex = self.ex - x + self.x + 1,
+      ex = self.ex - x + self.x,
       ey = self.ey },
       { x = x, y = self.y })
   end
@@ -1108,13 +1109,13 @@ function UI.TransitionSlideRight:update(device)
     self.lastScreen:blit(device, {
       x = self.x,
       y = self.y,
-      ex = self.ex - x + self.x + 1,
+      ex = self.ex - x + self.x,
       ey = self.ey },
       { x = x, y = self.y })
     self.canvas:blit(device, {
       x = self.ex - x + self.x,
       y = self.y,
-      ex = self.ex + 1,
+      ex = self.ex,
       ey = self.ey },
       { x = self.x, y = self.y })
   end
@@ -1431,8 +1432,6 @@ end
 UI.Grid = class(UI.Window)
 UI.Grid.defaults = {
   UIElement = 'Grid',
-  x = 1,
-  y = 1,
   index = 1,
   inverseSort = false,
   disableHeader = false,
@@ -2571,7 +2570,7 @@ UI.StatusBar.defaults = {
 function UI.StatusBar:init(args)
   local defaults = UI:getDefaults(UI.StatusBar, args)
   UI.GridLayout.init(self, defaults)
-  self:setStatus(self.status)
+  self:setStatus(self.status, true)
 end
 
 function UI.StatusBar:setParent()
@@ -2583,11 +2582,14 @@ function UI.StatusBar:setParent()
   end
 end
 
-function UI.StatusBar:setStatus(status)
+function UI.StatusBar:setStatus(status, noDraw)
   if type(status) == 'string' then
     self.values[1] = { status = status }
   else
     self.values[1] = status
+  end
+  if not noDraw then
+    self:draw()
   end
 end
 
@@ -2796,7 +2798,8 @@ function UI.TextEntry:updateScroll()
   elseif self.pos < self.scroll then
     self.scroll = self.pos
   end
---  debug('p:%d s:%d w:%d l:%d', self.pos, self.scroll, self.width, self.limit)
+
+  --debug('p:%d s:%d w:%d l:%d', self.pos, self.scroll, self.width, self.limit)
 end
 
 function UI.TextEntry:draw()
@@ -2910,7 +2913,7 @@ function UI.TextEntry:eventHandler(event)
     return true
 
   elseif event.type == 'mouse_click' then
-    if self.focused then
+    if self.focused and event.x > 1 then
       self.pos = event.x + self.scroll - 2
       self:updateCursor()
       return true
@@ -3166,7 +3169,7 @@ function UI.Dialog:init(args)
     titleBar = UI.TitleBar({ previousPage = true, title = defaults.title }),
   })
 
-  UI.setProperties(defaults, args)
+  --UI.setProperties(defaults, args)
   UI.Page.init(self, defaults)
 end
 
@@ -3266,8 +3269,8 @@ function UI.NftImage:setImage(image)
 end
 
 UI:loadTheme('config/ui.theme')
-if _HOST and string.find(_HOST, 'CCEmuRedux') then
-  UI:loadTheme('config/ccemuredux.theme')
+if os.getVersion() >= 1.79 then
+  UI:loadTheme('config/ext.theme')
 end
 
 UI:setDefaultDevice(UI.Device({ device = term.current() }))

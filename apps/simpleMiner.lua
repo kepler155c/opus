@@ -24,6 +24,11 @@ local options = {
 
 local MIN_FUEL = 7500
 local LOW_FUEL = 1500
+local MAX_FUEL = 100000
+
+if not term.isColor() then
+  MAX_FUEL = 20000
+end
 
 local mining = {
   diameter = 1,
@@ -175,6 +180,7 @@ end
 
 function refuel()
   if turtle.getFuelLevel() < MIN_FUEL then
+    local oldStatus = turtle.status
     status('refueling')
 
     if turtle.selectSlot('minecraft:coal:0') then
@@ -193,7 +199,7 @@ function refuel()
       end)
     end
     log('Fuel: ' .. turtle.getFuelLevel())
-    status('boring')
+    status(oldStatus)
   end
 
   turtle.select(1)
@@ -315,7 +321,7 @@ function mineable(action)
     collectDrops(action.suck)
   end
 
-  if turtle.getFuelLevel() < 99000 then
+  if turtle.getFuelLevel() < (MAX_FUEL - 1000) then
     if block.name == 'minecraft:lava' or block.name == 'minecraft:flowing_lava' then
       if turtle.selectSlot('minecraft:bucket:0') then
         if action.place() then
@@ -546,6 +552,7 @@ end
 local function main()
   repeat
     while #mining.locations > 0 do
+      status('searching')
       if not boreCommand() then
         return
       end

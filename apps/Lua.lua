@@ -68,9 +68,6 @@ end
 function page:enable()
   self:setFocus(self.prompt)
   UI.Page.enable(self)
-  if not device then
-    self.menuBar.Device:disable()
-  end
 end
 
 local function autocomplete(env, oLine, x)
@@ -131,6 +128,13 @@ function page:eventHandler(event)
     self.prompt:updateCursor()
 
   elseif event.type == 'device' then
+    if not _G.device then
+      sandboxEnv.device = { }
+      for _,side in pairs(peripheral.getNames()) do
+        local key = string.format('%s:%s', peripheral.getType(side), side)
+        sandboxEnv.device[ key ] = peripheral.wrap(side)
+      end
+    end
     self:setPrompt('device', true)
     self:executeStatement('device')
 

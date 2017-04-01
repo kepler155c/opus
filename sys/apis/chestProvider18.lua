@@ -15,15 +15,18 @@ function ChestProvider:init(args)
 end
  
 function ChestProvider:isValid()
-  return self.p and self.p.getAllStacks
+  return self.p and self.p.list
 end
  
 function ChestProvider:refresh()
   if self.p then
-    self.p.condenseItems()
-    self.stacks = self.p.getAllStacks(false)
+    --self.p.condenseItems()
+    self.stacks = self.p.list()
     local t = { }
-    for _,s in ipairs(self.stacks) do
+    for _,s in pairs(self.stacks) do
+      s.id = s.name
+      s.dmg = s.damage
+      s.qty = s.count
       local key = s.id .. ':' .. s.dmg
       if t[key] and t[key].qty < 64 then
         t[key].max_size = t[key].qty
@@ -47,11 +50,14 @@ end
  
 function ChestProvider:getItemInfo(id, dmg)
   local item = { id = id, dmg = dmg, qty = 0, max_size = 64 }
-  for _,stack in pairs(self.stacks) do
+  for k,stack in pairs(self.stacks) do
     if stack.id == id and stack.dmg == dmg then
-      item.name = stack.display_name
-      item.qty = item.qty + stack.qty
-      item.max_size = stack.max_size
+      local meta = self.p.getItemMeta(k)
+      if meta then
+        item.name = meta.displayName
+        item.qty = item.qty + meta.count
+        item.max_size = meta.maxCount
+      end
     end
   end
   if item.name then
@@ -68,11 +74,11 @@ end
 
 function ChestProvider:provide(item, qty, slot)
   if self.p then
-    self.stacks = self.p.getAllStacks(false)
+    self:refresh()
     for key,stack in pairs(self.stacks) do
       if stack.id == item.id and stack.dmg == item.dmg then
         local amount = math.min(qty, stack.qty)
-        self.p.pushItemIntoSlot(self.direction, key, amount, slot)
+        self.p.pushItems(self.direction, key, amount, slot)
         qty = qty - amount
         if qty <= 0 then
           break
@@ -81,30 +87,16 @@ function ChestProvider:provide(item, qty, slot)
     end
   end
 end
-
+ 
 function ChestProvider:extract(slot, qty)
   if self.p then
-    self.p.pushItem(self.direction, slot, qty)
+    self.p.pushItems(self.direction, slot, qty)
   end
 end
 
 function ChestProvider:insert(slot, qty)
   if self.p then
-    local s, m = pcall(function() self.p.pullItem(self.direction, slot, qty) end)
-    if not s and m then
-      print('chestProvider:pullItem')
-      print(m)
-      Logger.log('chestProvider', 'Insert failed, trying again')
-      sleep(1)
-      s, m = pcall(function() self.p.pullItem(self.direction, slot, qty) end)
-      if not s and m then
-        print('chestProvider:pullItem')
-        print(m)
-        Logger.log('chestProvider', 'Insert failed again')
-      else
-        Logger.log('chestProvider', 'Insert successful')
-      end
-    end
+    self.p.pullItems(self.direction, slot, qty)
   end
 end
 

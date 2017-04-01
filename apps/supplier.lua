@@ -6,6 +6,11 @@ local Point = require('point')
 local TableDB = require('tableDB')
 local MEProvider = require('meProvider')
 
+local ChestProvider = require('chestProvider')
+if os.getVersion() == 1.8 then
+  ChestProvider = require('chestProvider18')
+end
+
 if not device.wireless_modem then
 	error('No wireless modem detected')
 end
@@ -324,9 +329,9 @@ Message.addHandler('needSupplies',
 	  	turtle.select(15)
   		turtle.placeDown()
   		os.sleep(.1) -- random computer not connected error
-  		local p = peripheral.wrap('bottom')
+      local p = ChestProvider({ direction = 'up', wrapSide = 'bottom' })
   		for i = 1, 16 do
-  			p.pullItem('up', i, 64)
+  			p:insert(i, 64)
   		end
 
   		Message.send(__BUILDER_ID, 'gotSupplies', { supplies = true, point = pt })
@@ -334,9 +339,9 @@ Message.addHandler('needSupplies',
   		Message.waitForMessage('thanks', 5, __BUILDER_ID)
   		--os.sleep(0)
 
-  		p.condenseItems()
+  		--p.condenseItems()
   		for i = 1, 16 do
-  			p.pushItem('up', i, 64)
+  			p:extract(i, 64)
   		end
     	turtle.digDown()
       turtle.status = 'waiting'
@@ -386,6 +391,12 @@ turtle.setPoint({ x = -1, z = -2, y = 0, heading = 0 })
 turtle.saveLocation('supplies')
 
 Builder.itemProvider = MEProvider()
+if not Builder.itemProvider:isValid() then
+  Builder.itemProvider = ChestProvider()
+  if not Builder.itemProvider:isValid() then
+    error('A chest or ME interface must be below turtle')
+  end
+end
 
 turtle.run(function()
   Event.pullEvents(onTheWay)

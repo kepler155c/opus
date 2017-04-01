@@ -90,6 +90,16 @@ function os.isPocket()
   return not not pocket
 end
 
+function os.getVersion()
+  if _CC_VERSION then
+    return tonumber(_CC_VERSION)
+  end
+  if _HOST then
+    return tonumber(_HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
+  end
+  return 1.7
+end
+
 function os.registerApp(entry)
   local apps = { }
   Config.load('apps', apps)

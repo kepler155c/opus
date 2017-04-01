@@ -11,10 +11,14 @@ local UI = require('ui')
 local Schematic = require('schematic')
 local Profile = require('profile')
 local TableDB = require('tableDB')
-local ChestProvider = require('chestProvider')
 local MEProvider = require('meProvider')
 local Blocks = require('blocks')
 local Point = require('point')
+
+local ChestProvider = require('chestProvider')
+if os.getVersion() == 1.8 then
+  ChestProvider = require('chestProvider18')
+end
 
 Logger.filter('modem_send', 'event', 'ui')
 
@@ -38,24 +42,10 @@ local Builder = {
   fuelItem = { id = 'minecraft:coal', dmg = 0 },
   resourceSlots = 15,
   facing = 'south',
+  confirmFacing = false,
 }
 
--- these wrenches work relative to the turtle
-local GoodWrenches = {
-  [ 'appliedEnergistics2:item.ToolCertusQuartzWrench' ] = true,
-  [ 'appliedEnergistics2:item.ToolNetherQuartzWrench' ] = true,
-  [ 'EnderIO:itemYetaWrench' ] = true,
-}
-
---[[
--- these wrenches work but take more hits to turn a piston
-
-local BadButUsableWrenches = {
-  [ 'ThermalExpansion:wrench' ] = true,
-  [ 'MineFactoryReloaded:hammer' ] = true,
-  [ 'ImmersiveEngineering:tool' ] = true,
-}
---]]
+local pistonFacings
 
 --[[-- SubDB --]]--
 subDB = TableDB({
@@ -359,7 +349,7 @@ function Builder:getBlockCounts()
   local blocks = { }
  
   -- add a couple essential items to the supply list to allow replacements
-  local wrench = subDB:getSubstitutedItem('ThermalExpansion:wrench', 0)
+  local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
   wrench.qty = 0
   wrench.need = 1
   blocks[wrench.id .. ':' .. wrench.dmg] = wrench
@@ -461,7 +451,7 @@ function Builder:getSupplyList(blockIndex)
     index = 15,
   }
 
-  local wrench = subDB:getSubstitutedItem('ThermalExpansion:wrench', 0)
+  local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
   slots[16] = {
     id = wrench.id,
     dmg = wrench.dmg,
@@ -612,9 +602,7 @@ function Builder:getSupplies()
     if s.need > 0 then
       local item = self.itemProvider:getItemInfo(s.id, s.dmg)
       if item then
-        if item.name then
-          s.name = item.name
-        end
+        s.name = item.name
 
         local qty = math.min(s.need - s.qty, item.qty)
 
@@ -629,6 +617,8 @@ function Builder:getSupplies()
           self.itemProvider:provide(item, qty, s.index)
           s.qty = turtle.getItemCount(s.index)
         end
+      else
+        s.name = blocks.blockDB:getName(s.id, s.dmg)
       end
     end
     if s.qty < s.need then
@@ -855,26 +845,83 @@ end
 
 function Builder:getWrenchSlot()
 
-  local wrench = subDB:getSubstitutedItem('ThermalExpansion:wrench', 0)
+  local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
 
   return Builder:selectItem(wrench.id, wrench.dmg)
 end
 
-function Builder:wrenchBlock(side, count)
+function Builder:getTurtleFacing()
+
+  if os.getVersion() == 1.8 then
+
+    local directions = { -- reversed directions
+      [5] = 'west',
+      [3] = 'north',
+      [4] = 'east',
+      [2] = 'south',
+    }
+
+    if self:selectItem('minecraft:piston', 0) then
+      turtle.placeUp()
+      local _, bi = turtle.inspectUp()
+      turtle.digUp()
+      return directions[bi.metadata]
+    end
+    return
+  end
+  return Builder.facing
+end
+
+function Builder:wrenchBlock(side, facing)
 
   local s = Builder:getWrenchSlot()
 
   if not s then
     b.needResupply = true
-    return
+    return false
   end
 
-  turtle.select(s.index)
-  for i = 1,count do
+  local key = turtle.point.heading .. '-' .. facing
+  local count = pistonFacings[side][key]
+
+  if count then
+    turtle.select(s.index)
+    for i = 1,count do
+      turtle.getAction(side).place()
+    end
+    return true
+  end
+
+  local directions = {
+    [5] = 'east',
+    [3] = 'south',
+    [4] = 'west',
+    [2] = 'north',
+    [0] = 'down',
+    [1] = 'up',
+  }
+
+  if turtle.getHeadingInfo(facing).heading < 4 then
+    local offsetDirection = (turtle.getHeadingInfo(Builder.facing).heading +
+                turtle.getHeadingInfo(facing).heading) % 4
+    facing = turtle.getHeadingInfo(offsetDirection).direction
+  end
+
+  count = 0
+  print('determining wrench count')
+  for i = 1, 6 do
+    local _, bi = turtle.getAction(side).inspect()
+    local pistonFacing = directions[bi.metadata]
+
+    if facing == pistonFacing then
+      pistonFacings[side][key] = count
+      return true
+    end
+    count = count + 1
     turtle.getAction(side).place()
   end
 
-  return true
+  return false
 end
 
 -- place piston, wrench piston to face downward, extend, remove piston
@@ -890,15 +937,10 @@ function Builder:placePiston(b)
   end
 
   if not turtle.place(ps.index) then
-    return false
+    return
   end
 
-  local wrenchCount = 5
-  if GoodWrenches[ws.id] then
-    wrenchCount = 2
-  end
-
-  local success = self:wrenchBlock('forward', wrenchCount) --wrench piston to point downwards
+  local success = self:wrenchBlock('forward', 'down') --wrench piston to point downwards
 
   rs.setOutput('front', true)
   os.sleep(.25)
@@ -907,7 +949,7 @@ function Builder:placePiston(b)
   turtle.select(ps.index)
   turtle.dig()
 
-  return true
+  return success
 end
  
 function Builder:goto(x, z, y, heading)
@@ -1008,6 +1050,10 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     local isSouth = (turtle.getHeadingInfo(Builder.facing).heading +
                     turtle.getHeadingInfo(stairUpDirections[d]).heading) % 4 == 1
 
+    if os.getVersion() == 1.8 then
+      isSouth = false -- no stair bug in this version
+    end
+
     if isSouth then
 
       -- for some reason, the south facing stair doesn't place correctly
@@ -1058,6 +1104,7 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     [ 'piston-west' ] = 'west',
     [ 'piston-east' ] = 'east',
     [ 'piston-down'  ] = 'down',
+    [ 'piston-up'  ] = 'up',
   }
 
   if pistonDirections[d] then
@@ -1071,55 +1118,23 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
       return false
     end
 
-    if GoodWrenches[ws.id] then
-      -- piston turns relative to turtle position :)
-      local rotatedPistonDirections = {
-        [ 'piston-east' ] = 'south',
-        [ 'piston-south' ] = 'west',
-        [ 'piston-west' ] = 'north',
-        [ 'piston-north' ] = 'east',
-        [ 'piston-down'  ] = 'down',
-      }
+    -- piston turns relative to turtle position :)
+    local rotatedPistonDirections = {
+      [ 'piston-east' ] = 0,
+      [ 'piston-south' ] = 1,
+      [ 'piston-west' ] = 2,
+      [ 'piston-north' ] = 3,
+    }
 
-      local wrenchCount
+    self:gotoEx(b.x, b.z, b.y, nil, travelPlane)
 
-      if d == 'piston-down' then
-        self:gotoEx(b.x -1, b.z, b.y, 0, travelPlane)
-        wrenchCount = 2
-      else
-        local hi = turtle.getHeadingInfo(rotatedPistonDirections[d])
-        self:gotoEx(b.x + hi.xd, b.z + hi.zd, b.y, (hi.heading + 2) % 4, travelPlane)
-        wrenchCount = 1
-      end
+    local heading = rotatedPistonDirections[d]
+    if heading and turtle.point.heading % 2 ~= heading % 2 then
+      turtle.setHeading(heading)
+    end
 
-      if self:place(slot) then
-        self:wrenchBlock('forward', wrenchCount)
-        turtle.up()
-        b.placed = self:placePiston(b)
-      end
-
-    else -- cresent wrench
-      -- piston turns relative to the world :(
-      local wrenchCounts = {
-        [ 1 ] = 4,  -- east
-        [ 2 ] = 2,  -- south
-        [ 3 ] = 3,  -- west
-        [ 4 ] = 1,  -- north
-      }
-
-      self:goto(b.x, b.z, b.y, nil, travelPlane)
-
-      local wrenchCount = 5
-
-      if d ~= 'piston-down' then
-        local offsetDirection = (turtle.getHeadingInfo(Builder.facing).heading +
-                    turtle.getHeadingInfo(pistonDirections[d]).heading) % 4
-        wrenchCount = wrenchCounts[offsetDirection + 1]
-      end
-
-      if self:placeDown(slot) then
-        b.placed = self:wrenchBlock('down', wrenchCount)
-      end
+    if self:placeDown(slot) then
+      b.placed = self:wrenchBlock('down', pistonDirections[d])
     end
   end
  
@@ -1254,6 +1269,13 @@ function Builder:build()
   else
     travelPlane = self:findTravelPlane(self.index)
     turtle.status = 'building'
+    if not self.confirmFacing then
+      local facing = self:getTurtleFacing()
+      if facing then
+        self.confirmFacing = true
+        self.facing = facing
+      end
+    end
   end
  
   UI:setPage('blank')
@@ -1364,6 +1386,11 @@ blankPage = UI.Page()
 function blankPage:draw()
   self:clear()
   self:setCursorPos(1, 1)
+end
+
+function blankPage:enable()
+  self:sync()
+  UI.Page.enable(self)
 end
 
 --[[-- selectSubstitutionPage --]]--
@@ -1524,6 +1551,7 @@ function substitutionPage:eventHandler(event)
   elseif event.type == 'accept' or event.type == 'air' or event.type == 'revert' then
     self.statusBar:setStatus('Saving changes...')
     self.statusBar:draw()
+    self:sync()
  
     if event.type == 'air' then
       self:applySubstitute('minecraft:air', 0)
@@ -1674,8 +1702,8 @@ listingPage = UI.Page({
   grid = UI.ScrollingGrid({
     columns = {
       { heading = 'Name', key = 'name',  width = UI.term.width - 14 },
-      { heading = 'Need', key = 'fNeed', width = 5                  },
-      { heading = 'Have', key = 'fQty',  width = 5                  },
+      { heading = 'Need', key = 'need', width = 5                  },
+      { heading = 'Have', key = 'qty',  width = 5                  },
     },
     sortColumn = 'name',
     y = 3,
@@ -1743,6 +1771,13 @@ function listingPage:eventHandler(event)
   return UI.Page.eventHandler(self, event)
 end
 
+function listingPage.grid:getDisplayValues(row)
+  row = Util.shallowCopy(row)
+  row.need = Util.toBytes(row.need)
+  row.qty = Util.toBytes(row.qty)
+  return row
+end
+
 function listingPage.grid:getRowTextColor(row, selected)
   if row.is_craftable then
     return colors.yellow
@@ -1759,13 +1794,15 @@ function listingPage:refresh()
   for _,b in pairs(supplyList) do
     if b.need > 0 then
       local item = Builder.itemProvider:getItemInfo(b.id, b.dmg)
+
       if item then
         local block = blocks.blockDB:lookup(b.id, b.dmg)
         if not block then
-          blocks.blockDB:add(b.id, b.dmg, item.name)
+          blocks.blockDB:add(b.id, b.dmg, item.name, b.id)
         elseif not blocks.name and item.name then
           blocks.blockDB:add(b.id, b.dmg, item.name)
         end
+        b.name = item.name
         b.qty = item.qty
         b.is_craftable = item.is_craftable
       elseif not b.name then
@@ -1775,19 +1812,17 @@ function listingPage:refresh()
   end
   blocks.blockDB:flush()
  
-  local t = {}
-  for _,b in pairs(supplyList) do
-    local block = blocks.blockDB:lookup(b.id, b.dmg)
-    if block then
-      b.name = block.name
+  if self.fullList then
+    self.grid:setValues(supplyList)
+  else
+    local t = {}
+    for _,b in pairs(supplyList) do
+      if self.fullList or b.qty < b.need then
+        table.insert(t, b)
+      end
     end
-    if self.fullList or b.qty < b.need then
-      table.insert(t, b)
-    end
-    b.fNeed = Util.toBytes(b.need)
-    b.fQty = Util.toBytes(b.qty)
+    self.grid:setValues(t)
   end
-  self.grid:setValues(t)
   self.grid:setIndex(1)
 end
  
@@ -1882,13 +1917,19 @@ function startPage:eventHandler(event)
  
   if event.type == 'startLevel' then
     local dialog = UI.Dialog({
-      text = UI.Text({ x = 5, y = 3, value = '0 - ' .. schematic.height }),
-      textEntry = UI.TextEntry({ x = 15, y = 3, '0 - 11' })
+      title = 'Enter Starting Level',
+      height = 7,
+      form = UI.Form {
+        y = 3, x = 2, height = 4,
+        text = UI.Text({ x = 5, y = 1, textColor = colors.gray, value = '0 - ' .. schematic.height }),
+        textEntry = UI.TextEntry({ x = 15, y = 1, '0 - 11', width = 7 }),
+      },
+      statusBar = UI.StatusBar(),
     })
  
     dialog.eventHandler = function(self, event)
-      if event.type == 'accept' then
-        local l = tonumber(self.textEntry.value)
+      if event.type == 'form_complete' then
+        local l = tonumber(self.form.textEntry.value)
         if l and l < schematic.height and l >= 0 then
           for k,v in pairs(schematic.blocks) do
             if v.y >= l then
@@ -1901,25 +1942,32 @@ function startPage:eventHandler(event)
         else
           self.statusBar:timedStatus('Invalid Level', 3)
         end
-        return true
+      elseif event.type == 'form_cancel' or event.type == 'cancel' then
+        UI:setPreviousPage()
+      else
+        return UI.Dialog.eventHandler(self, event)
       end
- 
-      return UI.Dialog.eventHandler(self, event)
+      return true
     end
  
-    dialog.titleBar.title = 'Enter Starting Level'
-    dialog:setFocus(dialog.textEntry)
+    dialog:setFocus(dialog.form.textEntry)
     UI:setPage(dialog)
  
   elseif event.type == 'startBlock' then
-    local dialog = UI.Dialog({
-      text = UI.Text({ x = 5, y = 3, value = '1 - ' .. #schematic.blocks }),
-      textEntry = UI.TextEntry({ x = 15, y = 3, value = tostring(Builder.index) })
-    })
+    local dialog = UI.Dialog {
+      title = 'Enter Block Number',
+      height = 7,
+      form = UI.Form {
+        y = 3, x = 2, height = 4,
+        text = UI.Text { x = 5, y = 1, value = '1 - ' .. #schematic.blocks, textColor = colors.gray },
+        textEntry = UI.TextEntry { x = 15, y = 1, value = tostring(Builder.index), width = 7 }
+      },
+      statusBar = UI.StatusBar(),
+    }
  
     dialog.eventHandler = function(self, event)
-      if event.type == 'accept' then
-        local bn = tonumber(self.textEntry.value)
+      if event.type == 'form_complete' then
+        local bn = tonumber(self.form.textEntry.value)
         if bn and bn < #schematic.blocks and bn >= 0 then
           Builder.index = bn
           Builder:saveProgress(Builder.index)
@@ -1927,14 +1975,15 @@ function startPage:eventHandler(event)
         else
           self.statusBar:timedStatus('Invalid Block', 3)
         end
-        return true
+      elseif event.type == 'form_cancel' or event.type == 'cancel' then
+        UI:setPreviousPage()
+      else
+        return UI.Dialog.eventHandler(self, event)
       end
- 
-      return UI.Dialog.eventHandler(self, event)
+      return true
     end
  
-    dialog.titleBar.title = 'Enter Block Number'
-    dialog:setFocus(dialog.textEntry)
+    dialog:setFocus(dialog.form.textEntry)
     UI:setPage(dialog)
  
   elseif event.type == 'assignBlocks' then
@@ -1991,6 +2040,12 @@ function startPage:eventHandler(event)
     else
       print('Starting build')
     end
+
+    -- reset piston cache in case wrench was substituted
+    pistonFacings = {
+      down = { },
+      forward = { },
+    }
  
     Builder:build()
     Profile.display()

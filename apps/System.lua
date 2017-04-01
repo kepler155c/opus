@@ -86,7 +86,7 @@ local systemPage = UI.Page {
       grid = UI.ScrollingGrid {
         y = 4,
         values = {
-          { name = 'CC version',  value = os.version()                       },
+          { name = 'CC version',  value = os.getVersion()                    },
           { name = 'Lua version', value = _VERSION                           },
           { name = 'MC version',  value = _MC_VERSION or 'unknown'           },
           { name = 'Disk free',   value = Util.toBytes(fs.getFreeSpace('/')) },
