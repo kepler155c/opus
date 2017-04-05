@@ -338,28 +338,32 @@ end
 
 local function nameDialog(f)
   local dialog = UI.Dialog({
-    x = (UI.term.width - 28) / 2,
-    width = 28,
-    textEntry = UI.TextEntry({ x = 4, y = 3, width = 20, limit = 20 })
+--    x = (UI.term.width - 28) / 2,
+    width = 22,
+    title = 'Enter Name',
+    form = UI.Form {
+      x = 2, rex = -2, y = 2,
+      textEntry = UI.TextEntry({ y = 3, width = 20, limit = 20 })
+    },
   })
 
-  dialog.titleBar.title = 'Enter Name'
-
   dialog.eventHandler = function(self, event)
-    if event.type == 'accept' then
-      local name = self.textEntry.value
+    if event.type == 'form_complete' then
+      local name = self.form.textEntry.value
       if name then
         f(name)
       else
         self.statusBar:timedStatus('Invalid Name', 3)
       end
       return true
+    elseif event.type == 'form_cancel' or event.type == 'cancel' then
+      UI:setPreviousPage()
+    else
+      return UI.Dialog.eventHandler(self, event)
     end
-
-    return UI.Dialog.eventHandler(self, event)
   end
 
-  dialog:setFocus(dialog.textEntry)
+  dialog:setFocus(dialog.form.textEntry)
   UI:setPage(dialog)
 end
 

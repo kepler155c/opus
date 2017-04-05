@@ -3164,10 +3164,10 @@ UI.Dialog.defaults = {
 function UI.Dialog:init(args)
   local defaults = UI:getDefaults(UI.Dialog, args)
 
-  UI.setProperties(defaults, {
-    width = UI.term.width-11,
-    titleBar = UI.TitleBar({ previousPage = true, title = defaults.title }),
-  })
+  if not defaults.width then
+    defaults.width = UI.term.width-11
+  end
+  defaults.titleBar = UI.TitleBar({ previousPage = true, title = defaults.title })
 
   --UI.setProperties(defaults, args)
   UI.Page.init(self, defaults)

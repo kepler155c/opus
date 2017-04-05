@@ -86,7 +86,15 @@ function methodsPage:enable(p)
   self.peripheral = p or self.peripheral
 
   local p = peripheral.wrap(self.peripheral.side)
-  if not p.getAdvancedMethodsData then
+  if p.getDocs then
+    self.grid.values = { }
+    for k,v in pairs(p.getDocs()) do
+      table.insert(self.grid.values, {
+        name = k,
+        doc = v,
+      })
+    end
+  elseif not p.getAdvancedMethodsData then
     self.grid.values = { }
     for name,f in pairs(p) do
       table.insert(self.grid.values, {
@@ -132,6 +140,12 @@ function methodsPage.viewportConsole:draw()
     c.cursorY = 2
     c:print('No extended Information')
     return 2
+  end
+
+  if method.doc then
+    c:print(method.doc, nil, colors.yellow)
+    c.ymax = c.cursorY + 1
+    return
   end
 
   if method.description then
