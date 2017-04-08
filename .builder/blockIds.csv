@@ -1,0 +1,667 @@
+Air,0,minecraft:air,Non-Solid Block
+Stone,1,minecraft:stone,Solid Block
+Granite,1:1,,Solid Block
+Polished Granite,1:2,,Solid Block
+Diorite,1:3,,Solid Block
+Polished Diorite,1:4,,Solid Block
+Andesite,1:5,,Solid Block
+Polished Andesite,1:6,,Solid Block
+Grass,2,minecraft:grass,Solid Block
+Dirt,3,minecraft:dirt,Solid Block
+Dirt (No Grass),3:1,,Solid Block
+Podzol,3:2,,Solid Block
+Cobblestone,4,minecraft:cobblestone,Solid Block
+Wooden Plank (Oak),5,minecraft:planks,Solid Block
+Wooden Plank (Spruce),5:1,,Solid Block
+Wooden Plank (Birch),5:2,,Solid Block
+Wooden Plank (Jungle),5:3,,Solid Block
+Wooden Plank (Acacia),5:4,,Solid Block
+Wooden Plank (Dark Oak),5:5,,Solid Block
+Sapling (Oak),6,minecraft:sapling,Plant
+Sapling (Spruce),6:1,,Plant
+Sapling (Birch),6:2,,Plant
+Sapling (Jungle),6:3,,Plant
+Sapling (Acacia),6:4,,Plant
+Sapling (Dark Oak),6:5,,Plant
+Bedrock,7,minecraft:bedrock,Solid Block
+Water,8,minecraft:flowing_water,Fluid
+Water (No Spread),9,minecraft:water,Fluid
+Lava,10,minecraft:flowing_lava,Fluid
+Lava (No Spread),11,minecraft:lava,Fluid
+Sand,12,minecraft:sand,Solid Block
+Red Sand,12:1,,Solid Block
+Gravel,13,minecraft:gravel,Solid Block
+Gold Ore,14,minecraft:gold_ore,Solid Block
+Iron Ore,15,minecraft:iron_ore,Solid Block
+Coal Ore,16,minecraft:coal_ore,Solid Block
+Wood (Oak),17,minecraft:log,Solid Block
+Wood (Spruce),17:1,,Solid Block
+Wood (Birch),17:2,,Solid Block
+Wood (Jungle),17:3,,Solid Block
+Wood (Oak 4),17:4,,Solid Block
+Wood (Oak 5),17:5,,Solid Block
+Leaves (Oak),18,minecraft:leaves,Solid Block
+Leaves (Spruce),18:1,,Solid Block
+Leaves (Birch),18:2,,Solid Block
+Leaves (Jungle),18:3,,Solid Block
+Sponge,19,minecraft:sponge,Solid Block
+Glass,20,minecraft:glass,Solid Block
+Lapis Lazuli Ore,21,minecraft:lapis_ore,Solid Block
+Lapis Lazuli Block,22,minecraft:lapis_block,Solid Block
+Dispenser,23,minecraft:dispenser,Block
+Sandstone,24,minecraft:sandstone,Solid Block
+Sandstone (Chiseled),24:1,,Solid Block
+Sandstone (Smooth),24:2,,Solid Block
+Note Block,25,minecraft:noteblock,Solid Block
+Bed (Block),26,minecraft:bed,Solid Block
+Rail (Powered),27,minecraft:golden_rail,Non-Solid Block
+Rail (Detector),28,minecraft:detector_rail,Non-Solid Block
+Sticky Piston,29,minecraft:sticky_piston,Solid Block
+Cobweb,30,minecraft:web,Non-Solid Block
+Dead Shrub,31,minecraft:tallgrass,Plant
+Tall Grass,31:1,,Plant
+Fern,31:2,,Plant
+Dead Shrub,32,minecraft:deadbush,Plant
+Piston,33,minecraft:piston,Solid Block
+Piston (Head),34,minecraft:piston_head,Solid Block
+Wool,35,minecraft:wool,Solid Block
+Orange Wool,35:1,,Solid Block
+Magenta Wool,35:2,,Solid Block
+Light Blue Wool,35:3,,Solid Block
+Yellow Wool,35:4,,Solid Block
+Lime Wool,35:5,,Solid Block
+Pink Wool,35:6,,Solid Block
+Gray Wool,35:7,,Solid Block
+Light Gray Wool,35:8,,Solid Block
+Cyan Wool,35:9,,Solid Block
+Purple Wool,35:10,,Solid Block
+Blue Wool,35:11,,Solid Block
+Brown Wool,35:12,,Solid Block
+Green Wool,35:13,,Solid Block
+Red Wool,35:14,,Solid Block
+Black Wool,35:15,,Solid Block
+Piston (Moving),36,minecraft:piston_extension,Solid Block
+Dandelion,37,minecraft:yellow_flower,Plant
+Popppy,38,minecraft:red_flower,Plant
+Blue Orchid,38:1,,Plant
+Allium,38:2,,Plant
+Azure Bluet,38:3,,
+Red Tulip,38:4,,Plant
+Orange Tulip,38:5,,Plant
+White Tulip,38:6,,Plant
+Pink Tulip,38:7,,Plant
+Oxeye Daisy,38:8,,Plant
+Brown Mushroom,39,minecraft:brown_mushroom,Block
+Red Mushroom,40,minecraft:red_mushroom,Block
+Block of Gold,41,minecraft:gold_block,Solid Block
+Block of Iron,42,minecraft:iron_block,Solid Block
+Stone Slab (Double),43,minecraft:double_stone_slab,Solid Block
+Sandstone Slab (Double),43:1,,Solid Block
+Wooden Slab (Double),43:2,,Solid Block
+Cobblestone Slab (Double),43:3,,Solid Block
+Brick Slab (Double),43:4,,Solid Block
+Stone Brick Slab (Double),43:5,,Solid Block
+Nether Brick Slab (Double),43:6,,Solid Block
+Quartz Slab (Double),43:7,,Solid Block
+Smooth Stone Slab (Double),43:8,,Solid Block
+Smooth Sandstone Slab (Double),43:9,,Solid Block
+Double Quartz Slab,43:15,,Solid Block
+Stone Slab,44,minecraft:stone_slab,Solid Block
+Sandstone Slab,44:1,,Solid Block
+Wooden Slab,44:2,,Solid Block
+Cobblestone Slab,44:3,,Solid Block
+Brick Slab,44:4,,Solid Block
+Stone Brick Slab,44:5,,Solid Block
+Nether Brick Slab,44:6,,Solid Block
+Quartz Slab,44:7,,Solid Block
+Brick,45,minecraft:brick_block,Solid Block
+TNT,46,minecraft:tnt,Solid Block
+Bookshelf,47,minecraft:bookshelf,Solid Block
+Moss Stone,48,minecraft:mossy_cobblestone,Solid Block
+Obsidian,49,minecraft:obsidian,Solid Block
+Torch,50,minecraft:torch,Non-Solid Block
+Fire,51,minecraft:fire,Non-Solid Block
+Mob Spawner,52,minecraft:mob_spawner,Solid Block
+Wooden Stairs (Oak),53,minecraft:oak_stairs,Solid Block
+Chest,54,minecraft:chest,Tile Entity
+Redstone Wire,55,minecraft:redstone_wire,Raw Materials
+Diamond Ore,56,minecraft:diamond_ore,Solid Block
+Block of Diamond,57,minecraft:diamond_block,Solid Block
+Crafting Table,58,minecraft:crafting_table,Solid Block
+Wheat (Crop),59,minecraft:wheat,Plant
+Farmland,60,minecraft:farmland,Solid Block
+Furnace,61,minecraft:furnace,Solid Block
+Furnace (Smelting),62,minecraft:lit_furnace,Solid Block
+Sign (Block),63,minecraft:standing_sign,Non-Solid Block
+Wood Door (Block),64,minecraft:wooden_door,Solid Block
+Ladder,65,minecraft:ladder,Solid Block
+Rail,66,minecraft:rail,Non-Solid Block
+Cobblestair Stairs,67,minecraft:stone_stairs,Solid Block
+Sign (Wall Block),68,minecraft:wall_sign,Non-Solid Block
+Lever,69,minecraft:lever,Non-Solid Block
+Stone Pressure Plate,70,minecraft:stone_pressure_plate,Non-Solid Block
+Iron Door (Block),71,minecraft:iron_door,Solid Block
+Wooden Pressure Plate,72,minecraft:wooden_pressure_plate,Non-Solid Blocks
+Redstone Ore,73,minecraft:redstone_ore,Solid Block
+Redstoen Ore (Glowing),74,minecraft:lit_redstone_ore,Solid Block
+Redstone Torch (Off),75,minecraft:unlit_redstone_torch,Non-Solid Block
+Redstone Torch,76,minecraft:redstone_torch,Non-Solid Block
+Button (Stone),77,minecraft:stone_button,Non-Solid Block
+Snow,78,minecraft:snow_layer,Block
+Ice,79,minecraft:ice,Solid Block
+Snow Block,80,minecraft:snow,Block
+Cactus,81,minecraft:cactus,Solid Block
+Clay Block,82,minecraft:clay,Solid Block
+Sugar Can (Block),83,minecraft:reeds,Non-Solid Block
+Jukebox,84,minecraft:jukebox,Solid Block
+Fence,85,minecraft:fence,Solid Block
+Pumpkin,86,minecraft:pumpkin,Solid Block
+Netherrack,87,minecraft:netherrack,Solid Block
+Soul Sand,88,minecraft:soul_sand,Solid Block
+Glowstone,89,minecraft:glowstone,Solid Block
+Portal,90,minecraft:portal,Non-Solid Block
+Jack-O-Lantern,91,minecraft:lit_pumpkin,Solid Block
+Cake (Block),92,minecraft:cake,Food
+Redstone Repeater (Block Off),93,minecraft:unpowered_repeater,Solid Block
+Redstone Repeater (Block On),94,minecraft:powered_repeater,Solid Block
+Stained Glass (White),95,minecraft:stained_glass,Solid Block
+Stained Glass (Orange),95:1,,Solid Block
+Stained Glass (Magenta),95:2,,Solid Block
+Stained Glass (Light Blue),95:3,,Solid Block
+Stained Glass (Yellow),95:4,,Solid Block
+Stained Glass (Lime),95:5,,Solid Block
+Stained Glass (Pink),95:6,,Solid Block
+Stained Glass (Gray),95:7,,Solid Block
+Stained Glass (Light Gray),95:8,,Solid Block
+Stained Glass (Cyan),95:9,,Solid Block
+Stained Glass (Purple),95:10,,Solid Block
+Stained Glass (Blue),95:11,,Solid Block
+Stained Glass (Brown),95:12,,Solid Block
+Stained Glass (Green),95:13,,Solid Block
+Stained Glass (Red),95:14,,Solid Block
+Stained Glass (Black),95:15,,Solid Block
+Trapdoor,96,minecraft:trapdoor,Solid Block
+Monster Egg (Stone),97,minecraft:monster_egg,Solid
+Monster Egg (Cobblestone),97:1,,Solid
+Monster Egg (Stone Brick),97:2,,Solid
+Monster Egg (Mossy Stone Brick),97:3,,Solid
+Monster Egg (Cracked Stone),97:4,,Solid
+Monster Egg (Chiseled Stone),97:5,,Solid
+Stone Brick,98,minecraft:stonebrick,Solid Block
+Mossy Stone Brick,98:1,,Solid Block
+Cracked Stone Brick,98:2,,Solid Block
+Chiseled Stone Brick,98:3,,Solid Block
+Brown Mushroom (Block),99,minecraft:brown_mushroom_block,Solid Block
+Red Mushroom (Block),100,minecraft:red_mushroom_block,Solid Block
+Iron Bars,101,minecraft:iron_bars,Solid Block
+Glass Pane,102,minecraft:glass_pane,Solid Block
+Melon (Block),103,minecraft:melon_block,Solid Block
+Pumpkin Vine,104,minecraft:pumpkin_stem,
+Melon Vine,105,minecraft:melon_stem,
+Vines,106,minecraft:vine,
+Fence Gate,107,minecraft:fence_gate,
+Brick Stairs,108,minecraft:brick_stairs,
+Stone Brick Stairs,109,minecraft:stone_brick_stairs,
+Mycelium,110,minecraft:mycelium,
+Lily Pad,111,minecraft:waterlily,
+Nether Brick,112,minecraft:nether_brick,
+Nether Brick Fence,113,minecraft:nether_brick_fence,
+Nether Brick Stairs,114,minecraft:nether_brick_stairs,
+Nether Wart,115,minecraft:nether_wart,
+Enchantment Table,116,minecraft:enchanting_table,
+Brewing Stand (Block),117,minecraft:brewing_stand,
+Cauldron (Block),118,minecraft:cauldron,
+End Portal,119,minecraft:end_portal,
+End Portal Frame,120,minecraft:end_portal_frame,
+End Stone,121,minecraft:end_stone,
+Dragon Egg,122,minecraft:dragon_egg,
+Redstone Lamp,123,minecraft:redstone_lamp,
+Redstone Lamp (On),124,minecraft:lit_redstone_lamp,
+Oak Wood Slab (Double),125,minecraft:double_wooden_slab,
+Spruce Wood Slab (Double),125:1,,
+Birch Wood Slab (Double),125:2,,
+Jungle Wood Slab (Double),125:3,,
+Acacia Wood Slab (Double),125:4,,
+Dark Oak Wood Slab (Double),125:5,,
+Oak Wood Slab,126,minecraft:wooden_slab,
+Spruce Wood Slab,126:1,,
+Birch Wood Slab,126:2,,
+Jungle Wood Slab,126:3,,
+Acacia Wood Slab,126:4,,
+Dark Oak Wood Slab,126:5,,
+Cocoa Plant,127,minecraft:cocoa,
+Sandstone Stairs,128,minecraft:sandstone_stairs,
+Emerald Ore,129,minecraft:emerald_ore,
+Ender Chest,130,minecraft:ender_chest,
+Tripwire Hook,131,minecraft:tripwire_hook,
+Tripewire,132,minecraft:tripwire,
+Block of Emerald,133,minecraft:emerald_block,
+Wooden Stairs (Spruce),134,minecraft:spruce_stairs,
+Wooden Stairs (Birch),135,minecraft:birch_stairs,
+Wooden Stairs (Jungle),136,minecraft:jungle_stairs,
+Command Block,137,minecraft:command_block,
+Beacon,138,minecraft:beacon,
+Cobblestone Wall,139,minecraft:cobblestone_wall,
+Mossy Cobblestone Wall,139:1,,
+Flower Pot (Block),140,minecraft:flower_pot,
+Carrot (Crop),141,minecraft:carrots,
+Potatoes (Crop),142,minecraft:potatoes,
+Button (Wood),143,minecraft:wooden_button,
+Head Block (Skeleton),144,minecraft:skull,
+Head Block (Wither),144:1,,
+Head Block (Zombie),144:2,,
+Head Block (Steve),144:3,,
+Head Block (Creeper),144:4,,
+Anvil,145,minecraft:anvil,
+Anvil (Slightly Damaged),145:1,,
+Anvil (Very Damaged),145:2,,
+Trapped Chest,146,minecraft:trapped_chest,
+Weighted Pressure Plate (Light) (Gold),147,minecraft:light_weighted_pressure_plate,
+Weighted Pressure Plate (Heavy) (Iron),148,minecraft:heavy_weighted_pressure_plate,
+Redstone Comparator (Off),149,minecraft:unpowered_comparator,
+Redstone Comparator (On),150,minecraft:powered_comparator,
+Daylight Sensor,151,minecraft:daylight_detector,
+Block of Redstone,152,minecraft:redstone_block,
+Nether Quartz Ore,153,minecraft:quartz_ore,
+Hopper,154,minecraft:hopper,
+Quartz Block,155,minecraft:quartz_block,
+Chiseled Quartz Block,155:1,,
+Pillar Quartz Block,155:2,,
+Quartz Stairs,156,minecraft:quartz_stairs,
+Rail (Activator),157,minecraft:activator_rail,
+Dropper,158,minecraft:dropper,
+Stained Clay (White),159,minecraft:stained_hardened_clay,Solid Block
+Stained Clay (Orange),159:1,,Solid Block
+Stained Clay (Magenta),159:2,,Solid Block
+Stained Clay (Light Blue),159:3,,Solid Block
+Stained Clay (Yellow),159:4,,Solid Block
+Stained Clay (Lime),159:5,,Solid Block
+Stained Clay (Pink),159:6,,Solid Block
+Stained Clay (Gray),159:7,,Solid Block
+Stained Clay (Light Gray),159:8,,Solid Block
+Stained Clay (Cyan),159:9,,Solid Block
+Stained Clay (Purple),159:10,,Solid Block
+Stained Clay (Blue),159:11,,Solid Block
+Stained Clay (Brown),159:12,,Solid Block
+Stained Clay (Green),159:13,,Solid Block
+Stained Clay (Red),159:14,,Solid Block
+Stained Clay (Black),159:15,,Solid Block
+Stained Glass Pane (White),160,minecraft:stained_glass_pane,Solid Block
+Stained Glass Pane (Orange),160:1,,Solid Block
+Stained Glass Pane (Magenta),160:2,,Solid Block
+Stained Glass Pane (Light Blue),160:3,,Solid Block
+Stained Glass Pane (Yellow),160:4,,Solid Block
+Stained Glass Pane (Lime),160:5,,Solid Block
+Stained Glass Pane (Pink),160:6,,Solid Block
+Stained Glass Pane (Gray),160:7,,Solid Block
+Stained Glass Pane (Light Gray),160:8,,Solid Block
+Stained Glass Pane (Cyan),160:9,,Solid Block
+Stained Glass Pane (Purple),160:10,,Solid Block
+Stained Glass Pane (Blue),160:11,,Solid Block
+Stained Glass Pane (Brown),160:12,,Solid Block
+Stained Glass Pane (Green),160:13,,Solid Block
+Stained Glass Pane (Red),160:14,,Solid Block
+Stained Glass Pane (Black),160:15,,Solid Block
+Acacia Leaves,161,minecraft:leaves2,Solid Block
+Dark Oak Leaves,161:1,,Solid Block
+Acacia Wood,162,minecraft:log2,Solid Block
+Dark Oak Wood,162:1,,Solid Block
+Wooden Stairs (Acacia Oak),163,minecraft:acacia_stairs,
+Wooden Stairs (Dark Oak),164,minecraft:dark_oak_stairs,
+Slime Block,165,minecraft:slime,
+Barrier,166,minecraft:barrier,
+Iron Trapdoor,167,minecraft:iron_trapdoor,
+Prismarine,168,minecraft:prismarine,
+Prismarine Bricks,168:1,,
+Dark Prismarine,168:2,,
+Sea Lantern,169,minecraft:sea_lantern,
+Hay Bale,170,minecraft:hay_block,
+Carpet (White),171,minecraft:carpet,
+Carpet (Orange),171:1,,
+Carpet (Magenta),171:2,,
+Carpet (Light Blue),171:3,,
+Carpet (Yellow),171:4,,
+Carpet (Lime),171:5,,
+Carpet (Pink),171:6,,
+Carpet (Gray),171:7,,
+Carpet (Light Gray),171:8,,
+Carpet (Cyan),171:9,,
+Carpet (Purple),171:10,,
+Carpet (Blue),171:11,,
+Carpet (Brown),171:12,,
+Carpet (Green),171:13,,
+Carpet (Red),171:14,,
+Carpet (Black),171:15,,
+Hardened Clay,172,minecraft:hardened_clay,
+Block of Coal,173,minecraft:coal_block,
+Packed Ice,174,minecraft:packed_ice,
+Sunflower,175,minecraft:double_plant,
+Lilac,175:1,,
+Double Tallgrass,175:2,,
+Large Fern,175:3,,
+Rose Bush,175:4,,
+Peony,175:5,,
+Free-standing Banner,176,minecraft:standing_banner,
+Wall-mounted Banner,177,minecraft:wall_banner,
+Inverted Daylight Sensor,178,minecraft:daylight_detector_inverted,
+Red Sandstone,179,minecraft:red_sandstone,
+Chiseled Red Sandstone,179:1,,
+Smooth Red Sandstone,179:2,,
+Red Sandstone Stairs,180,minecraft:red_sandstone_stairs,
+Double Red Sandstone Slab,181,minecraft:double_stone_slab2,
+Red Sandstone Slab,182,minecraft:stone_slab2,
+Spruce Fence Gate,183,minecraft:spruce_fence_gate,
+Birch Fence Gate,184,minecraft:birch_fence_gate,
+Jungle Fence Gate,185,minecraft:jungle_fence_gate,
+Dark Oak Fence Gate,186,minecraft:dark_oak_fence_gate,
+Acacia Fence Gate,187,minecraft:acacia_fence_gate,
+Spruce Fence,188,minecraft:spruce_fence,
+Birch Fence,189,minecraft:birch_fence,
+Jungle Fence,190,minecraft:jungle_fence,
+Dark Oak Fence,191,minecraft:dark_oak_fence,
+Acacia Fence,192,minecraft:acacia_fence,
+Spruce Door Block,193,minecraft:spruce_door,
+Birch Door Block,194,minecraft:birch_door,
+Jungle Door Block,195,minecraft:jungle_door,
+Acacia Door Block,196,minecraft:acacia_door,
+Dark Oak Door Block,197,minecraft:dark_oak_door,
+End Rod,198,minecraft:end_rod,
+Chorus Plant,199,minecraft:chorus_plant,
+Chorus Flower,200,minecraft:chorus_flower,
+Purpur Block,201,minecraft:purpur_block,
+Purpur Pillar,202,minecraft:purpur_pillar,
+Purpur Stairs,203,minecraft:purpur_stairs,
+Purpur Double Slab,204,minecraft:purpur_double_slab,
+Purpur Slab,205,minecraft:purpur_slab,
+End Stone Bricks,206,minecraft:end_bricks,
+Beetroot Block,207,minecraft:beetroots,
+Repeating Command Block,210,minecraft:repeating_command_block,
+Chain Command Block,211,minecraft:chain_command_block,
+Iron Shovel,256,minecraft:iron_shovel,
+Iron Pickaxe,257,minecraft:iron_pickaxe,
+Iron Axe,258,minecraft:iron_axe,
+Flint and Steel,259,minecraft:flint_and_steel,
+Apple,260,minecraft:apple,
+Bow,261,minecraft:bow,
+Arrow,262,minecraft:arrow,
+Coal,263,minecraft:coal,
+Charcoal,263:1,,
+Diamond,264,minecraft:diamond,
+Iron Ingot,265,minecraft:iron_ingot,
+Gold Ingot,266,minecraft:gold_ingot,
+Iron Sword,267,minecraft:iron_sword,
+Wooden Sword,268,minecraft:wooden_sword,
+Wooden Shovel,269,minecraft:wooden_shovel,
+Wooden Pickaxe,270,minecraft:wooden_pickaxe,
+Wooden Axe,271,minecraft:wooden_axe,
+Stone Sword,272,minecraft:stone_sword,
+Stone Shovel,273,minecraft:stone_shovel,
+Stone Pickaxe,274,minecraft:stone_pickaxe,
+Stone Axe,275,minecraft:stone_axe,
+Diamond Sword,276,minecraft:diamond_sword,
+Diamond Shovel,277,minecraft:diamond_shovel,
+Diamond Pickaxe,278,minecraft:diamond_pickaxe,
+Diamond Axe,279,minecraft:diamond_axe,
+Stick,280,minecraft:stick,
+Bowl,281,minecraft:bowl,
+Mushroom Stew,282,minecraft:mushroom_stew,
+Gold Sword,283,minecraft:golden_sword,
+Gold Shovel,284,minecraft:golden_shovel,
+Gold Pickaxe,285,minecraft:golden_pickaxe,
+Gold Axe,286,minecraft:golden_axe,
+String,287,minecraft:string,
+Feather,288,minecraft:feather,
+Gunpowder,289,minecraft:gunpowder,
+Wooden Hoe,290,minecraft:wooden_hoe,
+Stone Hoe,291,minecraft:stone_hoe,
+Iron Hoe,292,minecraft:iron_hoe,
+Diamond Hoe,293,minecraft:diamond_hoe,
+Gold Hoe,294,minecraft:golden_hoe,
+Wheat Seeds,295,minecraft:wheat_seeds,
+Wheat,296,minecraft:wheat,
+Bread,297,minecraft:bread,
+Leather Helment,298,minecraft:leather_helmet,
+Leather Tunic,299,minecraft:leather_chestplate,
+Leather Leggings,300,minecraft:leather_leggings,
+Leather Boots,301,minecraft:leather_boots,
+Chainmail Helment,302,minecraft:chainmail_helmet,
+Chainmail Chestplate,303,minecraft:chainmail_chestplate,
+Chainmail Leggings,304,minecraft:chainmail_leggings,
+Chainmail Boots,305,minecraft:chainmail_boots,
+Iron Helment,306,minecraft:iron_helmet,
+Iron Chestplate,307,minecraft:iron_chestplate,
+Iron Leggings,308,minecraft:iron_leggings,
+Iron Boots,309,minecraft:iron_boots,
+Diamond Helment,310,minecraft:diamond_helmet,
+Diamond Chestplate,311,minecraft:diamond_chestplate,
+Diamond Leggings,312,minecraft:diamond_leggings,
+Diamond Boots,313,minecraft:diamond_boots,
+Gold Helment,314,minecraft:golden_helmet,
+Gold Chestplate,315,minecraft:golden_chestplate,
+Gold Leggings,316,minecraft:golden_leggings,
+Gold Boots,317,minecraft:golden_boots,
+Flint,318,minecraft:flint,
+Raw Porkchop,319,minecraft:porkchop,
+Cooked Porkchop,320,minecraft:cooked_porkchop,
+Painting,321,minecraft:painting,
+Golden Apple,322,minecraft:golden_apple,
+Enchanted Golden Apple (Notch Apple),322:1,,
+Sign,323,minecraft:sign,
+Wooden Door,324,minecraft:wooden_door,
+Bucket,325,minecraft:bucket,
+Bucket (Water),326,minecraft:water_bucket,
+Bucket (Lava),327,minecraft:lava_bucket,
+Minecart,328,minecraft:minecart,
+Saddle,329,minecraft:saddle,
+Iron Door,330,minecraft:iron_door,
+Redstone Dust,331,minecraft:redstone,
+Snowball,332,minecraft:snowball,
+Boat,333,minecraft:boat,
+Leather,334,minecraft:leather,
+Bucket (Milk),335,minecraft:milk_bucket,
+Clay Brick,336,minecraft:brick,
+Clay,337,minecraft:clay_ball,
+Sugar Cane,338,minecraft:reeds,
+Paper,339,minecraft:paper,
+Book,340,minecraft:book,
+Slime Ball,341,minecraft:slime_ball,
+Minecart (Storage) (Chest),342,minecraft:chest_minecart,
+Minecart (Powered) (Furance),343,minecraft:furnace_minecart,
+Egg,344,minecraft:egg,
+Compass,345,minecraft:compass,
+Fishing Rod,346,minecraft:fishing_rod,
+Clock,347,minecraft:clock,
+Glowstone Dust,348,minecraft:glowstone_dust,
+Raw Fish,349,minecraft:fish,
+Raw Salmon,349:1,,
+Clownfish,349:2,,
+Pufferfish,349:3,,
+Cooked Fish,350,minecraft:cooked_fished,
+Cooked Salmon,350:1,,
+Clownfish,350:2,,
+Pufferfish,350:3,,
+Ink Sack,351,minecraft:dye,
+Rose Red Dye,351:1,,
+Cactus Green Dye,351:2,,
+Cocoa Bean,351:3,,
+Lapis Lazuli,351:4,,
+Purple Due,351:5,,
+Cyan Dye,351:6,,
+Light Gray Dye,351:7,,
+Gray Dye,351:8,,
+Pink Dye,351:9,,
+Lime Dye,351:10,,
+Dandelion Yellow Dye,351:11,,
+Light Blue Dye,351:12,,
+Magenta Dye,351:13,,
+Orange Dye,351:14,,
+Bone Meal,351:15,,
+Bone,352,minecraft:bone,
+Sugar,353,minecraft:sugar,
+Cake,354,minecraft:cake,
+Bed,355,minecraft:bed,
+Redstone Repeater,356,minecraft:repeater,
+Cookie,357,minecraft:cookie,
+Map,358,minecraft:filled_map,
+Shears,359,minecraft:shears,
+Melon (Slice),360,minecraft:melon,
+Pumplin Seeds,361,minecraft:pumpkin_seeds,
+Melon Seeds,362,minecraft:melon_seeds,
+Raw Beef,363,minecraft:beef,
+Steak,364,minecraft:cooked_beef,
+Raw Chicken,365,minecraft:chicken,
+Cooked Chicken,366,minecraft:cooked_chicken,
+Rotten Flesh,367,minecraft:rotten_flesh,
+Ender Pearl,368,minecraft:ender_pearl,
+Blaze Rod,369,minecraft:blaze_rod,
+Ghast Tear,370,minecraft:ghast_tear,
+Gold Nugget,371,minecraft:god_nugget,
+Nether Wart,372,minecraft:nether_wart,
+Water Bottle,373,minecraft:potion,Potion
+Awkward Potion,373:16,,Potion
+Thick Potion,373:32,,Potion
+Mundane Potion,373:64,,Potion
+Regeneration Potion (0:45),373:8193,,Potion
+Swiftness Potion (3:00),373:8194,,Potion
+Fire Resistance Potion (3:00),373:8195,,Potion
+Poison Potion (0:45),373:8196,,Potion
+Healing Potion,373:8197,,Potion
+Night Vision Potion (3:00),373:8198,,Potion
+Weakness Potion (1:30),373:8200,,Potion
+Strength Potion (3:00),373:8201,,Potion
+Slowness Potion (1:30),373:8202,,Potion
+Harming Potion,373:8204,,Potion
+Water Breathing Potion (3:00),373:8205,,Potion
+Invisibility Potion (3:00),373:8206,,Potion
+Regeneration Potion II (0:22),373:8225,,Potion
+Swiftness Potion II (1:30),373:8226,,Potion
+Poison Potion II (0:22),373:8228,,Potion
+Healing Potion II,373:8229,,Potion
+Strength Potion II (1:30),373:8233,,Potion
+Harming Potion II,373:8236,,Potion
+Regeneration Potion (2:00),373:8257,,Potion
+Swiftness Potion (8:00),373:8258,,Potion
+Fire Resistance Potion (8:00),373:8259,,Potion
+Poison Potion (2:00),373:8260,,Potion
+Night Vision Potion (8:00),373:8262,,Potion
+Weakness Potion (4:00),373:8264,,Potion
+Strength Potion (8:00),373:8265,,Potion
+Slowness Potion (4:00),373:8266,,Potion
+Water Breathing Potion (8:00),373:8269,,Potion
+Invisbility Potion (8:00),373:8270,,Potion
+Regeneration Potion II (1:00),373:8289,,Potion
+Swiftness Potion II (4:00),373:8290,,Potion
+Poison Potion II (1:00),373:8292,,Potion
+Strength Potion II (4:00),373:8297,,Potion
+Regeneration Splash (0:33),373:16385,,Potion
+Swiftness Splash (2:15),373:16386,,Potion
+Fire Resistance Splash (2:15),373:16387,,Potion
+Poison Splash (0:33),373:16288,,Potion
+Healing Splash,373:16389,,Potion
+Night Vision Splash (2:15),373:16390,,Potion
+Weakness Splash (1:07),373:16392,,Potion
+Strength Splash (2:15),373:16393,,Potion
+Slowness Splash (1:07),373:16394,,Potion
+Harming Splash,373:16396,,Potion
+Water Breathing Splash (2:15),373:16197,,Potion
+Invisbility Splash (2:15),373:16338,,Potion
+Regeneration Splash II (0:16),373:16417,,Potion
+Swiftness Splash II (1:07),373:16418,,Potion
+Poison Splash II (0:16),373:16420,,Potion
+Healing Splash II,373:16421,,Potion
+Strength Splash II (1:07),373:16425,,Potion
+Harming Splash II,373:16428,,Potion
+Regeneration Splash (1:30),373:16449,,Potion
+Swiftness Splash (6:00),373:16450,,Potion
+Fire Resistance Splash (6:00),373:16451,,Potion
+Poison Splash (1:30),373:16452,,Potion
+Night Vision Splash (6:00),373:16454,,Potion
+Weakness Splash (3:00),373:16456,,Potion
+Strength Splash (6:00),373:16457,,Potion
+Slowness Splash (3:00),373:16458,,Potion
+Water Breathing Splash (6:00),373:16461,,Potion
+Invisbility Splash (6:00),373:16462,,Potion
+Regeneration Splash II (0:45),373:16481,,Potion
+Swiftness Splash II (3:00),373:16482,,Potion
+Poison Splash II (0:45),373:16484,,Potion
+Strength Splash II (3:00),373:16489,,Potion
+Glass Bottle,374,minecraft:glass_bottle,
+Spider Eye,375,minecraft:spider_eye,
+Fermented Spider Eye,376,minecraft:fermented_spider_eye,
+Blaze Powder,377,minecraft:blaze_powder,
+Magma Cream,378,minecraft:magma_cream,
+Brewing Stand,379,minecraft:brewing_stand,
+Cauldron,380,minecraft:cauldron,
+Eye of Ender,381,minecraft:ender_eye,
+Glistering Melon,382,minecraft:speckled_melon,
+Spawn Egg (Creeper),383:50,minecraft:spawn_egg,Item
+Spawn Egg (Skeleton),383:51,,Item
+Spawn Egg (Spider),383:52,,Item
+Spawn Egg (Zombie),383:54,,Item
+Spawn Egg (Slime),383:55,,Item
+Spawn Egg (Ghast),383:56,,Item
+Spawn Egg (Zombie Pigmen),383:57,,Item
+Spawn Egg (Endermen),383:58,,Item
+Spawn Egg (Cave Spider),383:59,,Item
+Spawn Egg (Silverfish),383:60,,Item
+Spawn Egg (Blaze),383:61,,Item
+Spawn Egg (Magma Cube),383:62,,Item
+Spawn Egg (Bat),383:65,,Item
+Spawn Egg (Witch),383:66,,Item
+Spawn Egg (Pig),383:90,,Item
+Spawn Egg (Sheep),383:91,,Item
+Spawn Egg (Cow),383:92,,Item
+Spawn Egg (Chicken),383:93,,Item
+Spawn Egg (Squid),383:94,,Item
+Spawn Egg (Wolf),383:95,,Item
+Spawn Egg (Mooshroom),383:96,,Item
+Spawn Egg (Ocelot),383:98,,Item
+Spawn Egg (Horse),383:100,,Item
+Spawn Egg (Villager),383:120,,Item
+Bottle o' Enchanting,384,minecraft:experience_bottle,
+Fire Charge,385,minecraft:fire_charge,
+Book and Quill,386,minecraft:writable_book,
+Written Book,387,minecraft:written_book,
+Emerald,388,minecraft:emerald,
+Item Frame,389,minecraft:item_frame,
+Flower Pot,390,minecraft:flower_pot,
+Carrot,391,minecraft:carrot,
+Potato,392,minecraft:potato,
+Baked Potato,393,minecraft:baked_potato,
+Poisonous Potato,394,minecraft:poisonous_potato,
+Empty Map,395,minecraft:map,
+Golden Carrot,396,minecraft:golden_carrot,
+Head (Skeleton),397,minecraft:skull,
+Head (Wither),397:1,,
+Head (Zombie),397:2,,
+Head (Steve),397:3,,
+Head (Creeper),397:4,,
+Carrot on a Stick,398,minecraft:carrot_on_a_stick,
+Nether Star,399,minecraft:nether_star,
+Pumpkin Pie,400,minecraft:pumpkin_pie,
+Firework Rocket,401,minecraft:fireworks,
+Firework Star,402,minecraft:firework_charge,
+Enchanted Book,403,minecraft:enchanted_book,
+Redstone Comparator,404,minecraft:comparator,
+Nether Brick (Item),405,minecraft:netherbrick,
+Nether Quartz,406,minecraft:quartz,
+Minecart (TNT),407,minecraft:tnt_minecart,
+Minecart (Hopper),408,minecraft:hopper_minecart,
+Iron Horse Armor,417,minecraft:iron_horse_armor,
+Gold Horse Armor,418,minecraft:golden_horse_armor,
+Diamond Horse Armor,419,minecraft:diamond_horse_armor,
+Lead,420,minecraft:lead,
+Name Tag,421,minecraft:name_tag,
+Minecart (Command Block),422,minecraft:command_block_minecart,
+Music Disk (13),2256,minecraft:record_13,Decorations
+Music Disk (Cat),2257,minecraft:record_cat,Decorations
+Music Disk (Blocks),2258,minecraft:record_blocks,Decorations
+Music Disk (Chrip),2259,minecraft:record_chirp,Decorations
+Music Disk (Far),2260,minecraft:record_far,Decorations
+Music Disk (Mall),2261,minecraft:record_mall,Decorations
+Music Disk (Mellohi),2262,minecraft:record_mellohi,Decorations
+Music Disk (Stal),2263,minecraft:record_stal,Decorations
+Music Disk (Strad),2264,minecraft:record_strad,Decorations
+Music Disk (Ward),2265,minecraft:record_ward,Decorations
+Music Disk (11) (Broken),2266,minecraft:record_11,Decorations
+Music Disk (Wait),2267,minecraft:record_wait,Decorations

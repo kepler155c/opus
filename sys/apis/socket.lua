@@ -1,6 +1,7 @@
 local Logger = require('logger')
 
 local socketClass = { }
+local trustList
 
 function socketClass:read(timeout)
 
@@ -174,6 +175,13 @@ function Socket.connect(host, port)
   socket:close()
 end
 
+function trusted(msg)
+  if trustList then
+    return trustList[msg.shost]
+  end
+  return true
+end
+
 function Socket.server(port, keepAlive)
 
   device.wireless_modem.open(port)
@@ -187,25 +195,29 @@ function Socket.server(port, keepAlive)
        msg.dhost == os.getComputerID() and
        msg.type == 'OPEN' then
 
-      local socket = newSocket(msg.shost == os.getComputerID())
-      socket.dport = dport
-      socket.dhost = msg.shost
-      socket.connected = true
+      if trusted(msg) then
+        local socket = newSocket(msg.shost == os.getComputerID())
+        socket.dport = dport
+        socket.dhost = msg.shost
+        socket.connected = true
 
-      socket.transmit(socket.dport, socket.sport, {
-        type = 'CONN',
-        dhost = socket.dhost,
-        shost = socket.shost,
-        keepAlive = keepAlive,
-      })
-      Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
+        socket.transmit(socket.dport, socket.sport, {
+          type = 'CONN',
+          dhost = socket.dhost,
+          shost = socket.shost,
+          keepAlive = keepAlive,
+        })
+        Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
-      if keepAlive then
-        pinger(socket)
+        if keepAlive then
+          pinger(socket)
+        end
+        return socket
       end
-      return socket
     end
   end
 end
+
+trustList = Util.readTable('.known_hosts')
 
 return Socket
