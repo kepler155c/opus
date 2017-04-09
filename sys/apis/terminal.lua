@@ -84,9 +84,7 @@ function Terminal.toGrayscale(ct)
   for _,v in pairs(methods) do
   	local fn = ct[v]
     ct[v] = function(c)
-      if scolors[c] then
-        fn(scolors[c])
-      end
+      fn(scolors[c])
     end
   end
 
@@ -107,9 +105,7 @@ function Terminal.toGrayscale(ct)
 
   local function translate(s)
     if s then
-      for k,v in pairs(bcolors) do
-        s = s:gsub(k, v)
-      end
+      s = s:gsub("%d+", bcolors)
     end
     return s
   end
@@ -132,14 +128,14 @@ function Terminal.getNullTerm(ct)
   return nt
 end
 
-function Terminal.copy(ot)
-  local ct = { }
-  for k,v in pairs(ot) do
+function Terminal.copy(it, ot)
+  ot = ot or { }
+  for k,v in pairs(it) do
   	if type(v) == 'function' then
-  	  ct[k] = v
+  	  ot[k] = v
   	end
   end
-  return ct
+  return ot
 end
 
 function Terminal.mirror(ct, dt)

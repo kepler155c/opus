@@ -1,7 +1,7 @@
 local Logger = require('logger')
 
 local socketClass = { }
-local trustList
+local trustList = Util.readTable('.known_hosts')
 
 function socketClass:read(timeout)
 
@@ -217,7 +217,5 @@ function Socket.server(port, keepAlive)
     end
   end
 end
-
-trustList = Util.readTable('.known_hosts')
 
 return Socket
