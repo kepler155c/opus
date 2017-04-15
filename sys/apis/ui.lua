@@ -1481,7 +1481,7 @@ function UI.Grid:adjustWidth()
     end
 
     for _,col in pairs(self.columns) do
-      for key,row in ipairs(self.values) do
+      for key,row in pairs(self.values) do
         row = self:getDisplayValues(row, key)
         local value = row[col.key]
         if value then
