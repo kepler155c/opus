@@ -1,15 +1,20 @@
 require = requireInjector(getfenv(1))
 local Event = require('event')
 local UI = require('ui')
-local Peripheral = require('peripheral')
+local RefinedProvider = require('refinedProvider')
+local MEProvider = require('meProvider')
 
 if not device.monitor then
   error('Monitor not found')
 end
 
-local me = Peripheral.getByMethod('getAvailableItems')
-if not me then
-  error("No ME peripheral attached")
+local storage = RefinedProvider()
+if not storage:isValid() then
+  storage = MEProvider()
+end
+
+if not storage:isValid() then
+  error('Not connected to a storage device')
 end
 
 local monitor = UI.Device({
@@ -118,7 +123,7 @@ function changedPage:eventHandler(event)
 end
  
 function changedPage:refresh()
-  local t = me.getAvailableItems('all')
+  local t = storage:listItems('all')
  
   if not t or Util.empty(t) then
     self:clear()
@@ -127,11 +132,12 @@ function changedPage:refresh()
   end
  
   for k,v in pairs(t) do
-    v.id = v.item.id
-    v.dmg = v.item.dmg
-    v.name = safeString(v.item.display_name)
-    v.qty = v.size
-  end  
+    --v.id = v.id
+    --v.dmg = v.dmg
+    v.name = safeString(v.display_name)
+    t[k] = Util.shallowCopy(v)
+    --v.qty = v.qty
+  end
  
   if not self.lastItems then
     self.lastItems = t
