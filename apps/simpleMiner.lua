@@ -8,18 +8,28 @@ end
 
 local args = { ... }
 local options = {
-  chunks     = { arg = 'c', type = 'number', value = -1,
+  chunks      = { arg = 'c', type = 'number', value = -1,
                  desc = 'Number of chunks to mine' },
-  depth      = { arg = 'd', type = 'number', value = 9000,
+  depth       = { arg = 'd', type = 'number', value = 9000,
                  desc = 'Mining depth' },
 --  enderChest = { arg = 'e', type = 'flag',   value = false,
 --                 desc = 'Use ender chest' },
-  resume     = { arg = 'r', type = 'flag',   value = false,
+  resume      = { arg = 'r', type = 'flag',   value = false,
                  desc = 'Resume mining' },
-  setTrash   = { arg = 's', type = 'flag',   value = false,
+  fortunePick = { arg = 'p', type = 'string', value = nil,
+                 desc = 'Pick to use with CCTweaks toolhost' },
+  setTrash    = { arg = 's', type = 'flag',   value = false,
                  desc = 'Set trash items' },
-  help       = { arg = 'h', type = 'flag',   value = false,
+  help        = { arg = 'h', type = 'flag',   value = false,
                  desc = 'Displays the options' },
+}
+
+local fortuneBlocks = {
+  [ 'minecraft:redstone_ore' ] = true,
+  [ 'minecraft:lapis_ore' ] = true,
+  [ 'minecraft:coal_ore' ] = true,
+  [ 'minecraft:diamond_ore' ] = true,
+  [ 'minecraft:emerald_ore' ] = true,
 }
 
 local MIN_FUEL = 7500
@@ -161,10 +171,10 @@ function addTrash()
   local slots = turtle.getFilledSlots()
  
   for k,slot in pairs(slots) do
-    if slot.iddmg ~= 'minecraft:bucket:0' then
-      trash[slot.iddmg] = true
-    end
+    trash[slot.iddmg] = true
   end
+
+  trash['minecraft:bucket:0'] = nil
   Util.writeTable('mining.trash', trash)
 end
 
@@ -278,9 +288,14 @@ function normalChestUnload()
   end
   local slots = turtle.getFilledSlots()
   for _,slot in pairs(slots) do
-    if not trash[slot.iddmg] and slot.iddmg ~= 'minecraft:bucket:0' then
-      turtle.select(slot.index)
-      turtle.dropUp(64)
+    if not trash[slot.iddmg] and 
+      slot.iddmg ~= 'minecraft:bucket:0' and
+      slot.id ~= 'minecraft:diamond_pickaxe' and
+      slot.id ~= 'cctweaks:toolHost' then
+      if slot.id ~= options.fortunePick.value then
+        turtle.select(slot.index)
+        turtle.dropUp(64)
+      end
     end
   end
   turtle.select(1)
@@ -336,17 +351,36 @@ function mineable(action)
   end
 
   if action.side == 'bottom' then
-    return true
+    return block.name
   end
 
-  return not trash[block.name .. ':0']
+  if trash[block.name .. ':0'] then
+    return false
+  end
+
+  return block.name
+end
+
+function fortuneDig(action, blockName)
+  if options.fortunePick.value and fortuneBlocks[blockName] then
+    turtle.selectSlot('cctweaks:toolHost')
+    turtle.equipRight()
+    turtle.selectSlot(options.fortunePick.value)
+    repeat until not turtle.dig()
+    turtle.selectSlot('minecraft:diamond_pickaxe')
+    turtle.equipRight()
+    return true
+  end
 end
 
 function mine(action)
-  if mineable(action) then
+  local blockName = mineable(action)
+  if blockName then
     checkSpace()
     --collectDrops(action.suck)
-    action.dig()
+    if not fortuneDig(action, blockName) then
+      action.dig()
+    end
   end
 end
  
@@ -377,9 +411,11 @@ function bore()
       break
     end
  
-    mine(turtle.getAction('forward'))
-    turtle.turnRight()
-    mine(turtle.getAction('forward'))
+    if loc.y < level - 1 then
+      mine(turtle.getAction('forward'))
+      turtle.turnRight()
+      mine(turtle.getAction('forward'))
+    end
   end
 
   boreDirection = 'up'
@@ -470,9 +506,7 @@ function Point.compare(pta, ptb)
 end
 
 function inspect(action, name)
-
   local r, block = action.inspect()
-
   if r and block.name == name then
     return true
   end
@@ -548,6 +582,21 @@ if not turtle.getSlot('minecraft:bucket:0') or
   print('Add bucket and cobblestone, press enter when ready')
   read()
 end
+
+if options.fortunePick.value then
+  local s = turtle.getSlot(options.fortunePick.value)
+  if not s then
+    error('fortunePick not found: ' .. options.fortunePick.value)
+  end
+  if not turtle.getSlot('cctweaks:toolHost:0') then
+    error('CCTweaks tool host not found')
+  end
+  trash[s.iddmg] = nil
+  trash['minecraft:diamond_pickaxe:0'] = nil
+  trash['cctweaks:toolHost:0'] = nil
+end
+
+_G._p = trash
 
 local function main()
   repeat
