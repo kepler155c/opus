@@ -7,7 +7,8 @@ function ChestProvider:init(args)
   
   args = args or { }
 
-  self.stacks = {}
+  self.items = { }  -- consolidated item info
+  self.stacks = { } -- raw stack info
   self.name = 'chest'
   self.direction = args.direction or 'up'
   self.wrapSide = args.wrapSide or 'bottom'
@@ -21,47 +22,35 @@ end
 function ChestProvider:refresh()
   if self.p then
     --self.p.condenseItems()
+    self.items = { }
     self.stacks = self.p.list()
-    local t = { }
-    for _,s in pairs(self.stacks) do
-      s.id = s.name
-      s.dmg = s.damage
-      s.qty = s.count
-      local key = s.id .. ':' .. s.dmg
-      if t[key] and t[key].qty < 64 then
-        t[key].max_size = t[key].qty
-      else
-        t[key] = {
-          qty = s.qty
+    for k,s in pairs(self.stacks) do
+
+      local key = s.name .. ':' .. s.damage
+      local entry = self.items[key]
+      if not entry then
+        local meta = self.p.getItemMeta(k)
+        entry = {
+          id = s.name,
+          dmg = s.damage,
+          name = meta.displayName,
+          max_size = meta.maxCount,
+          qty = 0,
         }
+        self.items[key] = entry
       end
-    end
-    for _,s in ipairs(self.stacks) do
-      local key = s.id .. ':' .. s.dmg
-      if t[key].max_size then
-        s.max_size = t[key].qty
-      else
-        s.max_size = 64
-      end
+      entry.qty = entry.qty + s.count
     end
   end
-  return self.stacks
+  return self.items
 end
- 
+
 function ChestProvider:getItemInfo(id, dmg)
-  local item = { id = id, dmg = dmg, qty = 0, max_size = 64 }
-  for k,stack in pairs(self.stacks) do
-    if stack.id == id and stack.dmg == dmg then
-      local meta = self.p.getItemMeta(k)
-      if meta then
-        item.name = meta.displayName
-        item.qty = item.qty + meta.count
-        item.max_size = meta.maxCount
-      end
+ 
+  for key,item in pairs(self.items) do
+    if item.id == id and item.dmg == dmg then
+      return item
     end
-  end
-  if item.name then
-    return item
   end
 end
  
@@ -76,8 +65,8 @@ function ChestProvider:provide(item, qty, slot)
   if self.p then
     self:refresh()
     for key,stack in pairs(self.stacks) do
-      if stack.id == item.id and stack.dmg == item.dmg then
-        local amount = math.min(qty, stack.qty)
+      if stack.name == item.id and stack.damage == item.dmg then
+        local amount = math.min(qty, stack.count)
         self.p.pushItems(self.direction, key, amount, slot)
         qty = qty - amount
         if qty <= 0 then

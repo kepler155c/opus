@@ -11,6 +11,9 @@ end
 
 multishell.setTitle(multishell.getCurrent(), 'Storage Manager')
 
+-- refined storage is slooow
+local cache = { }
+
 -- Strip off color prefix
 local function safeString(text)
 
@@ -29,6 +32,25 @@ local function safeString(text)
   return text
 end
 
+function getItemDetails(item)
+  local key = table.concat({ item.name, item.damage, item.nbtHash }, ':')
+
+  local detail = cache[key]
+  if not detail then
+    detail = controller.findItem(item)
+    if detail then
+      Util.merge(detail, detail.getMetadata())
+      detail.displayName = safeString(detail.displayName)
+      if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
+        detail.displayName = detail.displayName .. ' (damaged)'
+      end
+      detail.lname = detail.displayName:lower()
+      cache[key] = detail
+    end
+  end
+  return detail
+end
+
 function listItems()
   local items = { }
   local list
@@ -38,17 +60,10 @@ function listItems()
   end)
 
   if list then
-    for k,v in pairs(list) do
-      local item = controller.findItem(v)
-
+    for _,v in pairs(list) do
+      local item = getItemDetails(v)
       if item then
-        Util.merge(item, item.getMetadata())
-        item.displayName = safeString(item.displayName)
-        if item.maxDamage and item.maxDamage > 0 and item.damage > 0 then
-          item.displayName = item.displayName .. ' (damaged)'
-        end
-        item.lname = item.displayName:lower()
-
+        item.count = v.count
         table.insert(items, item)
       end
     end
@@ -463,7 +478,11 @@ function listingPage:enable()
 end
 
 function listingPage:refresh()
+local t = os.clock()
+
   self.allItems = listItems()
+debug('list items')
+debug(os.clock() - t)
   mergeResources(self.allItems)
   self:applyFilter()
 end

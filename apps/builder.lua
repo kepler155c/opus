@@ -96,12 +96,14 @@ function subDB:seedDB()
       dmg = 0,
       id = "minecraft:potatoes",
     },
+    --[[
     [ "minecraft:dirt:1" ] = {
       sdmg = 0,
       sid = "minecraft:dirt",
       dmg = 1,
       id = "minecraft:dirt",
     },
+    ]]--
     [ "minecraft:unlit_redstone_torch:0" ] = {
       sdmg = 0,
       sid = "minecraft:redstone",
@@ -174,6 +176,12 @@ function subDB:seedDB()
       dmg = 4,
       id = "minecraft:double_wooden_slab",
     },
+    [ "minecraft:double_wooden_slab:5" ] = {
+      sdmg = 5,
+      sid = "minecraft:planks",
+      dmg = 5,
+      id = "minecraft:double_wooden_slab",
+    },
     [ "minecraft:lit_redstone_lamp:0" ] = {
       sdmg = 0,
       sid = "minecraft:redstone_lamp",
@@ -186,10 +194,22 @@ function subDB:seedDB()
       dmg = 1,
       id = "minecraft:double_stone_slab",
     },
+    [ "minecraft:double_stone_slab:2" ] = {
+      sdmg = 0,
+      sid = "minecraft:planks",
+      dmg = 2,
+      id = "minecraft:double_stone_slab",
+    },
     [ "minecraft:double_stone_slab:3" ] = {
       sdmg = 0,
       sid = "minecraft:cobblestone",
       dmg = 3,
+      id = "minecraft:double_stone_slab",
+    },
+    [ "minecraft:double_stone_slab:4" ] = {
+      sdmg = 0,
+      sid = "minecraft:brick_block",
+      dmg = 4,
       id = "minecraft:double_stone_slab",
     },
     [ "minecraft:double_stone_slab:5" ] = {
@@ -826,11 +846,11 @@ function Builder:resupply()
     turtle.setHeading(0)
     self:autocraft(supplies)
     Logger.log('builder', 'Waiting for supplies')
-    supplyPage.grid:setValues(supplies)
+    supplyPage:setSupplies(supplies)
     UI:setPage('supply')
   end
 end
- 
+
 function Builder:placeDown(slot)
   return turtle.placeDown(slot.index)
 end
@@ -1346,8 +1366,10 @@ function Builder:build()
           print('failed to place block')
         end
       end
+      self:saveProgress(self.index+1)
+    elseif (i % 50) == 0 then -- is Air
+      os.sleep(0) -- sleep in case there are a large # of skipped blocks
     end
-    self:saveProgress(self.index+1)
 
     if turtle.abort then
       turtle.status = 'aborting'
@@ -1445,8 +1467,7 @@ substitutionPage = UI.Page({
       { text = 'Air',    event = 'air',    help = 'Air'                 },
     },
   }),
-  inName = UI.Text({ y = 4, width = UI.term.width }),
-  outName = UI.Text({ y = 5, width = UI.term.width }),
+  info = UI.Window({ y = 4, width = UI.term.width, height = 3 }),
   grid = UI.ScrollingGrid({
     columns = {
       { heading = 'Name', key = 'name', width = UI.term.width-9 },
@@ -1471,19 +1492,20 @@ substitutionPage.menuBar:add({
   })
 })
  
-function substitutionPage:draw()
+function substitutionPage.info:draw()
 
-  local inName = blocks.blockDB:getName(self.sub.id, self.sub.dmg)
-  self.inName.value =  ' Replace ' .. inName
-
-  self.outName.value = ''
-  if self.sub.sid then
-    local outName = blocks.blockDB:getName(self.sub.sid, self.sub.sdmg)
-    self.outName.value = ' With    ' .. outName
+  local sub = self.parent.sub
+  local inName = blocks.blockDB:getName(sub.id, sub.dmg)
+  local outName = ''
+  if sub.sid then
+    outName = blocks.blockDB:getName(sub.sid, sub.sdmg)
   end
 
-  --self.grid:adjustWidth()
-  UI.Page.draw(self)
+  self:clear()
+  self:setCursorPos(1, 1)
+  self:print(' Replace ' .. inName .. '\n')
+  self:print('         ' .. sub.id .. ':' .. sub.dmg .. '\n', nil, colors.yellow)
+  self:print(' With    ' .. outName)
 end
  
 function substitutionPage:enable()
@@ -1529,7 +1551,7 @@ function substitutionPage:eventHandler(event)
     end
 
     self:applySubstitute(event.selected.id, event.selected.dmg)
-    self:draw()
+    self.info:draw()
  
   elseif event.type == 'text_change' then
     local text = event.text
@@ -1594,11 +1616,10 @@ supplyPage = UI.Page({
   }),
   grid = UI.Grid({
     columns = {
-      { heading = 'Slot', key = 'index', width = 4                },
-      { heading = 'Name', key = 'name',  width = UI.term.width-12 },
-      { heading = 'Need', key = 'need',  width = 4                },
+      { heading = 'Name', key = 'name',  width = UI.term.width - 7 },
+      { heading = 'Need', key = 'need',  width = 4                 },
     },
-    sortColumn = 'index',
+    sortColumn = 'name',
     y = 3,
     width = UI.term.width,
     height = UI.term.height - 3
@@ -1672,14 +1693,30 @@ end
 function supplyPage:disable()
   Event.cancelNamedTimer('supplyRefresh')
 end
- 
+
+function supplyPage:setSupplies(supplies)
+  local t = { }
+  for _,s in pairs(supplies) do
+    local key = s.id .. ':' .. s.dmg
+    local entry = t[key]
+    if not entry then
+      entry = Util.shallowCopy(s)
+      t[key] = entry
+    else
+      entry.need = entry.need + s.need
+    end
+  end
+
+  self.grid:setValues(t)
+end
+
 function supplyPage:refresh()
   self.statusBar:timedStatus('Refreshed ', 3)
-  local t = Builder:getSupplies()
-  if #t == 0 then
+  local supplies = Builder:getSupplies()
+  if #supplies == 0 then
     Builder:build()
   else
-    self.grid:setValues(t)
+    self:setSupplies(supplies)
     self.grid:draw()
   end
 end
@@ -1799,13 +1836,13 @@ function listingPage:refresh()
         local block = blocks.blockDB:lookup(b.id, b.dmg)
         if not block then
           blocks.blockDB:add(b.id, b.dmg, item.name, b.id)
-        elseif not blocks.name and item.name then
-          blocks.blockDB:add(b.id, b.dmg, item.name)
+        elseif not block.name and item.name then
+          blocks.blockDB:add(b.id, b.dmg, item.name, b.id)
         end
         b.name = item.name
         b.qty = item.qty
         b.is_craftable = item.is_craftable
-      elseif not b.name then
+      else
         b.name = blocks.blockDB:getName(b.id, b.dmg)
       end
     end

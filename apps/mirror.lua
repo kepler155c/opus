@@ -1,6 +1,5 @@
 require = requireInjector(getfenv(1))
 local Terminal = require('terminal')
-local process = require('process')
 
 local args = { ... }
 local mon = device[table.remove(args, 1) or 'monitor']
@@ -15,7 +14,7 @@ mon.setCursorPos(1, 1)
 local oterm = Terminal.copy(term.current())
 Terminal.mirror(term.current(), mon)
 
-term.current().getSize = function() return mon.getSize() end
+term.current().getSize = mon.getSize
 
 if #args > 0 then
   shell.run(unpack(args))
