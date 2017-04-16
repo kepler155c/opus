@@ -1,5 +1,4 @@
 local class = require('class')
-local Logger = require('logger')
 
 local ChestProvider = class()
  

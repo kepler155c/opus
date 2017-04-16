@@ -40,12 +40,14 @@ function getItemDetails(item)
     detail = controller.findItem(item)
     if detail then
       Util.merge(detail, detail.getMetadata())
-      detail.displayName = safeString(detail.displayName)
-      if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
-        detail.displayName = detail.displayName .. ' (damaged)'
+      if detail.displayName then
+        detail.displayName = safeString(detail.displayName)
+        if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
+          detail.displayName = detail.displayName .. ' (damaged)'
+        end
+        detail.lname = detail.displayName:lower()
+        cache[key] = detail
       end
-      detail.lname = detail.displayName:lower()
-      cache[key] = detail
     end
   end
   return detail
@@ -303,7 +305,6 @@ function itemPage.displayName:draw()
   if item.nbtHash then
     str = str .. string.format('\nNBT:    %s\n', item.nbtHash)
   end
-  debug(str)
   self:setCursorPos(1, 1)
   self:print(str)
 end
@@ -478,11 +479,7 @@ function listingPage:enable()
 end
 
 function listingPage:refresh()
-local t = os.clock()
-
   self.allItems = listItems()
-debug('list items')
-debug(os.clock() - t)
   mergeResources(self.allItems)
   self:applyFilter()
 end
@@ -490,43 +487,6 @@ end
 function listingPage:applyFilter()
   local t = filterItems(self.allItems, self.filter)
   self.grid:setValues(t)
-end
-
-local nullDevice = {
-    setCursorPos = function(...) end,
-    write = function(...) end,
-    getSize = function() return 13, 20 end,
-    isColor = function() return false end,
-    setBackgroundColor = function(...) end,
-    setTextColor = function(...) end,
-    clear = function(...) end,
-    sync = function(...) end,
-}
-
-local function jobMonitor(jobList)
-
-  local mon = Peripheral.getByType('monitor')
-
-  if mon then
-    mon = UI.Device({
-      device = mon,
-      textScale = .5,
-    })
-  else
-    mon = UI.Device({
-      device = nullDevice
-    })
-  end
-
-  jobListGrid = UI.Grid {
-    parent = mon,
-    sortColumn = 'displayName',
-    columns = {
-      { heading = 'Qty',      key = 'count',    width = 6                  },
-      { heading = 'Crafting', key = 'displayName',   width = mon.width / 2 - 10 },
-      { heading = 'Status',   key = 'status', width = mon.width - 10     },
-    },
-  }
 end
 
 local function jobMonitor(jobList)

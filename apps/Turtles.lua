@@ -8,6 +8,15 @@ multishell.setTitle(multishell.getCurrent(), 'Turtles')
 UI.Button.defaults.focusIndicator = ' '
 UI:configure('Turtles', ...)
 
+local options = {
+  turtle      = { arg = 'i', type = 'number', value = -1,
+                 desc = 'Turtle ID' },
+  tab         = { arg = 's', type = 'string', value = 'inventory',
+                 desc = 'Selected tab to display' },
+  help        = { arg = 'h', type = 'flag',   value = false,
+                 desc = 'Displays the options' },
+}
+
 local SCRIPTS_PATH = '/apps/scripts'
 
 local ct = term.current()
@@ -62,7 +71,7 @@ local page = UI.Page {
   },
 ]]
   coords = UI.Window {
-    x = 16, y = 2, height = 4, width = 9,
+    x = 14, y = 2, height = 5, rex = -2,
   },
   tabs = UI.Tabs {
     x = 1, y = 8, rey = -2,
@@ -146,7 +155,8 @@ function page.coords:draw()
   if t then
     self:clear()
     self:setCursorPos(1, 1)
-    self:print(string.format('%s\nx: %d\ny: %d\nz: %d\n', t.coordSystem, t.point.x, t.point.y, t.point.z))
+    self:print(string.format('%s\nx: %d\ny: %d\nz: %d\nFuel: %s\n', 
+      t.coordSystem, t.point.x, t.point.y, t.point.z, Util.toBytes(t.fuel)))
   end
 end
 
@@ -282,7 +292,17 @@ local function updateThread()
   end
 end
 
+if not Util.getOptions(options, { ... }, true) then
+  return
+end
+
+if options.turtle.value then
+  page.turtle = _G.network[options.turtle.value]
+end
+
 UI:setPage(page)
+
+page.tabs:activateTab(page.tabs[options.tab.value])
 
 Event.pullEvents(updateThread)
 UI.term:reset()

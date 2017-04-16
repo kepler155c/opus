@@ -1,12 +1,9 @@
 require = requireInjector(getfenv(1))
+local Util = require('util')
 local Event = require('event')
 local UI = require('ui')
 local RefinedProvider = require('refinedProvider')
 local MEProvider = require('meProvider')
-
-if not device.monitor then
-  error('Monitor not found')
-end
 
 local storage = RefinedProvider()
 if not storage:isValid() then
@@ -17,45 +14,21 @@ if not storage:isValid() then
   error('Not connected to a storage device')
 end
 
-local monitor = UI.Device({
-  deviceType = 'monitor',
-  textScale = .5
-})
-UI:setDefaultDevice(monitor)
-
 multishell.setTitle(multishell.getCurrent(), 'Storage Activity')
 UI:configure('StorageActivity', ...)
-
--- Strip off color prefix
-local function safeString(text)
-
-  local val = text:byte(1)
-
-  if val < 32 or val > 128 then
-
-    local newText = {}
-    for i = 4, #text do
-      local val = text:byte(i)
-      newText[i - 3] = (val > 31 and val < 127) and val or 63
-    end
-    return string.char(unpack(newText))
-  end
-
-  return text
-end
 
 local changedPage = UI.Page({
   grid = UI.Grid({
     columns = {
-      { heading = 'Qty',    key = 'dispQty', width = 5                  },
-      { heading = 'Change', key = 'change',  width = 6                  },
-      { heading = 'Name',   key = 'name',    width = monitor.width - 15 },
+      { heading = 'Qty',    key = 'qty',          width = 5                  },
+      { heading = 'Change', key = 'change',       width = 6                  },
+      { heading = 'Name',   key = 'display_name', width = UI.term.width - 15 },
     },
-    sortColumn = 'name',
-    height = monitor.height - 6,
+    sortColumn = 'display_name',
+    rey = -6,
   }),
   buttons = UI.Window({
-    y = monitor.height - 5,
+    ry = -4,
     height = 5,
     backgroundColor = colors.gray,
     prevButton = UI.Button({
@@ -73,31 +46,37 @@ local changedPage = UI.Page({
       x = 8,
       y = 2,
       height = 3,
-      width = monitor.width - 14,
+      rex = -8,
       text = 'Reset'
     }),
     nextButton = UI.Button({
       event = 'next',
       backgroundColor = colors.lightGray,
-      x = monitor.width - 5,
+      rx = -5,
       y = 2,
       height = 3,
       width = 5,
       text = ' > '
     })
   }),
-  statusBar = UI.StatusBar({
-    columns = {
-      { '', 'slots',  18 },
-      { '', 'spacer', monitor.width-36 },
-      { '', 'space',  15 }
-    }
-  }),
   accelerators = {
     q = 'quit',
   }
 })
- 
+
+function changedPage.grid:getDisplayValues(row)
+  row = Util.shallowCopy(row)
+
+  local ind = '+'
+  if row.change < 0 then
+    ind = ''
+  end
+  row.change = ind .. Util.toBytes(row.change)
+  row.qty = Util.toBytes(row.qty)
+
+  return row
+end
+
 function changedPage:eventHandler(event)
  
   if event.type == 'reset' then
@@ -132,11 +111,7 @@ function changedPage:refresh()
   end
  
   for k,v in pairs(t) do
-    --v.id = v.id
-    --v.dmg = v.dmg
-    v.name = safeString(v.display_name)
     t[k] = Util.shallowCopy(v)
-    --v.qty = v.qty
   end
  
   if not self.lastItems then
@@ -172,22 +147,14 @@ function changedPage:refresh()
       v.lastQty = 0
       table.insert(changedItems, v)
     end
+
     for k,v in pairs(changedItems) do
-      local diff = v.qty - v.lastQty
-      local ind = '+'
-      if v.qty < v.lastQty then
-        ind = ''
-      end
-      v.change  = ind .. diff
-      v.dispQty = v.qty
-      if v.dispQty > 10000 then
-        v.dispQty = math.floor(v.qty / 1000) .. 'k'
-      end
-      v.iddmg = tostring(v.id) .. ':' .. tostring(v.dmg)
+      v.change  = v.qty - v.lastQty
     end
+
     self.grid:setValues(changedItems)
   end
-  self:draw()
+  self.grid:draw()
 end
  
 Event.addTimer(5, true, function()
@@ -196,5 +163,5 @@ Event.addTimer(5, true, function()
 end)
  
 UI:setPage(changedPage)
-Event.pullEvents()
+UI:pullEvents()
 UI.term:reset()

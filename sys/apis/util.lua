@@ -357,9 +357,9 @@ end
 
 --[[ String functions ]] --
 function Util.toBytes(n)
-  if n >= 1000000 then
+  if n >= 1000000 or n <= -1000000 then
     return string.format('%sM', Util.round(n/1000000, 1))
-  elseif n >= 1000 then
+  elseif n >= 1000 or n <= -1000 then
     return string.format('%sK', Util.round(n/1000, 1))
   end
   return tostring(n)
