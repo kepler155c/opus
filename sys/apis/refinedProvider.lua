@@ -13,11 +13,18 @@ function RefinedProvider:init(args)
   Util.merge(self, defaults)
   Util.merge(self, args)
 
-  self.controller = Peripheral.getByType('refinedstorage:controller')
+  local controller = Peripheral.getByType('refinedstorage:controller')
+  if controller then
+    Util.merge(self, controller)
+  end
 end
  
 function RefinedProvider:isValid()
-  return not not self.controller
+  return not not self.listAvailableItems
+end
+
+function RefinedProvider:isOnline()
+  return self.getNetworkEnergyStored() > 0
 end
 
 function RefinedProvider:getCachedItemDetails(item)
@@ -25,7 +32,7 @@ function RefinedProvider:getCachedItemDetails(item)
 
   local detail = self.cache[key]
   if not detail then
-    detail = self.controller.findItem(item)
+    detail = self.findItem(item)
     if detail then
       Util.merge(detail, detail.getMetadata())
       if detail.displayName then
@@ -52,7 +59,7 @@ function RefinedProvider:listItems()
   local list
 
   pcall(function()
-    list = self.controller.listAvailableItems()
+    list = self.listAvailableItems()
   end)
 
   if list then
@@ -78,14 +85,25 @@ function RefinedProvider:getItemInfo(fingerprint)
     return self:getCachedItemDetails(fingerprint)
   end
 
-  local detail = self.controller.findItem(item)
+  local detail = self.findItem(item)
   if detail then
     item.count = detail.count
     item.qty = detail.count
     return item
   end
 end
- 
+
+function RefinedProvider:isCrafting(item)
+  for _,task in pairs(self.getCraftingTasks()) do
+    if task.name == item.name and 
+       task.damage == item.damage and 
+       task.nbtHash == item.nbtHash then
+      return true
+    end
+  end
+  return false
+end
+
 function RefinedProvider:craft(id, dmg, qty)
   return false
 end
@@ -98,11 +116,11 @@ function RefinedProvider:provide(item, qty, slot)
 end
  
 function RefinedProvider:extract(slot, qty)
---  self.controller.pushItems(self.direction, slot, qty)
+--  self.pushItems(self.direction, slot, qty)
 end
 
 function RefinedProvider:insert(slot, qty)
---  self.controller.pullItems(self.direction, slot, qty)
+--  self.pullItems(self.direction, slot, qty)
 end
 
 return RefinedProvider

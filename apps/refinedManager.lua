@@ -1,78 +1,17 @@
 local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
 require = injector(getfenv(1))
-local Event = require('event')
+
 local UI = require('ui')
+local RefinedProvider = require('refinedProvider')
+local Terminal = require('terminal')
 local Peripheral = require('peripheral')
 
-local controller = Peripheral.getByType('refinedstorage:controller')
-if not controller then
+local controller = RefinedProvider()
+if not controller:isValid() then
   error('Refined storage controller not found')
 end
 
 multishell.setTitle(multishell.getCurrent(), 'Storage Manager')
-
--- refined storage is slooow
-local cache = { }
-
--- Strip off color prefix
-local function safeString(text)
-
-  local val = text:byte(1)
-
-  if val < 32 or val > 128 then
-
-    local newText = {}
-    for i = 4, #text do
-      local val = text:byte(i)
-      newText[i - 3] = (val > 31 and val < 127) and val or 63
-    end
-    return string.char(unpack(newText))
-  end
-
-  return text
-end
-
-function getItemDetails(item)
-  local key = table.concat({ item.name, item.damage, item.nbtHash }, ':')
-
-  local detail = cache[key]
-  if not detail then
-    detail = controller.findItem(item)
-    if detail then
-      Util.merge(detail, detail.getMetadata())
-      if detail.displayName then
-        detail.displayName = safeString(detail.displayName)
-        if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
-          detail.displayName = detail.displayName .. ' (damaged)'
-        end
-        detail.lname = detail.displayName:lower()
-        cache[key] = detail
-      end
-    end
-  end
-  return detail
-end
-
-function listItems()
-  local items = { }
-  local list
-
-  pcall(function()
-    list = controller.listAvailableItems()
-  end)
-
-  if list then
-    for _,v in pairs(list) do
-      local item = getItemDetails(v)
-      if item then
-        item.count = v.count
-        table.insert(items, item)
-      end
-    end
-  end
-
-  return items
-end
 
 function getItem(items, inItem, ignoreDamage)
   for _,item in pairs(items) do
@@ -105,6 +44,9 @@ function mergeResources(t)
       item.low = tonumber(v.low)
       item.auto = v.auto
       item.ignoreDamage = v.ignoreDamage
+      item.rsControl = v.rsControl
+      item.rsDevice = v.rsDevice
+      item.rsSide = v.rsSide
     else
       v.count = 0
       v.limit = tonumber(v.limit)
@@ -131,33 +73,15 @@ function filterItems(t, filter)
   return r
 end
 
-function getJobList()
-  local list = { }
-
-  for _,task in pairs(controller.getCraftingTasks()) do
-    table.insert(list, task.getPattern().outputs[1])
-  end
-
-  return list
-end
-
 function craftItems(itemList, allItems)
 
   for _,item in pairs(itemList) do
-
-    local alreadyCrafting = false
-    local jobList = getJobList()
-
-    for _,v in pairs(jobList) do
-      if v.name == item.name and v.damage == item.damage and v.nbtHash == item.nbtHash then
-        alreadyCrafting = true
-      end
-    end
-
     local cItem = getItem(allItems, item)
 
-    if alreadyCrafting then
+    if controller:isCrafting(item) then
       item.status = '(crafting)'
+    elseif item.rsControl then
+      item.status = 'Activated'
     elseif not cItem then
       item.status = '(no recipe)'
     else
@@ -248,8 +172,17 @@ function watchResources(items)
         count = res.low - item.count,
         name = item.name,
         displayName = item.displayName,
-        status = ''
+        status = '',
+        rsControl = res.rsControl,
       })
+    end
+
+    if res.rsControl and res.rsDevice and res.rsSide then
+      if item.count < res.low then
+        pcall(function() device[res.rsDevice].setOutput(res.rsSide, true) end)
+      else
+        pcall(function() device[res.rsDevice].setOutput(res.rsSide, false) end)
+      end
     end
   end
 
@@ -268,7 +201,7 @@ itemPage = UI.Page {
     x = 5, y = 3, width = UI.term.width - 10, height = 3,
   },
   form = UI.Form {
-    x = 4, y = 6, height = 8, rex = -4,
+    x = 4, y = 5, height = 10, rex = -4,
     [1] = UI.TextEntry {
       width = 7,
       backgroundColor = colors.gray,
@@ -295,6 +228,37 @@ itemPage = UI.Page {
       },
       help = 'Ignore damage of item'
     },
+    [4] = UI.Chooser {
+      width = 7,
+      formLabel = 'RS Control', formKey = 'rsControl',
+      nochoice = 'No',
+      choices = {
+        { name = 'Yes', value = true },
+        { name = 'No', value = false },
+      },
+      help = 'Control via redstone'
+    },
+    [5] = UI.Chooser {
+      width = 25,
+      formLabel = 'RS Device', formKey = 'rsDevice',
+      nochoice = 'No',
+      --choices = devices,
+      help = 'Redstone Device'
+    },
+    [6] = UI.Chooser {
+      width = 10,
+      formLabel = 'RS Side', formKey = 'rsSide',
+      --nochoice = 'No',
+      choices = {
+        { name = 'up', value = 'up' },
+        { name = 'down', value = 'down' },
+        { name = 'east', value = 'east' },
+        { name = 'north', value = 'north' },
+        { name = 'west', value = 'west' },
+        { name = 'south', value = 'south' },
+      },
+      help = 'Output side'
+    },
   },
   statusBar = UI.StatusBar { }
 }
@@ -315,6 +279,14 @@ function itemPage:enable(item)
   self.form:setValues(item)
   self.titleBar.title = item.name
   self.displayName.value = item.displayName
+
+  local devices = self.form[5].choices
+  Util.clear(devices)
+  for _,device in pairs(device) do
+    if device.setOutput then
+      table.insert(devices, { name = device.name, value = device.name })
+    end
+  end
 
   UI.Page.enable(self)
   self:focusFirst()
@@ -337,7 +309,9 @@ function itemPage:eventHandler(event)
         break
       end
     end
-    local keys = { 'name', 'displayName', 'auto', 'low', 'damage', 'maxDamage', 'nbtHash', 'limit', 'ignoreDamage' }
+    local keys = { 'name', 'displayName', 'auto', 'low', 'damage',
+                   'maxDamage', 'nbtHash', 'limit', 'ignoreDamage',
+                   'rsControl', 'rsDevice', 'rsSide', }
     local filtered = { }
     for _,key in pairs(keys) do
       filtered[key] = values[key]
@@ -434,7 +408,7 @@ end
 
 function listingPage:eventHandler(event)
   if event.type == 'quit' then
-    Event.exitPullEvents()
+    UI:exitPullEvents()
 
   elseif event.type == 'grid_select' then
     local selected = event.selected
@@ -479,7 +453,7 @@ function listingPage:enable()
 end
 
 function listingPage:refresh()
-  self.allItems = listItems()
+  self.allItems = controller:listItems()
   mergeResources(self.allItems)
   self:applyFilter()
 end
@@ -492,17 +466,6 @@ end
 local function jobMonitor(jobList)
 
   local mon = Peripheral.getByType('monitor')
-  local nullDevice = {
-      setCursorPos = function(...) end,
-      write = function(...) end,
-      getSize = function() return 13, 20 end,
-      isColor = function() return false end,
-      setBackgroundColor = function(...) end,
-      setTextColor = function(...) end,
-      clear = function(...) end,
-      sync = function(...) end,
-      blit = function(...) end,
-  }
 
   if mon then
     mon = UI.Device({
@@ -511,7 +474,7 @@ local function jobMonitor(jobList)
     })
   else
     mon = UI.Device({
-      device = nullDevice
+      device = Terminal.getNullTerm(term.current())
     })
   end
 
@@ -545,11 +508,11 @@ function craftingThread()
   while true do
     os.sleep(5)
 
-    pcall(function()
+    --pcall(function()
 
-      local items = listItems()
+      local items = controller:listItems()
 
-      if controller.getNetworkEnergyStored() == 0 then
+      if not controller:isOnline() then
         jobListGrid.parent:clear()
         jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'Power failure')
         jobListGrid:sync()
@@ -572,11 +535,11 @@ function craftingThread()
         itemList = getAutocraftItems(items) -- autocrafted items don't show on job monitor
         craftItems(itemList, items) 
       end
-    end)
+    --end)
   end
 end
 
-Event.pullEvents(craftingThread)
+UI:pullEvents(craftingThread)
 
 UI.term:reset()
 jobListGrid.parent:reset()

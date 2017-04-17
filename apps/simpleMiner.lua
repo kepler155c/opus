@@ -369,6 +369,7 @@ function fortuneDig(action, blockName)
     repeat until not turtle.dig()
     turtle.selectSlot('minecraft:diamond_pickaxe')
     turtle.equipRight()
+    turtle.select(1)
     return true
   end
 end

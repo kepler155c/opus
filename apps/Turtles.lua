@@ -296,8 +296,14 @@ if not Util.getOptions(options, { ... }, true) then
   return
 end
 
-if options.turtle.value then
-  page.turtle = _G.network[options.turtle.value]
+if options.turtle.value >= 0 then
+  for i = 1, 10 do
+    page.turtle = _G.network[options.turtle.value]
+    if page.turtle then
+      break
+    end
+    os.sleep(1)
+  end
 end
 
 UI:setPage(page)
