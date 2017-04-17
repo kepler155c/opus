@@ -3,6 +3,7 @@ local Event = require('event')
 local UI = require('ui')
 local Socket = require('socket')
 local Terminal = require('terminal')
+local TableDB = require('tableDB')
 
 multishell.setTitle(multishell.getCurrent(), 'Turtles')
 UI.Button.defaults.focusIndicator = ' '
@@ -29,6 +30,12 @@ local policies = {
   { label = 'digAttack' },
   { label = 'turtleSafe' },
 }
+
+local itemInfoDB = TableDB({
+  fileName = 'items.db'
+})
+
+itemInfoDB:load()
 
 local page = UI.Page {
   moveUp = UI.Button {
@@ -179,7 +186,13 @@ function page.tabs.inventory:draw()
           v.selected = true
         end
         if v.id then
-          v.id = v.id:gsub('.*:(.*)', '%1')
+          local item = itemInfoDB:get({ v.id, v.dmg })
+debug(v)
+          if item then
+            v.id = item.displayName
+          else
+            v.id = v.id:gsub('.*:(.*)', '%1')
+          end
         end
       end
     end
