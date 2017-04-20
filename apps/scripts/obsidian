@@ -1,0 +1,58 @@
+require = requireInjector(getfenv(1))
+local Point = require('point')
+
+local checkedNodes = { }
+local nodes = { }
+
+local function addNode(node)
+
+  local key = table.concat({ node.x, node.z }, ':')
+
+  for i = 0, 3 do
+    local hi = turtle.getHeadingInfo(i)
+    local testNode = { x = node.x + hi.xd, z = node.z + hi.zd }
+
+    key = table.concat({ testNode.x, testNode.z }, ':')
+    if not checkedNodes[key] then
+      nodes[key] = testNode
+    end
+  end
+end
+
+local function findObsidian()
+  while true do
+    local _,b = turtle.inspectDown()
+    local node = { x = turtle.point.x, z = turtle.point.z }
+    local key = table.concat({ node.x, node.z }, ':')
+
+    checkedNodes[key] = true
+    nodes[key] = nil
+
+    if b and b.name == 'minecraft:obsidian' then
+      turtle.digDown()
+      addNode(node)
+    end
+
+    print(string.format('%d nodes remaining', Util.size(nodes)))
+
+    if Util.size(nodes) == 0 then
+      break
+    end
+
+    local node = Point.closest(turtle.point, nodes)
+    if not turtle.gotoPoint(node) then
+      break
+    end
+
+  end
+end
+
+turtle.reset()
+turtle.setPolicy(turtle.policies.digOnly)
+local s, m = turtle.run(function() findObsidian() end)
+if not s and m then
+  error(m)
+end
+turtle.goto(0, 0, 0, 0)
+turtle.reset()
+

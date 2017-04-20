@@ -34,8 +34,10 @@ function RefinedProvider:getCachedItemDetails(item)
   if not detail then
     detail = self.findItem(item)
     if detail then
-      Util.merge(detail, detail.getMetadata())
-      if detail.displayName then
+      local meta
+      pcall(function() meta = detail.getMetadata() end)
+      if meta then
+        Util.merge(detail, meta)
         if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
           detail.displayName = detail.displayName .. ' (damaged)'
         end
@@ -95,9 +97,10 @@ end
 
 function RefinedProvider:isCrafting(item)
   for _,task in pairs(self.getCraftingTasks()) do
-    if task.name == item.name and 
-       task.damage == item.damage and 
-       task.nbtHash == item.nbtHash then
+    local output = task.getPattern().outputs[1]
+    if output.name == item.name and 
+       output.damage == item.damage and 
+       output.nbtHash == item.nbtHash then
       return true
     end
   end

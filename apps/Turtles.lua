@@ -1,5 +1,4 @@
 require = requireInjector(getfenv(1))
-local Event = require('event')
 local UI = require('ui')
 local Socket = require('socket')
 local Terminal = require('terminal')
@@ -20,7 +19,6 @@ local options = {
 
 local SCRIPTS_PATH = '/apps/scripts'
 
-local ct = term.current()
 local nullTerm = Terminal.getNullTerm(term.current())
 local turtles = { }
 local policies = { 
@@ -84,8 +82,9 @@ local page = UI.Page {
     x = 1, y = 8, rey = -2,
     scripts = UI.Grid {
       tabTitle = 'Run',
+      backgroundColor = UI.TabBar.defaults.selectedBackgroundColor,
       columns = {
-        { heading = '', key = 'label'  },
+        { heading = '', key = 'label' },
       },
       disableHeader = true,
       sortColumn = 'label',
@@ -93,6 +92,7 @@ local page = UI.Page {
     },
     turtles = UI.Grid {
       tabTitle = 'Sel',
+      backgroundColor = UI.TabBar.defaults.selectedBackgroundColor,
       columns = {
         { heading = 'label',  key = 'label'    },
         { heading = 'Dist',   key = 'distance' },
@@ -104,18 +104,20 @@ local page = UI.Page {
       autospace = true,
     },
     inventory = UI.Grid {
+      backgroundColor = UI.TabBar.defaults.selectedBackgroundColor,
       tabTitle = 'Inv',
       columns = {
-        { heading = '',          key = 'qty', width = 2   },
-        { heading = 'Inventory', key = 'id',  width = 13  },
+        { heading = '',          key = 'qty', width = 2 },
+        { heading = 'Inventory', key = 'id',  width = UI.term.width - 5 },
       },
       disableHeader = true,
       sortColumn = 'index',
     },
     policy = UI.Grid {
       tabTitle = 'Mod',
+      backgroundColor = UI.TabBar.defaults.selectedBackgroundColor,
       columns = {
-        { heading = 'label', key = 'label'  },
+        { heading = 'label', key = 'label' },
       },
       values = policies,
       disableHeader = true,
@@ -187,7 +189,6 @@ function page.tabs.inventory:draw()
         end
         if v.id then
           local item = itemInfoDB:get({ v.id, v.dmg })
-debug(v)
           if item then
             v.id = item.displayName
           else
@@ -273,7 +274,7 @@ end
 
 function page:eventHandler(event)
   if event.type == 'quit' then
-    UI:setPreviousPage()
+    UI:exitPullEvents()
   elseif event.type == 'button_press' then
     if event.button.fn then
       self:runFunction(event.button.fn, event.button.nowrap)
@@ -323,5 +324,5 @@ UI:setPage(page)
 
 page.tabs:activateTab(page.tabs[options.tab.value])
 
-Event.pullEvents(updateThread)
+UI:pullEvents(updateThread)
 UI.term:reset()
