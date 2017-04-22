@@ -16,7 +16,7 @@ multishell.setTitle(multishell.getCurrent(), 'Storage Manager')
 function getItem(items, inItem, ignoreDamage)
   for _,item in pairs(items) do
     if item.name == inItem.name then
-      if ignoreDamage and ignoreDamage == 'yes' then
+      if ignoreDamage then
         return item
       elseif item.damage == inItem.damage and item.nbtHash == inItem.nbtHash then
         return item
@@ -111,7 +111,7 @@ function getAutocraftItems(items)
 
   for _,res in pairs(t) do
 
-    if res.auto and res.auto == 'yes' then
+    if res.auto then
       res.count = 4  -- this could be higher to increase autocrafting speed
       table.insert(itemList, res)
     end
@@ -125,7 +125,7 @@ local function getItemWithQty(items, res, ignoreDamage)
 
   if item then
 
-    if ignoreDamage and ignoreDamage == 'yes' then
+    if ignoreDamage then
       local count = 0
 
       for _,v in pairs(items) do
@@ -163,7 +163,7 @@ function watchResources(items)
     end
 
     if res.low and item.count < res.low then
-      if res.ignoreDamage and res.ignoreDamage == 'yes' then
+      if res.ignoreDamage then
         item.damage = 0
       end
       table.insert(itemList, {
@@ -201,7 +201,7 @@ itemPage = UI.Page {
     x = 5, y = 3, width = UI.term.width - 10, height = 3,
   },
   form = UI.Form {
-    x = 4, y = 5, height = 10, rex = -4,
+    x = 4, y = 6, height = 10, rex = -4,
     [1] = UI.TextEntry {
       width = 7,
       backgroundColor = colors.gray,
@@ -213,8 +213,8 @@ itemPage = UI.Page {
       formLabel = 'Autocraft', formKey = 'auto',
       nochoice = 'No',
       choices = {
-        { name = 'Yes', value = 'yes' },
-        { name = 'No', value = 'no' },
+        { name = 'Yes', value = true },
+        { name = 'No', value = false },
       },
       help = 'Craft until out of ingredients'
     },
@@ -223,8 +223,8 @@ itemPage = UI.Page {
       formLabel = 'Ignore Dmg', formKey = 'ignoreDamage',
       nochoice = 'No',
       choices = {
-        { name = 'Yes', value = 'yes' },
-        { name = 'No', value = 'no' },
+        { name = 'Yes', value = true },
+        { name = 'No', value = false },
       },
       help = 'Ignore damage of item'
     },
@@ -241,7 +241,6 @@ itemPage = UI.Page {
     [5] = UI.Chooser {
       width = 25,
       formLabel = 'RS Device', formKey = 'rsDevice',
-      nochoice = 'No',
       --choices = devices,
       help = 'Redstone Device'
     },
@@ -288,6 +287,10 @@ function itemPage:enable(item)
     end
   end
 
+  if Util.size(devices) == 0 then
+    table.insert(devices, { name = 'None found', values = '' })
+  end
+
   UI.Page.enable(self)
   self:focusFirst()
 end
@@ -304,7 +307,8 @@ function itemPage:eventHandler(event)
     local values = self.form.values
     local t = Util.readTable('resource.limits') or { }
     for k,v in pairs(t) do
-      if v.name == values.name and v.damage == values.damage then
+      if uniqueKey(v) == uniqueKey(values) then
+      --if v.name == values.name and v.damage == values.damage then
         t[k] = nil
         break
       end
@@ -316,8 +320,14 @@ function itemPage:eventHandler(event)
     for _,key in pairs(keys) do
       filtered[key] = values[key]
     end
+    filtered.low = tonumber(filtered.low)
+    filtered.limit = tonumber(filtered.limit)
 
-    if filtered.ignoreDamage and filtered.ignoreDamage == 'yes' then
+    filtered.ignoreDamage = filtered.ignoreDamage == true
+    filtered.auto = filtered.auto == true
+    filtered.rsControl = filtered.rsControl == true
+
+    if filtered.ignoreDamage then
       filtered.damage = 0
     end
 

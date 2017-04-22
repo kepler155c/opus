@@ -48,12 +48,15 @@ function RefinedProvider:getCachedItemDetails(item)
         detail.id = detail.name
         detail.qty = detail.count
         detail.display_name = detail.displayName
+        detail.nbtHash = item.nbtHash
 
         self.cache[key] = detail
       end
     end
   end
-  return detail
+  if detail then
+    return Util.shallowCopy(detail)
+  end
 end
 
 function RefinedProvider:listItems()

@@ -91,13 +91,16 @@ function os.isPocket()
 end
 
 function os.getVersion()
+  local version
+
   if _CC_VERSION then
-    return tonumber(_CC_VERSION)
+    version = tonumber(_CC_VERSION)
   end
   if _HOST then
-    return tonumber(_HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
+    version = tonumber(_HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
   end
-  return 1.7
+
+  return version or 1.7
 end
 
 function os.registerApp(entry)

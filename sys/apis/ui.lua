@@ -1464,6 +1464,10 @@ end
 function UI.Grid:setParent()
   UI.Window.setParent(self)
   self:update()
+end
+
+function UI.Grid:resize()
+  UI.Window.resize(self)
 
   if not self.pageSize then
     if self.disableHeader then
@@ -2287,6 +2291,7 @@ function UI.Tabs:setParent()
     if child ~= self.tabBar then
       child.y = 2
       child.height = self.height - 1
+      child:resize()
     end
   end
 end
@@ -3061,6 +3066,9 @@ function UI.Form:setValues(values)
   self.values = values
   for k,child in pairs(self.children) do
     if child.formKey then
+      -- this should be child:setValue(self.values[child.formKey])
+      -- so chooser can set default choice if null
+      -- null should be valid as well
       child.value = self.values[child.formKey] or ''
     end
   end

@@ -1,18 +1,15 @@
 require = requireInjector(getfenv(1))
 local Point = require('point')
 
-local checkedNodes = { }
-local nodes = { }
+local checkedNodes, nodes
 
 local function addNode(node)
-
-  local key = table.concat({ node.x, node.z }, ':')
 
   for i = 0, 3 do
     local hi = turtle.getHeadingInfo(i)
     local testNode = { x = node.x + hi.xd, z = node.z + hi.zd }
 
-    key = table.concat({ testNode.x, testNode.z }, ':')
+    local key = table.concat({ testNode.x, testNode.z }, ':')
     if not checkedNodes[key] then
       nodes[key] = testNode
     end
@@ -20,17 +17,30 @@ local function addNode(node)
 end
 
 local function findObsidian()
-  while true do
-    local _,b = turtle.inspectDown()
+  repeat
     local node = { x = turtle.point.x, z = turtle.point.z }
     local key = table.concat({ node.x, node.z }, ':')
 
     checkedNodes[key] = true
     nodes[key] = nil
 
+    local _,b = turtle.inspectDown()
+    if b and (b.name == 'minecraft:lava' or b.name == 'minecraft:flowing_lava') then
+      if turtle.selectSlot('minecraft:water_bucket') then
+        turtle.up()
+        turtle.placeDown()
+        os.sleep(2)
+        turtle.placeDown()
+        turtle.down()
+        _, b = turtle.inspectDown()
+      end
+    end
+
     if b and b.name == 'minecraft:obsidian' then
       turtle.digDown()
       addNode(node)
+    else
+      turtle.digDown()
     end
 
     print(string.format('%d nodes remaining', Util.size(nodes)))
@@ -43,16 +53,35 @@ local function findObsidian()
     if not turtle.gotoPoint(node) then
       break
     end
-
-  end
+  until turtle.abort
 end
 
 turtle.reset()
 turtle.setPolicy(turtle.policies.digOnly)
-local s, m = turtle.run(function() findObsidian() end)
+local s, m = turtle.run(function() 
+  repeat
+
+    checkedNodes = { }
+    nodes = { }
+
+    local _,b = turtle.inspectDown()
+    if not b or b.name ~= 'minecraft:obsidian' then
+      break
+    end
+
+    findObsidian()
+    if not turtle.selectSlot('minecraft:water_bucket') then
+      break
+    end
+    turtle.goto(0, 0)
+    turtle.placeDown()
+    os.sleep(2)
+    turtle.placeDown()
+    turtle.down()
+  until turtle.abort
+end)
+turtle.goto(0, 0, 0, 0)
+turtle.reset()
 if not s and m then
   error(m)
 end
-turtle.goto(0, 0, 0, 0)
-turtle.reset()
-
