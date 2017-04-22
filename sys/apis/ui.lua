@@ -1464,10 +1464,6 @@ end
 function UI.Grid:setParent()
   UI.Window.setParent(self)
   self:update()
-end
-
-function UI.Grid:resize()
-  UI.Window.resize(self)
 
   if not self.pageSize then
     if self.disableHeader then
@@ -1475,6 +1471,16 @@ function UI.Grid:resize()
     else
       self.pageSize = self.height - 1
     end
+  end
+end
+
+function UI.Grid:resize()
+  UI.Window.resize(self)
+
+  if self.disableHeader then
+    self.pageSize = self.height
+  else
+    self.pageSize = self.height - 1
   end
 end
 
