@@ -1,12 +1,23 @@
 local class = require('class')
 local Peripheral = require('peripheral')
+local TableDB = require('tableDB')
 
 local RefinedProvider = class()
- 
+
+local keys = { 
+  'fields',
+  'damage',
+  'displayName',
+  'maxCount',
+  'maxDamage',
+  'name',
+  'nbtHash',
+  'rawName',
+}
+
 function RefinedProvider:init(args)
   
   local defaults = {
-    cache = { },
     items = { },
     name = 'refinedStorage',
   }
@@ -16,6 +27,14 @@ function RefinedProvider:init(args)
   local controller = Peripheral.getByType('refinedstorage:controller')
   if controller then
     Util.merge(self, controller)
+  end
+
+  if not self.itemInfoDB then
+    self.itemInfoDB = TableDB({
+      fileName = 'items.db'
+    })
+
+    self.itemInfoDB:load()
   end
 end
  
@@ -30,28 +49,35 @@ end
 function RefinedProvider:getCachedItemDetails(item)
   local key = table.concat({ item.name, item.damage, item.nbtHash }, ':')
 
-  local detail = self.cache[key]
+  local detail = self.itemInfoDB:get(key)
   if not detail then
     detail = self.findItem(item)
     if detail then
       local meta
       pcall(function() meta = detail.getMetadata() end)
-      if meta then
-        Util.merge(detail, meta)
-        if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
-          detail.displayName = detail.displayName .. ' (damaged)'
-        end
-        detail.lname = detail.displayName:lower()
-
-        -- backwards capability
-        detail.dmg = detail.damage
-        detail.id = detail.name
-        detail.qty = detail.count
-        detail.display_name = detail.displayName
-        detail.nbtHash = item.nbtHash
-
-        self.cache[key] = detail
+      if not meta then
+        return
       end
+      Util.merge(detail, meta)
+      if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
+        detail.displayName = detail.displayName .. ' (damaged)'
+      end
+      detail.lname = detail.displayName:lower()
+
+      -- backwards capability
+      detail.dmg = detail.damage
+      detail.id = detail.name
+      detail.qty = detail.count
+      detail.display_name = detail.displayName
+      detail.nbtHash = item.nbtHash
+
+      local t = { }
+      for _,key in pairs(keys) do
+        t[key] = detail[key]
+      end
+
+      detail = t
+      self.itemInfoDB:add(key, detail)
     end
   end
   if detail then
@@ -76,6 +102,7 @@ function RefinedProvider:listItems()
         table.insert(items, item)
       end
     end
+    self.itemInfoDB:flush()
   end
 
   return items
@@ -85,7 +112,7 @@ function RefinedProvider:getItemInfo(fingerprint)
 
   local key = table.concat({ fingerprint.name, fingerprint.damage, fingerprint.nbtHash }, ':')
 
-  local item = self.cache[key]
+  local item = self.itemInfoDB:get(key)
   if not item then
     return self:getCachedItemDetails(fingerprint)
   end
@@ -110,8 +137,11 @@ function RefinedProvider:isCrafting(item)
   return false
 end
 
-function RefinedProvider:craft(id, dmg, qty)
-  return false
+function RefinedProvider:craft(item, qty)
+  local detail = self.findItem(item)
+  if detail then
+    return detail.craft(qty)
+  end
 end
 
 function RefinedProvider:craftItems(items)

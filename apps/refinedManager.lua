@@ -26,22 +26,16 @@ function getItem(items, inItem, ignoreDamage)
 end
 
 local function uniqueKey(item)
-  local key = item.name .. ':' .. item.damage
-  if item.nbtHash then
-    key = key .. ':' .. item.nbtHash
-  end
-  return key
+  return table.concat({ item.name, item.damage, item.nbtHash }, ':')
 end
 
 function mergeResources(t)
-  local resources = Util.readTable('resource.limits')
-  resources = resources or { }
+  local resources = Util.readTable('resource.limits') or { }
 
   for _,v in pairs(resources) do
     local item = getItem(t, v)
     if item then
-      item.limit = tonumber(v.limit)
-      item.low = tonumber(v.low)
+      item.low = v.low
       item.auto = v.auto
       item.ignoreDamage = v.ignoreDamage
       item.rsControl = v.rsControl
@@ -49,29 +43,27 @@ function mergeResources(t)
       item.rsSide = v.rsSide
     else
       v.count = 0
-      v.limit = tonumber(v.limit)
-      v.low = tonumber(v.low)
-      v.auto = v.auto
-      v.ignoreDamage = v.ignoreDamage
       table.insert(t, v)
     end
+  end
+
+  for _,v in pairs(t) do
     v.lname = v.displayName:lower()
   end
 end
  
 function filterItems(t, filter)
-  local r = {}
   if filter then
+    local r = {}
     filter = filter:lower()
     for k,v in pairs(t) do
-      if  string.find(v.lname, filter) then
+      if string.find(v.lname, filter) then
         table.insert(r, v)
       end
     end
-  else
-    return t
+    return r
   end
-  return r
+  return t
 end
 
 function craftItems(itemList, allItems)
@@ -91,7 +83,7 @@ function craftItems(itemList, allItems)
       while count >= 1 do -- try to request smaller quantities until successful
         local s, m = pcall(function()
           item.status = '(no recipe)'
-          if not cItem.craft(count) then
+          if not controller:craft(cItem, count) then
             item.status = '(missing ingredients)'
             error('failed')
           end
@@ -106,7 +98,7 @@ function craftItems(itemList, allItems)
   end
 end
 
-function getAutocraftItems(items)
+function getAutocraftItems()
   local t = Util.readTable('resource.limits') or { }
   local itemList = { }
 
@@ -151,8 +143,6 @@ function watchResources(items)
   local t = Util.readTable('resource.limits') or { }
   for k, res in pairs(t) do
     local item = getItemWithQty(items, res, res.ignoreDamage)
-    res.limit = tonumber(res.limit)
-    res.low = tonumber(res.low)
     if not item then
       item = {
         damage = res.damage,
@@ -179,11 +169,9 @@ function watchResources(items)
     end
 
     if res.rsControl and res.rsDevice and res.rsSide then
-      if item.count < res.low then
-        pcall(function() device[res.rsDevice].setOutput(res.rsSide, true) end)
-      else
-        pcall(function() device[res.rsDevice].setOutput(res.rsSide, false) end)
-      end
+      pcall(function() 
+        device[res.rsDevice].setOutput(res.rsSide, item.count < res.low)
+      end)
     end
   end
 
@@ -278,7 +266,6 @@ function itemPage:enable(item)
 
   self.form:setValues(item)
   self.titleBar.title = item.name
-  self.displayName.value = item.displayName
 
   local devices = self.form[5].choices
   Util.clear(devices)
@@ -307,22 +294,15 @@ function itemPage:eventHandler(event)
   elseif event.type == 'form_complete' then
     local values = self.form.values
     local t = Util.readTable('resource.limits') or { }
-    for k,v in pairs(t) do
-      if uniqueKey(v) == uniqueKey(values) then
-      --if v.name == values.name and v.damage == values.damage then
-        t[k] = nil
-        break
-      end
-    end
     local keys = { 'name', 'displayName', 'auto', 'low', 'damage',
-                   'maxDamage', 'nbtHash', 'limit', 'ignoreDamage',
+                   'maxDamage', 'nbtHash', 'ignoreDamage',
                    'rsControl', 'rsDevice', 'rsSide', }
+
     local filtered = { }
     for _,key in pairs(keys) do
       filtered[key] = values[key]
     end
     filtered.low = tonumber(filtered.low)
-    filtered.limit = tonumber(filtered.limit)
 
     filtered.ignoreDamage = filtered.ignoreDamage == true
     filtered.auto = filtered.auto == true
@@ -333,10 +313,9 @@ function itemPage:eventHandler(event)
     end
 
     t[uniqueKey(filtered)] = filtered
-    --table.insert(t, filtered)
     Util.writeTable('resource.limits', t)
-    UI:setPreviousPage()
 
+    UI:setPreviousPage()
   else
     return UI.Page.eventHandler(self, event)
   end
@@ -394,9 +373,6 @@ function listingPage.grid:getDisplayValues(row)
   if row.low then
     row.low = Util.toBytes(row.low)
   end
-  if row.limit then
-    row.limit = Util.toBytes(row.limit)
-  end
   return row
 end
 
@@ -428,6 +404,7 @@ function listingPage:eventHandler(event)
   elseif event.type == 'refresh' then
     self:refresh()
     self.grid:draw()
+    self.statusBar.filter:focus()
 
   elseif event.type == 'forget' then
     local item = self.grid:getSelected()
@@ -539,11 +516,11 @@ function craftingThread()
         jobListGrid:draw()
         jobListGrid:sync()
         craftItems(itemList, items)
-        jobListGrid:update()
+        --jobListGrid:update()
         jobListGrid:draw()
         jobListGrid:sync()
 
-        itemList = getAutocraftItems(items) -- autocrafted items don't show on job monitor
+        itemList = getAutocraftItems() -- autocrafted items don't show on job monitor
         craftItems(itemList, items) 
       end
     --end)
