@@ -55,6 +55,7 @@ function mergeResources(t)
       v.ignoreDamage = v.ignoreDamage
       table.insert(t, v)
     end
+    v.lname = v.displayName:lower()
   end
 end
  
