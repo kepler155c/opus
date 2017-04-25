@@ -33,6 +33,7 @@ function mergeResources(t)
   local resources = Util.readTable('resource.limits') or { }
 
   for _,v in pairs(resources) do
+    v.low = tonumber(v.low) -- backwards compatibility
     local item = getItem(t, v)
     if item then
       item.low = v.low
@@ -142,6 +143,7 @@ function watchResources(items)
 
   local t = Util.readTable('resource.limits') or { }
   for k, res in pairs(t) do
+    res.low = tonumber(res.low) -- backwards compatibility
     local item = getItemWithQty(items, res, res.ignoreDamage)
     if not item then
       item = {
