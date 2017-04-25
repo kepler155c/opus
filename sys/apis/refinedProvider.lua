@@ -97,7 +97,8 @@ function RefinedProvider:listItems()
     for _,v in pairs(list) do
       local item = self:getCachedItemDetails(v)
       if item then
-        item.id - v.name
+        item.display_name = item.displayName
+        item.id = v.name
         item.count = v.count
         item.qty = v.count
         table.insert(items, item)
