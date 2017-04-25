@@ -459,7 +459,7 @@ local function jobMonitor(jobList)
 
   if mon then
     mon = UI.Device({
-      device = mon,
+      device = device.monitor,
       textScale = .5,
     })
   else
