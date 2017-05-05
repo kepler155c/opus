@@ -1,7 +1,6 @@
 local Logger = require('logger')
 
 local socketClass = { }
-local trustList = Util.readTable('.known_hosts') or { }
 
 local exchange = {
   base = 11,
@@ -203,6 +202,7 @@ function trusted(msg, port)
     return true
   end
 
+  local trustList = Util.readTable('.known_hosts') or { }
   local pubKey = trustList[msg.shost]
 
   if pubKey then
