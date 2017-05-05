@@ -1,7 +1,28 @@
 local Logger = require('logger')
 
 local socketClass = { }
-local trustList = Util.readTable('.known_hosts')
+local trustList = Util.readTable('.known_hosts') or { }
+
+local exchange = {
+  base = 11,
+  primeMod = 625210769
+}
+
+local function modexp(base, exponent, modulo)
+  local remainder = base
+
+  for i = 1, exponent-1 do
+    remainder = remainder * remainder
+    if remainder >= modulo then
+      remainder = remainder % modulo
+    end
+  end
+
+  return remainder
+end
+
+exchange.secretKey = os.getSecretKey()
+exchange.publicKey = modexp(exchange.base, exchange.secretKey, exchange.primeMod)
 
 function socketClass:read(timeout)
 
@@ -148,6 +169,7 @@ function Socket.connect(host, port)
     type = 'OPEN',
     shost = socket.shost,
     dhost = socket.dhost,
+    sharedKey = exchange.publicKey,
   })
 
   local timerId = os.startTimer(3)
@@ -175,11 +197,18 @@ function Socket.connect(host, port)
   socket:close()
 end
 
-function trusted(msg)
-  if trustList then
-    return trustList[msg.shost]
+function trusted(msg, port)
+
+  if port == 19 then -- no auth for trust server
+    return true
   end
-  return true
+
+  local pubKey = trustList[msg.shost]
+
+  if pubKey then
+    --local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
+    return pubKey == msg.sharedKey
+  end
 end
 
 function Socket.server(port, keepAlive)
@@ -195,7 +224,7 @@ function Socket.server(port, keepAlive)
        msg.dhost == os.getComputerID() and
        msg.type == 'OPEN' then
 
-      if trusted(msg) then
+      if trusted(msg, port) then
         local socket = newSocket(msg.shost == os.getComputerID())
         socket.dport = dport
         socket.dhost = msg.shost

@@ -7,8 +7,6 @@ local config = {
   distance = 8,
 }
 
-Config.load('lock', config)
-
 local lockId
 
 function lockScreen()
@@ -40,6 +38,7 @@ function lockScreen()
 
   function page:eventHandler(event)
     if event.type == 'key' and event.key == 'enter' then
+      Config.load('os', config)
       if SHA1.sha1(self.password.value) == config.password then
         os.locked = false
         Event.exitPullEvents()
@@ -54,6 +53,18 @@ function lockScreen()
 
   UI:setPage(page)
   Event.pullEvents()
+end
+
+function os.verifyPassword(password)
+  Config.load('os', config)
+  return config.password and password == config.password
+end
+
+function os.getSecretKey()
+  if not fs.exists('.secret') then
+    Util.writeFile('.secret', math.random(100000, 999999))
+  end
+  return Util.readFile('.secret')
 end
 
 os.lock = function()
