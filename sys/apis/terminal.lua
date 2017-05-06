@@ -150,4 +150,19 @@ function Terminal.mirror(ct, dt)
   end
 end
 
+function Terminal.readPassword(prompt)
+  if prompt then
+    term.write(prompt)
+  end
+  local fn = term.write
+  term.write = function() end
+  local s = read(prompt)
+  term.write = fn
+
+  if s == '' then
+    return
+  end
+  return s
+end
+
 return Terminal

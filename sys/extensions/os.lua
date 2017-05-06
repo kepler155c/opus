@@ -67,6 +67,11 @@ function os.getSecretKey()
   return Util.readFile('.secret')
 end
 
+function os.getPassword()
+  Config.load('os', config)
+  return config.password
+end
+
 os.lock = function()
   --os.locked = true
 

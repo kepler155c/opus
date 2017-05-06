@@ -1,6 +1,8 @@
 require = requireInjector(getfenv(1))
 local Socket = require('socket')
 local SHA1 = require('sha1')
+local Terminal = require('terminal')
+local Crypto = require('crypto')
 
 local remoteId
 local args = { ... }
@@ -21,7 +23,11 @@ if not remoteId then
 end
 
 print('Password')
-local password = read()
+local password = Terminal.readPassword('Enter password: ')
+
+if not password then
+  error('Invalid password')
+end
 
 print('connecting...')
 local socket = Socket.connect(remoteId, 19)
@@ -45,11 +51,9 @@ end
 
 local secretKey = os.getSecretKey()
 local publicKey = modexp(exchange.base, secretKey, exchange.primeMod)
+local password = SHA1.sha1(password)
 
-socket:write({
-  password = SHA1.sha1(password),
-  publicKey = publicKey,
-})
+socket:write(Crypto.encrypt({ pk = publicKey }, password))
 
 print(socket:read(2) or 'No response')
 

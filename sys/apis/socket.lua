@@ -1,4 +1,5 @@
 local Logger = require('logger')
+local Crypto = require('crypto')
 
 local socketClass = { }
 
@@ -168,7 +169,7 @@ function Socket.connect(host, port)
     type = 'OPEN',
     shost = socket.shost,
     dhost = socket.dhost,
-    sharedKey = exchange.publicKey,
+    t = Crypto.encrypt({ ts = os.time() }, exchange.publicKey),
   })
 
   local timerId = os.startTimer(3)
@@ -206,8 +207,10 @@ function trusted(msg, port)
   local pubKey = trustList[msg.shost]
 
   if pubKey then
+    local data = Crypto.decrypt(msg.t or '', pubKey)
+
     --local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
-    return pubKey == msg.sharedKey
+    return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 1
   end
 end
 

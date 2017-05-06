@@ -1,5 +1,6 @@
 local Socket = require('socket')
 local process = require('process')
+local Crypto = require('crypto')
 
 process:newThread('trust_server', function()
 
@@ -11,14 +12,20 @@ process:newThread('trust_server', function()
 
     local data = socket:read(2)
     if data then
-      if os.verifyPassword(data.password) then
-        local trustList = Util.readTable('.known_hosts') or { }
-        trustList[socket.dhost] = data.publicKey
-        Util.writeTable('.known_hosts', trustList)
-
-        socket:write('Trust accepted')
+      local password = os.getPassword()
+      if not password then
+        socket:write('No password has been set')
       else
-        socket:write('Invalid password or password is not set')
+        data = Crypto.decrypt(data, password)
+        if data and data.pk then
+          local trustList = Util.readTable('.known_hosts') or { }
+          trustList[socket.dhost] = data.pk
+          Util.writeTable('.known_hosts', trustList)
+
+          socket:write('Trust accepted')
+        else
+          socket:write('Invalid password or password is not set')
+        end
       end
     end
     socket:close()
