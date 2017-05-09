@@ -298,6 +298,7 @@ function standardBlockDB:seedDB()
     [ '86:0' ] = 'pumpkin',
     [ '90:0' ] = 'air',
     [ '91:0' ] = 'pumpkin',
+    [ '92:0' ] = 'flatten', -- cake
     [ '93:0' ] = 'repeater',
     [ '94:0' ] = 'repeater',
     [ '96:0' ] = 'trapdoor',

@@ -101,7 +101,7 @@ process:newThread('discovery_server', function()
   while true do
     local e, s, sport, id, info, distance = os.pullEvent('modem_message')
 
-    if sport == 999 then
+    if sport == 999 and tonumber(id) and type(info) == 'table' then
       if not network[id] then
         network[id] = { }
       end

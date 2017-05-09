@@ -46,13 +46,14 @@ process:newThread('telnet_read', function()
       ct[v.f](unpack(v.args))
     end
   end
+  print('telnet_read exiting')
 end)
 
 ct.clear()
 ct.setCursorPos(1, 1)
 
 while true do
-  local e = { process:pullEvent() }
+  local e = { process:pullEvent(nil, true) }
   local event = e[1]
 
   if not socket.connected then
@@ -71,10 +72,11 @@ while true do
      event == 'mouse_click' or
      event == 'mouse_drag' then
 
-    socket:write({
-      type = 'shellRemote',
-      event = e,
-    })
+    if not socket:write({ type = 'shellRemote', event = e }) then
+      socket:close()
+      break
+    end
+
   elseif event == 'terminate' then
     socket:close()
     break

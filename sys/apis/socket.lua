@@ -31,41 +31,29 @@ function socketClass:read(timeout)
     return
   end
 
-  local timerId
-  local filter
-
-  if timeout then
-    timerId = os.startTimer(timeout)
-  elseif self.keepAlive then
-    timerId = os.startTimer(3)
-  else
-    filter = 'modem_message'
+  local data, distance = transport.read(self)
+  if data then
+    return data, distance
   end
 
-  while true do
-    local e, s, dport, dhost, msg, distance = os.pullEvent(filter)
-    if e == 'modem_message' and
-      dport == self.sport and dhost == self.shost and
-      msg then
+  local timerId = os.startTimer(timeout or 5)
 
-      if msg.type == 'DISC' then
-        -- received disconnect from other end
-        self.connected = false
-        self:close()
-        return
-      elseif msg.type == 'DATA' then
-        if msg.data then
-          if timerId then
-            os.cancelTimer(timerId)
-          end
-          return msg.data, distance
-        end
+  while true do
+    local e, id = os.pullEvent()
+
+    if e == 'transport_' .. self.dport then
+
+      data, distance = transport.read(self)
+      if data then
+        os.cancelTimer(timerId)
+        return data, distance
       end
-    elseif e == 'timer' and s == timerId then
+
+    elseif e == 'timer' and id == timerId then
       if timeout or not self.connected then
         break
       end
-      timerId = os.startTimer(3)
+      timerId = os.startTimer(5)
     end
   end
 end
@@ -75,8 +63,9 @@ function socketClass:write(data)
     Logger.log('socket', 'write: No connection')
     return false
   end
-  self.transmit(self.dport, self.dhost, {
+  transport.write(self, {
     type = 'DATA',
+    seq = self.wseq,
     data = data,
   })
   return true
@@ -91,45 +80,7 @@ function socketClass:close()
     self.connected = false
   end
   device.wireless_modem.close(self.sport)
-end
-
--- write a ping every second (too much traffic!)
-local function pinger(socket)
-
-  local process = require('process')
-
-  socket.keepAlive = true
-
-  Logger.log('socket', 'keepAlive enabled')
-
-  process:newThread('socket_ping', function()
-    local timerId = os.startTimer(1)
-    local timeStamp = os.clock()
-
-    while true do
-      local e, id, dport, dhost, msg = os.pullEvent()
-
-      if e == 'modem_message' then
-        if dport == socket.sport and
-          dhost == socket.shost and
-          msg and
-          msg.type == 'PING' then
-
-          timeStamp = os.clock()
-        end
-      elseif e == 'timer' and id == timerId then
-        if os.clock() - timeStamp > 3 then
-          Logger.log('socket', 'Connection timed out')
-          socket:close()
-          break
-        end
-        timerId = os.startTimer(1)
-        socket.transmit(socket.dport, socket.dhost, {
-          type = 'PING',
-        })
-      end
-    end
-  end)
+  transport.close(self)
 end
 
 local Socket = { }
@@ -139,12 +90,16 @@ local function loopback(port, sport, msg)
 end
 
 local function newSocket(isLoopback)
-  for i = 16384, 32768 do
+  for i = 16384, 32767 do
     if not device.wireless_modem.isOpen(i) then
       local socket = {
         shost = os.getComputerID(),
         sport = i,
         transmit = device.wireless_modem.transmit,
+        wseq = math.random(100, 100000),
+        rseq = math.random(100, 100000),
+        timers = { },
+        messages = { },
       }
       setmetatable(socket, { __index = socketClass })
 
@@ -169,7 +124,9 @@ function Socket.connect(host, port)
     type = 'OPEN',
     shost = socket.shost,
     dhost = socket.dhost,
-    t = Crypto.encrypt({ ts = os.time() }, exchange.publicKey),
+    t = Crypto.encrypt({ ts = os.time(), seq = socket.seq }, exchange.publicKey),
+    rseq = socket.wseq,
+    wseq = socket.rseq,
   })
 
   local timerId = os.startTimer(3)
@@ -185,10 +142,9 @@ function Socket.connect(host, port)
       Logger.log('socket', 'connection established to %d %d->%d',
                             host, socket.sport, socket.dport)
 
-      if msg.keepAlive then
-        pinger(socket)
-      end
       os.cancelTimer(timerId)
+
+      transport.open(socket)
 
       return socket
     end
@@ -199,7 +155,8 @@ end
 
 function trusted(msg, port)
 
-  if port == 19 then -- no auth for trust server
+  if port == 19 or msg.shost == os.getComputerID() then
+    -- no auth for trust server or loopback
     return true
   end
 
@@ -214,7 +171,7 @@ function trusted(msg, port)
   end
 end
 
-function Socket.server(port, keepAlive)
+function Socket.server(port)
 
   device.wireless_modem.open(port)
   Logger.log('socket', 'Waiting for connections on port ' .. port)
@@ -232,18 +189,16 @@ function Socket.server(port, keepAlive)
         socket.dport = dport
         socket.dhost = msg.shost
         socket.connected = true
-
+        socket.wseq = msg.wseq
+        socket.rseq = msg.rseq
         socket.transmit(socket.dport, socket.sport, {
           type = 'CONN',
           dhost = socket.dhost,
           shost = socket.shost,
-          keepAlive = keepAlive,
         })
         Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
-        if keepAlive then
-          pinger(socket)
-        end
+        transport.open(socket)
         return socket
       end
     end

@@ -40,7 +40,7 @@ local function telnetHost(socket, termInfo)
     socket:close()
   end)
 
-  local queueThread = process:newThread('telnet_read', function()
+  process:newThread('telnet_read', function()
     while true do
       local data = socket:read()
       if not data then
@@ -49,7 +49,6 @@ local function telnetHost(socket, termInfo)
 
       if data.type == 'shellRemote' then
         local event = table.remove(data.event, 1)
-
         shellThread:resume(event, unpack(data.event))
       end
     end
@@ -65,7 +64,10 @@ local function telnetHost(socket, termInfo)
       break
     end
     if socket.queue then
-      socket:write(socket.queue)
+      if not socket:write(socket.queue) then
+        print('telnet: connection lost to ' .. socket.dhost)
+        break
+      end
       socket.queue = nil
     end
   end

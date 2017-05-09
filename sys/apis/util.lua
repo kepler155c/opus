@@ -21,7 +21,7 @@ function Util.tryTimes(attempts, f, ...)
   return unpack(result)
 end
 
-function Util.print(pattern, ...)
+function Util.tostring(pattern, ...)
 
   local function serialize(tbl, width)
     local str = '{\n'
@@ -43,12 +43,15 @@ function Util.print(pattern, ...)
   end
 
   if type(pattern) == 'string' then
-    print(string.format(pattern, ...))
+    return string.format(pattern, ...)
   elseif type(pattern) == 'table' then
-    print(serialize(pattern, term.current().getSize()))
-  else
-    print(tostring(pattern))
+    return serialize(pattern, term.current().getSize())
   end
+  return tostring(pattern)
+end
+
+function Util.print(pattern, ...)
+  print(Util.tostring(pattern, ...))
 end
 
 function Util.runFunction(env, fn, ...)

@@ -53,7 +53,7 @@ local secretKey = os.getSecretKey()
 local publicKey = modexp(exchange.base, secretKey, exchange.primeMod)
 local password = SHA1.sha1(password)
 
-socket:write(Crypto.encrypt({ pk = publicKey }, password))
+socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, password))
 
 print(socket:read(2) or 'No response')
 

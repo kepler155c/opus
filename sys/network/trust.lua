@@ -17,9 +17,9 @@ process:newThread('trust_server', function()
         socket:write('No password has been set')
       else
         data = Crypto.decrypt(data, password)
-        if data and data.pk then
+        if data and data.pk and data.dh then
           local trustList = Util.readTable('.known_hosts') or { }
-          trustList[socket.dhost] = data.pk
+          trustList[data.dh] = data.pk
           Util.writeTable('.known_hosts', trustList)
 
           socket:write('Trust accepted')
