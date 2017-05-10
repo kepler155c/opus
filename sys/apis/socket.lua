@@ -71,6 +71,19 @@ function socketClass:write(data)
   return true
 end
 
+function socketClass:ping()
+  if not self.connected then
+    Logger.log('socket', 'ping: No connection')
+    return false
+  end
+  transport.write(self, {
+    type = 'PING',
+    seq = self.wseq,
+    data = data,
+  })
+  return true
+end
+
 function socketClass:close()
   if self.connected then
     Logger.log('socket', 'closing socket ' .. self.sport)

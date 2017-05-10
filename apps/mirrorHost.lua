@@ -32,6 +32,16 @@ while true do
     end
   end)
 
+  process:newThread('pinger', function()
+    while true do
+      os.sleep(3)
+      if not socket.connected then
+        break
+      end
+      socket:ping()
+    end
+  end)
+
   while true do
     process:pullEvent('modem_message')
     if updateThread:isDead() then

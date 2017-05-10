@@ -19,23 +19,6 @@ if not remoteId then
   error('Syntax: mirrorClient <host ID>')
 end
 
-print('connecting...')
-local socket
-
-for i = 1,3 do
-  socket = Socket.connect(remoteId, 5901)
-  if socket then
-    break
-  end
-  os.sleep(3)
-end
-
-if not socket then
-  error('Unable to connect to ' .. remoteId .. ' on port 5901')
-end
-
-print('connected')
-
 local function wrapTerm(socket)
   local methods = { 'blit', 'clear', 'clearLine', 'setCursorPos', 'write',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
@@ -59,26 +42,42 @@ local function wrapTerm(socket)
   end
 end
 
-wrapTerm(socket)
-
-os.queueEvent('term_resize')
-
 while true do
-  local e = process:pullEvent('mirror_flush')
-  if e == 'terminate' then
-  	break
-  end
-  if not socket.connected then
-    break
-  end
-  if socket.queue then
-    socket:write(socket.queue)
-    socket.queue = nil
-  end
-end
+  print('connecting...')
+  local socket
 
-for k,v in pairs(socket.oldTerm) do
-  socket.term[k] = v
-end
+  while true do
+    socket = Socket.connect(remoteId, 5901)
+    if socket then
+      break
+    end
+    os.sleep(3)
+  end
 
-socket:close()
+  print('connected')
+
+  wrapTerm(socket)
+
+  os.queueEvent('term_resize')
+
+  while true do
+    local e = process:pullEvent('mirror_flush')
+    if e == 'terminate' then
+    	break
+    end
+    if not socket.connected then
+      break
+    end
+    if socket.queue then
+      socket:write(socket.queue)
+      socket.queue = nil
+    end
+  end
+
+  for k,v in pairs(socket.oldTerm) do
+    socket.term[k] = v
+  end
+
+  socket:close()
+
+end

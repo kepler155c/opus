@@ -52,8 +52,12 @@ end)
 ct.clear()
 ct.setCursorPos(1, 1)
 
+local filter = Util.invert({
+  'char', 'paste', 'key', 'key_up', 'mouse_scroll', 'mouse_click', 'mouse_drag',
+})
+
 while true do
-  local e = { process:pullEvent(nil, true) }
+  local e = { process:pullEvent() }
   local event = e[1]
 
   if not socket.connected then
@@ -64,13 +68,7 @@ while true do
     break
   end
 
-  if event == 'char' or 
-     event == 'paste' or 
-     event == 'key' or
-     event == 'key_up' or
-     event == 'mouse_scroll' or
-     event == 'mouse_click' or
-     event == 'mouse_drag' then
+  if filter[event] then
 
     if not socket:write({ type = 'shellRemote', event = e }) then
       socket:close()

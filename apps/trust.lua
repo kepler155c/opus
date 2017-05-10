@@ -22,7 +22,6 @@ if not remoteId then
   error('Syntax: trust <host ID>')
 end
 
-print('Password')
 local password = Terminal.readPassword('Enter password: ')
 
 if not password then

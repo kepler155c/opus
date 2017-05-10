@@ -154,10 +154,11 @@ function Terminal.readPassword(prompt)
   if prompt then
     term.write(prompt)
   end
-  local fn = term.write
-  term.write = function() end
-  local s = read(prompt)
-  term.write = fn
+  local fn = term.current().write
+  term.current().write = function() end
+  local s
+  pcall(function() s = read(prompt) end)
+  term.current().write = fn
 
   if s == '' then
     return

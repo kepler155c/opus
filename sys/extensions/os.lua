@@ -110,9 +110,9 @@ function os.getVersion()
   local version
 
   if _CC_VERSION then
-    version = tonumber(_CC_VERSION)
+    version = tonumber(_CC_VERSION:gmatch('[%d]+%.?[%d][%d]', '%1')())
   end
-  if _HOST then
+  if not version and _HOST then
     version = tonumber(_HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
   end
 

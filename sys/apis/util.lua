@@ -103,6 +103,14 @@ function Util.keys(t)
   return keys
 end
 
+function Util.invert(t)
+  local nt = { }
+  for k,v in pairs(t) do
+    nt[v] = k
+  end
+  return nt
+end
+
 function Util.merge(obj, args)
   if args then
     for k,v in pairs(args) do

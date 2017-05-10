@@ -1,6 +1,7 @@
 require = requireInjector(getfenv(1))
 local Config = require('config')
 local SHA1 = require('sha1')
+local Terminal = require('terminal')
 
 local config = {
   enable = false,
@@ -10,9 +11,10 @@ local config = {
 
 Config.load('os', config)
 
-print('Enter new password')
-local password = read()
+local password = Terminal.readPassword('Enter new password: ')
 
-config.password = SHA1.sha1(password)
-
-Config.update('os', config)
+if password then
+  config.password = SHA1.sha1(password)
+  Config.update('os', config)
+  print('Password updated')
+end
