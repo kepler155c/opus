@@ -92,7 +92,7 @@ while true do
 
           -- use resume instead ??
           if not socket.messages[2] then  -- table size is 1
-            os.queueEvent('transport_' .. dport)
+            os.queueEvent('transport_' .. socket.sport)
           end
 
           --debug('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))

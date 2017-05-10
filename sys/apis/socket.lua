@@ -26,14 +26,14 @@ exchange.publicKey = modexp(exchange.base, exchange.secretKey, exchange.primeMod
 
 function socketClass:read(timeout)
 
-  if not self.connected then
-    Logger.log('socket', 'read: No connection')
-    return
-  end
-
   local data, distance = transport.read(self)
   if data then
     return data, distance
+  end
+
+  if not self.connected then
+    Logger.log('socket', 'read: No connection')
+    return
   end
 
   local timerId = os.startTimer(timeout or 5)
@@ -41,7 +41,7 @@ function socketClass:read(timeout)
   while true do
     local e, id = os.pullEvent()
 
-    if e == 'transport_' .. self.dport then
+    if e == 'transport_' .. self.sport then
 
       data, distance = transport.read(self)
       if data then
@@ -59,29 +59,25 @@ function socketClass:read(timeout)
 end
 
 function socketClass:write(data)
-  if not self.connected then
-    Logger.log('socket', 'write: No connection')
-    return false
+  if self.connected then
+    transport.write(self, {
+      type = 'DATA',
+      seq = self.wseq,
+      data = data,
+    })
+    return true
   end
-  transport.write(self, {
-    type = 'DATA',
-    seq = self.wseq,
-    data = data,
-  })
-  return true
 end
 
 function socketClass:ping()
-  if not self.connected then
-    Logger.log('socket', 'ping: No connection')
-    return false
+  if self.connected then
+    transport.write(self, {
+      type = 'PING',
+      seq = self.wseq,
+      data = data,
+    })
+    return true
   end
-  transport.write(self, {
-    type = 'PING',
-    seq = self.wseq,
-    data = data,
-  })
-  return true
 end
 
 function socketClass:close()
@@ -166,7 +162,7 @@ function Socket.connect(host, port)
   socket:close()
 end
 
-function trusted(msg, port)
+local function trusted(msg, port)
 
   if port == 19 or msg.shost == os.getComputerID() then
     -- no auth for trust server or loopback

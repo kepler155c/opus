@@ -32,13 +32,13 @@ while true do
     end
   end)
 
+  -- ensure socket is connected
   process:newThread('pinger', function()
     while true do
       os.sleep(3)
-      if not socket.connected then
+      if not socket:ping() then
         break
       end
-      socket:ping()
     end
   end)
 
