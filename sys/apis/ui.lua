@@ -128,9 +128,27 @@ function Manager:init(args)
     end
   end)
 
+  Event.addHandler('mouse_drag', function(h, button, x, y)
+
+    if self.target then
+      local event = self:pointToChild(self.target, x, y)
+
+      -- revisit - should send out scroll_up and scroll_down events
+      -- let the element convert them to up / down
+      self:inputEvent(event.element,
+        { type = 'mouse_drag', button = button, x = event.x, y = event.y })
+      self.currentPage:sync()
+    end
+  end)
+
   Event.addHandler('paste', function(h, text)
-    self:emitEvent({ type = 'paste', text = text })
-    self.currentPage:sync()
+    if clipboard.isInternal() then
+      text = clipboard.getData()
+    end
+    if text and type(text) == 'string' then
+      self:emitEvent({ type = 'paste', text = text })
+      self.currentPage:sync()
+    end
   end)
 
   Event.addHandler('char', function(h, ch)
@@ -431,7 +449,7 @@ end
 function Manager:getDefaults(element, args)
   local defaults = Util.deepCopy(element.defaults)
   if args then
-    Util.merge(defaults, args)
+    Manager.setProperties(defaults, args)
   end
   return defaults
 end
@@ -1449,6 +1467,18 @@ UI.Grid.defaults = {
   inverseSortIndicator = '^',
   values = { },
   columns = { },
+  accelerators = {
+    enter           = 'key_enter',
+    [ 'control-c' ] = 'copy',
+    down            = 'scroll_down',
+    up              = 'scroll_up',
+    home            = 'scroll_top',
+    [ 'end' ]       = 'scroll_bottom',
+    pageUp          = 'scroll_pageUp',
+    [ 'control-b' ] = 'scroll_pageUp',
+    pageDown        = 'scroll_pageDown',
+    [ 'control-f' ] = 'scroll_pageDown',
+  },
 }
 function UI.Grid:init(args)
   local defaults = UI:getDefaults(UI.Grid, args)
@@ -1772,34 +1802,37 @@ function UI.Grid:eventHandler(event)
     if row > 0 and row <= Util.size(self.values) then
       self:setIndex(row)
       if event.type == 'mouse_doubleclick' then
-        self:emit({ type = 'key', key = 'enter' })
+        self:emit({ type = 'key_enter' })
       end
       return true
     end
-  elseif event.type == 'key' then
-    if event.key == 'enter' then
-      if self.selected then
-        self:emit({ type = 'grid_select', selected = self.selected })
-      end
-      return true
-    elseif event.key == 'down' then
-      self:setIndex(self.index + 1)
-    elseif event.key == 'up' then
-      self:setIndex(self.index - 1)
-    elseif event.key == 'control-b' or event.key == 'pageUp' then
-      self:setIndex(self.index - self.pageSize)
-    elseif event.key == 'control-f' or event.key == 'pageDown' then
-      self:setIndex(self.index + self.pageSize)
-    elseif event.key == 'home' then
-      self:setIndex(1)
-    elseif event.key == 'end' then
-      self:setIndex(Util.size(self.values))
-    else
-      return false
+    return false
+
+  elseif event.type == 'scroll_down' then
+    self:setIndex(self.index + 1)
+  elseif event.type == 'scroll_up' then
+    self:setIndex(self.index - 1)
+  elseif event.type == 'scroll_top' then
+    self:setIndex(1)
+  elseif event.type == 'scroll_bottom' then
+    self:setIndex(Util.size(self.values))
+  elseif event.type == 'scroll_pageUp' then
+    self:setIndex(self.index - self.pageSize)
+  elseif event.type == 'scroll_pageDown' then
+    self:setIndex(self.index + self.pageSize)
+  elseif event.type == 'key_enter' then
+    if self.selected then
+      self:emit({ type = 'grid_select', selected = self.selected })
     end
-    return true
+  elseif event.type == 'copy' then
+    if self.selected then
+      clipboard.setData(Util.tostring(self.selected))
+      clipboard.useInternal(true)
+    end
+  else
+    return false
   end
-  return false
+  return true
 end
 
 --[[-- ScrollingGrid  --]]--
@@ -2776,6 +2809,9 @@ UI.TextEntry.defaults = {
   height = 1,
   limit = 6,
   pos = 0,
+  accelerators = {
+    [ 'control-c' ] = 'copy',
+  }
 }
 function UI.TextEntry:init(args)
   local defaults = UI:getDefaults(UI.TextEntry, args)
@@ -2909,6 +2945,9 @@ function UI.TextEntry:eventHandler(event)
       return false
     end
     return true
+
+  elseif event.type == 'copy' then
+    clipboard.setData(self.value)
 
   elseif event.type == 'paste' then
     local input = tostring(self.value)

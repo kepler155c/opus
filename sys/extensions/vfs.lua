@@ -66,7 +66,23 @@ function nativefs.list(node, dir, full)
   return files
 end
 
-function nativefs.getSize(node, dir)
+function nativefs.getSize(node, dir, recursive)
+  if recursive and fs.native.isDir(dir) then
+    local function sum(dir)
+      local total = 0
+      local files = fs.native.list(dir)
+      for _,f in ipairs(files) do
+        local fullName = fs.combine(dir, f)
+        if fs.native.isDir(fullName) then
+          total = total + sum(fullName)
+        else
+          total = total + fs.native.getSize(fullName)
+        end
+      end
+      return total
+    end
+    return sum(dir)
+  end
   if node.mountPoint == dir and node.nodes then
     return 0
   end

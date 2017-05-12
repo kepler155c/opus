@@ -42,7 +42,6 @@ function socketClass:read(timeout)
     local e, id = os.pullEvent()
 
     if e == 'transport_' .. self.sport then
-
       data, distance = transport.read(self)
       if data then
         os.cancelTimer(timerId)
@@ -74,7 +73,6 @@ function socketClass:ping()
     transport.write(self, {
       type = 'PING',
       seq = self.wseq,
-      data = data,
     })
     return true
   end

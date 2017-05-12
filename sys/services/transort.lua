@@ -5,8 +5,6 @@
   * write acknowledgements
   * background read buffering
 ]]--
-require = requireInjector(getfenv(1))
-local Logger = require('logger')
 
 multishell.setTitle(multishell.getCurrent(), 'Net transport')
 
@@ -53,7 +51,7 @@ while true do
   if e == 'timer' then
     local socket = transport.timers[timerId]
     if socket and socket.connected then
-      Logger.log('transport', 'timeout - closing socket ' .. socket.sport)
+      print('transport timeout - closing socket ' .. socket.sport)
       socket:close()
       transport.timers[timerId] = nil
     end
@@ -84,7 +82,7 @@ while true do
 
       elseif msg.type == 'DATA' and msg.data then
         if msg.seq ~= socket.rseq then
-          Logger.log('transport', 'seq error - closing socket ' .. socket.sport)
+          print('transport seq error - closing socket ' .. socket.sport)
           socket:close()
         else
           socket.rseq = socket.rseq + 1

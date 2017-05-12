@@ -29,15 +29,36 @@ local fileInfo
 local dirty     = { y = 1, ey = h }
 local mark      = { anchor, active, continue }
 local keyboard
-local clipboard = { size, internal }
 local searchPattern
 local undo      = { chain = { }, pointer = 0 }
 local complete  = { }
 
-if _G.__CLIPBOARD then
-  clipboard = _G.__CLIPBOARD
-else
-  _G.__CLIPBOARD = clipboard
+if not clipboard then
+  _G.clipboard = { internal, data }
+  clipboard.shim = true
+
+  function clipboard.setData(data)
+    clipboard.data = data
+    if data then
+      clipboard.useInternal(true)
+    end
+  end
+
+  function clipboard.getText()
+    if clipboard.data then
+      return Util.tostring(clipboard.data)
+    end
+  end
+
+  function clipboard.isInternal()
+    return clipboard.internal
+  end
+
+  function clipboard.useInternal(mode)
+    if mode ~= clipboard.mode then
+      clipboard.internal = mode
+    end
+  end
 end
 
 local color = {
@@ -363,7 +384,7 @@ local function redraw()
 
   if not (w < 32 and #sStatus > 0) then
     local clipboardIndicator = 'S'
-    if clipboard.internal then
+    if clipboard.isInternal() then
       clipboardIndicator = 'I'
     end
 
@@ -1016,8 +1037,10 @@ local __actions = {
   end,
 
   toggle_clipboard = function()
-    clipboard.internal = not clipboard.internal
-    if clipboard.internal then
+    if clipboard.shim then
+      clipboard.setInternal(not clipboard.internal)
+    end
+    if clipboard.isInternal() then
       setStatus('Using internal clipboard')
     else
       setStatus('Using system clipboard')
@@ -1025,10 +1048,11 @@ local __actions = {
   end,
 
   copy_marked = function()
-    clipboard.lines, clipboard.size = 
+    local text, size = 
         actions.copyText(mark.x, mark.y, mark.ex, mark.ey)
-    setStatus('%d chars copied', clipboard.size)
-    clipboard.internal = true
+    clipboard.setData(text)
+    setStatus('%d chars copied', size)
+    clipboard.useInternal(true)
   end,
 
   cut = function()
@@ -1049,16 +1073,14 @@ local __actions = {
     if mark.active then
       actions.delete()
     end
-    if clipboard.internal then
-      if clipboard.lines then
-        actions.insertText(x, y, clipboard.lines)
-        setStatus('%d chars added', clipboard.size)
-      else
-        setStatus('Internal clipboard empty')
-      end
-    else
+    if clipboard.isInternal() then
+      text = clipboard.getText()
+    end
+    if text then
       actions.insertText(x, y, text)
       setStatus('%d chars added', #text)
+    else
+      setStatus('Clipboard empty')
     end
   end,
 

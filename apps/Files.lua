@@ -2,6 +2,7 @@ require = requireInjector(getfenv(1))
 local Util = require('util')
 local Event = require('event')
 local UI = require('ui')
+local Config = require('config')
 
 local cleanEnv = Util.shallowCopy(getfenv(1))
 cleanEnv.require = nil
@@ -9,10 +10,16 @@ cleanEnv.require = nil
 multishell.setTitle(multishell.getCurrent(), 'Files')
 UI:configure('Files', ...)
 
+local config = {
+  showHidden = false,
+  showDirSizes = false,
+}
+
+Config.load('Files', config)
+
 local copied = { }
 local marked = { }
 local directories = { }
-local hidden = true
 local cutMode = false
 
 function formatSize(size)
@@ -60,6 +67,7 @@ local Browser = UI.Page {
     buttons = {
       { text = 'Refresh     r',   event = 'refresh'       },
       { text = 'Hidden     ^h',   event = 'toggle_hidden' },
+      { text = 'Dir Size   ^s',   event = 'toggle_dirSize' },
       UI.Text { },
     }
   },
@@ -200,12 +208,18 @@ function Browser:updateDirectory(dir)
         dir.totalSize = dir.totalSize + file.size
         file.fsize = formatSize(file.size)
       else
+        if config.showDirSizes then
+          file.size = fs.getSize(file.fullName, true)
+
+          dir.totalSize = dir.totalSize + file.size
+          file.fsize = formatSize(file.size)
+        end
         file.flags = 'D'
       end
       if file.isReadOnly then
         file.flags = file.flags .. 'R'
       end
-      if not hidden or file.name:sub(1, 1) ~= '.' then
+      if config.showHidden or file.name:sub(1, 1) ~= '.' then
         dir.files[file.fullName] = file
       end
     end
@@ -277,13 +291,25 @@ function Browser:eventHandler(event)
     self:setStatus('Refreshed')
 
   elseif event.type == 'toggle_hidden' then
-    hidden = not hidden
+    config.showHidden = not config.showHidden
+    Config.update('Files', config)
+
     self:updateDirectory(self.dir)
     self.grid:draw()
-    if hidden then
+    if not config.showHidden then
       self:setStatus('Hiding hidden')
     else
       self:setStatus('Displaying hidden')
+    end
+
+  elseif event.type == 'toggle_dirSize' then
+    config.showDirSizes = not config.showDirSizes
+    Config.update('Files', config)
+
+    self:updateDirectory(self.dir)
+    self.grid:draw()
+    if config.showDirSizes then
+      self:setStatus('Displaying dir sizes')
     end
 
   elseif event.type == 'mark' and file then

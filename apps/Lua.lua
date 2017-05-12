@@ -258,6 +258,10 @@ function page.grid:eventHandler(event)
   elseif event.type == 'grid_select' then
     page:setPrompt(commandAppend(), true)
     page:executeStatement(commandAppend())
+  elseif event.type == 'copy' then
+    if entry then
+      clipboard.setData(entry.rawValue)
+    end
   else
     return UI.Grid.eventHandler(self, event)
   end
