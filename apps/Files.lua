@@ -143,6 +143,13 @@ function Browser.grid:getRowBackgroundColorX(file, selected)
   return self.backgroundColor
 end
 
+function Browser.grid:eventHandler(event)
+  if event.type == 'copy' then -- let copy be handled by parent
+    return false
+  end
+  return UI.Grid.eventHandler(self, event)
+end
+
 function Browser.statusBar:draw()
   if self.parent.dir then
     local info = '#:' .. Util.size(self.parent.dir.files)
