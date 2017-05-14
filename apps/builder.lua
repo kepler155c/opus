@@ -541,9 +541,7 @@ function Builder:getGenericSupplyList(blockIndex)
 end
  
 function Builder:substituteBlocks()
-  local spinner = UI.Spinner({
-    spinSymbols = { '' }
-  })
+  local throttle = Util.throttle()
  
   for _,b in pairs(schematic.blocks) do
 
@@ -560,7 +558,7 @@ function Builder:substituteBlocks()
       b.dmg = sub.sdmg
     end
 
-    spinner:spin()
+    throttle()
   end
 end
  

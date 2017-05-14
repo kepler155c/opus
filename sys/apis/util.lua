@@ -21,13 +21,17 @@ function Util.tryTimes(attempts, f, ...)
   return unpack(result)
 end
 
-function Util.throttle()
+function Util.throttle(fn)
   local ts = os.time()
-  return function()
+  local timeout = .095
+  return function(...)
     local nts = os.time()
-    if nts ~= ts then
+    if nts > ts + timeout then
       ts = nts
       os.sleep(0)
+      if fn then
+        fn(...)
+      end
     end
   end
 end

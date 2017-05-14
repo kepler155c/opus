@@ -27,13 +27,22 @@ local function findObsidian()
     local _,b = turtle.inspectDown()
     if b and (b.name == 'minecraft:lava' or b.name == 'minecraft:flowing_lava') then
       if turtle.selectSlot('minecraft:water_bucket') then
-        turtle.up()
+        while not turtle.up() do
+          print('stuck')
+        end
         turtle.placeDown()
         os.sleep(2)
         turtle.placeDown()
         turtle.down()
+        turtle.select(1)
         _, b = turtle.inspectDown()
       end
+    end
+
+    if turtle.getCount(16) > 0 then
+      print('Inventory full')
+      print('Enter to continue...')
+      read()
     end
 
     if b and b.name == 'minecraft:obsidian' then
@@ -78,6 +87,7 @@ local s, m = turtle.run(function()
     os.sleep(2)
     turtle.placeDown()
     turtle.down()
+    turtle.select(1)
   until turtle.abort
 end)
 turtle.goto(0, 0, 0, 0)
