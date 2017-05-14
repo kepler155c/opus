@@ -24,7 +24,7 @@ process:newThread('trust_server', function()
 
           socket:write('Trust accepted')
         else
-          socket:write('Invalid password or password is not set')
+          socket:write('Invalid password')
         end
       end
     end

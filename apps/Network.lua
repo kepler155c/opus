@@ -22,6 +22,7 @@ local page = UI.Page {
     buttons = {
       { text = 'Telnet', event = 'telnet' },
       { text = 'VNC',    event = 'vnc'    },
+      { text = 'Trust',  event = 'trust'  },
       { text = 'Reboot', event = 'reboot' },
     },
   },
@@ -39,7 +40,7 @@ local page = UI.Page {
   },
 }
 
-function sendCommand(host, command)
+local function sendCommand(host, command)
 
   if not device.wireless_modem then
     page.notification:error('Wireless modem not present')
@@ -76,6 +77,8 @@ function page:eventHandler(event)
         args = { t.id },
         title = t.label,
       })
+    elseif event.type == 'trust' then
+      shell.run('trust ' .. t.id)
     elseif event.type == 'reboot' then
       sendCommand(t.id, 'reboot')
     elseif event.type == 'shutdown' then

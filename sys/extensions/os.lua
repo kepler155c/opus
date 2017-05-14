@@ -61,10 +61,18 @@ function os.verifyPassword(password)
 end
 
 function os.getSecretKey()
-  if not fs.exists('.secret') then
-    Util.writeFile('.secret', math.random(100000, 999999))
+  Config.load('os', config)
+  if not os.secretKey then
+    os.secretKey = math.random(100000, 999999)
+    Config.update('os', config)
   end
-  return Util.readFile('.secret')
+  return os.secretKey
+end
+
+function os.updatePassword(password)
+  Config.load('os', config)
+  config.password = password
+  Config.update('os', config)
 end
 
 function os.getPassword()
