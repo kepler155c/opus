@@ -100,7 +100,11 @@ function changedPage:eventHandler(event)
 
   return true
 end
- 
+
+local function uniqueKey(item)
+  return table.concat({ item.name, item.damage, item.nbtHash }, ':')
+end
+
 function changedPage:refresh()
   local t = storage:listItems('all')
  
@@ -122,8 +126,7 @@ function changedPage:refresh()
     for _,v in pairs(self.lastItems) do
       found = false
       for k2,v2 in pairs(t) do
-        if v.id == v2.id and
-           v.dmg == v2.dmg then
+        if uniqueKey(v) == uniqueKey(v2) then
           if v.qty ~= v2.qty then
             local c = Util.shallowCopy(v2)
             c.lastQty = v.qty

@@ -21,6 +21,17 @@ function Util.tryTimes(attempts, f, ...)
   return unpack(result)
 end
 
+function Util.throttle()
+  local ts = os.time()
+  return function()
+    local nts = os.time()
+    if nts ~= ts then
+      ts = nts
+      os.sleep(0)
+    end
+  end
+end
+
 function Util.tostring(pattern, ...)
 
   local function serialize(tbl, width)

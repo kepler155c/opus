@@ -5,14 +5,12 @@ local TableDB = require('tableDB')
 local RefinedProvider = class()
 
 local keys = { 
-  'fields',
   'damage',
   'displayName',
   'maxCount',
   'maxDamage',
   'name',
   'nbtHash',
-  'rawName',
 }
 
 function RefinedProvider:init(args)
@@ -78,6 +76,8 @@ function RefinedProvider:getCachedItemDetails(item)
 
       detail = t
       self.itemInfoDB:add(key, detail)
+
+      os.sleep(0) -- prevent timeout on large inventories
     end
   end
   if detail then
@@ -94,6 +94,9 @@ function RefinedProvider:listItems()
   end)
 
   if list then
+
+    local throttle = Util.throttle()
+
     for _,v in pairs(list) do
       local item = self:getCachedItemDetails(v)
       if item then
@@ -103,6 +106,7 @@ function RefinedProvider:listItems()
         item.qty = v.count
         table.insert(items, item)
       end
+      throttle()
     end
     self.itemInfoDB:flush()
   end
