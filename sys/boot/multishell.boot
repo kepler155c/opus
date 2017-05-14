@@ -2,7 +2,7 @@ print('\nStarting multishell..')
 
 LUA_PATH = '/sys/apis'
 
-math.randomseed(os.clock())
+-- math.randomseed(os.clock()) -- totally broken
 
 _G.Util = dofile('/sys/apis/util.lua')
 _G.debug = function(...) Util.print(...) end

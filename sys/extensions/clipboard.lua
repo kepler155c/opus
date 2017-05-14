@@ -22,7 +22,7 @@ function clipboard.isInternal()
 end
 
 function clipboard.useInternal(mode)
-  if mode ~= clipboard.mode then
+  if mode ~= clipboard.internal then
     clipboard.internal = mode
     os.queueEvent('clipboard_mode', mode)
   end
