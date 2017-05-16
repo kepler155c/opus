@@ -1703,6 +1703,7 @@ function supplyPage:setSupplies(supplies)
     else
       entry.need = entry.need + s.need
     end
+    entry.need = entry.need - turtle.getItemCount(s.index)
   end
 
   self.grid:setValues(t)

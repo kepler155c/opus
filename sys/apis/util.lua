@@ -22,10 +22,10 @@ function Util.tryTimes(attempts, f, ...)
 end
 
 function Util.throttle(fn)
-  local ts = os.time()
+  local ts = os.clock()
   local timeout = .095
   return function(...)
-    local nts = os.time()
+    local nts = os.clock()
     if nts > ts + timeout then
       ts = nts
       os.sleep(0)
