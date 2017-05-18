@@ -62,11 +62,11 @@ end
 
 function os.getSecretKey()
   Config.load('os', config)
-  if not os.secretKey then
-    os.secretKey = math.random(100000, 999999)
+  if not config.secretKey then
+    config.secretKey = math.random(100000, 999999)
     Config.update('os', config)
   end
-  return os.secretKey
+  return config.secretKey
 end
 
 function os.updatePassword(password)
