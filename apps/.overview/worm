@@ -1,0 +1,8 @@
+{
+  icon = "\030d \030  \030e \030  \
+\030d \030    \
+\030d    ",
+  title = "Worm",
+  category = "Games",
+  run = "/rom/programs/fun/worm",
+}

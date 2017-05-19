@@ -1,0 +1,8 @@
+{
+  icon = "\0304  \030   \
+\030f \0304 \0307 \030 \031  \031f_\
+\030f \0304 \0307 \030 \031f/",
+  title = "Devices",
+  category = "System",
+  run = "/apps/Peripherals.lua",
+}

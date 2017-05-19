@@ -69,6 +69,30 @@ function os.getSecretKey()
   return config.secretKey
 end
 
+function os.getPublicKey()
+
+  local exchange = {
+    base = 11,
+    primeMod = 625210769
+  }
+
+  local function modexp(base, exponent, modulo)
+    local remainder = base
+
+    for i = 1, exponent-1 do
+      remainder = remainder * remainder
+      if remainder >= modulo then
+        remainder = remainder % modulo
+      end
+    end
+
+    return remainder
+  end
+
+  local secretKey = os.getSecretKey()
+  return modexp(exchange.base, secretKey, exchange.primeMod)
+end
+
 function os.updatePassword(password)
   Config.load('os', config)
   config.password = password
@@ -127,6 +151,8 @@ function os.getVersion()
   return version or 1.7
 end
 
+-- move completely into overview
+-- just post event from appstore
 function os.registerApp(entry)
   local apps = { }
   Config.load('apps', apps)

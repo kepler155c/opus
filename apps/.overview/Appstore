@@ -1,0 +1,8 @@
+{
+  icon = "\030 \0310=\0300 \030 XX\0300\031f \030  \
+\030 \031f \0300    \030  \
+\030 \031f \0310o \031f \0310o\031f ",
+  category = "System",
+  title = "AppStore",
+  run = "/apps/Appstore.lua",
+}

@@ -78,7 +78,7 @@ function page:eventHandler(event)
         title = t.label,
       })
     elseif event.type == 'trust' then
-      shell.openTab('trust ' .. t.id)
+      shell.openForegroundTab('trust ' .. t.id)
     elseif event.type == 'reboot' then
       sendCommand(t.id, 'reboot')
     elseif event.type == 'shutdown' then

@@ -1,0 +1,5 @@
+{
+  category = "Apps",
+  title = "Turtles",
+  run = "apps/Turtles.lua",
+}

@@ -18,7 +18,20 @@ local config = {
 local applications = { }
 
 Config.load('Overview', config)
-Config.load('apps', applications)
+
+local function loadApplications()
+  Util.clear(applications)
+  local apps = fs.list('apps/.overview')
+  for _,app in pairs(apps) do
+    local data = Util.readTable('apps/.overview/' .. app)
+    if data then
+      data.filename = 'apps/.overview/' .. app
+      table.insert(applications, data)
+    end
+  end
+end
+
+loadApplications()
 
 local defaultIcon = NFT.parse([[
 8071180
@@ -292,8 +305,7 @@ function page:eventHandler(event)
     end
 
   elseif event.type == 'refresh' then
-    applications = { }
-    Config.load('apps', applications)
+    loadApplications()
     self:refresh()
     self:draw()
     self.notification:success('Refreshed')
@@ -301,14 +313,11 @@ function page:eventHandler(event)
   elseif event.type == 'delete' then
     local focused = page:getFocused()
     if focused.app then
-      local _,k = Util.find(applications, 'run', focused.app.run)
-      if k then
-        table.remove(applications, k)
-        Config.update('apps', applications)
-        page:refresh()
-        page:draw()
-        self.notification:success('Removed')
-      end
+      fs.delete(focused.app.filename)
+      loadApplications()
+      page:refresh()
+      page:draw()
+      self.notification:success('Removed')
     end
 
   elseif event.type == 'new' then
@@ -386,14 +395,11 @@ function editor.form.image:draw()
 end
 
 function editor:updateApplications(app)
-  for k,v in pairs(applications) do
-    if v == app then
-      applications[k] = nil
-      break
-    end
+  if not app.filename then
+    app.filename = 'apps/.overview/' .. app.title
   end
-  table.insert(applications, app)
-  Config.update('apps', applications)
+  Util.writeTable(app.filename, app)
+  loadApplications()
 end
 
 function editor:eventHandler(event)
@@ -458,8 +464,7 @@ UI:setPages({
 })
 
 Event.addHandler('os_register_app', function()
-  applications = { }
-  Config.load('apps', applications)
+  loadApplications()
   page:refresh()
   page:draw()
   page:sync()

@@ -3,27 +3,6 @@ local Crypto = require('crypto')
 
 local socketClass = { }
 
-local exchange = {
-  base = 11,
-  primeMod = 625210769
-}
-
-local function modexp(base, exponent, modulo)
-  local remainder = base
-
-  for i = 1, exponent-1 do
-    remainder = remainder * remainder
-    if remainder >= modulo then
-      remainder = remainder % modulo
-    end
-  end
-
-  return remainder
-end
-
-exchange.secretKey = os.getSecretKey()
-exchange.publicKey = modexp(exchange.base, exchange.secretKey, exchange.primeMod)
-
 function socketClass:read(timeout)
 
   local data, distance = transport.read(self)
@@ -131,7 +110,7 @@ function Socket.connect(host, port)
     type = 'OPEN',
     shost = socket.shost,
     dhost = socket.dhost,
-    t = Crypto.encrypt({ ts = os.time(), seq = socket.seq }, exchange.publicKey),
+    t = Crypto.encrypt({ ts = os.time(), seq = socket.seq }, os.getPublicKey()),
     rseq = socket.wseq,
     wseq = socket.rseq,
   })

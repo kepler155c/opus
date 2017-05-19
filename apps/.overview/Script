@@ -1,0 +1,9 @@
+{
+  title = "Scripts",
+  category = "Apps",
+  requires = "wireless_modem",
+  icon = "\0300\0317if\031  \0307 \
+\0300\0317turt\
+\0300\0317retu",
+  run = "/apps/Script.lua",
+}
