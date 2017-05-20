@@ -18,9 +18,9 @@ process:newThread('trust_server', function()
       else
         data = Crypto.decrypt(data, password)
         if data and data.pk and data.dh == socket.dhost then
-          local trustList = Util.readTable('.known_hosts') or { }
+          local trustList = Util.readTable('usr/.known_hosts') or { }
           trustList[data.dh] = data.pk
-          Util.writeTable('.known_hosts', trustList)
+          Util.writeTable('usr/.known_hosts', trustList)
 
           socket:write({ success = true, msg = 'Trust accepted' })
         else

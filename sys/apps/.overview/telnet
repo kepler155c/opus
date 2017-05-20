@@ -1,0 +1,8 @@
+{
+  icon = "    \0314>\0310_\
+ \031f)))\031   \
+\0314>\0310_\031     ",
+  title = "Telnet",
+  category = "Apps",
+  run = "telnet.lua",
+}

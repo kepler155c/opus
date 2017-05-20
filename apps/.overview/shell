@@ -1,8 +1,0 @@
-{
-  icon = "\0304     \030  \
-\0304 \030f\0314> \0310_\031  \
-\0304 \030f    \030  ",
-  title = "Shell",
-  category = "Apps",
-  run = "/apps/shell",
-}

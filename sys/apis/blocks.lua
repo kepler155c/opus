@@ -68,7 +68,7 @@ function blockDB:seedDB(dir)
     return res
   end
 
-  local f = fs.open(fs.combine(dir, 'blockIds.csv'), "r")
+  local f = fs.open(fs.combine('sys/etc', 'blockIds.csv'), "r")
 
   if not f then
     error('unable to read blockIds.csv')

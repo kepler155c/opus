@@ -1,0 +1,9 @@
+{
+  title = "Network",
+  category = "Apps",
+  requires = "wireless_modem",
+  icon = "\0304  \030    \
+\030f \0304 \0307 \030 \031  \031f)\
+\030f \0304 \0307 \030 \031f)",
+  run = "Network.lua",
+}

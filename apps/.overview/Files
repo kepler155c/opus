@@ -1,8 +1,0 @@
-{
-  icon = "\0300\0317==\031  \0307 \
-\0300\0317====\
-\0300\0317====",
-  title = "Files",
-  category = "Apps",
-  run = "/apps/Files.lua",
-}

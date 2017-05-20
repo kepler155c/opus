@@ -146,7 +146,7 @@ local function trusted(msg, port)
     return true
   end
 
-  local trustList = Util.readTable('.known_hosts') or { }
+  local trustList = Util.readTable('usr/.known_hosts') or { }
   local pubKey = trustList[msg.shost]
 
   if pubKey then

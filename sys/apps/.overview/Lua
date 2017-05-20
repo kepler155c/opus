@@ -1,0 +1,8 @@
+{
+  icon = "\030f     \
+\030f\0310lua>\031  \
+\030f     ",
+  title = "Lua",
+  category = "Apps",
+  run = "Lua.lua",
+}

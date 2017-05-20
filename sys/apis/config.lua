@@ -3,10 +3,10 @@ local Util = require('util')
 local Config = { }
 
 Config.load = function(fname, data)
-	local filename = '/config/' .. fname
+	local filename = 'usr/config/' .. fname
 
-	if not fs.exists('/config') then
-	  fs.makeDir('/config')
+	if not fs.exists('usr/config') then
+	  fs.makeDir('usr/config')
 	end
 
 	if not fs.exists(filename) then
@@ -17,7 +17,7 @@ Config.load = function(fname, data)
 end
 
 Config.update = function(fname, data)
-	local filename = '/config/' .. fname
+	local filename = 'usr/config/' .. fname
 	Util.writeTable(filename, data)
 end
 

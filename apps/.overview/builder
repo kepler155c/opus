@@ -1,8 +1,0 @@
-{
-  icon = "\0317_____\
-\030e\031c###\0308\0317=\030e\031c#\
-\030e\031c#\0307\031f.\030e\031c###",
-  title = "Builder",
-  category = "Apps",
-  run = "/apps/builder.lua",
-}

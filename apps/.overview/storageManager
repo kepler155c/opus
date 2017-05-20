@@ -1,8 +1,0 @@
-{
-  icon = "\0307       \
-\0307 \0308\0311 \0305 \0308\031  \0307 \0308 \0301 \
-\0307       ",
-  title = "Storage",
-  category = "Apps",
-  run = "/apps/storageManager.lua",
-}

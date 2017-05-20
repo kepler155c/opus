@@ -202,7 +202,7 @@ function Manager:configure(appName, ...)
     textScale  = { arg = 't', type = 'number',
                    desc = 'Text scale' },
   }
-  local defaults = Util.loadTable('/config/' .. appName) or { }
+  local defaults = Util.loadTable('usr/config/' .. appName) or { }
   if not defaults.device then
     defaults.device = { }
   end
@@ -3321,7 +3321,7 @@ function UI.NftImage:setImage(image)
   self.image = image
 end
 
-UI:loadTheme('config/ui.theme')
+UI:loadTheme('usr/config/ui.theme')
 if os.getVersion() >= 1.79 then
   UI:loadTheme('sys/etc/ext.theme')
 end

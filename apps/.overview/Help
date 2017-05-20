@@ -1,8 +1,0 @@
-{
-  icon = "  \031d?\031  \
-\031d?\031    \
-   \031d?",
-  title = "Help",
-  category = "Apps",
-  run = "/apps/Help.lua",
-}

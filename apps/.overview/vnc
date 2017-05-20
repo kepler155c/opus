@@ -1,8 +1,0 @@
-{
-  icon = "\
-\031e\\\031   \031e/\031dn\
- \031e\\/\031  \0319c",
-  title = "VNC",
-  category = "Apps",
-  run = "/apps/vnc.lua",
-}

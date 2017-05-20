@@ -1,8 +1,0 @@
-{
-  icon = "\0307  \0308 \0307 \
-\0308\031b> \030b\0310>\0308\0318 \
-\0307    ",
-  title = "Redirection",
-  category = "Games",
-  run = "/rom/programs/fun/advanced/redirection",
-}

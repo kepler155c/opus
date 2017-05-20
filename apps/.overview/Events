@@ -1,8 +1,0 @@
-{
-  icon = "\0304\031f  \030    \0311e\
-\030f\031f \0304 \030  \0311ee\031f \
-\030f\031f \0304 \030 \0311e\031f   ",
-  title = "Events",
-  category = "System",
-  run = "apps/Events.lua",
-}

@@ -1,8 +1,0 @@
-{
-  icon = "\030f\0310You \031 \
-\030f\0310Ther\030 \031  \
-\030f\0314?\031f \031   \030  ",
-  title = "Adventure",
-  category = "Games",
-  run = "/rom/programs/fun/adventure",
-}

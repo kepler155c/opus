@@ -1,8 +1,0 @@
-{
-  icon = "\0318/\030f\031  \030 \0318\\\
-\030f \0308\0319o\030f\031  \
-\0318\\\030f\031  \030 \0318/",
-  title = "Activity",
-  category = "Apps",
-  run = "/apps/storageActivity.lua",
-}

@@ -1,8 +1,0 @@
-{
-  icon = "\030 \031f \031b \031foo  \
-\030 \031f \030e\031b    \030 \031f/\
-\030 \031b \030e    \030 \031f\\",
-  category = "Apps",
-  title = "Recorder",
-  run = "/apps/recorder.lua",
-}
