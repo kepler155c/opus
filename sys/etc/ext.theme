@@ -1,0 +1,15 @@
+{
+  ScrollingGrid = {
+    lineChar = '|',
+    sliderChar = '\127',
+    upArrowChar = '\30',
+    downArrowChar = '\31',
+  },
+  Button = {
+    focusIndicator = '\183',
+  },
+  Grid = {
+    focusIndicator = '\183',
+    inverseSortIndicator = '\24',
+  },
+}

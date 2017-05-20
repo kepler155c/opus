@@ -46,13 +46,12 @@ process:newThread('telnet_read', function()
       ct[v.f](unpack(v.args))
     end
   end
-  print('telnet_read exiting')
 end)
 
 ct.clear()
 ct.setCursorPos(1, 1)
 
-local filter = Util.invert({
+local filter = Util.transpose({
   'char', 'paste', 'key', 'key_up', 'mouse_scroll', 'mouse_click', 'mouse_drag',
 })
 

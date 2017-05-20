@@ -3323,7 +3323,7 @@ end
 
 UI:loadTheme('config/ui.theme')
 if os.getVersion() >= 1.79 then
-  UI:loadTheme('config/ext.theme')
+  UI:loadTheme('sys/etc/ext.theme')
 end
 
 UI:setDefaultDevice(UI.Device({ device = term.current() }))
