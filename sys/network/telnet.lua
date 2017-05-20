@@ -36,7 +36,7 @@ local function telnetHost(socket, termInfo)
   wrapTerm(socket, termInfo)
 
   local shellThread = process:newThread('shell_wrapper', function()
-    os.run(getfenv(1), '/apps/shell')
+    os.run(getfenv(1), 'sys/apps/shell')
     socket:close()
   end)
 

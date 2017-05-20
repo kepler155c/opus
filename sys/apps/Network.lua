@@ -65,14 +65,14 @@ function page:eventHandler(event)
   if t then
     if event.type == 'telnet' or event.type == 'grid_select' then
       multishell.openTab({
-        path = '/apps/telnet.lua',
+        path = 'sys/apps/telnet.lua',
         focused = true,
         args = { t.id },
         title = t.label,
       })
     elseif event.type == 'vnc' then
       multishell.openTab({
-        path = '/apps/vnc.lua',
+        path = 'sys/apps/vnc.lua',
         focused = true,
         args = { t.id },
         title = t.label,

@@ -17,7 +17,8 @@ local options = {
                  desc = 'Displays the options' },
 }
 
-local SCRIPTS_PATH = '/apps/scripts'
+local USR_SCRIPTS_PATH = 'usr/scripts'
+local SYS_SCRIPTS_PATH = 'sys/etc/scripts'
 
 local nullTerm = Terminal.getNullTerm(term.current())
 local turtles = { }
@@ -153,10 +154,12 @@ function page:runFunction(script, nowrap)
 end
 
 function page:runScript(scriptName)
-  local cmd = string.format('Script %d %s', self.turtle.id, scriptName)
-  local ot = term.redirect(nullTerm)
-  pcall(function() shell.run(cmd) end)
-  term.redirect(ot)
+  if self.turtle then
+    local cmd = string.format('Script %d %s', self.turtle.id, scriptName)
+    local ot = term.redirect(nullTerm)
+    pcall(function() shell.run(cmd) end)
+    term.redirect(ot)
+  end
 end
 
 function page.coords:draw()
@@ -214,10 +217,24 @@ function page.tabs.inventory:eventHandler(event)
 end
 
 function page.tabs.scripts:draw()
+
+  local function combineDirs(...)
+    local list = { }
+    for _,path in pairs({...}) do
+      if fs.exists(path) then
+        local files = fs.list(path)
+        for _,f in pairs(files) do
+          list[f] = fs.combine(path, f)
+        end
+      end
+    end
+    return list
+  end
+
   Util.clear(self.values)
-  local files = fs.list(SCRIPTS_PATH)
-  for _,f in pairs(files) do
-    table.insert(self.values, { label = f, path = fs.combine(SCRIPTS_PATH, f) })
+  local files = combineDirs(SYS_SCRIPTS_PATH, USR_SCRIPTS_PATH)
+  for f,path in pairs(files) do
+    table.insert(self.values, { label = f, path = path })
   end
   self:update()
   UI.Grid.draw(self)

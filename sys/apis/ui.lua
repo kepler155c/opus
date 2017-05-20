@@ -119,7 +119,7 @@ function Manager:init(args)
 
     if button == 1 and shift and control then -- hack
       local event = self:pointToChild(self.target, x, y)
-      multishell.openTab({ path = 'apps/Lua.lua', args = { event.element }, focused = true })
+      multishell.openTab({ path = 'sys/apps/Lua.lua', args = { event.element }, focused = true })
 
     elseif self.currentPage then
       if not self.currentPage.parent.device.side then

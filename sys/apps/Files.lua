@@ -287,10 +287,10 @@ function Browser:eventHandler(event)
     Event.exitPullEvents()
 
   elseif event.type == 'edit' and file then
-    self:run('/apps/shell', 'edit', file.name)
+    self:run('sys/apps/shell', 'edit', file.name)
 
   elseif event.type == 'shell' then
-    self:run('/apps/shell')
+    self:run('sys/apps/shell')
 
   elseif event.type == 'refresh' then
     self:updateDirectory(self.dir)
@@ -339,7 +339,7 @@ function Browser:eventHandler(event)
       if file.isDir then
         self:setDir(file.fullName)
       else
-        self:run('/apps/shell', file.name)
+        self:run('sys/apps/shell', file.name)
       end
     end
 
