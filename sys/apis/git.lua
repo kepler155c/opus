@@ -31,7 +31,10 @@ function git.list(user, repo, branch)
   for k,v in pairs(data.tree) do
     if v.type == "blob" then
       v.path = v.path:gsub("%s","%%20")
-      list[v.path] = string.format(FILE_URL, user, repo, branch, v.path)
+      list[v.path] = {
+        url = string.format(FILE_URL, user, repo, branch, v.path),
+        size = v.size,
+      }
     end
   end
 

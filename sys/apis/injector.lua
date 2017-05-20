@@ -1,4 +1,13 @@
-local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis'
+local branch = 'master'
+if fs.exists('.branch') then
+  local f = fs.open('.branch', "r")
+  if f then
+    branch = f.readAll()
+    f.close()
+  end
+end
+
+local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/' .. branch .. '/sys/apis'
 local PASTEBIN_URL  = 'http://pastebin.com/raw'
 local GIT_URL       = 'https://raw.githubusercontent.com'
 
