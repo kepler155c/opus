@@ -35,6 +35,9 @@ local function loadApplications()
       end
     end
   end
+
+  Util.each(applications, function(v, k) v.key = k end)
+  applications = Util.filter(applications, function(_, a) return not a.disabled end)
 end
 
 loadApplications()
@@ -318,8 +321,11 @@ function page:eventHandler(event)
 
   elseif event.type == 'delete' then
     local focused = page:getFocused()
+    debug(focused.app)
     if focused.app then
-      fs.delete(focused.app.filename)
+      focused.app.disabled = true
+      local filename = focused.app.filename or fs.combine(REGISTRY_DIR, focused.app.key)
+      Util.writeTable(filename, focused.app)
       loadApplications()
       page:refresh()
       page:draw()
@@ -401,10 +407,11 @@ function editor.form.image:draw()
 end
 
 function editor:updateApplications(app)
-  if not app.filename then
-    app.filename = 'sys/apps/.overview/' .. app.title
+  if not app.key then
+    app.key = SHA1.sha1(app.title)
   end
-  Util.writeTable(app.filename, app)
+  local filename = app.filename or fs.combine(REGISTRY_DIR, app.key)
+  Util.writeTable(filename, app)
   loadApplications()
 end
 

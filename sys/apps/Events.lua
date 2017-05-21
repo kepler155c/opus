@@ -50,6 +50,9 @@ function page:eventHandler(event)
     end
     self.menuBar:draw()
 
+  elseif event.type == 'grid_select' then
+    multishell.openTab({ path = 'sys/apps/Lua.lua', args = { event.selected }, focused = true })
+
   elseif event.type == 'reset' then
     self.filtered = { }
     self.grid:setValues({ })
@@ -78,12 +81,8 @@ function page:eventHandler(event)
   return true
 end
 
-function page.grid:draw()
-  self:adjustWidth()
-  UI.Grid.draw(self)
-end
-
-function eventLoop()
+function page.grid:getDisplayValues(row)
+  row = Util.shallowCopy(row)
 
   local function tovalue(s)
     if type(s) == 'table' then
@@ -92,16 +91,30 @@ function eventLoop()
     return s
   end
 
+  for k,v in pairs(row) do
+    row[k] = tovalue(v)
+  end
+
+  return row
+end
+
+function page.grid:draw()
+  self:adjustWidth()
+  UI.Grid.draw(self)
+end
+
+function eventLoop()
+
   while true do
     local e = { os.pullEvent() }
     if not page.paused and not page.filtered[e[1]] then
       table.insert(page.grid.values, 1, {
         event = e[1],
-        p1 = tovalue(e[2]),
-        p2 = tovalue(e[3]),
-        p3 = tovalue(e[4]),
-        p4 = tovalue(e[5]),
-        p5 = tovalue(e[6]),
+        p1 = e[2],
+        p2 = e[3],
+        p3 = e[4],
+        p4 = e[5],
+        p5 = e[6],
       })
       if #page.grid.values > page.grid.height - 1 then
         table.remove(page.grid.values, #page.grid.values)

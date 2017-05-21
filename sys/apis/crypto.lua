@@ -55,15 +55,14 @@ local function unserialize( s )
   end
 end
 
-local function sure(N,n)
-  if (l2-n)<1 then N="0" end
-  return N
-end
-
 local function splitnum(S)
   local Out=""
   for l1=1,#S,2 do
     local l2=(#S-l1)+1
+    local function sure(N,n)
+      if (l2-n)<1 then N="0" end
+      return N
+    end
     local CNum=tonumber("0x"..sure(string.sub(S,l2-1,l2-1),1) .. sure(string.sub(S,l2,l2),0))
     Out=string.char(CNum)..Out
   end
