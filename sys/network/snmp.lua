@@ -137,7 +137,7 @@ end
 
 -- every 10 seconds, send out this computer's info
 process:newThread('discovery_heartbeat', function()
-  os.sleep(1)
+  --os.sleep(1)
 
   while true do
     sendInfo()
@@ -157,7 +157,6 @@ end)
 if os.isTurtle() then
   process:newThread('turtle_heartbeat', function()
 
-    os.sleep(1)
     while true do
       os.pullEvent('turtle_response')
       if turtle.status ~= info.status or
