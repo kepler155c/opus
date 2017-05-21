@@ -15,9 +15,9 @@ local config = {
   Recent = { },
   currentCategory = 'Apps',
 }
-local applications = { }
-
 Config.load('Overview', config)
+
+local applications = { }
 
 local function loadApplications()
   Util.clear(applications)

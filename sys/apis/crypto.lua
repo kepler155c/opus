@@ -61,10 +61,10 @@ local function sure(N,n)
 end
 
 local function splitnum(S)
-  Out=""
+  local Out=""
   for l1=1,#S,2 do
-    l2=(#S-l1)+1
-    CNum=tonumber("0x"..sure(string.sub(S,l2-1,l2-1),1) .. sure(string.sub(S,l2,l2),0))
+    local l2=(#S-l1)+1
+    local CNum=tonumber("0x"..sure(string.sub(S,l2-1,l2-1),1) .. sure(string.sub(S,l2,l2),0))
     Out=string.char(CNum)..Out
   end
   return Out
