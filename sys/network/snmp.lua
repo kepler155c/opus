@@ -95,7 +95,7 @@ end)
 process:newThread('discovery_server', function()
   device.wireless_modem.open(999)
 
-  os.sleep(1) -- allow services a chance to startup
+  --os.sleep(1) -- allow services a chance to startup
   print('discovery: listening on port 999')
 
   while true do

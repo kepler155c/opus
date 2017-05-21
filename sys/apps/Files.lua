@@ -287,7 +287,7 @@ function Browser:eventHandler(event)
     Event.exitPullEvents()
 
   elseif event.type == 'edit' and file then
-    self:run('sys/apps/shell', 'edit', file.name)
+    self:run('sys/apps/shell', '/sys/apps/edit.lua', file.name)
 
   elseif event.type == 'shell' then
     self:run('sys/apps/shell')
