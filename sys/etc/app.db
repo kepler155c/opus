@@ -1,0 +1,217 @@
+{
+  [ "53ebc572b4a44802ba114729f07bdaaf5409a9d7" ] = {
+    category = "Apps",
+    icon = "\0304  \030    \
+\030f \0304 \0307 \030 \031  \031f)\
+\030f \0304 \0307 \030 \031f)",
+    title = "Network",
+    run = "Network.lua",
+    requires = "wireless_modem",
+  },
+  [ "90ef98d4b6fd15466f0a1f212ec1db8d9ebe018c" ] = {
+    title = "Turtles",
+    category = "Apps",
+    run = "Turtles.lua",
+  },
+  [ "81c0d915fa6d82fd30661c5e66e204cea52bb2b5" ] = {
+    title = "Activity",
+    category = "Apps",
+    icon = "\0318/\030f\031  \030 \0318\\\
+\030f \0308\0319o\030f\031  \
+\0318\\\030f\031  \030 \0318/",
+    run = "storageActivity.lua",
+  },
+  [ "9f46ca3ef617166776ef6014a58d4e66859caa62" ] = {
+    title = "DJ",
+    category = "Games",
+    icon = " \030f   \
+\030f  \0307  \
+\030f \0307  \0300 ",
+    run = "/rom/programs/fun/dj",
+  },
+  [ "76b849f460640bc789c433894382fb5acbac42a2" ] = {
+    title = "Worm",
+    category = "Games",
+    icon = "\030d \030  \030e \030  \
+\030d \030    \
+\030d    ",
+    run = "/rom/programs/fun/worm",
+  },
+  c7116629a6a855cb774d9c7c8ad822fd83c71fb5 = {
+    title = "Reboot",
+    category = "System",
+    icon = "\0304\031f \030f\0310o..\0304\031f \
+\0304\031f \030f\0310.o.\0304\031f \
+\0304\031f   - ",
+    run = "rom/programs/reboot",
+  },
+  [ "381e3298b2b8f6caeb2208b57d805ada38402f0b" ] = {
+    category = "Apps",
+    icon = "\0300\0317if\031  \0307 \
+\0300\0317turt\
+\0300\0317retu",
+    title = "Scripts",
+    run = "Script.lua",
+    requires = "wireless_modem",
+  },
+  db56e2e1db9f7accfc37f2b132d27505c66ba521 = {
+    title = "Adventure",
+    category = "Games",
+    icon = "\030f\0310You \031 \
+\030f\0310Ther\030 \031  \
+\030f\0314?\031f \031   \030  ",
+    run = "rom/programs/fun/adventure",
+  },
+  fb91e24fa52d8d2b32937bf04d843f730319a902 = {
+    title = "Update",
+    category = "System",
+    icon = "\0301\03171\03180\030 \031   \
+\0301\03181\030 \031    \
+\0301\03170\03180\03171\0307\031f>",
+    run = "update.lua",
+  },
+  [ "7ef35cac539f84722b0a988caee03b2df734c56a" ] = {
+    title = "AppStore",
+    category = "System",
+    icon = "\030 \0310=\0300 \030 XX\0300\031f \030  \
+\030 \031f \0300    \030  \
+\030 \031f \0310o \031f \0310o\031f ",
+    run = "Appstore.lua",
+  },
+  [ "4486006f811b88cacd5f211fd579717e29b600cd" ] = {
+    title = "Miner",
+    category = "Apps",
+    icon = "    \0315\\\030 \031  \
+ \0304\031f _ \030 \031c/\0315\\\
+ \0304   ",
+    run = "simpleMiner.lua",
+  },
+  c47ae15370cfe1ed2781eedc1dc2547d12d9e972 = {
+    title = "Help",
+    category = "Apps",
+    icon = "  \031d?\031  \
+\031d?\031    \
+   \031d?",
+    run = "Help.lua",
+  },
+  b0832074630eb731d7fbe8074de48a90cd9bb220 = {
+    title = "Lua",
+    category = "Apps",
+    icon = "\030f     \
+\030f\0310lua>\031  \
+\030f     ",
+    run = "Lua.lua",
+  },
+  [ "89307d419a2fe4fbb69af92b3d3af27b6ec14d3e" ] = {
+    title = "Telnet",
+    category = "Apps",
+    icon = "    \0314>\0310_\
+ \031f)))\031   \
+\0314>\0310_\031     ",
+    run = "telnet.lua",
+  },
+  df485c871329671f46570634d63216761441bcd6 = {
+    title = "Devices",
+    category = "System",
+    icon = "\0304  \030   \
+\030f \0304 \0307 \030 \031  \031f_\
+\030f \0304 \0307 \030 \031f/",
+    run = "Peripherals.lua",
+  },
+  f39d173d91c22348565c20283b89d4d1cabd3b7e = {
+    title = "Falling",
+    category = "Games",
+    icon = "\030f \0302   \
+\0309  \0302 \0301 \
+\030e \0309  \0301 ",
+    run = "rom/programs/pocket/falling",
+  },
+  bc0792d8dc81e8aa30b987246a5ce97c40cd6833 = {
+    title = "System",
+    category = "System",
+    icon = "   \0307\031f| \
+\0307\031f---o\030 \031  \
+   \0307\031f| ",
+    run = "System.lua",
+  },
+  [ "9e092dda4f0e27d0c7686ddd00272079e678b6e6" ] = {
+    title = "Storage",
+    category = "Apps",
+    icon = "\0307       \
+\0307 \0308\0311 \0305 \0308\031  \0307 \0308 \0301 \
+\0307       ",
+    run = "storageManager.lua",
+  },
+  c5497bca58468ae64aed6c0fd921109217988db3 = {
+    title = "Events",
+    category = "System",
+    icon = "\0304\031f  \030    \0311e\
+\030f\031f \0304 \030  \0311ee\031f \
+\030f\031f \0304 \030 \0311e\031f   ",
+    run = "Events.lua",
+  },
+  [ "2a4d562b1d9a9c90bdede6fac8ce4f7402462b86" ] = {
+    title = "Tabs",
+    category = "System",
+    icon = "\0307 \0303\0317__\0307\031   \
+\0303     \
+\0303     ",
+    run = "Tabs.lua",
+  },
+  [ "114edfc04a1ab03541bdc80ce064f66a7cfcedbb" ] = {
+    title = "Recorder",
+    category = "Apps",
+    icon = "\030 \031f \031b \031foo  \
+\030 \031f \030e\031b    \030 \031f/\
+\030 \031b \030e    \030 \031f\\",
+    run = "recorder.lua",
+  },
+  [ "8a77613b475e46064321fd7da18d126ee35e5066" ] = {
+    title = "VNC",
+    category = "Apps",
+    icon = "\
+\031e\\\031   \031e/\031dn\
+ \031e\\/\031  \0319c",
+    run = "vnc.lua",
+  },
+  [ "4759bf14d7a511508e86c343c934894b6e8db533" ] = {
+    title = "Builder",
+    category = "Apps",
+    icon = "\0317_____\
+\030e\031c###\0308\0317=\030e\031c#\
+\030e\031c#\0307\031f.\030e\031c###",
+    run = "builder.lua",
+  },
+  [ "6ce6c512ea433a7fc5c8841628e7696cd0ff7f2b" ] = {
+    title = "Files",
+    category = "Apps",
+    icon = "\0300\0317==\031  \0307 \
+\0300\0317====\
+\0300\0317====",
+    run = "Files.lua",
+  },
+  b77aad5fb24921ef76ac8f3e500ed93fddae8f2a = {
+    title = "Redirection",
+    category = "Games",
+    icon = "\0307  \0308 \0307 \
+\0308\031b> \030b\0310>\0308\0318 \
+\0307    ",
+    run = "rom/programs/fun/advanced/redirection",
+  },
+  [ "7fddb7d8d1d60b1eeefa9af01082e0811d4b484d" ] = {
+    title = "Shutdown",
+    category = "System",
+    icon = "\0304\031f     \
+\0304\031f \030f\0310zz\031   \
+\0304\031f \030f    ",
+    run = "/rom/programs/shutdown",
+  },
+  bdc1fd5d3c0f3dcfd55d010426e61bf9451e680d = {
+    title = "Shell",
+    category = "Apps",
+    icon = "\0304     \030  \
+\0304 \030f\0314> \0310_\031  \
+\0304 \030f    \030  ",
+    run = "shell",
+  },
+}

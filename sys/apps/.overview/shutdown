@@ -1,8 +1,0 @@
-{
-  icon = "\0304\031f     \
-\0304\031f \030f\0310zz\031   \
-\0304\031f \030f    ",
-  title = "Shutdown",
-  category = "System",
-  run = "/rom/programs/shutdown",
-}

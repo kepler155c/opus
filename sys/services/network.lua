@@ -7,7 +7,7 @@ _G.network = { }
 
 local function netUp()
   local process = require('process')
-_G.__process = process
+
   local files = fs.list('/sys/network')
 
   for _,file in pairs(files) do

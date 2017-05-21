@@ -1,8 +1,0 @@
-{
-  icon = "\0304\031f \030f\0310o..\0304\031f \
-\0304\031f \030f\0310.o.\0304\031f \
-\0304\031f   - ",
-  title = "Reboot",
-  category = "System",
-  run = "rom/programs/reboot",
-}

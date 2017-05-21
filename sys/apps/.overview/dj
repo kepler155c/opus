@@ -1,8 +1,0 @@
-{
-  icon = " \030f   \
-\030f  \0307  \
-\030f \0307  \0300 ",
-  title = "DJ",
-  category = "Games",
-  run = "/rom/programs/fun/dj",
-}

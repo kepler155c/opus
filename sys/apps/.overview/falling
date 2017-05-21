@@ -1,8 +1,0 @@
-{
-  icon = "\030f \0302   \
-\0309  \0302 \0301 \
-\030e \0309  \0301 ",
-  title = "Falling",
-  category = "Games",
-  run = "rom/programs/pocket/falling",
-}

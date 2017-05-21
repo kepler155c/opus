@@ -7,6 +7,9 @@ local NFT = require('nft')
 local class = require('class')
 local FileUI = require('fileui')
 local Tween = require('tween')
+local SHA1 = require('sha1')
+
+local REGISTRY_DIR = 'usr/.registry'
 
 multishell.setTitle(multishell.getCurrent(), 'Overview')
 UI:configure('Overview', ...)
@@ -20,13 +23,16 @@ Config.load('Overview', config)
 local applications = { }
 
 local function loadApplications()
-  Util.clear(applications)
-  local apps = fs.list('sys/apps/.overview')
-  for _,app in pairs(apps) do
-    local data = Util.readTable('sys/apps/.overview/' .. app)
-    if data then
-      data.filename = 'sys/apps/.overview/' .. app
-      table.insert(applications, data)
+  applications = Util.readTable('sys/etc/app.db')
+
+  if fs.exists(REGISTRY_DIR) then
+    local files = fs.list(REGISTRY_DIR)
+    for _,file in pairs(files) do
+      local app = Util.readTable(fs.combine(REGISTRY_DIR, file))
+      if app and app.key then
+        app.filename = fs.combine(REGISTRY_DIR, file)
+        applications[app.key] = app
+      end
     end
   end
 end

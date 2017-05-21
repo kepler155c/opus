@@ -1,8 +1,0 @@
-{
-  icon = "\0307 \0303\0317__\0307\031   \
-\0303     \
-\0303     ",
-  title = "Tabs",
-  category = "System",
-  run = "Tabs.lua",
-}

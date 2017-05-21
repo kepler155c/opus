@@ -1,8 +1,0 @@
-{
-  icon = "   \0307\031f| \
-\0307\031f---o\030 \031  \
-   \0307\031f| ",
-  title = "System",
-  category = "System",
-  run = "System.lua",
-}

@@ -1,8 +1,0 @@
-{
-  icon = "    \0315\\\030 \031  \
- \0304\031f _ \030 \031c/\0315\\\
- \0304   ",
-  title = "Miner",
-  category = "Apps",
-  run = "simpleMiner.lua",
-}
