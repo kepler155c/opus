@@ -79,14 +79,11 @@ end
 
 function shell.resolveProgram( _sCommand )
 
-  local sPath = PATH or ''
-
   if ALIASES[ _sCommand ] ~= nil then
     _sCommand = ALIASES[ _sCommand ]
   end
 
   local path = shell.resolve(_sCommand)
-
   if fs.exists(path) and not fs.isDir(path) then
     return path
   end
@@ -104,9 +101,9 @@ function shell.resolveProgram( _sCommand )
     return nil
   end
   
--- Otherwise, look on the path variable
-  for sPath in string.gmatch(sPath, "[^:]+") do
-    sPath = fs.combine( shell.resolve(sPath), _sCommand )
+  -- Otherwise, look on the path variable
+  for sPath in string.gmatch(PATH or '', "[^:]+") do
+    sPath = fs.combine(sPath, _sCommand )
     if fs.exists( sPath ) and not fs.isDir( sPath ) then
       return sPath
     end

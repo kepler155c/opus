@@ -5,7 +5,7 @@ local Socket = require('socket')
 local Config = require('config')
 
 local GROUPS_PATH = 'usr/groups'
-local SCRIPTS_PATH = 'usr/scripts'
+local SCRIPTS_PATH = 'sys/etc/scripts'
 
 multishell.setTitle(multishell.getCurrent(), 'Script')
 UI:configure('script', ...)

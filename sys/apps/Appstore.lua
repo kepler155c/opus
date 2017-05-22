@@ -1,8 +1,6 @@
 require = requireInjector(getfenv(1))
 local Util = require('util')
-local class = require('class')
 local UI = require('ui')
-local Event = require('event')
 
 local sandboxEnv = Util.shallowCopy(getfenv(1))
 setmetatable(sandboxEnv, { __index = _G })
@@ -10,12 +8,14 @@ setmetatable(sandboxEnv, { __index = _G })
 multishell.setTitle(multishell.getCurrent(), 'App Store')
 UI:configure('Appstore', ...)
 
+local APP_DIR = 'usr/apps'
+
 local sources = {
 
   { text = "STD Default",
     event = 'source',
     url = "http://pastebin.com/raw/zVws7eLq" }, --stock
-
+--[[
   { text = "Discover",
     event = 'source',
     generateName = true,
@@ -24,9 +24,10 @@ local sources = {
   { text = "Opus",
     event = 'source',
     url = "http://pastebin.com/raw/ajQ91Rmn" },
+]]
 }
 
-shell.setDir('/apps')
+shell.setDir(APP_DIR)
 
 function downloadApp(app)
   local h
@@ -49,8 +50,8 @@ function runApp(app, checkExists, ...)
   local path, fn
   local args = { ... }
 
-  if checkExists and fs.exists(fs.combine('/apps', app.name)) then
-    path = fs.combine('/apps', app.name)
+  if checkExists and fs.exists(fs.combine(APP_DIR, app.name)) then
+    path = fs.combine(APP_DIR, app.name)
   else
     local program = downloadApp(app)
 
@@ -89,7 +90,7 @@ local installApp = function(app)
     return false, "Failed to download"
   end
 
-  local fullPath = fs.combine('/apps', app.name)
+  local fullPath = fs.combine(APP_DIR, app.name)
   Util.writeFile(fullPath, program)
   return true, 'Installed as ' .. fullPath
 end
@@ -103,6 +104,7 @@ local viewApp = function(app)
 
   Util.writeFile('/.source', program)
   shell.openForegroundTab('edit /.source')
+  fs.delete('/.source')
   return true
 end
 
@@ -190,7 +192,7 @@ function appPage:enable(source, app)
   UI.Page.enable(self)
 
   self.container.viewport:setScrollPosition(0)
-  if fs.exists(fs.combine('/apps', app.name)) then
+  if fs.exists(fs.combine(APP_DIR, app.name)) then
     self.menuBar.removeButton:enable('Remove')
   else
     self.menuBar.removeButton:disable('Remove')
@@ -215,13 +217,13 @@ function appPage:eventHandler(event)
     if self.app.runOnly then
       s,m = runApp(self.app, false, 'uninstall')
     else
-      fs.delete(fs.combine('/apps', self.app.name))
+      fs.delete(fs.combine(APP_DIR, self.app.name))
       self.notification:success("Uninstalled " .. self.app.name, 3)
       self:focusFirst(self)
       self.menuBar.removeButton:disable('Remove')
       self.menuBar:draw()
 
-      os.unregisterApp(fs.combine('/apps', self.app.name))
+      os.unregisterApp(self.app.creator .. '.' .. self.app.name)
     end
 
   elseif event.type == 'install' then
@@ -246,11 +248,11 @@ function appPage:eventHandler(event)
         end
 
         os.registerApp({
-          run = fs.combine('/apps', self.app.name),
+          run = fs.combine(APP_DIR, self.app.name),
           title = self.app.title,
           category = category,
           icon = self.app.icon,
-        })
+        }, self.app.creator .. '.' .. self.app.name)
       end
     else
       self.notification:error(m, 3)
@@ -348,7 +350,7 @@ function categoryPage.grid:sortCompare(a, b)
 end
 
 function categoryPage.grid:getRowTextColor(row, selected)
-  if fs.exists(fs.combine('/apps', row.name)) then
+  if fs.exists(fs.combine(APP_DIR, row.name)) then
     return colors.orange
   end
   return UI.Grid:getRowTextColor(row, selected)
@@ -370,7 +372,7 @@ function categoryPage:eventHandler(event)
     self:draw()
 
   elseif event.type == 'quit' then
-    Event.exitPullEvents()
+    UI:exitPullEvents()
 
   else
     return UI.Page.eventHandler(self, event)
@@ -382,5 +384,5 @@ print("Retrieving catalog list")
 categoryPage:setSource(sources[1])
 
 UI:setPage(categoryPage)
-Event.pullEvents()
+UI:pullEvents()
 UI.term:reset()

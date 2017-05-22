@@ -1,5 +1,8 @@
 require = requireInjector(getfenv(1))
 local Config = require('config')
+local SHA1 = require('sha1')
+
+local REGISTRY_DIR = 'usr/.registry'
 
 local config = {
   enable = false,
@@ -13,7 +16,6 @@ function lockScreen()
   require = requireInjector(getfenv(1))
   local UI = require('ui')
   local Event = require('event')
-  local SHA1 = require('sha1')
 
   local center = math.floor(UI.term.width / 2)
 
@@ -153,45 +155,20 @@ end
 
 -- move completely into overview
 -- just post event from appstore
-function os.registerApp(entry)
-  local apps = { }
-  Config.load('apps', apps)
+function os.registerApp(app, key)
 
-  local run = fs.combine(entry.run, '')
-
-  for k,app in pairs(apps) do
-    if app.run == run then
-      table.remove(apps, k)
-      break
-    end
-  end
-
-  table.insert(apps, {
-    run = run,
-    title = entry.title,
-    args = entry.args,
-    category = entry.category,
-    icon = entry.icon,
-  })
-
-  Config.update('apps', apps)
-
+  app.key = SHA1.sha1(key)
+debug(fs.combine(REGISTRY_DIR, app.key))
+debug(app)
+  Util.writeTable(fs.combine(REGISTRY_DIR, app.key), app)
   os.queueEvent('os_register_app')
 end
 
-function os.unregisterApp(run)
+function os.unregisterApp(key)
 
-  local apps = { }
-  Config.load('apps', apps)
-
-  local run = fs.combine(run, '')
-
-  for k,app in pairs(apps) do
-    if app.run == run then
-      table.remove(apps, k)
-      Config.update('apps', apps)
-      os.queueEvent('os_register_app')
-      break
-    end
+  local filename = fs.combine(REGISTRY_DIR, SHA1.sha1(key))
+  if fs.exists(filename) then
+    fs.delete(filename)
+    os.queueEvent('os_register_app')
   end
 end

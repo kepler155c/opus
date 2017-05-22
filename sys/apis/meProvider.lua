@@ -1,16 +1,40 @@
 local class = require('class')
 local Logger = require('logger')
+local Peripheral = require('peripheral')
 
 local MEProvider = class()
 
 function MEProvider:init(args)
-  self.items = {}
-  self.name = 'ME'
+  local defaults = {
+    items = { },
+    name = 'ME',
+  }
+  Util.merge(self, defaults)
+  Util.merge(self, args)
+
+  if self.side then
+    local mep = peripheral.wrap('bottom')
+    if mep then
+      Util.merge(self, mep)
+    end
+  else
+    local mep = Peripheral.getByMethod('getAvailableItems')
+    if mep then
+      Util.merge(self, mep)
+    end
+  end
+
+  if self.side then
+    local sides = {
+      top = 'down',
+      bottom = 'up',
+    }
+    self.oside = sides[self.side]
+  end
 end
  
 function MEProvider:isValid()
-  local mep = peripheral.wrap('bottom')
-  return mep and mep.getAvailableItems and mep.getAvailableItems()
+  return self.getAvailableItems and self.getAvailableItems()
 end
 
 -- Strip off color prefix
@@ -32,14 +56,16 @@ local function safeString(text)
 end
 
 function MEProvider:refresh()
-  local mep = peripheral.wrap('bottom')
-  if mep then
-    self.items = mep.getAvailableItems('all')
-    for _,v in pairs(self.items) do
-      Util.merge(v, v.item)
-      v.name = safeString(v.display_name)
-    end
+  self.items = self.getAvailableItems('all')
+  for _,v in pairs(self.items) do
+    Util.merge(v, v.item)
+    v.name = safeString(v.display_name)
   end
+  return self.items
+end
+
+function MEProvider:listItems()
+  self:refresh()
   return self.items
 end
  
@@ -60,21 +86,14 @@ function MEProvider:craft(id, dmg, qty)
 
   if item and item.is_craftable then
 
-    local mep = peripheral.wrap('bottom')
-    if mep then
-      Logger.log('meProvideer', 'requested crafting for: ' .. id .. ':' .. dmg .. ' qty: ' .. qty)
-      mep.requestCrafting({ id = id, dmg = dmg }, qty)
-      return true
-    end
+    Logger.log('MEProvider', 'requested crafting for: ' .. id .. ':' .. dmg .. ' qty: ' .. qty)
+    self.requestCrafting({ id = id, dmg = dmg }, qty)
+    return true
   end
-
-  return false
 end
 
 function MEProvider:craftItems(items)
-  local mep = peripheral.wrap('bottom')
-
-  local cpus = mep.getCraftingCPUs() or { }
+  local cpus = self.getCraftingCPUs() or { }
   local count = 0
 
   for _,cpu in pairs(cpus) do
@@ -94,42 +113,29 @@ function MEProvider:craftItems(items)
 end
 
 function MEProvider:provide(item, qty, slot)
-  local mep = peripheral.wrap('bottom')
-  if mep then
-    return pcall(function()
-      mep.exportItem({
-        id = item.id,
-        dmg = item.dmg
-      },
-      'up',
-      qty,
-      slot)
-    end)
-
-    --if item.qty then
-    --  item.qty = item.qty - extractedQty
-    --end
-  end
+  return pcall(function()
+    self.exportItem({
+      id = item.id,
+      dmg = item.dmg
+    }, self.oside, qty, slot)
+  end)
 end
  
 function MEProvider:insert(slot, qty)
-  local mep = peripheral.wrap('bottom')
-  if mep then
-    local s, m = pcall(function() mep.pullItem('up', slot, qty) end)
+  local s, m = pcall(function() self.pullItem(self.oside, slot, qty) end)
+  if not s and m then
+    print('MEProvider:pullItem')
+    print(m)
+    Logger.log('MEProvider', 'Insert failed, trying again')
+    sleep(1)
+    s, m = pcall(function() self.pullItem('up', slot, qty) end)
     if not s and m then
-      print('meProvider:pullItem')
+      print('MEProvider:pullItem')
       print(m)
-      Logger.log('meProvider', 'Insert failed, trying again')
-      sleep(1)
-      s, m = pcall(function() mep.pullItem('up', slot, qty) end)
-      if not s and m then
-        print('meProvider:pullItem')
-        print(m)
-        Logger.log('meProvider', 'Insert failed again')
-        read()
-      else
-        Logger.log('meProvider', 'Insert successful')
-      end
+      Logger.log('MEProvider', 'Insert failed again')
+      read()
+    else
+      Logger.log('MEProvider', 'Insert successful')
     end
   end
 end

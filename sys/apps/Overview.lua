@@ -158,8 +158,8 @@ function page.container:setCategory(categoryName)
     filtered = { }
 
     for _,v in ipairs(config.Recent) do
-      local app = Util.find(applications, 'run', v)
-      if app and fs.exists(app.run) then
+      local app = Util.find(applications, 'key', v)
+      if app then -- and fs.exists(app.run) then
         table.insert(filtered, app)
       end
     end
@@ -273,12 +273,12 @@ function page:eventHandler(event)
 
   elseif event.type == 'button' then
     for k,v in ipairs(config.Recent) do
-      if v == event.button.app.run then
+      if v == event.button.app.key then
         table.remove(config.Recent, k)
         break
       end
     end
-    table.insert(config.Recent, 1, event.button.app.run)
+    table.insert(config.Recent, 1, event.button.app.key)
     if #config.Recent > maxRecent then
       table.remove(config.Recent, maxRecent + 1)
     end

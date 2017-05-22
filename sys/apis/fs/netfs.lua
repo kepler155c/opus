@@ -29,7 +29,7 @@ local function remoteCommand(node, msg)
   error('netfs: Connection failed', 2)
 end
 
-local methods = { 'delete', 'exists', 'getFreeSpace', 'getSize', 'makeDir' }
+local methods = { 'delete', 'exists', 'getFreeSpace', 'makeDir' }
 
 local function resolveDir(dir, node)
   dir = dir:gsub(node.mountPoint, '', 1)
@@ -97,6 +97,16 @@ function netfs.isReadOnly(node, dir)
   end
   return remoteCommand(node, {
     fn = 'isReadOnly',
+    args = { resolveDir(dir, node) },
+  })
+end
+
+function netfs.getSize(node, dir)
+  if dir == node.mountPoint and node.directory == '' then
+    return 0
+  end
+  return remoteCommand(node, {
+    fn = 'getSize',
     args = { resolveDir(dir, node) },
   })
 end
