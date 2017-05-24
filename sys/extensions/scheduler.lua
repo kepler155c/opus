@@ -67,6 +67,7 @@ function turtle.run(fn, ...)
     end
     if id == ticketId then
       turtle.abort = false
+      turtle.resetState()
       local args = { ... }
       local s, m = pcall(function() fn(unpack(args)) end)
       turtle.abort = false

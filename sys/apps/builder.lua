@@ -2143,13 +2143,14 @@ UI:setPages({
 })
 
 UI:setPage('start')
-turtle.setPolicy(turtle.policies.digAttack)
-turtle.setPoint({ x = -1, z = -1, y = 0, heading = 0 })
-turtle.saveLocation('supplies')
-turtle.status = 'idle'
-turtle.abort = false
 
-Event.pullEvents()
+turtle.run(function()
+  turtle.setPolicy(turtle.policies.digAttack)
+  turtle.setPoint({ x = -1, z = -1, y = 0, heading = 0 })
+  turtle.getState().coordSystem = 'relative'
+  turtle.saveLocation('supplies')
+  Event.pullEvents()
+end)
 
 UI.term:reset()
-turtle.status = 'idle'
+--turtle.status = 'idle'

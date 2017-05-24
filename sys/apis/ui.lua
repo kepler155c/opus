@@ -1260,6 +1260,8 @@ function UI.Device:runTransitions(transitions, canvas)
   canvas:blitClipped(self.device) -- and blit the remainder
   canvas:reset()
 
+  local queue = { } -- don't miss events while transition is running
+                    -- especially timers
   while true do
     for _,k in ipairs(Util.keys(transitions)) do
       local transition = transitions[k]
@@ -1270,7 +1272,17 @@ function UI.Device:runTransitions(transitions, canvas)
     if Util.empty(transitions) then
       break
     end
-    os.sleep() -- ?
+    local timerId = os.startTimer(0)
+    while true do
+      local e = { os.pullEvent() }
+      if e[1] == 'timer' and e[2] == timerId then
+        break
+      end
+      table.insert(queue, e)
+    end
+  end
+  for _, e in ipairs(queue) do
+    Event.processEvent(e)
   end
 end
 

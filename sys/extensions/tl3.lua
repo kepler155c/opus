@@ -50,6 +50,17 @@ function turtle.reset()
   return true
 end
 
+function turtle.resetState()
+  --turtle.abort = false -- should be part of state
+  --turtle.status = 'idle' -- should be part of state
+  state.moveAttack = noop
+  state.moveDig = noop
+  state.moveCallback = noop
+  state.locations = {}
+
+  return true
+end
+
 local actions = {
   up = {
     detect = turtle.native.detectUp,

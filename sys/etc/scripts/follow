@@ -1,19 +1,15 @@
 local function follow(id)
 
   require = requireInjector(getfenv(1))
-  local GPS = require('gps')
   local Socket = require('socket')
   local Point = require('point')
   local process = require('process')
 
   turtle.status = 'follow ' .. id
 
-  local pt = GPS.getPointAndHeading()
-  if not pt or not pt.heading then
+  if not turtle.enableGPS() then
     error('turtle: No GPS found')
   end
-
-  turtle.setPoint(pt)
 
   local socket = Socket.connect(id, 161)
   if not socket then

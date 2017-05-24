@@ -387,9 +387,6 @@ __BUILDER_ID = tonumber(args[1])
 
 maxStackDB:load()
 
-turtle.setPoint({ x = -1, z = -2, y = 0, heading = 0 })
-turtle.saveLocation('supplies')
-
 Builder.itemProvider = MEProvider()
 if not Builder.itemProvider:isValid() then
   Builder.itemProvider = ChestProvider()
@@ -399,5 +396,10 @@ if not Builder.itemProvider:isValid() then
 end
 
 turtle.run(function()
+  turtle.setPoint({ x = -1, z = -2, y = 0, heading = 0 })
+  turtle.getState().coordSystem = 'relative'
+
+  turtle.saveLocation('supplies')
+
   Event.pullEvents(onTheWay)
 end)

@@ -31,13 +31,13 @@ function GPS.getPoint(timeout, debug)
   return pt
 end
 
-function GPS.getHeading()
+function GPS.getHeading(timeout)
 
   if not turtle then
     return
   end
 
-  local apt = GPS.locate()
+  local apt = GPS.locate(timeout)
   if not apt then
     return
   end
@@ -67,8 +67,8 @@ function GPS.getHeading()
   return 3
 end
 
-function GPS.getPointAndHeading()
-  local heading = GPS.getHeading()
+function GPS.getPointAndHeading(timeout)
+  local heading = GPS.getHeading(timeout)
   if heading then
     local pt = GPS.getPoint()
     if pt then

@@ -7,6 +7,7 @@ local function summon(id)
 
   turtle.status = 'GPSing'
   turtle.setPoint({ x = 0, y = 0, z = 0, heading = 0 })
+  turtle.getState().coordSystem = 'relative'
 
   local pts = {
     [ 1 ] = { x = 0, z = 0, y = 0 },
