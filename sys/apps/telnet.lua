@@ -52,7 +52,8 @@ ct.clear()
 ct.setCursorPos(1, 1)
 
 local filter = Util.transpose({
-  'char', 'paste', 'key', 'key_up', 'mouse_scroll', 'mouse_click', 'mouse_drag',
+  'char', 'paste', 'key', 'key_up', 
+  'mouse_scroll', 'mouse_click', 'mouse_drag', 'mouse_up',
 })
 
 while true do

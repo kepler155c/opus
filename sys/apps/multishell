@@ -513,6 +513,8 @@ end
 
 draw()
 
+local lastClicked
+
 while true do
 
   -- Get the event
@@ -552,6 +554,7 @@ while true do
   
   elseif sEvent == "mouse_click" then
     local button, x, y = tEventData[1], tEventData[2], tEventData[3]
+    lastClicked = nil
     if y == 1 and os.locked then
       -- ignore
     elseif y == 1 then
@@ -575,6 +578,13 @@ while true do
       end
     elseif currentTab then
       -- Passthrough to current process
+      lastClicked = currentTab
+      resumeTab(currentTab, sEvent, { button, x, y-1 })
+    end
+
+  elseif sEvent == "mouse_up" then
+    if currentTab and lastClicked == currentTab then
+      local button, x, y = tEventData[1], tEventData[2], tEventData[3]
       resumeTab(currentTab, sEvent, { button, x, y-1 })
     end
 

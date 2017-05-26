@@ -75,6 +75,7 @@ local Manager = class()
 function Manager:init(args)
   local control = false
   local shift = false
+  local mouseDragged = false
   local pages = { }
 
   Event.addHandler('term_resize', function(h, side)
@@ -117,11 +118,25 @@ function Manager:init(args)
 
   Event.addHandler('mouse_click', function(h, button, x, y)
 
-    if button == 1 and shift and control then -- hack
+    mouseDragged = false
+    if button == 1 and shift and control then -- debug hack
       local event = self:pointToChild(self.target, x, y)
       multishell.openTab({ path = 'sys/apps/Lua.lua', args = { event.element }, focused = true })
 
     elseif self.currentPage then
+      if not self.currentPage.parent.device.side then
+        local event = self:pointToChild(self.target, x, y)
+        if event.element.focus then
+          self.currentPage:setFocus(event.element)
+          self.currentPage:sync()
+        end
+      end
+    end
+  end)
+
+  Event.addHandler('mouse_up', function(h, button, x, y)
+
+    if self.currentPage and not mouseDragged then
       if not self.currentPage.parent.device.side then
         self:click(button, x, y)
       end
@@ -130,6 +145,7 @@ function Manager:init(args)
 
   Event.addHandler('mouse_drag', function(h, button, x, y)
 
+    mouseDragged = true
     if self.target then
       local event = self:pointToChild(self.target, x, y)
 
@@ -3334,7 +3350,7 @@ function UI.NftImage:setImage(image)
 end
 
 UI:loadTheme('usr/config/ui.theme')
-if os.getVersion() >= 1.79 then
+if os.getVersion and os.getVersion() >= 1.79 then
   UI:loadTheme('sys/etc/ext.theme')
 end
 

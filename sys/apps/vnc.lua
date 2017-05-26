@@ -54,6 +54,11 @@ end)
 ct.clear()
 ct.setCursorPos(1, 1)
 
+local filter = Util.transpose({
+  'char', 'paste', 'key', 'key_up', 
+  'mouse_scroll', 'mouse_click', 'mouse_drag', 'mouse_up',
+})
+
 while true do
   local e = { process:pullEvent() }
   local event = e[1]
@@ -66,14 +71,7 @@ while true do
     break
   end
 
-  if event == 'char' or 
-     event == 'paste' or 
-     event == 'key' or
-     event == 'key_up' or
-     event == 'mouse_scroll' or
-     event == 'mouse_click' or
-     event == 'mouse_drag' then
-
+  if filter[event] then
     socket:write({
       type = 'shellRemote',
       event = e,

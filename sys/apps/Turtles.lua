@@ -11,7 +11,7 @@ UI:configure('Turtles', ...)
 local options = {
   turtle      = { arg = 'i', type = 'number', value = -1,
                  desc = 'Turtle ID' },
-  tab         = { arg = 's', type = 'string', value = 'inventory',
+  tab         = { arg = 's', type = 'string', value = 'turtles',
                  desc = 'Selected tab to display' },
   help        = { arg = 'h', type = 'flag',   value = false,
                  desc = 'Displays the options' },
@@ -22,6 +22,7 @@ local SYS_SCRIPTS_PATH = 'sys/etc/scripts'
 
 local nullTerm = Terminal.getNullTerm(term.current())
 local turtles = { }
+local socket
 local policies = { 
   { label = 'none' },
   { label = 'digOnly' },
@@ -37,36 +38,6 @@ local itemInfoDB = TableDB({
 itemInfoDB:load()
 
 local page = UI.Page {
-  moveUp = UI.Button {
-    x = 5, y = 2,
-    text = '/\\',
-    fn = 'turtle.up',
-  },
-  moveDown = UI.Button {
-    x = 5, y = 4,
-    text = '\\/',
-    fn = 'turtle.down',
-  },
-  moveForward = UI.Button {
-    x = 9, y = 3,
-    text = '>',
-    fn = 'turtle.forward',
-  },
-  moveBack = UI.Button {
-    x = 2, y = 3,
-    text = '<',
-    fn = 'turtle.back',
-  },
-  turnLeft = UI.Button {
-    x = 2, y = 6,
-    text = '<-',
-    fn = 'turtle.turnLeft',
-  },
-  turnRight = UI.Button {
-    x = 8, y = 6,
-    text = '->',
-    fn = 'turtle.turnRight',
-  },
 --[[
   policy = UI.Chooser {
     x = 2, y = 8,
@@ -77,10 +48,10 @@ local page = UI.Page {
   },
 ]]
   coords = UI.Window {
-    x = 14, y = 2, height = 5, rex = -2,
+    x = 2, y = 2, height = 3, rex = -2,
   },
   tabs = UI.Tabs {
-    x = 1, y = 8, rey = -2,
+    x = 1, y = 5, rey = -2,
     scripts = UI.Grid {
       tabTitle = 'Run',
       backgroundColor = UI.TabBar.defaults.selectedBackgroundColor,
@@ -108,8 +79,9 @@ local page = UI.Page {
       backgroundColor = UI.TabBar.defaults.selectedBackgroundColor,
       tabTitle = 'Inv',
       columns = {
+        { heading = '',          key = 'index', width = 2 },
         { heading = '',          key = 'qty', width = 2 },
-        { heading = 'Inventory', key = 'id',  width = UI.term.width - 5 },
+        { heading = 'Inventory', key = 'id',  width = UI.term.width - 7 },
       },
       disableHeader = true,
       sortColumn = 'index',
@@ -125,6 +97,39 @@ local page = UI.Page {
       sortColumn = 'label',
       autospace = true,
     },
+    action = UI.Window {
+      tabTitle = 'Act',
+      moveUp = UI.Button {
+        x = 5, y = 2,
+        text = '/\\',
+        fn = 'turtle.up',
+      },
+      moveDown = UI.Button {
+        x = 5, y = 4,
+        text = '\\/',
+        fn = 'turtle.down',
+      },
+      moveForward = UI.Button {
+        x = 9, y = 3,
+        text = '>',
+        fn = 'turtle.forward',
+      },
+      moveBack = UI.Button {
+        x = 2, y = 3,
+        text = '<',
+        fn = 'turtle.back',
+      },
+      turnLeft = UI.Button {
+        x = 2, y = 6,
+        text = '<-',
+        fn = 'turtle.turnLeft',
+      },
+      turnRight = UI.Button {
+        x = 8, y = 6,
+        text = '->',
+        fn = 'turtle.turnRight',
+      },
+    },
   },
   statusBar = UI.StatusBar(),
   notification = UI.Notification(),
@@ -139,18 +144,18 @@ function page:enable(turtle)
 end
 
 function page:runFunction(script, nowrap)
-
-  local socket = Socket.connect(self.turtle.id, 161)
   if not socket then
-    self.notification:error('Unable to connect')
-    return
+    socket = Socket.connect(self.turtle.id, 161)
+    if not socket then
+      self.notification:error('Unable to connect')
+      return
+    end
   end
 
   if not nowrap then
     script = 'turtle.run(' .. script .. ')'
   end
   socket:write({ type = 'script', args = script })
-  socket:close()
 end
 
 function page:runScript(scriptName)
@@ -167,8 +172,12 @@ function page.coords:draw()
   if t then
     self:clear()
     self:setCursorPos(1, 1)
-    self:print(string.format('%s\nx: %d\ny: %d\nz: %d\nFuel: %s\n', 
-      t.coordSystem, t.point.x, t.point.y, t.point.z, Util.toBytes(t.fuel)))
+    local ind = 'GPS'
+    if t.coordSystem ~= 'GPS' then
+      ind = 'REL'
+    end
+    self:print(string.format('%s : %d,%d,%d\nFuel: %s\n', 
+      ind, t.point.x, t.point.y, t.point.z, Util.toBytes(t.fuel)))
   end
 end
 
@@ -274,6 +283,10 @@ end
 function page.tabs.turtles:eventHandler(event)
   if event.type == 'grid_select' then
     page.turtle = event.selected
+    if socket then
+      socket:close()
+      socket = nil
+    end
   else
     return UI.Grid.eventHandler(self, event)
   end
