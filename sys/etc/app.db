@@ -11,6 +11,9 @@
   [ "90ef98d4b6fd15466f0a1f212ec1db8d9ebe018c" ] = {
     title = "Turtles",
     category = "Apps",
+    icon = " \0305 \030c \0305 \030   \
+\030d \030c \0305 \030c \0308 \030d\031f\"\
+ \0308\031f.\030 \031  \0308\031f.\030 \031   ",
     run = "Turtles.lua",
   },
   [ "81c0d915fa6d82fd30661c5e66e204cea52bb2b5" ] = {

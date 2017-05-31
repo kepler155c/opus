@@ -15,7 +15,7 @@ if not s then
 end
 
 -- process fstab
-local mounts = Util.readFile('usr/config/fstab')
+local mounts = Util.readFile('sys/etc/fstab')
 if mounts then
   for _,l in ipairs(Util.split(mounts)) do
     if l:sub(1, 1) ~= '#' then

@@ -34,17 +34,6 @@ for n = 0, 15 do
   mapGrayToPaint[2 ^ n] = mapColorToPaint[gs]
 end
 
-local function colorToGrayScale(c)
-  return mapColorToGray[c]
-end
-
-local function colorToPaintColor(c, isColor)
-  if isColor then
-    return mapColorToPaint[c]
-  end
-  return mapGrayToPaint[c]
-end
-
 local function safeValue(v)
   local t = type(v)
   if t == 'string' or t == 'number' then
@@ -900,6 +889,13 @@ function Canvas:init(args)
   end
 end
 
+function Canvas:colorToPaintColor(c)
+  if self.isColor then
+    return mapColorToPaint[c]
+  end
+  return mapGrayToPaint[c]
+end
+
 function Canvas:copy()
   local b = Canvas({ x = self.x, y = self.y, ex = self.ex, ey = self.ey })
   for i = 1, self.ey - self.y + 1 do
@@ -918,8 +914,7 @@ function Canvas:addLayer(layer, bg, fg)
     ey = layer.y + layer.height - 1,
     isColor = self.isColor,
   })
-  canvas:clear(colorToPaintColor(bg, self.isColor),
-             colorToPaintColor(fg, self.isColor))
+  canvas:clear(bg, fg)
 
   canvas.parent = self
   if not self.layers then
@@ -978,10 +973,10 @@ function Canvas:write(x, y, text, bg, tc)
       line.dirty = true
       line.text = replace(line.text, x, text, width)
       if bg then
-        line.bg = fill(line.bg, x, colorToPaintColor(bg, self.isColor), width)
+        line.bg = fill(line.bg, x, self:colorToPaintColor(bg), width)
       end
       if tc then
-        line.fg = fill(line.fg, x, colorToPaintColor(tc, self.isColor), width)
+        line.fg = fill(line.fg, x, self:colorToPaintColor(tc), width)
       end
     end
   end
@@ -1001,8 +996,8 @@ end
 function Canvas:clear(bg, fg)
   local width = self.ex - self.x + 1
   local text = string.rep(' ', width)
-  fg = string.rep(fg, width)
-  bg = string.rep(bg, width)
+  fg = string.rep(self:colorToPaintColor(fg), width)
+  bg = string.rep(self:colorToPaintColor(bg), width)
   for i = 1, self.ey - self.y + 1 do
     self:writeLine(i, text, fg, bg)
   end
@@ -1209,8 +1204,7 @@ function UI.Device:init(args)
     x = 1, y = 1, ex = self.width, ey = self.height,
     isColor = self.isColor,
   })
-  self.canvas:clear(colorToPaintColor(self.backgroundColor, self.isColor),
-             colorToPaintColor(self.textColor, self.isColor))
+  self.canvas:clear(self.backgroundColor, self.textColor)
 end
 
 function UI.Device:resize()
@@ -2339,7 +2333,7 @@ function UI.Tabs:init(args)
   for k,child in pairs(defaults) do
     if type(child) == 'table' and child.UIElement then
       table.insert(buttons, {
-        text = child.tabTitle, event = 'tab_select',
+        text = child.tabTitle or '', event = 'tab_select',
       })
     end
   end
