@@ -37,7 +37,7 @@ end
 
 function urlfs.open(node, fn, fl)
 
-  if fl ~= 'r' then
+  if fl ~= 'r' and fl ~= 'rb' then
     error('Unsupported mode')
   end
 
@@ -58,19 +58,31 @@ function urlfs.open(node, fn, fl)
 
   local ctr = 0
   local lines
+
+  if fl == 'r' then
+    return {
+      readLine = function()
+        if not lines then
+          lines = Util.split(c)
+        end
+        ctr = ctr + 1
+        return lines[ctr]
+      end,
+      readAll = function()
+        return c
+      end,
+      close = function()
+        lines = nil
+      end,
+    }
+  end
   return {
-    readLine = function()
-      if not lines then
-        lines = Util.split(c)
-      end
+    read = function()
       ctr = ctr + 1
-      return lines[ctr]
-    end,
-    readAll = function()
-      return c
+      return c:sub(ctr, ctr)
     end,
     close = function()
-      lines = nil
+      ctr = 0
     end,
   }
 end
