@@ -79,7 +79,7 @@ function urlfs.open(node, fn, fl)
   return {
     read = function()
       ctr = ctr + 1
-      return c:sub(ctr, ctr)
+      return c:sub(ctr, ctr):byte()
     end,
     close = function()
       ctr = 0
