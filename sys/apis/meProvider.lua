@@ -24,13 +24,15 @@ function MEProvider:init(args)
     end
   end
 
-  if self.side then
-    local sides = {
-      top = 'down',
-      bottom = 'up',
-    }
-    self.oside = sides[self.side]
-  end
+  local sides = {
+    top = 'down',
+    bottom = 'up',
+    east = 'west',
+    west = 'east',
+    north = 'south',
+    south = 'north',
+  }
+  self.oside = sides[self.direction or self.side]
 end
  
 function MEProvider:isValid()

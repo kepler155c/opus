@@ -1,7 +1,7 @@
 local bootOptions = {
   { prompt = 'Default Shell', file = '/sys/boot/default.boot' },
-  { prompt = 'Multishell'   , file = '/sys/boot/multishell.boot' },
-  { prompt = 'TLCO'         , file = '/sys/boot/tlco.boot' },
+  { prompt = 'Opus'         , file = '/sys/boot/multishell.boot' },
+--  { prompt = 'TLCO'         , file = '/sys/boot/tlco.boot' },
 }
 local bootOption = 2
 

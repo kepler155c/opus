@@ -198,7 +198,7 @@ function Builder:finish()
   Builder.resupplying = true
   Builder.ready = false
   if turtle.gotoLocation('supplies') then
-    turtle.setHeading(0)
+    turtle.setHeading(1)
     os.sleep(.1) -- random 'Computer is not connected' error...
     Builder:dumpInventory()
     Event.exitPullEvents()
@@ -274,6 +274,7 @@ Message.addHandler('supplyList',
   		self.ready = false
   		Event.exitPullEvents()
   	end
+    turtle.setHeading(1)
     os.sleep(.2) -- random 'Computer is not connected' error...
     Builder:dumpInventoryWithCheck()
     Builder:refuel()
@@ -283,7 +284,6 @@ Message.addHandler('supplyList',
   	  if #supplies == 0 then
   	  	break
   	  end
-  	  turtle.setHeading(0)
   	  Builder:autocraft(supplies)
       turtle.status = 'waiting'
   	  os.sleep(5)
@@ -319,9 +319,10 @@ Message.addHandler('needSupplies',
   		  os.sleep(0)
   			if not turtle.gotoLocation('supplies') then
   				Builder:log('failed to go to supply location')
-  				self.ready = false
+  				--self.ready = false
   				Event.exitPullEvents()
   			end
+        turtle.setHeading(1)
 	  		return
   		end
   		pt.y = pt.y - 2 -- location where builder should go for the chest to be above
@@ -379,24 +380,31 @@ local function onTheWay() -- parallel routine
 end
 
 local args = {...}
-if #args < 1 then
-  error('Supply id for builder')
+if #args < 2 then
+  error('syntax: <builder id> <facing>')
 end
 
 __BUILDER_ID = tonumber(args[1])
 
 maxStackDB:load()
 
-Builder.itemProvider = MEProvider()
+Builder.itemProvider = MEProvider({ direction = args[2] })
 if not Builder.itemProvider:isValid() then
-  Builder.itemProvider = ChestProvider()
+  local sides = {
+    east = 'west',
+    west = 'east',
+    north = 'south',
+    south = 'north',
+  }
+
+  Builder.itemProvider = ChestProvider({ direction = sides[args[2]], wrapSide = args[2] })
   if not Builder.itemProvider:isValid() then
     error('A chest or ME interface must be below turtle')
   end
 end
 
 turtle.run(function()
-  turtle.setPoint({ x = -1, z = -2, y = 0, heading = 0 })
+  turtle.setPoint({ x = -1, z = -2, y = -1, heading = 1 })
   turtle.getState().coordSystem = 'relative'
 
   turtle.saveLocation('supplies')
