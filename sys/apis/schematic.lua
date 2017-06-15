@@ -1,8 +1,6 @@
 local class = require('class')
 local DEFLATE = require('deflatelua')
 local UI = require('ui')
-local Logger = require('logger')
-local Profile = require('profile')
 local Point = require('point')
 
 --[[
@@ -17,7 +15,6 @@ function Schematic:init(args)
   self.blocks = { }
   self.damages = { }
   self.originalBlocks = { }
-  self.placementChains = { }
   self.x, self.y, self.z = 0, 0, 0
   self.height = 0
   self.index = 1
@@ -29,7 +26,7 @@ end
  
   Some parts of the file reader code was modified from the original
 --]]
- 
+
 function Schematic:discardBytes(h, n, spinner)
   for i = 1,n do
     h:readbyte()
@@ -38,17 +35,17 @@ function Schematic:discardBytes(h, n, spinner)
     end
   end
 end
- 
+
 function Schematic:readname(h)  
   local n1 = h:readbyte(h)
   local n2 = h:readbyte(h)
- 
+
   if(n1 == nil or n2 == nil) then
     return ""
   end
- 
+
   local n = n1*256 + n2
- 
+
   local str = ""
   for i=1,n do
     local c = h:readbyte(h)
@@ -59,13 +56,13 @@ function Schematic:readname(h)
   end
   return str
 end
- 
+
 function Schematic:parse(a, h, containsName, spinner)
- 
+
   if a==0 then
     return
   end
- 
+
   local name
   if containsName then
     name = self:readname(h)
@@ -150,9 +147,8 @@ function Schematic:parse(a, h, containsName, spinner)
   end
 end
 -- end http://www.computercraft.info/forums2/index.php?/topic/1949-turtle-schematic-file-builder/
- 
+
 function Schematic:copyBlocks(iblocks, oblocks, spinner)
-  Profile.start('copyBlocks')
   for k,b in ipairs(iblocks) do
     oblocks[k] = Util.shallowCopy(b)
     if spinner then
@@ -161,29 +157,20 @@ function Schematic:copyBlocks(iblocks, oblocks, spinner)
       end
     end
   end
-  Profile.stop('copyBlocks')
 end
- 
+
 function Schematic:reload()
-  self.placementChains = {}
   self.blocks = { }
   self:copyBlocks(self.originalBlocks, self.blocks)
-  --[[
-  self.planes = { }
-  for i = 0, self.height - 1 do
-    self.planes[i] = { }
+
+  for _,ri in pairs(self.rowIndex) do
+    ri.loaded = false
   end
-  for k,b in ipairs(self.blocks) do
-    if not self.planes[b.y].start then
-      self.planes[b.y].start = k
-    end
-  end
-  --]]
 end
 
 function Schematic:getMagic(fh)
   fh:open()
- 
+
   local magic = fh:readbyte() * 256 +  fh:readbyte()
 
   fh:close()
@@ -192,12 +179,12 @@ function Schematic:getMagic(fh)
 end
 
 function Schematic:isCompressed(filename)
- local h = fs.open(filename, "rb")
- 
+  local h = fs.open(filename, "rb")
+
   if not h then
     error('unable to open: ' .. filename)
   end
- 
+
   local magic = h.read() * 256 +  h.read()
 
   h.close()
@@ -206,7 +193,7 @@ function Schematic:isCompressed(filename)
 end
 
 function Schematic:checkFileType(fh)
- 
+
   local magic = self:getMagic(fh)
   if magic ~= schematicMagic then
     error('Unknown file type')
@@ -253,8 +240,6 @@ end
 
 function Schematic:decompress(ifname, spinner)
 
-  Profile.start('decompress')
-
   local ifh = fs.open(ifname, "rb")
   if not ifh then
     error('Unable to open ' .. ifname)
@@ -271,20 +256,17 @@ function Schematic:decompress(ifname, spinner)
   ifh.close()
 
   spinner:stop()
-  Profile.stop('decompress')
 
   return mh
 end
- 
+
 function Schematic:loadpass(fh, spinner)
- 
-  Profile.start('load')
 
   fh:open()
- 
+
   while true do
     local a = fh:readbyte()
- 
+
     if not a then
       break
     end
@@ -297,13 +279,11 @@ function Schematic:loadpass(fh, spinner)
   end
 
   fh:close()
-  Profile.stop('load')
- 
+
   self:assignDamages(spinner)
   self.damages = nil
- 
+
   self:copyBlocks(self.blocks, self.originalBlocks, spinner)
-  Profile.display()
 
   spinner:stop()
 end
@@ -316,7 +296,7 @@ function Schematic:load(filename)
     y = cursorY - 1
   })
   local f
- 
+
   if self:isCompressed(filename) then
     local originalFile = filename
     filename = originalFile .. '.uncompressed'
@@ -335,28 +315,6 @@ function Schematic:load(filename)
 
   self:checkFileType(f)
 
-  --[[
-  local size = fs.getSize(filename)
-
-  local buffer = {
-    h = h,
-    i = 1,
-    s = { },
-    l = size,
-  }
-
-  for i = 1,size do
-    buffer.s[i] = h.read()
-  end
-
-  function buffer:readbyte()
-    --return self.h.read()
-    local b = self.s[self.i]
-    self.i = self.i + 1
-    return b
-  end
-  ]]--
-
   print('Initial pass     ')
   self:loadpass(f, spinner)
 
@@ -365,7 +323,6 @@ function Schematic:load(filename)
     self.blocks = { }
     self.damages = { }
     self.originalBlocks = { }
-    self.placementChains = { }
     self.x, self.y, self.z = 0, 0, 0
     self.height = 0
     self.index = 1
@@ -373,6 +330,18 @@ function Schematic:load(filename)
     print('Second pass      ')
     self:loadpass(f, spinner)
   end 
+
+  self.rowIndex = { }
+  for k,b in ipairs(self.blocks) do
+    local ri = self.rowIndex[b.y]
+    if not ri then
+      self.rowIndex[b.y] = { s = k, e = k }
+    else
+      ri.e = k
+    end
+  end
+
+  self.cache = Util.readTable('usr/builder/' .. self.filename .. '.cache') or { }
 end
 
 function Schematic:assignCoord(i, id)
@@ -400,13 +369,11 @@ function Schematic:assignCoord(i, id)
     self.height = self.y + 1
   end
 end
- 
+
 function Schematic:assignDamages(spinner)
-  local i = 0
- 
-  Profile.start('assignDamages')
   print('Assigning damages')
 
+  local i = 0
   for _,b in pairs(self.blocks) do
     b.dmg = self.damages[b.index] or 0
     i = i + 1
@@ -414,7 +381,6 @@ function Schematic:assignDamages(spinner)
       spinner:spin()
     end
   end
-  Profile.stop('assignDamages')
 end
 
 function Schematic:findIndexAt(x, z, y)
@@ -445,8 +411,8 @@ function Schematic:findBlockAtSide(b, side)
     return self.blocks[index] -- could be better
   end
 end
- 
-function Schematic:addPlacementChain(chain)
+
+function Schematic:addPlacementChain(chains, chain)
   local t = { }
   for _,v in ipairs(chain) do
     local k = self:findIndexAt(v.x, v.z, v.y)
@@ -461,17 +427,17 @@ function Schematic:addPlacementChain(chain)
     for _,b in pairs(t) do
       keys[b.index] = true
     end
-    table.insert(self.placementChains, {
+    table.insert(chains, {
       blocks = t,
       keys = keys
     })
   end
 end
- 
-function Schematic:bestSide(b, ...)
+
+function Schematic:bestSide(b, chains, ...)
   local directions = { ... }
   local blocks = { }
- 
+
   for k,d in pairs(directions) do
     local hi = turtle.getHeadingInfo(d)
     local sb = self:findIndexAt(b.x - hi.xd, b.z - hi.zd, b.y)
@@ -486,7 +452,7 @@ function Schematic:bestSide(b, ...)
       d = d
     }
   end
- 
+
   local bestBlock
   for _,sb in ipairs(blocks) do
     if not sb.b.direction then -- could be better
@@ -494,7 +460,7 @@ function Schematic:bestSide(b, ...)
       break
     end
   end
- 
+
   if not bestBlock then
     local sideDirections = {
       [ 'east-block' ] = 'east',
@@ -512,17 +478,17 @@ function Schematic:bestSide(b, ...)
       end
     end
   end
- 
+
   local hi = bestBlock.hi
   b.heading = hi.heading     -- ?????????????????????????????????
   b.direction = bestBlock.d .. '-block'
-  self:addPlacementChain({
+  self:addPlacementChain(chains, {
     { x = b.x,         z = b.z,         y = b.y },
     { x = b.x - hi.xd, z = b.z - hi.zd, y = b.y }
   })
 end
- 
-function Schematic:bestOfTwoSides(b, side1, side2) -- could be better
+
+function Schematic:bestOfTwoSides(b, chains, side1, side2) -- could be better
 
   local sb
   local fb = b  -- first block
@@ -567,7 +533,7 @@ function Schematic:bestOfTwoSides(b, side1, side2) -- could be better
       b = self:findBlockAtSide(b, side2)
     end
 
-    self:addPlacementChain(pc)
+    self:addPlacementChain(chains, pc)
   end
 
   -- can we place the first block from the side (instead of using piston) ?
@@ -599,11 +565,13 @@ function Schematic:bestOfTwoSides(b, side1, side2) -- could be better
   end
 
 end
- 
+
 -- Determine the best way to place each block
-function Schematic:determineBlockPlacement(row)
+function Schematic:determineBlockPlacement(y)
 
   -- NOTE: blocks are evaluated top to bottom
+
+  print('Processing level ' .. y)
 
   local spinner = UI.Spinner({
     x = 1,
@@ -649,21 +617,14 @@ function Schematic:determineBlockPlacement(row)
     [ 'west-block-vine'  ] = 'west-block',
     [ 'north-block-vine'  ] = 'north-block'
   }
- 
+
   local dirtyBlocks = {}
   local dirtyBlocks2 = {}
+  local chains = {}
 
-  self.rowIndex = { }
-  for k,b in ipairs(self.blocks) do
-    local ri = self.rowIndex[b.y]
-    if not ri then
-      self.rowIndex[b.y] = { s = k, e = k }
-    else
-      ri.e = k
-    end
-  end
-
-  for k,b in ipairs(self.blocks) do
+  local ri = self.rowIndex[y]
+  for k = ri.s, ri.e do
+    local b = self.blocks[k]
     local d = b.direction
 
     if d then
@@ -724,23 +685,23 @@ function Schematic:determineBlockPlacement(row)
     local d = b.direction or ''
 
     spinner:spin(#dirtyBlocks + #dirtyBlocks2 .. ' blocks remaining ')
- 
+
     if directions[d] then
       b.heading = turtle.getHeadingInfo(directions[d]).heading
     end
-  
+
     if doorDirections[d] then
- 
+
       local hi = turtle.getHeadingInfo(doorDirections[d])
       b.heading = hi.heading
       b.twoHigh = true
- 
-      self:addPlacementChain({
+
+      self:addPlacementChain(chains, {
         { x = b.x, z = b.z, y = b.y },
         { x = b.x - hi.xd, z = b.z - hi.zd, y = b.y },
       })
     end
- 
+
     if stairDownDirections[d] then
       if not self:findIndexAt(b.x, b.z, b.y-1) then
         b.direction = stairDownDirections[b.direction]
@@ -749,7 +710,7 @@ function Schematic:determineBlockPlacement(row)
         b.heading = turtle.getHeadingInfo(stairDownDirections[b.direction]).heading
       end
     end
- 
+
     if d == 'bottom' then
       -- slab occupying bottom of voxel
       -- can be placed from top if a block is below
@@ -761,7 +722,7 @@ function Schematic:determineBlockPlacement(row)
           -- no block below, place from side
 
           -- took care of all other cases above
-          self:bestSide(b, 'east', 'south', 'west', 'north')
+          self:bestSide(b, chains, 'east', 'south', 'west', 'north')
 
         -- elseif not db.direction or db.direction ~= 'bottom' then
         -- not a slab below, ok to place from above
@@ -781,7 +742,7 @@ function Schematic:determineBlockPlacement(row)
       -- all other directions are fine
       -- any stair southwards that can't be placed against another block must be pistoned
       local sd = stairUpDirections[d]
- 
+
       if self:findIndexAt(b.x, b.z, b.y-1) then
         -- there's a block below
         b.direction = sd[1]
@@ -802,14 +763,14 @@ function Schematic:determineBlockPlacement(row)
       -- placing a block from the side
       local hi = turtle.getHeadingInfo(blockDirections[d])
       b.heading = hi.heading
-      self:addPlacementChain({
+      self:addPlacementChain(chains, {
         { x = b.x + hi.xd, z = b.z + hi.zd, y = b.y },  -- block we are placing against
         { x = b.x,         z = b.z,         y = b.y },  -- the block (or torch, etc)
         { x = b.x - hi.xd, z = b.z - hi.zd, y = b.y }   -- room for the turtle
       })
     end
   end
- 
+
   -- pass 3
   while #dirtyBlocks2 > 0 do
     local b = table.remove(dirtyBlocks2)
@@ -818,26 +779,50 @@ function Schematic:determineBlockPlacement(row)
     spinner:spin(#dirtyBlocks2 .. ' blocks remaining ')
 
     if d == 'east-west-block' then
-      self:bestOfTwoSides(b, 'east', 'west')
+      self:bestOfTwoSides(b, chains, 'east', 'west')
     elseif d == 'north-south-block' then
-      self:bestOfTwoSides(b, 'north', 'south')
+      self:bestOfTwoSides(b, chains, 'north', 'south')
     end
   end
- 
-  spinner:stop()
+
   term.clearLine()
+
+  self:setPlacementOrder(spinner, chains)
+  local plane = self:optimizeRoute(spinner, y)
+
+  spinner:stop()
+
+  for k,b in ipairs(plane) do
+    self.blocks[ri.s + k - 1] = b
+  end
 end
- 
+
+function Schematic:getComputedBlock(i)
+  local b = self.blocks[i]
+
+  -- has this level been computed ?
+  if not self.rowIndex[b.y].loaded then
+    -- compute each level up til this one (unless saved in cache)
+    for y = 0, b.y - 1 do
+      if not self.cache[y] then
+        self:determineBlockPlacement(y)
+      end
+    end
+    self:determineBlockPlacement(b.y)
+    -- get the block now at the computed location
+    b = self.blocks[i]
+  end
+
+  return b
+end
+
 -- set the order for block dependencies
-function Schematic:setPlacementOrder()
+function Schematic:setPlacementOrder(spinner, placementChains)
+
   local cursorX, cursorY = term.getCursorPos()
-  local spinner = UI.Spinner({
-    x = 1
-  })
- 
-  Profile.start('overlapping')
+
   -- optimize for overlapping check
-  for _,chain in pairs(self.placementChains) do
+  for _,chain in pairs(placementChains) do
     for index,_ in pairs(chain.keys) do
       if not chain.startRow or (index < chain.startRow) then
         chain.startRow = index
@@ -847,10 +832,10 @@ function Schematic:setPlacementOrder()
       end
     end
   end
- 
+
   local function groupOverlappingChains(t, groupedChain, chain, spinner)
     local found = true
- 
+
     local function overlaps(chain1, chain2)
       if chain1.startRow > chain2.endRow or
          chain2.startRow > chain1.endRow then
@@ -862,7 +847,7 @@ function Schematic:setPlacementOrder()
         end
       end
     end
- 
+
     while found do
       found = false
       for k, v in pairs(t) do
@@ -881,16 +866,15 @@ function Schematic:setPlacementOrder()
 
   -- group together any placement chains with overlapping blocks
   local groupedChains = {}
-  while #self.placementChains > 0 do
+  while #placementChains > 0 do
     local groupedChain = {}
-    local chain = table.remove(self.placementChains)
+    local chain = table.remove(placementChains)
     table.insert(groupedChain, chain)
     table.insert(groupedChains, groupedChain)
-    groupOverlappingChains(self.placementChains, groupedChain, chain, spinner)
-    spinner:spin('chains: ' .. #groupedChains .. '  ' .. #self.placementChains .. '  ')
+    groupOverlappingChains(placementChains, groupedChain, chain, spinner)
+    spinner:spin('chains: ' .. #groupedChains .. '  ' .. #placementChains .. '  ')
   end
-  Profile.stop('overlapping')
- 
+
   --Logger.log('schematic', 'groups: ' .. #groupedChains)
   --Logger.setFileLogging('chains')
 
@@ -961,7 +945,7 @@ function Schematic:setPlacementOrder()
         end
       end
     end
- 
+
     while #chains > 0 do
       for k,chain in pairs(chains) do
         if splice(masterChain.blocks, chain.blocks) then
@@ -983,16 +967,14 @@ function Schematic:setPlacementOrder()
 
     return masterChain
   end
- 
+
   -- combine the individual overlapping placement chains into 1 long master chain
-  Profile.start('masterchains')
   local masterChains = {}
   for _,group in pairs(groupedChains) do
     spinner:spin('chains: ' .. #masterChains)
     table.insert(masterChains, mergeChains(group))
   end
-  Profile.stop('masterchains')
- 
+
   local function removeDuplicates(chain)
     for k,v in ipairs(chain) do
       for i = #chain, k+1, -1 do
@@ -1003,10 +985,9 @@ v.info = 'Unplaceable'
       end
     end
   end
- 
+
   -- any chains with duplicates cannot be placed correctly
   -- there are some cases where a turtle cannot place blocks the same as a player
-  Profile.start('duplicates')
   for _,chain in pairs(masterChains) do
     removeDuplicates(chain.blocks)
     spinner:spin('chains: ' .. #masterChains)
@@ -1020,52 +1001,26 @@ v.info = 'Unplaceable'
     --]]
 
   end
-  Profile.stop('duplicates')
   term.clearLine()
- 
-  -- adjust row indices as blocks are being moved
-  Profile.start('reordering')
+
+  -- set dependent blocks for optimize routine
   for k,chain in pairs(masterChains) do
     spinner:spin('chains: ' .. #masterChains - k)
- 
-    local startBlock = table.remove(chain.blocks, 1)
-    startBlock.movedBlocks = chain.blocks
- 
-    for _,b in pairs(chain.blocks) do
-      b.moved = true
+
+    local prev
+    for k,b in ipairs(chain.blocks) do
+      b.prev = prev
+      b.next = chain.blocks[k + 1]
+      prev = b
     end
   end
- 
-  local t = { }
-  for k,b in ipairs(self.blocks) do
-
-    -- adjust y so the turtle travels above the two high blocks
-    if b.twoHigh then
-      b.y = b.y + 1
-    end
-
-    spinner:spin('blocks: ' .. #self.blocks - k .. '  ')
-    if not b.moved then
-      table.insert(t, b)
-    end
-    if b.movedBlocks then
-      for _,mb in ipairs(b.movedBlocks) do
-        table.insert(t, mb)
-      end
-    end
-  end
- 
-  self.blocks = t
-
-  Profile.stop('reordering')
-
-  --Logger.setWirelessLogging()
 
   term.clearLine()
-  spinner:stop()
+
+  return t
 end
- 
-function Schematic:optimizeRoute()
+
+function Schematic:optimizeRoute(spinner, y)
  
   local function getNearestNeighbor(p, pt, maxDistance)
     local key, block, heading
@@ -1085,14 +1040,24 @@ function Schematic:optimizeRoute()
         end
       end
     end
- 
+
+    local function blockReady(b)
+      if b.u then
+        return false
+      end
+      if b.prev and not b.prev.u then
+        return false
+      end
+      return true
+    end
+
     local mid = pt.index
     local forward = mid + 1
     local backward = mid - 1
     while forward <= #p or backward > 0 do
       if forward <= #p then
         local b = p[forward]
-        if not b.u then
+        if blockReady(b) then
           getMoves(b, forward)
           if moves <= 1 then
             break
@@ -1105,7 +1070,7 @@ function Schematic:optimizeRoute()
       end
       if backward > 0 then
         local b = p[backward]
-        if not b.u then
+        if blockReady(b) then
           getMoves(b, backward)
           if moves <= 1 then
             break
@@ -1125,54 +1090,62 @@ function Schematic:optimizeRoute()
     block.u = true
     return block
   end
- 
-  local pt = { x = -1, z = -1, y = 0, heading = 0 }
+
+  local pt = Util.shallowCopy(self.cache[y - 1] or turtle.point)
   local t = {}
-  local cursorX, cursorY = term.getCursorPos()
-  local spinner = UI.Spinner({
-    x = 0,
-    y = cursorY
-  })
- 
-  local function extractPlane(y)
+  local ri = self.rowIndex[y]
+  local blockCount = ri.e - ri.s + 1
+
+  local function extractPlane()
     local t = {}
     local dt = {}
-    for _, b in pairs(self.blocks) do
-      if b.y == y then
-        if b.twoHigh then
-          table.insert(dt, b)
-        else
-          table.insert(t, b)
+    for i = ri.s, ri.e do
+      local b = self.blocks[i]
+      if b.twoHigh then
+        b.last = true
+        while b.next do
+          b = b.next
+          b.last = true
         end
+      end
+    end
+    for i = ri.s, ri.e do
+      local b = self.blocks[i]
+      if b.last then
+        table.insert(dt, b)
+      else
+        table.insert(t, b)
       end
     end
     return t, dt
   end
- 
+
   local maxDistance = self.width*self.length
-  Profile.start('optimize')
-  for y = 0, self.height do
-    local percent = math.floor(#t * 100 / #self.blocks) .. '%'
-    spinner:spin(percent)
-    local plane, doors = extractPlane(y)
-    pt.index = 0
-    for i = 1, #plane do
-      local b = getNearestNeighbor(plane, pt, maxDistance)
-      table.insert(t, b)
-      spinner:spin(percent .. ' ' .. #plane - i .. '    ')
-    end
-    -- all two high blocks are placed last on each plane
-    pt.index = 0
-    for i = 1, #doors do
-      local b = getNearestNeighbor(doors, pt, maxDistance)
-      table.insert(t, b)
-      spinner:spin(percent .. ' ' .. #doors - i .. '    ')
-    end
+  local plane, doors = extractPlane(y)
+  spinner:spin(percent)
+  pt.index = 0
+  for i = 1, #plane do
+    local b = getNearestNeighbor(plane, pt, maxDistance)
+    table.insert(t, b)
+    local percent = math.floor(#t * 100 / blockCount) .. '%'
+    spinner:spin(percent .. ' ' .. blockCount - i .. '    ')
+  end
+  -- all two high blocks are placed last on each plane
+  pt.index = 0
+  for i = 1, #doors do
+    local b = getNearestNeighbor(doors, pt, maxDistance)
+    table.insert(t, b)
+    local percent = math.floor(#t * 100 / blockCount) .. '%'
+    spinner:spin(percent .. ' ' .. blockCount - #plane - i .. '    ')
   end
 
-  Profile.stop('optimize')
-  self.blocks = t
-  spinner:stop('      ')
+  self.rowIndex[y].loaded = true
+  if not self.cache[y] then
+    self.cache[y] = Util.shallowCopy(pt)
+    Util.writeTable('usr/builder/' .. self.filename .. '.cache', self.cache)
+  end
+
+  return t
 end
 
 return Schematic

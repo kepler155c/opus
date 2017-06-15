@@ -347,7 +347,7 @@ function standardBlockDB:seedDB()
     [ '163:0' ] = 'stairs',
     [ '164:0' ] = 'stairs',
     [ '167:0' ] = 'trapdoor',
-    [ '170:0' ] = 'flatten',
+    [ '170:0' ] = 'quartz-pillar', -- hay bale
     [ '175:0' ] = 'largeplant',
     [ '175:1' ] = 'largeplant',
     [ '175:2' ] = 'largeplant', -- double tallgrass - an alternative would be to use grass as the bottom part, bonemeal as top part

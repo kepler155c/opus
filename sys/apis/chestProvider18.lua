@@ -29,20 +29,25 @@ function ChestProvider:refresh()
         entry = self.cache[key]
         if not entry then
           local meta = self.p.getItemMeta(k) -- slow method.. cache for speed
-          entry = {
-            id = s.name,
-            dmg = s.damage,
-            name = meta.displayName,
-            max_size = meta.maxCount,
-          }
-          self.cache[key] = entry
+          if meta then
+            entry = {
+              id = s.name,
+              dmg = s.damage,
+              name = meta.displayName,
+              max_size = meta.maxCount,
+            }
+            self.cache[key] = entry
+          end
         end
-        entry = Util.shallowCopy(entry)
-        self.items[key] = entry
-        entry.qty = 0
+        if entry then
+          entry = Util.shallowCopy(entry)
+          self.items[key] = entry
+          entry.qty = 0
+        end
       end
-
-      entry.qty = entry.qty + s.count
+      if entry then
+        entry.qty = entry.qty + s.count
+      end
     end
   end
   return self.items

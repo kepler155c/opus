@@ -9,7 +9,6 @@ local Message = require('message')
 local Logger = require('logger')
 local UI = require('ui')
 local Schematic = require('schematic')
-local Profile = require('profile')
 local TableDB = require('tableDB')
 local MEProvider = require('meProvider')
 local Blocks = require('blocks')
@@ -520,7 +519,7 @@ function Builder:getGenericSupplyList(blockIndex)
   local lastBlock = blockIndex
   for k = blockIndex, #schematic.blocks do
     lastBlock = k
-    local b = schematic.blocks[k]
+    local b = schematic:getComputedBlock(k)
 
     if b.id ~= 'minecraft:air' then
       local slot = getSlot(b.id, b.dmg)
@@ -1164,16 +1163,8 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
   }
   if doorDirections[d] then
     local hi = turtle.getHeadingInfo(doorDirections[d])
-    self:gotoEx(b.x - hi.xd, b.z - hi.zd, b.y - 2, hi.heading, travelPlane)
---    if not turtle.detectDown() then
---      if turtle.down() then
---        if not turtle.detectDown() then
---          if turtle.down() then
-            b.placed = self:place(slot)
---          end
---        end
---      end
---    end
+    self:gotoEx(b.x - hi.xd, b.z - hi.zd, b.y - 1, hi.heading, travelPlane)
+    b.placed = self:place(slot)
   end
  
   local blockDirections = {
@@ -1251,15 +1242,19 @@ function Builder:findTravelPlane(index)
   for i = index, 1, -1 do
     local b = schematic.blocks[i]
 
-    if not travelPlane or b.y > travelPlane then
+    local y = b.y
+    if b.twoHigh then
+      y = y + 1
+    end
+    if not travelPlane or y > travelPlane then
 --      if not b.twoHigh then
-        travelPlane = b.y
+        travelPlane = y
 
         Logger.log('builder', 'adjusting travelPlane')
         Logger.log('builder', b)
         --read()
 --      end
-    elseif travelPlane and travelPlane - b.y > 2 then
+    elseif travelPlane and travelPlane - y > 2 then
       break
     end
   end
@@ -1300,11 +1295,12 @@ function Builder:build()
 
   for i = self.index, last, direction do
     self.index = i
-    local b = schematic.blocks[i]
+    local b = schematic:getComputedBlock(i)
  
     if b.id ~= 'minecraft:air' then
  
       if self.mode == 'destroy' then
+
         b.heading = nil -- don't make the supplier follow the block heading
         self:logBlock(self.index, b)
         if b.y ~= turtle.getPoint().y then
@@ -1337,8 +1333,12 @@ function Builder:build()
           self:resupply()
           return
         end
-        if b.y > travelPlane then
-          travelPlane = b.y
+        local y = b.y
+        if b.twoHigh then
+          y = b.y + 1
+        end
+        if y > travelPlane then
+          travelPlane = y
         end
 
         self:logBlock(self.index, b)
@@ -1995,8 +1995,8 @@ function startPage:eventHandler(event)
       height = 7,
       form = UI.Form {
         y = 3, x = 2, height = 4,
-        text = UI.Text { x = 5, y = 1, value = '1 - ' .. #schematic.blocks, textColor = colors.gray },
-        textEntry = UI.TextEntry { x = 15, y = 1, value = tostring(Builder.index), width = 7 }
+        text = UI.Text { x = 2, y = 1, value = '1 - ' .. #schematic.blocks, textColor = colors.gray },
+        textEntry = UI.TextEntry { x = 16, y = 1, value = tostring(Builder.index), width = 10, limit = 8 }
       },
       statusBar = UI.StatusBar(),
     }
@@ -2023,6 +2023,9 @@ function startPage:eventHandler(event)
     UI:setPage(dialog)
  
   elseif event.type == 'assignBlocks' then
+    -- this might be an approximation of the blocks needed
+    -- as the current level's route may or may not have been
+    -- computed
     Builder:dumpInventory()
     UI:setPage('listing')
  
@@ -2059,12 +2062,6 @@ function startPage:eventHandler(event)
     turtle.status = 'thinking'
     print('Reloading schematic')
     Builder:reloadSchematic()
-    print('Determining block placement')
-    schematic:determineBlockPlacement()
-    print('Optimizing route (' .. #schematic.blocks .. ' blocks)')
-    schematic:optimizeRoute()
-    print('Adjusting route')
-    schematic:setPlacementOrder()
     Builder:dumpInventory()
     Builder:refuel()
 
@@ -2084,7 +2081,6 @@ function startPage:eventHandler(event)
     }
  
     Builder:build()
-    Profile.display()
  
   elseif event.type == 'quit' then
     Event.exitPullEvents()
@@ -2098,9 +2094,6 @@ local args = {...}
 if #args < 1 then
   error('supply file name')
 end
---if #args > 1 then
-  Profile.enable()
---end
  
 if os.version() == 'CraftOS 1.7' then
   Builder.ccVersion = 1.7

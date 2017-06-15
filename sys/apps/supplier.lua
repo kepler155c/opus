@@ -6,6 +6,18 @@ local Point = require('point')
 local TableDB = require('tableDB')
 local MEProvider = require('meProvider')
 
+--[[
+  A supplier turtle for the builder turtle. For larger builds, use
+  ender modems.
+
+  Setup:
+
+  1. chest or ME interface at level 0 (bottom of build area)
+  2. builder turtle on top facing the build area
+  3. If facing the build turtle, the supplier turtle is to the right
+     pointing at the chest/interface
+]]--
+
 local ChestProvider = require('chestProvider')
 if os.getVersion() == 1.8 then
   ChestProvider = require('chestProvider18')
@@ -70,7 +82,7 @@ function Builder:dumpInventoryWithCheck()
     Builder:log('Unable to dump inventory')
     print('Provider is full or missing - make space or replace')
     print('Press enter to continue')
-    turtle.setHeading(0)
+    --turtle.setHeading(0)
     self.ready = false
     read()
   end
@@ -397,9 +409,9 @@ if not Builder.itemProvider:isValid() then
     south = 'north',
   }
 
-  Builder.itemProvider = ChestProvider({ direction = sides[args[2]], wrapSide = args[2] })
+  Builder.itemProvider = ChestProvider({ direction = sides[args[2]], wrapSide = 'front' })
   if not Builder.itemProvider:isValid() then
-    error('A chest or ME interface must be below turtle')
+    error('A chest or ME interface must be in front of turtle')
   end
 end
 
