@@ -19,6 +19,8 @@ Event.addHandler('peripheral', function(event, side)
       term.setTextColor(attachColor)
       Util.print('[%s] %s attached', dev.side, dev.name)
       os.queueEvent('device_attach', dev.name)
+    else
+      Util.print('[%s] attached failed', side)
     end
   end
 end)

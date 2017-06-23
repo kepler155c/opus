@@ -45,6 +45,7 @@ Leaves (Spruce),18:1,,Solid Block
 Leaves (Birch),18:2,,Solid Block
 Leaves (Jungle),18:3,,Solid Block
 Sponge,19,minecraft:sponge,Solid Block
+Wet Sponge,19:1,minecraft:sponge,Solid Block
 Glass,20,minecraft:glass,Solid Block
 Lapis Lazuli Ore,21,minecraft:lapis_ore,Solid Block
 Lapis Lazuli Block,22,minecraft:lapis_block,Solid Block

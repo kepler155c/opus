@@ -27,8 +27,8 @@ function Util.throttle(fn)
   return function(...)
     local nts = os.clock()
     if nts > ts + timeout then
-      ts = nts
       os.sleep(0)
+      ts = os.clock()
       if fn then
         fn(...)
       end

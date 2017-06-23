@@ -331,7 +331,7 @@ function Manager:click(button, x, y)
 
     if button == 1 then
       local c = os.clock()
-      if self.doubleClickTimer and (c - self.doubleClickTimer < 1) and
+      if self.doubleClickTimer and (c - self.doubleClickTimer < 1.5) and
          self.doubleClickX == x and self.doubleClickY == y and
          self.doubleClickElement == clickEvent.element then
         button = 3
@@ -1076,8 +1076,8 @@ end
 UI.TransitionSlideLeft = class()
 UI.TransitionSlideLeft.defaults = {
   UIElement = 'TransitionSlideLeft',
-  ticks = 12,
-  easing = 'outBounce',
+  ticks = 4,
+  easing = 'outQuint',
 }
 function UI.TransitionSlideLeft:init(args)
   local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
@@ -1116,11 +1116,11 @@ end
 UI.TransitionSlideRight = class()
 UI.TransitionSlideRight.defaults = {
   UIElement = 'TransitionSlideRight',
-  ticks = 12,
-  easing = 'outBounce',
+  ticks = 4,
+  easing = 'outQuint',
 }
 function UI.TransitionSlideRight:init(args)
-  local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
+  local defaults = UI:getDefaults(UI.TransitionSlideRight, args)
   UI.setProperties(self, defaults)
 
   self.pos = { x = self.x }
@@ -2518,6 +2518,72 @@ function UI.Notification:display(value, timeout)
     self:cancel()
     self:sync()
   end)
+end
+
+--[[-- Throttle --]]--
+UI.Throttle = class(UI.Window)
+UI.Throttle.defaults = {
+  UIElement = 'Throttle',
+  backgroundColor = colors.gray,
+  height = 6,
+  width = 10,
+  timeout = .095,
+  ctr = 0,
+  image = {
+    '  //)    (O )~@ &~&-( ?Q        ',
+    '  //)    (O )- @  \-( ?)  &&    ',
+    '  //)    (O ), @  \-(?)     &&  ',
+    '  //)    (O ). @  \-d )      (@ '
+  }
+}
+
+function UI.Throttle:init(args)
+  local defaults = UI:getDefaults(UI.Throttle, args)
+  UI.Window.init(self, defaults)
+end
+
+function UI.Throttle:setParent()
+  self.x = math.ceil((self.parent.width - self.width) / 2)
+  self.y = math.ceil((self.parent.height - self.height) / 2)
+  UI.Window.setParent(self)
+end
+
+function UI.Throttle:enable()
+  self.enabled = false
+end
+
+function UI.Throttle:disable()
+  if self.canvas then
+    self.enabled = false
+    self.canvas:removeLayer()
+    self.canvas = nil
+    self.c = nil
+  end
+end
+
+function UI.Throttle:update()
+  local cc = os.clock()
+  if not self.c then
+    self.c = cc
+  elseif cc > self.c + self.timeout then
+    os.sleep(0)
+    self.c = os.clock()
+    self.enabled = true
+    if not self.canvas then
+      self.canvas = UI.term.canvas:addLayer(self, self.backgroundColor, colors.cyan)
+      self.canvas:setVisible(true)
+      self:clear(colors.cyan)
+    end
+    local image = self.image[self.ctr + 1]
+    local width = self.width - 2
+    for i = 0, #self.image do
+      self:write(2, i + 2, image:sub(width * i + 1, width * i + width), colors.black, colors.white)
+    end
+
+    self.ctr = (self.ctr + 1) % #self.image
+
+    self:sync()
+  end
 end
 
 --[[-- GridLayout --]]--

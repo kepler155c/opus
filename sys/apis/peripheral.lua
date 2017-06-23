@@ -51,13 +51,15 @@ function Peripheral.addDevice(deviceList, side)
   end
 
   deviceList[name] = peripheral.wrap(side)
-  Util.merge(deviceList[name], {
-    name = name,
-    type = ptype,
-    side = side,
-  })
+  if deviceList[name] then
+    Util.merge(deviceList[name], {
+      name = name,
+      type = ptype,
+      side = side,
+    })
 
-  return deviceList[name]
+    return deviceList[name]
+  end
 end
 
 function Peripheral.getBySide(side)

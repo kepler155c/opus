@@ -205,7 +205,7 @@ end
 
 function json.decodeFromFile(path)
   local file = assert(fs.open(path, "r"))
-  local decoded = decode(file.readAll())
+  local decoded = json.decode(file.readAll())
   file.close()
   return decoded
 end

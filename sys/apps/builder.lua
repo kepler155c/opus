@@ -33,13 +33,12 @@ local schematic = Schematic()
 local blocks = Blocks({ dir = BUILDER_DIR })
 
 local Builder = {
-  version = '1.70',
-  ccVersion = nil,
+  version = '1.71',
   slots = { },
   index = 1,
   mode = 'build',
   fuelItem = { id = 'minecraft:coal', dmg = 0 },
-  resourceSlots = 15,
+  resourceSlots = 14,
   facing = 'south',
   confirmFacing = false,
 }
@@ -49,18 +48,8 @@ local pistonFacings
 --[[-- SubDB --]]--
 subDB = TableDB({
   fileName = fs.combine(BUILDER_DIR, 'sub.db'),
-  tabledef = {
-    autokeys = false,
-    columns = {
-      { name = 'Key',    type = 'key',    length = 8 },
-      { name = 'id',     type = 'number', length = 5 },
-      { name = 'dmg',    type = 'number', length = 2 },
-      { name = 'refid',  type = 'number', length = 5 },
-      { name = 'refdmg', type = 'number', length = 2 },
-    }
-  }
 })
- 
+
 function subDB:load()
   if fs.exists(self.fileName) then
     TableDB.load(self)
@@ -71,222 +60,66 @@ end
 
 function subDB:seedDB()
   self.data = {
-    [ "minecraft:redstone_wire:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:redstone",
-      dmg = 0,
-      id = "minecraft:redstone_wire",
-    },
-    [ "minecraft:wall_sign:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:sign",
-      dmg = 0,
-      id = "minecraft:wall_sign",
-    },
-    [ "minecraft:standing_sign:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:sign",
-      dmg = 0,
-      id = "minecraft:standing_sign",
-    },
-    [ "minecraft:potatoes:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:potato",
-      dmg = 0,
-      id = "minecraft:potatoes",
-    },
-    --[[
-    [ "minecraft:dirt:1" ] = {
-      sdmg = 0,
-      sid = "minecraft:dirt",
-      dmg = 1,
-      id = "minecraft:dirt",
-    },
-    ]]--
-    [ "minecraft:unlit_redstone_torch:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:redstone",
-      dmg = 0,
-      id = "minecraft:unlit_redstone_torch",
-    },
-    [ "minecraft:powered_repeater:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:repeater",
-      dmg = 0,
-      id = "minecraft:powered_repeater",
-    },
-    [ "minecraft:unpowered_repeater:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:repeater",
-      dmg = 0,
-      id = "minecraft:unpowered_repeater",
-    },
-    [ "minecraft:carrots:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:carrot",
-      dmg = 0,
-      id = "minecraft:carrots",
-    },
-    [ "minecraft:cocoa:0" ] = {
-      sdmg = 3,
-      sid = "minecraft:dye",
-      dmg = 0,
-      id = "minecraft:cocoa",
-    },
-    [ "minecraft:unpowered_comparator:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:comparator",
-      dmg = 0,
-      id = "minecraft:unpowered_comparator",
-    },
-    [ "minecraft:piston_head:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:air",
-      dmg = 0,
-      id = "minecraft:piston_head",
-    },
-    [ "minecraft:double_wooden_slab:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:planks",
-      dmg = 0,
-      id = "minecraft:double_wooden_slab",
-    },
-    [ "minecraft:double_wooden_slab:1" ] = {
-      sdmg = 1,
-      sid = "minecraft:planks",
-      dmg = 1,
-      id = "minecraft:double_wooden_slab",
-    },
-    [ "minecraft:double_wooden_slab:2" ] = {
-      sdmg = 2,
-      sid = "minecraft:planks",
-      dmg = 2,
-      id = "minecraft:double_wooden_slab",
-    },
-    [ "minecraft:double_wooden_slab:3" ] = {
-      sdmg = 3,
-      sid = "minecraft:planks",
-      dmg = 3,
-      id = "minecraft:double_wooden_slab",
-    },
-    [ "minecraft:double_wooden_slab:4" ] = {
-      sdmg = 4,
-      sid = "minecraft:planks",
-      dmg = 4,
-      id = "minecraft:double_wooden_slab",
-    },
-    [ "minecraft:double_wooden_slab:5" ] = {
-      sdmg = 5,
-      sid = "minecraft:planks",
-      dmg = 5,
-      id = "minecraft:double_wooden_slab",
-    },
-    [ "minecraft:lit_redstone_lamp:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:redstone_lamp",
-      dmg = 0,
-      id = "minecraft:lit_redstone_lamp",
-    },
-    [ "minecraft:double_stone_slab:1" ] = {
-      sdmg = 0,
-      sid = "minecraft:sandstone",
-      dmg = 1,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:2" ] = {
-      sdmg = 0,
-      sid = "minecraft:planks",
-      dmg = 2,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:3" ] = {
-      sdmg = 0,
-      sid = "minecraft:cobblestone",
-      dmg = 3,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:4" ] = {
-      sdmg = 0,
-      sid = "minecraft:brick_block",
-      dmg = 4,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:5" ] = {
-      sdmg = 0,
-      sid = "minecraft:stonebrick",
-      dmg = 5,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:6" ] = {
-      sdmg = 0,
-      sid = "minecraft:nether_brick",
-      dmg = 6,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:7" ] = {
-      sdmg = 0,
-      sid = "minecraft:quartz_block",
-      dmg = 7,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab:9" ] = {
-      sdmg = 2,
-      sid = "minecraft:sandstone",
-      dmg = 9,
-      id = "minecraft:double_stone_slab",
-    },
-    [ "minecraft:double_stone_slab2:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:sandstone",
-      dmg = 0,
-      id = "minecraft:double_stone_slab2",
-    },
-    [ "minecraft:stone_slab:2" ] = {
-      sdmg = 0,
-      sid = "minecraft:wooden_slab",
-      dmg = 2,
-      id = "minecraft:stone_slab",
-    },
-    [ "minecraft:wheat:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:wheat_seeds",
-      dmg = 0,
-      id = "minecraft:wheat",
-    },
-    [ "minecraft:flowing_water:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:air",
-      dmg = 0,
-      id = "minecraft:flowing_water",
-    },
-    [ "minecraft:lit_furnace:0" ] = {
-      sdmg = 0,
-      sid = "minecraft:furnace",
-      dmg = 0,
-      id = "minecraft:lit_furnace",
-    },
+    [ "minecraft:redstone_wire:0"        ] = "minecraft:redstone:0",
+    [ "minecraft:wall_sign:0"            ] = "minecraft:sign:0",
+    [ "minecraft:standing_sign:0"        ] = "minecraft:sign:0",
+    [ "minecraft:potatoes:0"             ] = "minecraft:potato:0",
+    [ "minecraft:unlit_redstone_torch:0" ] = "minecraft:redstone_torch:0",
+    [ "minecraft:powered_repeater:0"     ] = "minecraft:repeater:0",
+    [ "minecraft:unpowered_repeater:0"   ] = "minecraft:repeater:0",
+    [ "minecraft:carrots:0"              ] = "minecraft:carrot:0",
+    [ "minecraft:cocoa:0"                ] = "minecraft:dye:3",
+    [ "minecraft:unpowered_comparator:0" ] = "minecraft:comparator:0",
+    [ "minecraft:powered_comparator:0"   ] = "minecraft:comparator:0",
+    [ "minecraft:piston_head:0"          ] = "minecraft:air:0",
+    [ "minecraft:double_wooden_slab:0"   ] = "minecraft:planks:0",
+    [ "minecraft:double_wooden_slab:1"   ] = "minecraft:planks:1",
+    [ "minecraft:double_wooden_slab:2"   ] = "minecraft:planks:2",
+    [ "minecraft:double_wooden_slab:3"   ] = "minecraft:planks:3",
+    [ "minecraft:double_wooden_slab:4"   ] = "minecraft:planks:4",
+    [ "minecraft:double_wooden_slab:5"   ] = "minecraft:planks:5",
+    [ "minecraft:lit_redstone_lamp:0"    ] = "minecraft:redstone_lamp:0",
+    [ "minecraft:double_stone_slab:1"    ] = "minecraft:sandstone:0",
+    [ "minecraft:double_stone_slab:2"    ] = "minecraft:planks:0",
+    [ "minecraft:double_stone_slab:3"    ] = "minecraft:cobblestone:0",
+    [ "minecraft:double_stone_slab:4"    ] = "minecraft:brick_block:0",
+    [ "minecraft:double_stone_slab:5"    ] = "minecraft:stonebrick:0",
+    [ "minecraft:double_stone_slab:6"    ] = "minecraft:nether_brick:0",
+    [ "minecraft:double_stone_slab:7"    ] = "minecraft:quartz_block:0",
+    [ "minecraft:double_stone_slab:9"    ] = "minecraft:sandstone:2",
+    [ "minecraft:double_stone_slab2:0"   ] = "minecraft:sandstone:0",
+    [ "minecraft:stone_slab:2"           ] = "minecraft:wooden_slab:0",
+    [ "minecraft:wheat:0"                ] = "minecraft:wheat_seeds:0",
+    [ "minecraft:flowing_water:0"        ] = "minecraft:air:0",
+    [ "minecraft:lit_furnace:0"          ] = "minecraft:furnace:0",
+    [ "minecraft:wall_banner:0"          ] = "minecraft:banner:0",
+    [ "minecraft:standing_banner:0"      ] = "minecraft:banner:0",
+    [ "minecraft:tripwire:0"             ] = "minecraft:string:0",
   }
   self.dirty = true
   self:flush()
 end
 
 function subDB:add(s)
-
-  TableDB.add(self, { s.id, s.dmg}, s)
+  TableDB.add(self, { s.id, s.dmg }, table.concat({ s.sid, s.sdmg }, ':'))
   self:flush()
 end
 
 function subDB:remove(s)
-
   -- TODO: tableDB.remove should take table key
   TableDB.remove(self, s.id .. ':' .. s.dmg)
   self:flush()
 end
 
+function subDB:extract(s)
+  local id, dmg = s:match('(.+):(%d+)')
+  return id, tonumber(dmg)
+end
+
 function subDB:getSubstitutedItem(id, dmg)
   local sub = TableDB.get(self, { id, dmg })
   if sub then
-    return { id = sub.sid, dmg = sub.sdmg }
+    id, dmg = self:extract(sub)
   end
   return { id = id, dmg = dmg }
 end
@@ -294,26 +127,20 @@ end
 function subDB:lookupBlocksForSub(sid, sdmg)
   local t = { }
   for k,v in pairs(self.data) do
-    if v.sid == sid and v.sdmg == sdmg then
-      t[k] = v
+    local id, dmg = self:extract(v)
+    if id == sid and dmg == sdmg then
+      id, dmg = self:extract(k)
+      t[k] = { id = id, dmg = dmg, sid = sid, sdmg = sdmg }
     end
   end
   return t
 end
- 
+
 --[[-- maxStackDB --]]--
 maxStackDB = TableDB({
   fileName = fs.combine(BUILDER_DIR, 'maxstack.db'),
-  tabledef = {
-    autokeys = false,
-    type = 'simple',
-    columns = {
-      { label = 'Key',      type = 'key',    length = 8 },
-      { label = 'Quantity', type = 'number', length = 2 },
-    }
-  }
 })
- 
+
 function maxStackDB:get(id, dmg)
   return self.data[id .. ':' .. dmg] or 64
 end
@@ -348,8 +175,8 @@ function UI.Spinner:spin(text)
     end
     term.write(str)
     self.spinIndex = self.spinIndex + 1
-    self.c = cc
     os.sleep(0)
+    self.c = os.clock()
   end
 end
 
@@ -366,7 +193,7 @@ end
 --[[-- Builder --]]--
 function Builder:getBlockCounts()
   local blocks = { }
- 
+
   -- add a couple essential items to the supply list to allow replacements
   local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
   wrench.qty = 0
@@ -395,13 +222,13 @@ function Builder:getBlockCounts()
         block.need = 0
         blocks[key] = block
       end
-      blocks[key].need = blocks[key].need + 1
+      block.need = block.need + 1
     end
   end
 
   return blocks
 end
- 
+
 function Builder:selectItem(id, dmg)
 
   for k,s in ipairs(self.slots) do
@@ -515,7 +342,7 @@ function Builder:getGenericSupplyList(blockIndex)
       end
     end
   end
- 
+
   local lastBlock = blockIndex
   for k = blockIndex, #schematic.blocks do
     lastBlock = k
@@ -529,19 +356,18 @@ function Builder:getGenericSupplyList(blockIndex)
       slot.need = slot.need + 1
     end
   end
- 
+
   for _,s in pairs(slots) do
     if s.id then
-      s.name = blocks.blockDB:getName(s.id, s.dmg)
+      s.name = blocks.nameDB:getName(s.id, s.dmg)
     end
   end
 
   return slots, lastBlock
 end
- 
-function Builder:substituteBlocks()
-  local throttle = Util.throttle()
- 
+
+function Builder:substituteBlocks(throttle)
+
   for _,b in pairs(schematic.blocks) do
 
     -- replace schematic block type with substitution
@@ -550,17 +376,16 @@ function Builder:substituteBlocks()
     b.id = pb.id
     b.dmg = pb.dmg
     b.direction = pb.direction
+    b.extra = pb.extra
 
     local sub = subDB:get({ b.id, b.dmg })
     if sub then
-      b.id = sub.sid
-      b.dmg = sub.sdmg
+      b.id, b.dmg = subDB:extract(sub)
     end
-
     throttle()
   end
 end
- 
+
 function Builder:dumpInventory()
 
   local success = true
@@ -589,7 +414,7 @@ function Builder:dumpInventoryWithCheck()
     read()
   end
 end
- 
+
 function Builder:autocraft(supplies)
   local t = { }
 
@@ -606,20 +431,20 @@ function Builder:autocraft(supplies)
     end
     item.qty = item.qty + (s.need - s.qty)
   end
- 
+
   Builder.itemProvider:craftItems(t)
 end
- 
+
 function Builder:getSupplies()
- 
+
   self.itemProvider:refresh()
- 
+
   local t = { }
   for _,s in ipairs(self.slots) do
     if s.need > 0 then
       local item = self.itemProvider:getItemInfo(s.id, s.dmg)
       if item then
-        s.name = item.name
+        s.name = item.display_name
 
         local qty = math.min(s.need - s.qty, item.qty)
 
@@ -635,7 +460,7 @@ function Builder:getSupplies()
           s.qty = turtle.getItemCount(s.index)
         end
       else
-        s.name = blocks.blockDB:getName(s.id, s.dmg)
+        s.name = blocks.nameDB:getName(s.id, s.dmg)
       end
     end
     if s.qty < s.need then
@@ -644,14 +469,14 @@ function Builder:getSupplies()
       Logger.log('builder', 'Need %d %s', s.need - s.qty, name)
     end
   end
- 
+
   return t
 end
- 
+
 Event.addHandler('build', function()
   Builder:build()
 end)
- 
+
 function Builder:refuel()
   while turtle.getFuelLevel() < 4000 and self.fuelItem do
     Logger.log('builder', 'Refueling')
@@ -730,7 +555,6 @@ function Builder:inAirDropoff()
       return true
     end
   end
-
 end
 
 function Builder:inAirResupply()
@@ -779,7 +603,7 @@ function Builder:inAirResupply()
 
       local lastBlock = self:getSupplyList(self.index)
       local supplies = self:getSupplies()
-     
+
       Message.broadcast('thanks', { })
 
       self.itemProvider = oldProvider
@@ -815,7 +639,7 @@ function Builder:sendSupplyRequest(lastBlock)
 end
 
 function Builder:resupply()
- 
+
   if self.slotUid and self:inAirResupply() then
     os.queueEvent('build')
     return
@@ -836,7 +660,7 @@ function Builder:resupply()
   end
   os.sleep(1)
   local supplies = self:getSupplies()
- 
+
   if #supplies == 0 then
     os.queueEvent('build')
   else
@@ -851,11 +675,11 @@ end
 function Builder:placeDown(slot)
   return turtle.placeDown(slot.index)
 end
- 
+
 function Builder:placeUp(slot)
   return turtle.placeUp(slot.index)
 end
- 
+
 function Builder:place(slot)
   return turtle.place(slot.index)
 end
@@ -863,10 +687,10 @@ end
 function Builder:getWrenchSlot()
 
   local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
-
   return Builder:selectItem(wrench.id, wrench.dmg)
 end
 
+-- figure out our orientation in the world
 function Builder:getTurtleFacing()
 
   if os.getVersion() == 1.8 then
@@ -889,7 +713,7 @@ function Builder:getTurtleFacing()
   return Builder.facing
 end
 
-function Builder:wrenchBlock(side, facing)
+function Builder:wrenchBlock(side, facing, cache)
 
   local s = Builder:getWrenchSlot()
 
@@ -899,14 +723,16 @@ function Builder:wrenchBlock(side, facing)
   end
 
   local key = turtle.point.heading .. '-' .. facing
-  local count = pistonFacings[side][key]
+  if cache then
+    local count = cache[side][key]
 
-  if count then
-    turtle.select(s.index)
-    for i = 1,count do
-      turtle.getAction(side).place()
+    if count then
+      turtle.select(s.index)
+      for i = 1,count do
+        turtle.getAction(side).place()
+      end
+      return true
     end
-    return true
   end
 
   local directions = {
@@ -928,10 +754,11 @@ function Builder:wrenchBlock(side, facing)
   print('determining wrench count')
   for i = 1, 6 do
     local _, bi = turtle.getAction(side).inspect()
-    local pistonFacing = directions[bi.metadata]
 
-    if facing == pistonFacing then
-      pistonFacings[side][key] = count
+    if facing == directions[bi.metadata] then
+      if cache then
+        cache[side][key] = count
+      end
       return true
     end
     count = count + 1
@@ -939,6 +766,43 @@ function Builder:wrenchBlock(side, facing)
   end
 
   return false
+end
+
+function Builder:rotateBlock(side, facing)
+
+  local s = Builder:getWrenchSlot()
+
+  if not s then
+    b.needResupply = true
+    return false
+  end
+
+  for i = 1, facing do
+    turtle.getAction(side).place()
+  end
+
+  return true
+
+  --[[
+  local origFacing
+  while true do
+    local _, bi = turtle.getAction(side).inspect()
+
+    -- spin until it repeats
+    if not origFacing then
+      origFacing = bi.metadata
+    elseif bi.metadata == origFacing then
+      return false
+    end
+
+    if facing == bi.metadata then
+      return true
+    end
+    turtle.getAction(side).place()
+  end
+
+  return false
+  ]]--
 end
 
 -- place piston, wrench piston to face downward, extend, remove piston
@@ -957,7 +821,7 @@ function Builder:placePiston(b)
     return
   end
 
-  local success = self:wrenchBlock('forward', 'down') --wrench piston to point downwards
+  local success = self:wrenchBlock('forward', 'down', pistonFacings) --wrench piston to point downwards
 
   rs.setOutput('front', true)
   os.sleep(.25)
@@ -968,7 +832,7 @@ function Builder:placePiston(b)
 
   return success
 end
- 
+
 function Builder:goto(x, z, y, heading)
   if not turtle.goto(x, z, y, heading) then
     Logger.log('builder', 'stuck')
@@ -1000,7 +864,7 @@ end
 
 function Builder:placeDirectionalBlock(b, slot, travelPlane)
   local d = b.direction
- 
+
   local function getAdjacentPoint(pt, direction)
     local hi = turtle.getHeadingInfo(direction)
     return { x = pt.x + hi.xd, z = pt.z + hi.zd, y = pt.y + hi.yd, heading = (hi.heading + 2) % 4 }
@@ -1016,7 +880,7 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     self:gotoEx(b.x, b.z, b.y, turtle.getHeadingInfo(directions[d]).heading, travelPlane)
     b.placed = self:placeDown(slot)
   end
- 
+
   if d == 'top' then
     self:gotoEx(b.x, b.z, b.y+1, nil, travelPlane)
     if self:placeDown(slot) then
@@ -1041,7 +905,7 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
       b.placed = self:placePiston(b)
     end
   end
- 
+
   local stairDownDirections = {
     [ 'north-down' ] = 'north',
     [ 'south-down' ] = 'south',
@@ -1094,9 +958,9 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
       end
     end
   end
- 
+
   local horizontalDirections = {
-    [ 'east-west-block'  ] = { 'east', 'west' },
+    [ 'east-west-block'   ] = { 'east', 'west' },
     [ 'north-south-block' ] = { 'north', 'south' },
   }
   if horizontalDirections[d] then
@@ -1118,10 +982,10 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
   local pistonDirections = {
     [ 'piston-north' ] = 'north',
     [ 'piston-south' ] = 'south',
-    [ 'piston-west' ] = 'west',
-    [ 'piston-east' ] = 'east',
+    [ 'piston-west'  ] = 'west',
+    [ 'piston-east'  ] = 'east',
     [ 'piston-down'  ] = 'down',
-    [ 'piston-up'  ] = 'up',
+    [ 'piston-up'    ] = 'up',
   }
 
   if pistonDirections[d] then
@@ -1151,10 +1015,32 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     end
 
     if self:placeDown(slot) then
-      b.placed = self:wrenchBlock('down', pistonDirections[d])
+      b.placed = self:wrenchBlock('down', pistonDirections[d], pistonFacings)
     end
   end
- 
+
+  local wrenchDirections = {
+    [ 'wrench-down' ] = 'down',
+    [ 'wrench-up'   ] = 'up',
+  }
+
+  if wrenchDirections[d] then
+
+    local ws = Builder:getWrenchSlot()
+
+    if not ws then
+      b.needResupply = true
+      -- a hopper may have eaten the piston
+      return false
+    end
+
+    self:gotoEx(b.x, b.z, b.y, nil, travelPlane)
+
+    if self:placeDown(slot) then
+      b.placed = self:wrenchBlock('down', wrenchDirections[d])
+    end
+  end
+
   local doorDirections = {
     [ 'east-door' ] = 'east',
     [ 'south-door' ] = 'south',
@@ -1166,7 +1052,7 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     self:gotoEx(b.x - hi.xd, b.z - hi.zd, b.y - 1, hi.heading, travelPlane)
     b.placed = self:place(slot)
   end
- 
+
   local blockDirections = {
     [ 'north-block' ] = 'north',
     [ 'south-block' ] = 'south',
@@ -1179,6 +1065,10 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     b.placed = self:place(slot)
   end
 
+  if b.extra then
+    self:rotateBlock('down', b.extra.facing)
+  end
+
 -- debug
 if d ~= 'top' and d ~= 'bottom' and not horizontalDirections[d] and not pistonDirections[d] then
   if not b.heading or turtle.getHeading() ~= b.heading then
@@ -1189,10 +1079,10 @@ end
 
   return b.placed
 end
- 
-function Builder:reloadSchematic()
-  schematic:reload()
-  self:substituteBlocks()
+
+function Builder:reloadSchematic(throttle)
+  schematic:reload(throttle)
+  self:substituteBlocks(throttle)
 end
 
 function Builder:log(...)
@@ -1267,14 +1157,14 @@ function Builder:gotoTravelPlane(travelPlane)
     turtle.gotoY(travelPlane)
   end
 end
- 
+
 function Builder:build()
- 
+
   local direction = 1
   local last = #schematic.blocks
   local travelPlane = 0
   local minFuel = schematic.height + schematic.width + schematic.length + 100
- 
+
   if self.mode == 'destroy' then
     direction = -1
     last = 1
@@ -1290,15 +1180,15 @@ function Builder:build()
       end
     end
   end
- 
+
   UI:setPage('blank')
 
   for i = self.index, last, direction do
     self.index = i
     local b = schematic:getComputedBlock(i)
- 
+
     if b.id ~= 'minecraft:air' then
- 
+
       if self.mode == 'destroy' then
 
         b.heading = nil -- don't make the supplier follow the block heading
@@ -1424,7 +1314,7 @@ selectSubstitutionPage = UI.Page({
       { heading = 'id',  key = 'id'  },
       { heading = 'dmg', key = 'dmg' },
     },
-    sortColumn = 'odmg',
+    sortColumn = 'id',
     height = UI.term.height-1,
     autospace = true,
     y = 2,
@@ -1438,7 +1328,7 @@ function selectSubstitutionPage:enable()
 end
 
 function selectSubstitutionPage:eventHandler(event)
- 
+
   if event.type == 'grid_select' then
     substitutionPage.sub = event.selected
     UI:setPage(substitutionPage)
@@ -1449,35 +1339,36 @@ function selectSubstitutionPage:eventHandler(event)
   end
   return true
 end
- 
+
 --[[-- substitutionPage --]]--
-substitutionPage = UI.Page({
+substitutionPage = UI.Page {
   backgroundColor = colors.gray,
-  titleBar = UI.TitleBar({
+  titleBar = UI.TitleBar {
     previousPage = true,
     title = 'Substitute a block'
-  }),
-  menuBar = UI.MenuBar({
+  },
+  menuBar = UI.MenuBar {
     y = 2,
     buttons = {
       { text = 'Accept', event = 'accept', help = 'Accept'              },
       { text = 'Revert', event = 'revert', help = 'Restore to original' },
       { text = 'Air',    event = 'air',    help = 'Air'                 },
     },
-  }),
-  info = UI.Window({ y = 4, width = UI.term.width, height = 3 }),
-  grid = UI.ScrollingGrid({
+  },
+  info = UI.Window { y = 4, width = UI.term.width, height = 3 },
+  grid = UI.ScrollingGrid {
     columns = {
-      { heading = 'Name', key = 'name', width = UI.term.width-9 },
+      { heading = 'Name', key = 'display_name', width = UI.term.width-9 },
       { heading = 'Qty',  key = 'fQty', width = 5               },
     },
     sortColumn = 'name',
     height = UI.term.height-7,
     y = 7,
-  }),
-  statusBar = UI.StatusBar()
-})
- 
+  },
+  throttle = UI.Throttle { },
+  statusBar = UI.StatusBar { }
+}
+
 substitutionPage.menuBar:add({
   filterLabel = UI.Text({
     value = 'Search',
@@ -1489,14 +1380,14 @@ substitutionPage.menuBar:add({
     width = 7,
   })
 })
- 
+
 function substitutionPage.info:draw()
 
   local sub = self.parent.sub
-  local inName = blocks.blockDB:getName(sub.id, sub.dmg)
+  local inName = blocks.nameDB:getName(sub.id, sub.dmg)
   local outName = ''
   if sub.sid then
-    outName = blocks.blockDB:getName(sub.sid, sub.sdmg)
+    outName = blocks.nameDB:getName(sub.sid, sub.sdmg)
   end
 
   self:clear()
@@ -1505,18 +1396,18 @@ function substitutionPage.info:draw()
   self:print('         ' .. sub.id .. ':' .. sub.dmg .. '\n', nil, colors.yellow)
   self:print(' With    ' .. outName)
 end
- 
+
 function substitutionPage:enable()
- 
+
   self.allItems = Builder.itemProvider:refresh()
   self.grid.values = self.allItems
   for _,item in pairs(self.grid.values) do
     item.key = item.id .. ':' .. item.dmg
-    item.lname = string.lower(item.name)
+    item.lname = string.lower(item.display_name)
     item.fQty = Util.toBytes(item.qty)
   end
   self.grid:update()
- 
+
   self.menuBar.filter.value = ''
   self.menuBar.filter.pos = 1
   self:setFocus(self.menuBar.filter)
@@ -1526,31 +1417,31 @@ end
 --function substitutionPage:focusFirst()
 --  self.menuBar.filter:focus()
 --end
- 
+
 function substitutionPage:applySubstitute(id, dmg)
   self.sub.sid = id
   self.sub.sdmg = dmg
 end
- 
+
 function substitutionPage:eventHandler(event)
- 
+
   if event.type == 'grid_focus_row' then
     local s = string.format('%s:%d',
       event.selected.id,
       event.selected.dmg)
- 
+
     self.statusBar:setStatus(s)
     self.statusBar:draw()
 
   elseif event.type == 'grid_select' then
-    if not blocks.blockDB:lookupName(event.selected.id, event.selected.dmg) then
-      blocks.blockDB:add(event.selected.id, event.selected.dmg, event.selected.name, event.selected.id)
-      blocks.blockDB:flush()
+    if not blocks.nameDB:lookupName(event.selected.id, event.selected.dmg) then
+      blocks.nameDB:add({event.selected.id, event.selected.dmg}, event.selected.name)
+      blocks.nameDB:flush()
     end
 
     self:applySubstitute(event.selected.id, event.selected.dmg)
     self.info:draw()
- 
+
   elseif event.type == 'text_change' then
     local text = event.text
     if #text == 0 then
@@ -1567,12 +1458,12 @@ function substitutionPage:eventHandler(event)
     self.grid:update()
     self.grid:setIndex(1)
     self.grid:draw()
- 
+
   elseif event.type == 'accept' or event.type == 'air' or event.type == 'revert' then
     self.statusBar:setStatus('Saving changes...')
     self.statusBar:draw()
     self:sync()
- 
+
     if event.type == 'air' then
       self:applySubstitute('minecraft:air', 0)
     end
@@ -1587,23 +1478,25 @@ function substitutionPage:eventHandler(event)
       subDB:add(self.sub)
     end
 
-    Builder:reloadSchematic()
+    self.throttle:enable()
+    Builder:reloadSchematic(function() self.throttle:update() end)
+    self.throttle:disable()
     UI:setPage('listing')
- 
+
   elseif event.type == 'cancel' then
     UI:setPreviousPage()
   end
- 
+
   return UI.Page.eventHandler(self, event)
 end
- 
+
 --[[-- SupplyPage --]]--
-supplyPage = UI.Page({
-  titleBar = UI.TitleBar({
+supplyPage = UI.Page {
+  titleBar = UI.TitleBar {
     title = 'Waiting for supplies',
     previousPage = 'start'
-  }),
-  menuBar = UI.MenuBar({
+  },
+  menuBar = UI.MenuBar {
     y = 2,
     buttons = {
       --{ text = 'Refresh', event = 'refresh', help = 'Refresh inventory' },
@@ -1611,8 +1504,8 @@ supplyPage = UI.Page({
       { text = 'Menu',        event = 'menu',  help = 'Return to main menu' },
       { text = 'Force Craft', event = 'craft', help = 'Request crafting (again)' },
     }
-  }),
-  grid = UI.Grid({
+  },
+  grid = UI.Grid {
     columns = {
       { heading = 'Name', key = 'name',  width = UI.term.width - 7 },
       { heading = 'Need', key = 'need',  width = 4                 },
@@ -1621,23 +1514,23 @@ supplyPage = UI.Page({
     y = 3,
     width = UI.term.width,
     height = UI.term.height - 3
-  }),
-  statusBar = UI.StatusBar({
+  },
+  statusBar = UI.StatusBar {
     columns = {
       { 'Help', 'help', UI.term.width - 13 },
       { 'Fuel', 'fuel', 11 }
     }
-  }),
+  },
   accelerators = {
     c = 'craft',
     r = 'refresh',
     b = 'build',
     m = 'menu',
   },
-})
- 
+}
+
 function supplyPage:eventHandler(event)
- 
+
   if event.type == 'craft' then
     local s = self.grid:getSelected()
     if Builder.itemProvider:craft(s.id, s.dmg, s.need-s.qty) then
@@ -1646,19 +1539,19 @@ function supplyPage:eventHandler(event)
     else
       self.statusBar:timedStatus('Unable to craft')
     end
- 
+
   elseif event.type == 'refresh' then
     self:refresh()
- 
+
   elseif event.type == 'build' then
     Builder:build()
- 
+
   elseif event.type == 'menu' then
     Builder:dumpInventory()
     --Builder.status = 'idle'
     UI:setPage('start')
     turtle.status = 'idle'
- 
+
   elseif event.type == 'grid_focus_row' then
     self.statusBar:setValue('help', event.selected.id .. ':' .. event.selected.dmg)
     self.statusBar:draw()
@@ -1666,17 +1559,17 @@ function supplyPage:eventHandler(event)
   elseif event.type == 'focus_change' then
     self.statusBar:timedStatus(event.focused.help, 3)
   end
- 
+
   return UI.Page.eventHandler(self, event)
 end
- 
+
 function supplyPage:enable()
   self.grid:setIndex(1)
   self.statusBar:setValue('fuel',
     string.format('Fuel: %dk', math.floor(turtle.getFuelLevel() / 1024)))
 --  self.statusBar:setValue('block',
- --   string.format('Block: %d', Builder.index))
- 
+--   string.format('Block: %d', Builder.index))
+
   Event.addNamedTimer('supplyRefresh', 6, true, function()
     if self.enabled then
       Builder:autocraft(Builder:getSupplies())
@@ -1687,7 +1580,7 @@ function supplyPage:enable()
   end)
   UI.Page.enable(self)
 end
- 
+
 function supplyPage:disable()
   Event.cancelNamedTimer('supplyRefresh')
 end
@@ -1719,7 +1612,7 @@ function supplyPage:refresh()
     self.grid:draw()
   end
 end
- 
+
 --[[-- ListingPage --]]--
 listingPage = UI.Page({
   titleBar = UI.TitleBar({
@@ -1737,7 +1630,7 @@ listingPage = UI.Page({
   }),
   grid = UI.ScrollingGrid({
     columns = {
-      { heading = 'Name', key = 'name',  width = UI.term.width - 14 },
+      { heading = 'Name', key = 'name', width = UI.term.width - 14 },
       { heading = 'Need', key = 'need', width = 5                  },
       { heading = 'Have', key = 'qty',  width = 5                  },
     },
@@ -1755,14 +1648,14 @@ listingPage = UI.Page({
   statusBar = UI.StatusBar(),
   fullList = true
 })
- 
-function listingPage:enable()
-  listingPage:refresh()
+
+function listingPage:enable(throttle)
+  listingPage:refresh(throttle)
   UI.Page.enable(self)
 end
- 
+
 function listingPage:eventHandler(event)
- 
+
   if event.type == 'craft' then
     local s = self.grid:getSelected()
     local item = Builder.itemProvider:getItemInfo(s.id, s.dmg)
@@ -1786,24 +1679,24 @@ function listingPage:eventHandler(event)
     self:refresh()
     self:draw()
     self.statusBar:timedStatus('Refreshed ', 3)
- 
+
   elseif event.type == 'toggle' then
     self.fullList = not self.fullList
     self:refresh()
     self:draw()
- 
+
   elseif event.type == 'menu' then
     UI:setPage('start')
- 
+
   elseif event.type == 'edit' or event.type == 'grid_select' then
     self:manageBlock(self.grid:getSelected())
- 
+
   elseif event.type == 'focus_change' then
     if event.focused.help then
       self.statusBar:timedStatus(event.focused.help, 3)
     end
   end
- 
+
   return UI.Page.eventHandler(self, event)
 end
 
@@ -1821,12 +1714,12 @@ function listingPage.grid:getRowTextColor(row, selected)
   return UI.Grid:getRowTextColor(row, selected)
 end
 
-function listingPage:refresh()
- 
+function listingPage:refresh(throttle)
+
   local supplyList = Builder:getBlockCounts()
- 
-  Builder.itemProvider:refresh()
- 
+
+  Builder.itemProvider:refresh(throttle)
+
   for _,b in pairs(supplyList) do
     if b.need > 0 then
       local item = Builder.itemProvider:getItemInfo(b.id, b.dmg)
@@ -1834,20 +1727,23 @@ function listingPage:refresh()
       if item then
         local block = blocks.blockDB:lookup(b.id, b.dmg)
         if not block then
-          blocks.blockDB:add(b.id, b.dmg, item.name, b.id)
-        elseif not block.name and item.name then
-          blocks.blockDB:add(b.id, b.dmg, item.name, b.id)
+          blocks.nameDB:add({b.id, b.dmg}, item.display_name)
+        elseif not block.name and item.display_name then
+          blocks.nameDB:add({b.id, b.dmg}, item.display_name)
         end
-        b.name = item.name
+        b.name = item.display_name
         b.qty = item.qty
         b.is_craftable = item.is_craftable
       else
-        b.name = blocks.blockDB:getName(b.id, b.dmg)
+        b.name = blocks.nameDB:getName(b.id, b.dmg)
       end
     end
+    if throttle then
+      throttle()
+    end
   end
-  blocks.blockDB:flush()
- 
+  blocks.nameDB:flush()
+
   if self.fullList then
     self.grid:setValues(supplyList)
   else
@@ -1861,7 +1757,7 @@ function listingPage:refresh()
   end
   self.grid:setIndex(1)
 end
- 
+
 function listingPage:manageBlock(selected)
 
   local substitutes = subDB:lookupBlocksForSub(selected.id, selected.dmg)
@@ -1879,17 +1775,17 @@ function listingPage:manageBlock(selected)
     UI:setPage(selectSubstitutionPage)
   end
 end
- 
+
 --[[-- startPage --]]--
-local startPage = UI.Page({
+local startPage = UI.Page {
   -- titleBar = UI.TitleBar({ title = 'Builder v' .. Builder.version }),
-  window = UI.Window({
+  window = UI.Window {
     x = UI.term.width-16,
     y = 2,
     width = 16,
     height = UI.term.height-2,
     backgroundColor = colors.gray,
-    grid = UI.Grid({
+    grid = UI.Grid {
       columns = {
         { heading = 'Name',  key = 'name',  width = 6 },
         { heading = 'Value', key = 'value', width = 7 },
@@ -1903,9 +1799,9 @@ local startPage = UI.Page({
       --autospace = true,
       selectable = false,
       backgroundColor = colors.gray
-    }),
-  }),
-  menu = UI.Menu({
+    },
+  },
+  menu = UI.Menu {
     x = 2,
     y = 4,
     menuItems = {
@@ -1917,13 +1813,14 @@ local startPage = UI.Page({
       { prompt = 'Begin',              event = 'begin' },
       { prompt = 'Quit',               event = 'quit' }
     }
-  }),
+  },
+  throttle = UI.Throttle { },
   accelerators = {
     x = 'test',
     q = 'quit'
   }
-})
- 
+}
+
 function startPage:draw()
   local fuel = turtle.getFuelLevel()
   if fuel > 9999 then
@@ -1939,7 +1836,7 @@ function startPage:draw()
     { name = 'width', value = schematic.width },
     { name = 'height', value = schematic.height },
   }
- 
+
   self.window.grid:setValues(t)
   UI.Page.draw(self)
 end
@@ -1948,9 +1845,9 @@ function startPage:enable()
   self:setFocus(self.menu)
   UI.Page.enable(self)
 end
- 
+
 function startPage:eventHandler(event)
- 
+
   if event.type == 'startLevel' then
     local dialog = UI.Dialog({
       title = 'Enter Starting Level',
@@ -1962,7 +1859,7 @@ function startPage:eventHandler(event)
       },
       statusBar = UI.StatusBar(),
     })
- 
+
     dialog.eventHandler = function(self, event)
       if event.type == 'form_complete' then
         local l = tonumber(self.form.textEntry.value)
@@ -1985,10 +1882,10 @@ function startPage:eventHandler(event)
       end
       return true
     end
- 
+
     dialog:setFocus(dialog.form.textEntry)
     UI:setPage(dialog)
- 
+
   elseif event.type == 'startBlock' then
     local dialog = UI.Dialog {
       title = 'Enter Block Number',
@@ -2000,7 +1897,7 @@ function startPage:eventHandler(event)
       },
       statusBar = UI.StatusBar(),
     }
- 
+
     dialog.eventHandler = function(self, event)
       if event.type == 'form_complete' then
         local bn = tonumber(self.form.textEntry.value)
@@ -2018,17 +1915,18 @@ function startPage:eventHandler(event)
       end
       return true
     end
- 
+
     dialog:setFocus(dialog.form.textEntry)
     UI:setPage(dialog)
- 
+
   elseif event.type == 'assignBlocks' then
     -- this might be an approximation of the blocks needed
     -- as the current level's route may or may not have been
     -- computed
     Builder:dumpInventory()
-    UI:setPage('listing')
- 
+    UI:setPage('listing', function() self.throttle:update() end)
+    self.throttle:disable()
+
   elseif event.type == 'toggleMode' then
     if Builder.mode == 'build' then
       if Builder.index == 1 then
@@ -2054,14 +1952,14 @@ function startPage:eventHandler(event)
     Builder.facing = directions[Builder.facing]
     Builder:saveProgress(Builder.index)
     self:draw()
- 
+
   elseif event.type == 'begin' then
     UI:setPage('blank')
     --Builder.status = 'building'
- 
+
     turtle.status = 'thinking'
     print('Reloading schematic')
-    Builder:reloadSchematic()
+    Builder:reloadSchematic(Util.throttle())
     Builder:dumpInventory()
     Builder:refuel()
 
@@ -2079,29 +1977,22 @@ function startPage:eventHandler(event)
       down = { },
       forward = { },
     }
- 
+
     Builder:build()
- 
+
   elseif event.type == 'quit' then
     Event.exitPullEvents()
   end
- 
+
   return UI.Page.eventHandler(self, event)
 end
- 
+
 --[[-- startup logic --]]--
 local args = {...}
 if #args < 1 then
   error('supply file name')
 end
- 
-if os.version() == 'CraftOS 1.7' then
-  Builder.ccVersion = 1.7
-  Builder.resourceSlots = 14
-else
-  error('Unsupported ComputerCraft version')
-end
- 
+
 Builder.itemProvider = MEProvider()
 if not Builder.itemProvider:isValid() then
   Builder.itemProvider = ChestProvider()
@@ -2109,7 +2000,7 @@ if not Builder.itemProvider:isValid() then
     error('A chest or ME interface must be below turtle')
   end
 end
- 
+
 multishell.setTitle(multishell.getCurrent(), 'Builder v' .. Builder.version)
 
 maxStackDB:load()
@@ -2117,17 +2008,18 @@ subDB:load()
 
 UI.term:reset()
 turtle.status = 'reading'
-print('Loading ' .. args[1])
+print('Loading schematic')
 schematic:load(args[1])
 print('Substituting blocks')
-Builder:substituteBlocks()
+
+Builder:substituteBlocks(Util.throttle())
 
 if not fs.exists(BUILDER_DIR) then
   fs.makeDir(BUILDER_DIR)
 end
 
 Builder:loadProgress(schematic.filename .. '.progress')
- 
+
 UI:setPages({
   listing = listingPage,
   start = startPage,
@@ -2146,4 +2038,3 @@ turtle.run(function()
 end)
 
 UI.term:reset()
---turtle.status = 'idle'

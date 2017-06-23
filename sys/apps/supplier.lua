@@ -31,6 +31,7 @@ Logger.filter('modem_send', 'event', 'ui')
 Logger.setWirelessLogging()
 
 local __BUILDER_ID = 6
+local itemInfoDB
 
 local Builder = {
   version = '1.70',
@@ -116,7 +117,7 @@ function Builder:refuel()
     self.itemProvider:provide(self.fuelItem, 64, 1)
     if turtle.getItemCount(1) == 0 then
       Builder:log('Out of fuel, add coal to chest/ME system')
-      turtle.setHeading(0)
+      --turtle.setHeading(0)
       os.sleep(5)
     else
       turtle.refuel(64)
@@ -160,6 +161,11 @@ function Builder:getSupplies()
     if s.qty < s.need then
       table.insert(t, s)
       local name = s.name or s.id .. ':' .. s.dmg
+      local item = itemInfoDB:get({ s.id, s.dmg })
+      if item then
+        name = item.displayName
+      end
+
       Builder:log('Need %d %s', s.need - s.qty, name)
     end
   end
@@ -399,6 +405,12 @@ end
 __BUILDER_ID = tonumber(args[1])
 
 maxStackDB:load()
+
+itemInfoDB = TableDB({
+  fileName = 'items.db'
+})
+
+itemInfoDB:load()
 
 Builder.itemProvider = MEProvider({ direction = args[2] })
 if not Builder.itemProvider:isValid() then

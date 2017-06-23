@@ -160,10 +160,14 @@ end
 
 function page:runScript(scriptName)
   if self.turtle then
+    self.notification:info('Connecting')
+    self:sync()
+
     local cmd = string.format('Script %d %s', self.turtle.id, scriptName)
     local ot = term.redirect(nullTerm)
     pcall(function() shell.run(cmd) end)
     term.redirect(ot)
+    self.notification:success('Sent')
   end
 end
 

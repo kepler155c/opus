@@ -1,65 +1,124 @@
 local class = require('class')
+local TableDB = require('tableDB')
+local Peripheral = require('peripheral')
 
 local ChestProvider = class()
- 
+
+local keys = Util.transpose({ 
+  'damage',
+  'displayName',
+  'maxCount',
+  'maxDamage',
+  'name',
+  'nbtHash',
+})
+
 function ChestProvider:init(args)
   
-  args = args or { }
+  local defaults = {
+    items = { },
+    name = 'chest',
+    direction = 'up',
+    wrapSide = 'bottom',
+  }
+  Util.merge(self, defaults)
+  Util.merge(self, args)
+  
+  local chest = Peripheral.getBySide(self.wrapSide)
+  if chest then
+    Util.merge(self, chest)
+  end
 
-  self.items = { }  -- consolidated item info
-  self.cache = { }
-  self.name = 'chest'
-  self.direction = args.direction or 'up'
-  self.wrapSide = args.wrapSide or 'bottom'
-  self.p = peripheral.wrap(self.wrapSide)
+  if not self.itemInfoDB then
+    self.itemInfoDB = TableDB({
+      fileName = 'items.db'
+    })
+
+    self.itemInfoDB:load()
+  end
 end
 
 function ChestProvider:isValid()
-  return self.p and self.p.list
+  return not not self.list
 end
 
-function ChestProvider:refresh()
-  if self.p then
-    self.items = { }
-    for k,s in pairs(self.p.list()) do
+function ChestProvider:getCachedItemDetails(item, k)
+  local key = table.concat({ item.name, item.damage, item.nbtHash }, ':')
 
-      local key = s.name .. ':' .. s.damage
-      local entry = self.items[key]
-      if not entry then
-        entry = self.cache[key]
-        if not entry then
-          local meta = self.p.getItemMeta(k) -- slow method.. cache for speed
-          if meta then
-            entry = {
-              id = s.name,
-              dmg = s.damage,
-              name = meta.displayName,
-              max_size = meta.maxCount,
-            }
-            self.cache[key] = entry
-          end
-        end
-        if entry then
-          entry = Util.shallowCopy(entry)
-          self.items[key] = entry
-          entry.qty = 0
-        end
+  local detail = self.itemInfoDB:get(key)
+  if not detail then
+    pcall(function() detail = self.getItemMeta(k) end)
+    if not detail then
+      return
+    end
+    if detail.name ~= item.name then
+      return
+    end
+    if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
+      detail.displayName = detail.displayName .. ' (damaged)'
+    end
+
+    for _,k in ipairs(Util.keys(detail)) do
+      if not keys[k] then
+        detail[k] = nil
       end
+    end
+
+    self.itemInfoDB:add(key, detail)
+  end
+  if detail then
+    return Util.shallowCopy(detail)
+  end
+end
+
+function ChestProvider:refresh(throttle)
+  return self:listItems(throttle)
+end
+
+-- provide a consolidated list of items
+function ChestProvider:listItems(throttle)
+  self.cache = { }
+  local items = { }
+
+  throttle = throttle or Util.throttle()
+
+  for k,v in pairs(self.list()) do
+    local key = table.concat({ v.name, v.damage, v.nbtHash }, ':')
+
+    local entry = self.cache[key]
+    if not entry then
+      entry = self:getCachedItemDetails(v, k)
       if entry then
-        entry.qty = entry.qty + s.count
+        entry.dmg = entry.damage
+        entry.id = entry.name
+        entry.count = 0
+        entry.display_name = entry.displayName
+        entry.max_size = entry.maxCount
+        entry.nbt_hash = entry.nbtHash
+        entry.lname = entry.displayName:lower()
+        self.cache[key] = entry
+        table.insert(items, entry)
       end
     end
+
+    if entry then
+      entry.count = entry.count + v.count
+      entry.qty = entry.count
+    end
+    throttle()
   end
-  return self.items
+
+  self.itemInfoDB:flush()
+
+  return items
 end
 
-function ChestProvider:getItemInfo(id, dmg)
-
-  for key,item in pairs(self.items) do
-    if item.id == id and item.dmg == dmg then
-      return item
-    end
+function ChestProvider:getItemInfo(id, dmg, nbtHash)
+  if not self.cache then
+    self:listItems()
   end
+  local key = table.concat({ id, dmg, nbtHash }, ':')
+  return self.cache[key]
 end
 
 function ChestProvider:craft(id, dmg, qty)
@@ -69,31 +128,25 @@ function ChestProvider:craftItems(items)
 end
 
 function ChestProvider:provide(item, qty, slot)
-  if self.p then
-    local stacks = self.p.list()
-    for key,stack in pairs(stacks) do
-      if stack.name == item.id and stack.damage == item.dmg then
-        local amount = math.min(qty, stack.count)
-        self.p.pushItems(self.direction, key, amount, slot)
-        qty = qty - amount
-        if qty <= 0 then
-          break
-        end
+  local stacks = self.list()
+  for key,stack in pairs(stacks) do
+    if stack.name == item.id and stack.damage == item.dmg then
+      local amount = math.min(qty, stack.count)
+      self.pushItems(self.direction, key, amount, slot)
+      qty = qty - amount
+      if qty <= 0 then
+        break
       end
     end
   end
 end
 
 function ChestProvider:extract(slot, qty)
-  if self.p then
-    self.p.pushItems(self.direction, slot, qty)
-  end
+  self.pushItems(self.direction, slot, qty)
 end
 
 function ChestProvider:insert(slot, qty)
-  if self.p then
-    self.p.pullItems(self.direction, slot, qty)
-  end
+  self.pullItems(self.direction, slot, qty)
 end
 
 return ChestProvider

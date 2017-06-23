@@ -4,10 +4,14 @@ local Event = require('event')
 local UI = require('ui')
 local RefinedProvider = require('refinedProvider')
 local MEProvider = require('meProvider')
+local ChestProvider = require('chestProvider18')
 
 local storage = RefinedProvider()
 if not storage:isValid() then
   storage = MEProvider()
+  if not storage:isValid() then
+    storage = ChestProvider()
+  end
 end
 
 if not storage:isValid() then
@@ -106,7 +110,7 @@ local function uniqueKey(item)
 end
 
 function changedPage:refresh()
-  local t = storage:listItems('all')
+  local t = storage:listItems()
  
   if not t or Util.empty(t) then
     self:clear()

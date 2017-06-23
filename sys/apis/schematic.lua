@@ -148,20 +148,18 @@ function Schematic:parse(a, h, containsName, spinner)
 end
 -- end http://www.computercraft.info/forums2/index.php?/topic/1949-turtle-schematic-file-builder/
 
-function Schematic:copyBlocks(iblocks, oblocks, spinner)
+function Schematic:copyBlocks(iblocks, oblocks, throttle)
   for k,b in ipairs(iblocks) do
     oblocks[k] = Util.shallowCopy(b)
-    if spinner then
-      if (k % 1000) == 0 then
-        spinner:spin()
-      end
+    if (k % 1000) == 0 then
+      throttle()
     end
   end
 end
 
-function Schematic:reload()
+function Schematic:reload(throttle)
   self.blocks = { }
-  self:copyBlocks(self.originalBlocks, self.blocks)
+  self:copyBlocks(self.originalBlocks, self.blocks, throttle)
 
   for _,ri in pairs(self.rowIndex) do
     ri.loaded = false
@@ -283,7 +281,7 @@ function Schematic:loadpass(fh, spinner)
   self:assignDamages(spinner)
   self.damages = nil
 
-  self:copyBlocks(self.blocks, self.originalBlocks, spinner)
+  self:copyBlocks(self.blocks, self.originalBlocks, function() spinner:spin() end)
 
   spinner:stop()
 end
@@ -488,6 +486,37 @@ function Schematic:bestSide(b, chains, ...)
   })
 end
 
+function Schematic:bestFlipSide(b, chains)
+  -- If there is a block to place this one against
+
+  local directions = {
+    [ 'east-block-flip'  ] = 'east',
+    [ 'west-block-flip'  ] = 'west',
+    [ 'north-block-flip' ] = 'north',
+    [ 'south-block-flip' ] = 'south',
+  }
+
+  local d = directions[b.direction]
+  local hi = turtle.getHeadingInfo(d)
+  local _, fb = self:findIndexAt(b.x + hi.xd, b.z + hi.zd, b.y)
+
+  if fb then
+    self:addPlacementChain(chains, {
+      { x = b.x + hi.xd, z = b.z + hi.zd, y = b.y },  -- block we are placing against
+      { x = b.x,         z = b.z,         y = b.y },  -- the block (or torch, etc)
+      { x = b.x - hi.xd, z = b.z - hi.zd, y = b.y },  -- room for the turtle
+    })
+    b.direction = d .. '-block'
+  else
+    self:addPlacementChain(chains, {
+      { x = b.x,         z = b.z,         y = b.y },  -- the block (or torch, etc)
+      { x = b.x - hi.xd, z = b.z - hi.zd, y = b.y },  -- room for the turtle
+      { x = b.x + hi.xd, z = b.z + hi.zd, y = b.y },  -- block we are placing against
+    })
+    b.direction = turtle.getHeadingInfo((hi.heading + 2) % 4).direction .. '-block'
+  end
+end
+
 function Schematic:bestOfTwoSides(b, chains, side1, side2) -- could be better
 
   local sb
@@ -617,12 +646,23 @@ function Schematic:determineBlockPlacement(y)
     [ 'west-block-vine'  ] = 'west-block',
     [ 'north-block-vine'  ] = 'north-block'
   }
+  local flipDirections = {
+    [ 'east-block-flip' ] = 'east-block',
+    [ 'south-block-flip' ] = 'south-block',
+    [ 'west-block-flip'  ] = 'west-block',
+    [ 'north-block-flip'  ] = 'north-block'
+  }
 
   local dirtyBlocks = {}
   local dirtyBlocks2 = {}
   local chains = {}
 
   local ri = self.rowIndex[y]
+  if not ri then
+    ri = { s = -1, e = -2 }
+    self.rowIndex[y] = ri
+  end
+
   for k = ri.s, ri.e do
     local b = self.blocks[k]
     local d = b.direction
@@ -757,6 +797,8 @@ function Schematic:determineBlockPlacement(y)
           b.heading = (turtle.getHeadingInfo(sd[1]).heading + 2) % 4
         end
       end
+    elseif flipDirections[d] then
+      self:bestFlipSide(b, chains)
     end
 
     if blockDirections[d] then
@@ -790,6 +832,7 @@ function Schematic:determineBlockPlacement(y)
   self:setPlacementOrder(spinner, chains)
   local plane = self:optimizeRoute(spinner, y)
 
+  term.clearLine()
   spinner:stop()
 
   for k,b in ipairs(plane) do

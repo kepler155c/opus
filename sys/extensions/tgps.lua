@@ -30,6 +30,6 @@ end
 function turtle.setGPSHome()
   if turtle.enableGPS() then
     turtle.storeLocation('gpsHome', turtle.point)
-    turtle.gotoPoint(tturtle.point)
+    turtle.gotoPoint(turtle.point)
   end
 end

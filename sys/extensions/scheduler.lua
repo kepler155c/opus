@@ -72,10 +72,10 @@ function turtle.run(fn, ...)
       local s, m = pcall(function() fn(unpack(args)) end)
       turtle.abort = false
       releaseTicket(ticketId)
+      os.queueEvent('turtle_response')
       if not s and m then
         printError(m)
       end
-      os.queueEvent('turtle_response')
       return s, m
     end
   end

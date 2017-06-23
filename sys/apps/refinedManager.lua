@@ -189,10 +189,10 @@ itemPage = UI.Page {
     backgroundColor = colors.green
   },
   displayName = UI.Window {
-    x = 5, y = 3, width = UI.term.width - 10, height = 3,
+    x = 5, y = 2, width = UI.term.width - 10, height = 3,
   },
   form = UI.Form {
-    x = 4, y = 6, height = 10, rex = -4,
+    x = 4, y = 4, height = 10, rex = -4,
     [1] = UI.TextEntry {
       width = 7,
       backgroundColor = colors.gray,

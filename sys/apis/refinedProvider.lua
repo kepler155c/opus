@@ -62,13 +62,6 @@ function RefinedProvider:getCachedItemDetails(item)
       end
       detail.lname = detail.displayName:lower()
 
-      -- backwards capability
-      detail.dmg = detail.damage
-      detail.id = detail.name
-      detail.qty = detail.count
-      detail.display_name = detail.displayName
-      detail.nbtHash = item.nbtHash
-
       local t = { }
       for _,key in pairs(keys) do
         t[key] = detail[key]
@@ -76,8 +69,6 @@ function RefinedProvider:getCachedItemDetails(item)
 
       detail = t
       self.itemInfoDB:add(key, detail)
-
-      os.sleep(0) -- prevent timeout on large inventories
     end
   end
   if detail then

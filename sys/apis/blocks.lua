@@ -1,5 +1,39 @@
 local class = require('class')
 local TableDB = require('tableDB')
+local JSON = require('json')
+
+-- see https://github.com/Khroki/MCEdit-Unified/blob/master/pymclevel/minecraft.yaml
+-- see https://github.com/Khroki/MCEdit-Unified/blob/master/Items/minecraft/blocks.json
+
+local nameDB = TableDB({
+  fileName = 'blocknames.db'
+})
+function nameDB:load(dir, blockDB)
+  self.fileName = fs.combine(dir, self.fileName)
+  if fs.exists(self.fileName) then
+    TableDB.load(self)
+  end
+  self.blockDB = blockDB
+end
+
+function nameDB:getName(id, dmg)
+  return self:lookupName(id, dmg) or id .. ':' .. dmg
+end
+ 
+function nameDB:lookupName(id, dmg)
+  -- is it in the name db ?
+  local name = self:get({ id, dmg })
+  if name then
+    return name
+  end
+
+  -- is it in the block db ?
+  for _,v in pairs(self.blockDB.data) do
+    if v.strId == id and v.dmg == dmg then
+      return v.name
+    end
+  end
+end
 
 local blockDB = TableDB({
   fileName = 'block.db',
@@ -16,7 +50,7 @@ local blockDB = TableDB({
   }
 })
 
-function blockDB:load(dir, sbDB, btDB)
+function blockDB:load(dir)
   self.fileName = fs.combine(dir, self.fileName)
   if fs.exists(self.fileName) then
     TableDB.load(self)
@@ -26,90 +60,26 @@ function blockDB:load(dir, sbDB, btDB)
 end
  
 function blockDB:seedDB(dir)
- 
- -- http://lua-users.org/wiki/LuaCsv
-  function ParseCSVLine (line,sep) 
-    local res = {}
-    local pos = 1
-    sep = sep or ','
-    while true do 
-      local c = string.sub(line,pos,pos)
-      if (c == "") then break end
-      if (c == '"') then
-        -- quoted value (ignore separator within)
-        local txt = ""
-        repeat
-          local startp,endp = string.find(line,'^%b""',pos)
-          txt = txt..string.sub(line,startp+1,endp-1)
-          pos = endp + 1
-          c = string.sub(line,pos,pos) 
-          if (c == '"') then txt = txt..'"' end 
-          -- check first char AFTER quoted string, if it is another
-          -- quoted string without separator, then append it
-          -- this is the way to "escape" the quote char in a quote. example:
-          --   value1,"blub""blip""boing",value3  will result in blub"blip"boing  for the middle
-        until (c ~= '"')
-        table.insert(res,txt)
-        assert(c == sep or c == "")
-        pos = pos + 1
-      else  
-        -- no quotes used, just look for the first separator
-        local startp,endp = string.find(line,sep,pos)
-        if (startp) then 
-          table.insert(res,string.sub(line,pos,startp-1))
-          pos = endp + 1
-        else
-          -- no separator found -> use rest of string and terminate
-          table.insert(res,string.sub(line,pos))
-          break
-        end 
+
+  local blocks = JSON.decodeFromFile(fs.combine('sys/etc', 'blocks.json'))
+
+  if not blocks then
+    error('Unable to read blocks.json')
+  end
+
+  for strId, block in pairs(blocks) do
+    strId = 'minecraft:' .. strId
+    if type(block.name) == 'string' then
+      self:add(block.id, 0, block.name, strId)
+    else
+      for nid,name in pairs(block.name) do
+        self:add(block.id, nid - 1, name, strId)
       end
     end
-    return res
   end
-
-  local f = fs.open(fs.combine('sys/etc', 'blockIds.csv'), "r")
-
-  if not f then
-    error('unable to read blockIds.csv')
-  end
-
-  local lastID = nil
-
-  while true do
-
-    local data = f.readLine()
-    if not data then
-      break
-    end
-
-    local line = ParseCSVLine(data, ',')
-
-    local strId = line[3]    -- string ID
-    local nid              -- schematic ID
-    local id = line[3]
-    local dmg = 0
-    local name = line[1]
-
-    if not strId or #strId == 0 then
-      strId = lastID
-    end
-    lastID = strId
-
-    local t = { }
-    string.gsub(line[2], '(%d+)', function(d) table.insert(t, d) end)
-    nid = tonumber(t[1])
-    dmg = 0
-    if t[2] then
-      dmg = tonumber(t[2])
-    end
-    self:add(nid, dmg, name, strId)
-  end
-
-  f.close()
  
   self.dirty = true
-  self:flush()
+  -- self:flush()
 end
  
 function blockDB:lookup(id, dmg)
@@ -117,27 +87,12 @@ function blockDB:lookup(id, dmg)
   if not id then
     return
   end
-
   if not id or not dmg then error('blockDB:lookup: nil passed', 2) end
   local key = id .. ':' .. dmg
  
   return self.data[key]
 end
 
-function blockDB:getName(id, dmg)
-  return self:lookupName(id, dmg) or id .. ':' .. dmg
-end
- 
-function blockDB:lookupName(id, dmg)
-  if not id or not dmg then error('blockDB:lookupName: nil passed', 2) end
-
-  for _,v in pairs(self.data) do
-    if v.strId == id and v.dmg == dmg then
-      return v.name
-    end
-  end
-end
- 
 function blockDB:add(id, dmg, name, strId)
   local key = id .. ':' .. dmg
  
@@ -170,8 +125,8 @@ function placementDB:load(dir, sbDB, btDB)
   end
 
 -- testing
---  self.dirty = true
---  self:flush()
+  self.dirty = true
+  --self:flush()
 end
 
 function placementDB:addSubsForBlockType(id, dmg, bt)
@@ -192,11 +147,12 @@ function placementDB:addSubsForBlockType(id, dmg, bt)
       odmg,
       sub.sid or strId,
       sub.sdmg or dmg,
-      sub.dir)
+      sub.dir,
+      sub.extra)
   end
 end
  
-function placementDB:add(id, dmg, sid, sdmg, direction)
+function placementDB:add(id, dmg, sid, sdmg, direction, extra)
   if not id or not dmg then error('placementDB:add: nil passed', 2) end
  
   local key = id .. ':' .. dmg
@@ -212,6 +168,7 @@ function placementDB:add(id, dmg, sid, sdmg, direction)
     sid = sid,    -- string ID
     sdmg = sdmg,  -- dmg without placement info
     direction = direction,
+    extra = extra,
   }
 end
 
@@ -286,7 +243,7 @@ function standardBlockDB:seedDB()
     [ '65:0' ] = 'wallsign-ladder',
     [ '66:0' ] = 'rail',
     [ '67:0' ] = 'stairs',
-    [ '68:0' ] = 'wallsign',
+    [ '68:0' ] = 'wallsign-ladder',
     [ '69:0' ] = 'lever',
     [ '71:0' ] = 'door',
     [ '75:0' ] = 'torch',
@@ -295,6 +252,7 @@ function standardBlockDB:seedDB()
     [ '78:0' ] = 'flatten',
     [ '81:0' ] = 'flatten',
     [ '83:0' ] = 'flatten',
+    [ '84:0' ] = 'flatten',  -- jukebox
     [ '86:0' ] = 'pumpkin',
     [ '90:0' ] = 'air',
     [ '91:0' ] = 'pumpkin',
@@ -312,6 +270,7 @@ function standardBlockDB:seedDB()
     [ '115:0' ] = 'flatten',
     [ '117:0' ] = 'flatten',
     [ '118:0' ] = 'cauldron',
+    [ '120:0' ] = 'flatten', -- end portal
     [ '126:0' ] = 'slab',
     [ '126:1' ] = 'slab',
     [ '126:2' ] = 'slab',
@@ -339,7 +298,7 @@ function standardBlockDB:seedDB()
     [ '155:2' ] = 'quartz-pillar',
     [ '156:0' ] = 'stairs',
     [ '157:0' ] = 'adp-rail',
-    [ '158:0' ] = 'hopper',
+    [ '158:0' ] = 'dispenser',
     [ '161:0' ] = 'leaves',
     [ '161:1' ] = 'leaves',
     [ '162:0' ] = 'wood',
@@ -347,15 +306,15 @@ function standardBlockDB:seedDB()
     [ '163:0' ] = 'stairs',
     [ '164:0' ] = 'stairs',
     [ '167:0' ] = 'trapdoor',
-    [ '170:0' ] = 'quartz-pillar', -- hay bale
+    [ '170:0' ] = 'hay-bale', -- hay bale
     [ '175:0' ] = 'largeplant',
     [ '175:1' ] = 'largeplant',
     [ '175:2' ] = 'largeplant', -- double tallgrass - an alternative would be to use grass as the bottom part, bonemeal as top part
     [ '175:3' ] = 'largeplant',
     [ '175:4' ] = 'largeplant',
     [ '175:5' ] = 'largeplant',
-    [ '176:0' ] = 'banner',
-    [ '177:0' ] = 'wall_banner',
+    [ '176:0' ] = 'signpost',
+    [ '177:0' ] = 'wallsign-ladder',
     [ '178:0' ] = 'truncate',
     [ '180:0' ] = 'stairs',
     [ '182:0' ] = 'slab',
@@ -369,7 +328,7 @@ function standardBlockDB:seedDB()
     [ '195:0' ] = 'door',
     [ '196:0' ] = 'door',
     [ '197:0' ] = 'door',
-    [ '198:0' ] = 'flatten',
+    [ '198:0' ] = 'end_rod',  -- end rod
     [ '205:0' ] = 'slab',
     [ '210:0' ] = 'flatten',
     [ '355:0' ] = 'bed',
@@ -377,9 +336,9 @@ function standardBlockDB:seedDB()
     [ '404:0' ] = 'comparator',
   }
   self.dirty = true
-  self:flush()
+  -- self:flush()
 end
- 
+
 --[[-- BlockTypeDB --]]--
 local blockTypeDB = TableDB({
   fileName = 'blocktype.db',
@@ -393,7 +352,7 @@ local blockTypeDB = TableDB({
     }
   }
 })
- 
+
 function blockTypeDB:load(dir)
   self.fileName = fs.combine(dir, self.fileName)
 
@@ -403,7 +362,7 @@ function blockTypeDB:load(dir)
     self:seedDB()
   end
 end
- 
+
 function blockTypeDB:addTemp(blockType, subs)
   local bt = self.data[blockType]
   if not bt then
@@ -415,7 +374,8 @@ function blockTypeDB:addTemp(blockType, subs)
       odmg = sub[1],
       sid = sub[2],
       sdmg = sub[3],
-      dir = sub[4]
+      dir = sub[4],
+      extra = sub[5]
     })
   end
   self.dirty = true
@@ -512,6 +472,11 @@ function blockTypeDB:seedDB()
     {  3, nil, 2, 'north-south-block' },
     {  4, nil, 2, 'east-west-block' },                 -- should be east-west-block
   })
+  blockTypeDB:addTemp('hay-bale', {
+    {  0, nil, 0 },
+    {  4, nil, 0, 'east-west-block' },                 -- should be east-west-block
+    {  8, nil, 0, 'north-south-block' },
+  })
   blockTypeDB:addTemp('button', {
     {  1, nil, 0, 'west-block' },
     {  2, nil, 0, 'east-block' },
@@ -526,12 +491,21 @@ function blockTypeDB:seedDB()
     {  3, nil, 0 },
   })
   blockTypeDB:addTemp('dispenser', {
-    { 0, nil, 0 },
-    { 1, nil, 0 },
+    { 0, nil, 0, 'wrench-down' },
+    { 1, nil, 0, 'wrench-up' },
     { 2, nil, 0, 'south' },
     { 3, nil, 0, 'north' },
     { 4, nil, 0, 'east' },
     { 5, nil, 0, 'west' },
+    { 9, nil, 0 },
+  })
+  blockTypeDB:addTemp('end_rod', {
+    { 0, nil, 0, 'wrench-down' },
+    { 1, nil, 0, 'wrench-up' },
+    { 2, nil, 0, 'south-block-flip' },
+    { 3, nil, 0, 'north-block-flip' },
+    { 4, nil, 0, 'east-block-flip' },
+    { 5, nil, 0, 'west-block-flip' },
     { 9, nil, 0 },
   })
   blockTypeDB:addTemp('hopper', {
@@ -541,6 +515,7 @@ function blockTypeDB:seedDB()
     { 3, nil, 0, 'north-block' },
     { 4, nil, 0, 'east-block' },
     { 5, nil, 0, 'west-block' },
+    { 8, nil, 0 },
     { 9, nil, 0 },
     { 10, nil, 0 },
     { 11, nil, 0, 'south-block' },
@@ -583,22 +558,22 @@ function blockTypeDB:seedDB()
     { 13, nil, 0, 'south' },
   })
   blockTypeDB:addTemp('signpost', {
-    {  0, nil, 0, 'south' },
-    {  1, nil, 0, 'south' },
-    {  2, nil, 0, 'south' },
-    {  3, nil, 0, 'south' },
-    {  4, nil, 0, 'west' },
-    {  5, nil, 0, 'west' },
-    {  6, nil, 0, 'west' },
-    {  7, nil, 0, 'west' },
-    {  8, nil, 0, 'north' },
-    {  9, nil, 0, 'north' },
-    { 10, nil, 0, 'north' },
-    { 11, nil, 0, 'north' },
-    { 12, nil, 0, 'east' },
-    { 13, nil, 0, 'east' },
-    { 14, nil, 0, 'east' },
-    { 15, nil, 0, 'east' },
+    {  0, nil, 0, 'north' },
+    {  1, nil, 0, 'north', { facing = 1 } },
+    {  2, nil, 0, 'north', { facing = 2 } },
+    {  3, nil, 0, 'north', { facing = 3 } },
+    {  4, nil, 0, 'east' },
+    {  5, nil, 0, 'east', { facing = 1 } },
+    {  6, nil, 0, 'east', { facing = 2 } },
+    {  7, nil, 0, 'east', { facing = 3 } },
+    {  8, nil, 0, 'south' },
+    {  9, nil, 0, 'south', { facing = 1 } },
+    { 10, nil, 0, 'south', { facing = 2 } },
+    { 11, nil, 0, 'south', { facing = 3 } },
+    { 12, nil, 0, 'west' },
+    { 13, nil, 0, 'west', { facing = 1 } },
+    { 14, nil, 0, 'west', { facing = 2 } },
+    { 15, nil, 0, 'west', { facing = 3 } },
   })
   blockTypeDB:addTemp('vine', {
     { 0, nil, 0 },
@@ -684,17 +659,11 @@ function blockTypeDB:seedDB()
   })
   blockTypeDB:addTemp('wallsign-ladder', {
     { 0, nil, 0 },
+    { 1, nil, 0 },
     { 2, nil, 0, 'south-block' },
     { 3, nil, 0, 'north-block' },
     { 4, nil, 0, 'east-block' },
     { 5, nil, 0, 'west-block' },
-  })
-  blockTypeDB:addTemp('wallsign', {
-    { 0, nil, 0 },
-    { 2, 'minecraft:sign', 0, 'south-block' },
-    { 3, 'minecraft:sign', 0, 'north-block' },
-    { 4, 'minecraft:sign', 0, 'east-block' },
-    { 5, 'minecraft:sign', 0, 'west-block' },
   })
   blockTypeDB:addTemp('chest-furnace', {
     { 0, nil, 0 },
@@ -817,32 +786,6 @@ function blockTypeDB:seedDB()
     { 14,'minecraft:air', 0 },
     { 15,'minecraft:air', 0 },
   })
-  blockTypeDB:addTemp('banner', {
-    {  0, nil, 0, 'north' },
-    {  1, nil, 0, 'east' },
-    {  2, nil, 0, 'east' },
-    {  3, nil, 0, 'east' },
-    {  4, nil, 0, 'east' },
-    {  5, nil, 0, 'east' },
-    {  6, nil, 0, 'east' },
-    {  7, nil, 0, 'east' },
-    {  8, nil, 0, 'south' },
-    {  9, nil, 0, 'west' },
-    {  10, nil, 0, 'west' },
-    {  11, nil, 0, 'west' },
-    {  12, nil, 0, 'west' },
-    {  13, nil, 0, 'west' },
-    {  14, nil, 0, 'west' },
-    {  15, nil, 0, 'west' },
-  })
-  blockTypeDB:addTemp('wall_banner', {
-    { 0, nil, 0 },
-    { 1, nil, 0 },
-    { 2, nil, 0, 'south-block' },
-    { 3, nil, 0, 'north-block' },
-    { 4, nil, 0, 'east-block' },
-    { 5, nil, 0, 'west-block' },
-  })
   blockTypeDB:addTemp('cocoa', {
     { 0, nil, 0, 'south-block' },
     { 1, nil, 0, 'west-block' },
@@ -858,7 +801,7 @@ function blockTypeDB:seedDB()
     { 11, nil, 0, 'east-block' },
   })
   self.dirty = true
-  self:flush()
+  -- self:flush()
 end
 
 local Blocks = class()
@@ -866,10 +809,12 @@ function Blocks:init(args)
 
   Util.merge(self, args)
   self.blockDB = blockDB
+  self.nameDB = nameDB
 
   blockDB:load(self.dir)
   standardBlockDB:load(self.dir)
   blockTypeDB:load(self.dir)
+  nameDB:load(self.dir, blockDB)
   placementDB:load(self.dir, standardBlockDB, blockTypeDB)
 end
 
@@ -878,10 +823,15 @@ function Blocks:getRealBlock(id, dmg)
 
   local p = placementDB:get({id, dmg})
   if p then
-    return { id = p.sid, dmg = p.sdmg, direction = p.direction }
+    return { id = p.sid, dmg = p.sdmg, direction = p.direction, extra = p.extra }
   end
  
   local b = blockDB:get({id, dmg})
+  if b then
+    return { id = b.strId, dmg = b.dmg }
+  end
+
+  b = blockDB:get({id, 0})
   if b then
     return { id = b.strId, dmg = b.dmg }
   end
