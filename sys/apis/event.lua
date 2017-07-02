@@ -153,9 +153,9 @@ function Event.pullEvents(...)
     end
   else
   while true do
-    local e = { os.pullEvent() }
+    local e = { os.pullEventRaw() }
       Event.processEvent(e)
-      if exitPullEvents or e == 'terminate' then
+      if exitPullEvents or e[1] == 'terminate' then
         break
       end
     end

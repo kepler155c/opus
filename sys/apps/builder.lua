@@ -266,7 +266,7 @@ function Builder:getAirResupplyList(blockIndex)
   local fuel = subDB:getSubstitutedItem(Builder.fuelItem.id, Builder.fuelItem.dmg)
 
   slots[15] = {
-    id = 'minecraft:chest',
+    id = 'ironchest:BlockIronChest',  -- 'minecraft:chest',
     dmg = 0,
     qty = 0,
     need = 1,

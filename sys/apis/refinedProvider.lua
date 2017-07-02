@@ -1,6 +1,6 @@
 local class = require('class')
 local Peripheral = require('peripheral')
-local TableDB = require('tableDB')
+local itemDB = require('itemDB')
 
 local RefinedProvider = class()
 
@@ -14,7 +14,6 @@ local keys = {
 }
 
 function RefinedProvider:init(args)
-  
   local defaults = {
     items = { },
     name = 'refinedStorage',
@@ -25,14 +24,6 @@ function RefinedProvider:init(args)
   local controller = Peripheral.getByType('refinedstorage:controller')
   if controller then
     Util.merge(self, controller)
-  end
-
-  if not self.itemInfoDB then
-    self.itemInfoDB = TableDB({
-      fileName = 'items.db'
-    })
-
-    self.itemInfoDB:load()
   end
 end
  
@@ -45,9 +36,9 @@ function RefinedProvider:isOnline()
 end
 
 function RefinedProvider:getCachedItemDetails(item)
-  local key = table.concat({ item.name, item.damage, item.nbtHash }, ':')
+  local key = { item.name, item.damage, item.nbtHash }
 
-  local detail = self.itemInfoDB:get(key)
+  local detail = itemDB:get(key)
   if not detail then
     detail = self.findItem(item)
     if detail then
@@ -63,12 +54,12 @@ function RefinedProvider:getCachedItemDetails(item)
       detail.lname = detail.displayName:lower()
 
       local t = { }
-      for _,key in pairs(keys) do
-        t[key] = detail[key]
+      for _,k in pairs(keys) do
+        t[k] = detail[k]
       end
 
       detail = t
-      self.itemInfoDB:add(key, detail)
+      itemDB:add(key, detail)
     end
   end
   if detail then
@@ -99,7 +90,7 @@ function RefinedProvider:listItems()
       end
       throttle()
     end
-    self.itemInfoDB:flush()
+    itemDB:flush()
   end
 
   return items
@@ -107,9 +98,9 @@ end
 
 function RefinedProvider:getItemInfo(fingerprint)
 
-  local key = table.concat({ fingerprint.name, fingerprint.damage, fingerprint.nbtHash }, ':')
+  local key = { fingerprint.name, fingerprint.damage, fingerprint.nbtHash }
 
-  local item = self.itemInfoDB:get(key)
+  local item = itemDB:get(key)
   if not item then
     return self:getCachedItemDetails(fingerprint)
   end

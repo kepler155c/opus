@@ -1,5 +1,5 @@
 local class = require('class')
-local TableDB = require('tableDB')
+local itemDB = require('itemDB')
 local Peripheral = require('peripheral')
 
 local ChestProvider = class()
@@ -28,14 +28,6 @@ function ChestProvider:init(args)
   if chest then
     Util.merge(self, chest)
   end
-
-  if not self.itemInfoDB then
-    self.itemInfoDB = TableDB({
-      fileName = 'items.db'
-    })
-
-    self.itemInfoDB:load()
-  end
 end
 
 function ChestProvider:isValid()
@@ -43,9 +35,9 @@ function ChestProvider:isValid()
 end
 
 function ChestProvider:getCachedItemDetails(item, k)
-  local key = table.concat({ item.name, item.damage, item.nbtHash }, ':')
+  local key = { item.name, item.damage, item.nbtHash }
 
-  local detail = self.itemInfoDB:get(key)
+  local detail = itemDB:get(key)
   if not detail then
     pcall(function() detail = self.getItemMeta(k) end)
     if not detail then
@@ -64,7 +56,7 @@ function ChestProvider:getCachedItemDetails(item, k)
       end
     end
 
-    self.itemInfoDB:add(key, detail)
+    itemDB:add(key, detail)
   end
   if detail then
     return Util.shallowCopy(detail)
@@ -108,7 +100,7 @@ function ChestProvider:listItems(throttle)
     throttle()
   end
 
-  self.itemInfoDB:flush()
+  itemDB:flush()
 
   return items
 end
@@ -127,12 +119,14 @@ end
 function ChestProvider:craftItems(items)
 end
 
-function ChestProvider:provide(item, qty, slot)
+function ChestProvider:provide(item, qty, slot, direction)
   local stacks = self.list()
   for key,stack in pairs(stacks) do
     if stack.name == item.id and stack.damage == item.dmg then
       local amount = math.min(qty, stack.count)
-      self.pushItems(self.direction, key, amount, slot)
+      if amount > 0 then
+        self.pushItems(direction or self.direction, key, amount, slot)
+      end
       qty = qty - amount
       if qty <= 0 then
         break

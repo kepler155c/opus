@@ -706,11 +706,14 @@ function Schematic:determineBlockPlacement(y)
         table.remove(dirtyBlocks, k)
       end
     elseif d == 'bottom' then
+      b.bottom = true  -- flag this as a bottom block
       local _,db = self:findIndexAt(b.x, b.z, b.y-1)
       if db then
         if not db.direction or db.direction ~= 'bottom' then
           -- not a slab below, ok to place from above
-          b.direction = nil
+          if not db.bottom then
+            b.direction = nil
+          end
         end
         -- it is a slab below - must be pistoned
         table.remove(dirtyBlocks, k)
