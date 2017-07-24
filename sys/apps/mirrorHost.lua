@@ -1,7 +1,7 @@
 require = requireInjector(getfenv(1))
+local Event  = require('event')
 local Socket = require('socket')
 local Logger = require('logger')
-local process = require('process')
 
 Logger.setScreenLogging()
 
@@ -20,7 +20,7 @@ while true do
 
   print('mirror: connection from ' .. socket.dhost)
 
-  local updateThread = process:newThread('updateThread', function()
+  Event.addRoutine(function()
     while true do
       local data = socket:read()
       if not data then
@@ -33,18 +33,15 @@ while true do
   end)
 
   -- ensure socket is connected
-  process:newThread('pinger', function()
-    while true do
-      os.sleep(3)
-      if not socket:ping() then
-        break
-      end
+  Event.onInterval(3, function(h)
+    if not socket:ping() then
+      Event.off(h)
     end
   end)
 
   while true do
-    process:pullEvent('modem_message')
-    if updateThread:isDead() then
+    Event.pullEvent()
+    if not socket.connected then
       break
     end
   end

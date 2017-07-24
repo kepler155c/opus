@@ -12,7 +12,7 @@ if not term.isColor() then
   detachColor = colors.lightGray
 end
 
-Event.addHandler('peripheral', function(event, side)
+Event.on('peripheral', function(event, side)
   if side then
     local dev = Peripheral.addDevice(device, side)
     if dev then
@@ -23,7 +23,7 @@ Event.addHandler('peripheral', function(event, side)
   end
 end)
 
-Event.addHandler('peripheral_detach', function(event, side)
+Event.on('peripheral_detach', function(event, side)
   if side then
     local dev = Util.find(device, 'side', side)
     if dev then

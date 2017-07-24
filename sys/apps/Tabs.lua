@@ -52,7 +52,7 @@ function page.grid:getDisplayValues(row)
   if elapsed < 60 then
     row.timestamp = string.format("%ds", math.floor(elapsed))
   else
-    row.timestamp = string.format("%fm", math.floor(elapsed/6)/10)
+    row.timestamp = string.format("%sm", math.floor(elapsed/6)/10)
   end
   if row.isDead then
     row.status = 'error'

@@ -61,40 +61,37 @@ function getClient(id)
   return ids[id]
 end
 
-local function logWriter()
-  while true do
-    os.pullEvent('logMessage')
-    local t = { }
-    while #messages > 0 do
-      local msg = messages[1]
-      table.remove(messages, 1)
-      local client = getClient(msg.id)
-      client.scrollingText:appendLine(string.format('%d %s', math.floor(os.clock()),  msg.text))
-      t[msg.id] = client
-    end
-    for _,client in pairs(t) do
-      client.scrollingText:draw()
-    end
-    terminal:sync()
+Event.on('logMessage', function()
+  local t = { }
+  while #messages > 0 do
+    local msg = messages[1]
+    table.remove(messages, 1)
+    local client = getClient(msg.id)
+    client.scrollingText:appendLine(string.format('%d %s', math.floor(os.clock()),  msg.text))
+    t[msg.id] = client
   end
-end
+  for _,client in pairs(t) do
+    client.scrollingText:draw()
+  end
+  terminal:sync()
+end)
 
 Message.addHandler('log', function(h, id, msg)
   table.insert(messages, { id = id, text = msg.contents })
   os.queueEvent('logMessage')
 end)
 
-Event.addHandler('monitor_touch', function()
+Event.on('monitor_touch', function()
   terminal:reset()
   ids = { }
 end)
 
-Event.addHandler('mouse_click', function()
+Event.on('mouse_click', function()
   terminal:reset()
   ids = { }
 end)
 
-Event.addHandler('char', function()
+Event.on('char', function()
   Event.exitPullEvents()
 end)
 

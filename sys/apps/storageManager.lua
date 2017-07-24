@@ -863,43 +863,37 @@ jobMonitor()
 jobListGrid:draw()
 jobListGrid:sync()
 
-function craftingThread()
+Event.onInterval(5, function()
 
-  while true do
-    os.sleep(5)
+  if not craftingPaused then
 
-    if not craftingPaused then
+    local items = ME.getAvailableItems()
+    
+    if Util.size(items) == 0 then
+      jobListGrid.parent:clear()
+      jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'No items in system')
+      jobListGrid:sync()
+    
+    elseif config.noCraftingStorage ~= 'true' and #ME.getCraftingCPUs() <= 0 then  -- only way to determine if AE is online
+      jobListGrid.parent:clear()
+      jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'Power failure')
+      jobListGrid:sync()
 
-      local items = ME.getAvailableItems()
-      
-      if Util.size(items) == 0 then
-        jobListGrid.parent:clear()
-        jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'No items in system')
-        jobListGrid:sync()
-      
-      elseif config.noCraftingStorage ~= 'true' and #ME.getCraftingCPUs() <= 0 then  -- only way to determine if AE is online
-        jobListGrid.parent:clear()
-        jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'Power failure')
-        jobListGrid:sync()
+    else
+      local itemList = watchResources(items)
+      jobListGrid:setValues(itemList)
+      jobListGrid:draw()
+      jobListGrid:sync()
+      craftItems(itemList)
+      jobListGrid:update()
+      jobListGrid:draw()
+      jobListGrid:sync()
 
-      else
-        local itemList = watchResources(items)
-        jobListGrid:setValues(itemList)
-        jobListGrid:draw()
-        jobListGrid:sync()
-        craftItems(itemList)
-        jobListGrid:update()
-        jobListGrid:draw()
-        jobListGrid:sync()
-
-        itemList = getAutocraftItems(items) -- autocrafted items don't show on job monitor
-        craftItems(itemList) 
-      end
+      itemList = getAutocraftItems(items) -- autocrafted items don't show on job monitor
+      craftItems(itemList) 
     end
   end
-end
+end)
 
-Event.pullEvents(craftingThread)
-
-UI.term:reset()
+UI:pullEvents()
 jobListGrid.parent:reset()

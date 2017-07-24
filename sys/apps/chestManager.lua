@@ -5,16 +5,18 @@ local ChestProvider = require('chestProvider18')
 local RefinedProvider = require('refinedProvider')
 local itemDB = require('itemDB')
 local Terminal = require('terminal')
+local Peripheral = require('peripheral')
+
+multishell.setTitle(multishell.getCurrent(), 'Resource Manager')
 
 -- 3 wide monitor (any side of turtle)
 
--- Config location is /sys/config/chestManager
+-- Config location is /sys/config/resourceManager
 -- adjust directions in that file if needed
 
 local config = {
-  trashDirection = 'up',    -- trash /chest in relation to interface
-  turtleDirection = 'down',    -- turtle in relation to interface
-  noCraftingStorage = 'false'  -- no ME crafting (or ability to tell if powered - use with caution)
+  trashDirection = 'up',    -- trash /chest in relation to chest
+  turtleDirection = 'down',    -- turtle in relation to chest
 }
 
 Config.load('resourceManager', config)
@@ -26,14 +28,34 @@ if not controller:isValid() then
 end
 
 local chestProvider = ChestProvider({ direction = 'west', wrapSide = 'back' })
+local turtleChestProvider = ChestProvider({ direction = 'up', wrapSide = 'bottom' })
+
+local RESOURCE_FILE = 'usr/etc/resources.db'
+local RECIPES_FILE = 'usr/etc/recipes.db'
 
 local jobListGrid
 local craftingPaused = false
-local recipes = Util.readTable('recipes') or { }
+local recipes = Util.readTable(RECIPES_FILE) or { }
+local resources = Util.readTable(RESOURCE_FILE) or { }
 
-multishell.setTitle(multishell.getCurrent(), 'Resource Manager')
+for _,r in pairs(resources) do
+  r.maxDamage = nil
+  r.displayName = nil
+  r.count = nil
+  r.lname = nil
+  r.has_recipe = nil
 
-function getItem(items, inItem, ignoreDamage)
+  if not r.ignoreDamage then
+    r.ignoreDamage = nil
+  end
+
+  if not r.auto then
+    r.auto = nil
+  end
+end
+Util.writeTable(RESOURCE_FILE, resources)
+
+local function getItem(items, inItem, ignoreDamage)
   for _,item in pairs(items) do
     if item.name == inItem.name then
       if ignoreDamage then
@@ -61,7 +83,7 @@ local function getItemDetails(items, item)
   cItem = itemDB:get(itemDB:makeKey(item))
   if cItem then
     return { count = 0, maxCount = cItem.maxCount }
-  enditemDB:makeKey
+  end
   return { count = 0, maxCount = 64 }
 end
 
@@ -69,7 +91,7 @@ local function uniqueKey(item)
   return table.concat({ item.name, item.damage, item.nbtHash }, ':')
 end
 
-function getName(item)
+local function getName(item)
   local detail = itemDB:get(itemDB:makeKey(item))
   if detail then
     return detail.displayName
@@ -77,60 +99,51 @@ function getName(item)
   return item.name .. ':' .. item.damage
 end
 
-function mergeResources(t)
-  local resources = Util.readTable('resource.limits') or { }
-
+local function mergeResources(t)
   for _,v in pairs(resources) do
-    v.low = tonumber(v.low) -- backwards compatibility
     local item = getItem(t, v)
     if item then
-      item.low = v.low
-      item.limit = v.limit
-      item.auto = v.auto
-      item.ignoreDamage = v.ignoreDamage
-      item.rsControl = v.rsControl
-      item.rsDevice = v.rsDevice
-      item.rsSide = v.rsSide
+      Util.merge(item, v)
     else
-      v.count = 0
-      table.insert(t, v)
+      item = Util.shallowCopy(v)
+      item.count = 0
+      table.insert(t, item)
     end
   end
 
   for _,v in pairs(recipes) do
     local item = getItem(t, v)
-    if item then
-      item.has_recipe = true
-    else
+    if not item then
       item = Util.shallowCopy(v)
-      item.displayName = getName(item)
       item.count = 0
-      item.has_recipe = true
       table.insert(t, item)
     end
+    item.has_recipe = true
   end
 
   for _,v in pairs(t) do
+    if not v.displayName then
+      v.displayName = getName(v)
+    end
     v.lname = v.displayName:lower()
   end
 end
  
-function filterItems(t, filter)
-  local r = {}
+local function filterItems(t, filter)
   if filter then
+    local r = {}
     filter = filter:lower()
     for k,v in pairs(t) do
-      if  string.find(v.lname, filter) then
+      if string.find(v.lname, filter) then
         table.insert(r, v)
       end
     end
-  else
-    return t
+    return r
   end
-  return r
+  return t
 end
 
-function sumItems3(ingredients, items, summedItems, count)
+local function sumItems3(ingredients, items, summedItems, count)
 
   local canCraft = 0
   for _,item in pairs(ingredients) do
@@ -179,7 +192,7 @@ local function sumItems2(ingredients, items, summedItems, count)
   return canCraft
 end
 
-function sumItems(items)
+local function sumItems(items)
   local t = {}
 
   for _,item in pairs(items) do
@@ -197,7 +210,7 @@ function sumItems(items)
   return t
 end
 
-function isGridClear()
+local function isGridClear()
   for i = 1, 16 do
     if turtle.getItemCount(i) ~= 0 then
       return false
@@ -219,22 +232,11 @@ local function clearGrid()
   return true
 end
 
-function turtleCraft(recipe, originalItem, qty)
+local function turtleCraft(recipe, originalItem, qty)
 
   for k,v in pairs(recipe.ingredients) do
 
-    -- ugh
-    local dmg = v.damage
-
---FIX - LOOKUP IN ITEMS
-    if v.max_dmg and v.max_dmg > 0 then
-      local item = ME.getItemDetail({ id = v.id, nbt_hash = v.nbt_hash }, false)
-      if item then
-        dmg = item.dmg
-      end
-    end
-
-    chestProvider:provide({ id = v.name, dmg = dmg, nbt_hash = v.nbtHash }, v.count * qty, k)
+    chestProvider:provide({ id = v.name, dmg = v.damage, nbt_hash = v.nbtHash }, v.count * qty, k)
     if turtle.getItemCount(k) ~= v.count * qty then
       clearGrid()
       originalItem.status = v.name .. ' (extract failed)'
@@ -256,7 +258,7 @@ function turtleCraft(recipe, originalItem, qty)
   return true
 end
 
-function addCraftingRequest(item, craftList, count)
+local function addCraftingRequest(item, craftList, count)
   local key = uniqueKey(item)
   local request = craftList[key]
   if not craftList[key] then
@@ -267,9 +269,18 @@ function addCraftingRequest(item, craftList, count)
   request.count = request.count + count
 end
 
-function craftRecipe(recipe, items, originalItem, count)
+local function craftRecipe(recipe, items, originalItem, count)
 
-  local maxCount = 64
+  local maxCount = recipe.maxCount
+
+  if not maxCount then -- temporary
+    local cItem = itemDB:get(itemDB:makeKey(recipe))
+    if cItem then
+      maxCount = cItem.maxCount
+    else
+      maxCount = 1
+    end
+  end
 
   local summedItems = sumItems(recipe.ingredients)
   for key,ingredient in pairs(summedItems) do
@@ -293,7 +304,7 @@ function craftRecipe(recipe, items, originalItem, count)
   return true
 end
 
-function craftItem(recipe, items, originalItem, craftList, count)
+local function craftItem(recipe, items, originalItem, craftList, count)
 
   if craftingPaused or not device.workbench or not isGridClear() then
     return
@@ -305,11 +316,10 @@ function craftItem(recipe, items, originalItem, craftList, count)
 
   if toCraft > 0 then
     craftRecipe(recipe, items, originalItem, toCraft)
+    items = chestProvider:listItems()
   end
 
   count = count - toCraft
-
-  items = chestProvider:listItems()
 
   local summedItems = { }
   sumItems3(recipe.ingredients, items, summedItems, count)
@@ -321,7 +331,7 @@ function craftItem(recipe, items, originalItem, craftList, count)
   end
 end
 
-function craftItems(craftList, allItems)
+local function craftItems(craftList, allItems)
 
   for _,key in pairs(Util.keys(craftList)) do
     local item = craftList[key]
@@ -336,25 +346,29 @@ function craftItems(craftList, allItems)
 
   for key,item in pairs(craftList) do
 
-    if controller and not recipes[key] then
-      if controller:isCrafting(item) then
-        item.status = '(crafting)'
+    if not recipes[key] then
+      if not controller then
+        item.status = '(no recipe)'
       else
+        if controller:isCrafting(item) then
+          item.status = '(crafting)'
+        else
 
-        local count = item.count
-        while count >= 1 do -- try to request smaller quantities until successful
-          local s, m = pcall(function()
-            item.status = '(no recipe)'
-            if not controller:craft(item, count) then
-              item.status = '(missing ingredients)'
-              error('failed')
+          local count = item.count
+          while count >= 1 do -- try to request smaller quantities until successful
+            local s, m = pcall(function()
+              item.status = '(no recipe)'
+              if not controller:craft(item, count) then
+                item.status = '(missing ingredients)'
+                error('failed')
+              end
+              item.status = '(crafting)'
+            end)
+            if s then
+              break -- successfully requested crafting
             end
-            item.status = '(crafting)'
-          end)
-          if s then
-            break -- successfully requested crafting
+            count = math.floor(count / 2)
           end
-          count = math.floor(count / 2)
         end
       end
     end
@@ -363,11 +377,11 @@ end
 
 local function jobMonitor(jobList)
 
-  local mon
+  local mon = Peripheral.getByType('monitor')
 
-  if device.monitor then
+  if mon then
     mon = UI.Device({
-      deviceType = 'monitor',
+      device = mon,
       textScale = .5,
     })
   else
@@ -387,11 +401,10 @@ local function jobMonitor(jobList)
   })
 end
 
-function getAutocraftItems()
-  local t = Util.readTable('resource.limits') or { }
+local function getAutocraftItems()
   local craftList = { }
 
-  for _,res in pairs(t) do
+  for _,res in pairs(resources) do
 
     if res.auto then
       res.count = 4  -- this could be higher to increase autocrafting speed
@@ -426,19 +439,18 @@ local function getItemWithQty(items, res, ignoreDamage)
   return item
 end
 
-function watchResources(items)
+local function watchResources(items)
 
   local craftList = { }
 
-  local t = Util.readTable('resource.limits') or { }
-  for k, res in pairs(t) do
+  for k, res in pairs(resources) do
     local item = getItemWithQty(items, res, res.ignoreDamage)
     if not item then
       item = {
         damage = res.damage,
         nbtHash = res.nbtHash,
         name = res.name,
-        displayName = res.displayName,
+        displayName = getName(res),
         count = 0
       }
     end
@@ -472,7 +484,7 @@ function watchResources(items)
   return craftList
 end
 
-itemPage = UI.Page {
+local itemPage = UI.Page {
   backgroundColor = colors.lightGray,
   titleBar = UI.TitleBar {
     title = 'Limit Resource',
@@ -481,10 +493,10 @@ itemPage = UI.Page {
     backgroundColor = colors.green
   },
   displayName = UI.Window {
-    x = 5, y = 2, width = UI.term.width - 10, height = 3,
+    x = 2, y = 2, width = UI.term.width - 4, height = 3,
   },
   form = UI.Form {
-    x = 4, y = 4, height = 8, rex = -4,
+    x = 4, y = 5, height = 8, rex = -4,
     [1] = UI.TextEntry {
       width = 7,
       backgroundColor = colors.gray,
@@ -555,7 +567,7 @@ function itemPage.displayName:draw()
   local item = self.parent.item
   local str = string.format('Name:   %s\nDamage: %d', item.displayName, item.damage)
   if item.nbtHash then
-    str = str .. string.format('\nNBT:    %s\n', item.nbtHash)
+    str = str .. string.format('\n%s', item.nbtHash)
   end
   self:setCursorPos(1, 1)
   self:print(str)
@@ -593,9 +605,8 @@ function itemPage:eventHandler(event)
 
   elseif event.type == 'form_complete' then
     local values = self.form.values
-    local t = Util.readTable('resource.limits') or { }
-    local keys = { 'name', 'displayName', 'auto', 'low', 'limit', 'damage',
-                   'maxDamage', 'nbtHash', 'ignoreDamage',
+    local keys = { 'name', 'auto', 'low', 'limit', 'damage',
+                   'nbtHash', 'ignoreDamage',
                    'rsControl', 'rsDevice', 'rsSide', }
 
     local filtered = { }
@@ -605,16 +616,26 @@ function itemPage:eventHandler(event)
     filtered.low = tonumber(filtered.low)
     filtered.limit = tonumber(filtered.limit)
 
-    filtered.ignoreDamage = filtered.ignoreDamage == true
-    filtered.auto = filtered.auto == true
-    filtered.rsControl = filtered.rsControl == true
+    --filtered.ignoreDamage = filtered.ignoreDamage == true
+    --filtered.auto = filtered.auto == true
+    --filtered.rsControl = filtered.rsControl == true
 
-    if filtered.ignoreDamage then
+    if filtered.auto ~= true then
+      filtered.auto = nil
+    end
+ 
+    if filtered.rsControl ~= true then
+      filtered.rsControl = nil
+      filtered.rsSide = nil
+      filtered.rsDevice = nil
+    end
+
+    if values.ignoreDamage == true then
       filtered.damage = 0
     end
 
-    t[uniqueKey(filtered)] = filtered
-    Util.writeTable('resource.limits', t)
+    resources[uniqueKey(filtered)] = filtered
+    Util.writeTable(RESOURCE_FILE, resources)
 
     UI:setPreviousPage()
 
@@ -624,11 +645,12 @@ function itemPage:eventHandler(event)
   return true
 end
 
-listingPage = UI.Page {
+local listingPage = UI.Page {
   menuBar = UI.MenuBar {
     buttons = {
       { text = 'Learn',  event = 'learn'  },
       { text = 'Forget', event = 'forget' },
+      { text = 'Craft',  event = 'craft'  },
     },
   },
   grid = UI.Grid {
@@ -720,6 +742,9 @@ function listingPage:eventHandler(event)
     self.statusBar.filter:focus()
 
   elseif event.type == 'learn' then
+    UI:setPage('learn')
+
+  elseif event.type == 'craft' then
     UI:setPage('craft')
 
   elseif event.type == 'forget' then
@@ -729,16 +754,12 @@ function listingPage:eventHandler(event)
 
       if recipes[key] then
         recipes[key] = nil
-        Util.writeTable('recipes', recipes)
+        Util.writeTable(RECIPES_FILE, recipes)
       end
 
-      local resources = Util.readTable('resource.limits') or { }
-      for k,v in pairs(resources) do
-        if v.name == item.name and v.damage == item.damage then
-          resources[k] = nil
-          Util.writeTable('resource.limits', resources)
-          break
-        end
+      if resources[key] then
+        resources[key] = nil
+        Util.writeTable(RESOURCE_FILE, resources)
       end
 
       self.statusBar:timedStatus('Forgot: ' .. item.name, 3)
@@ -779,7 +800,7 @@ function listingPage:applyFilter()
 end
 
 -- without duck antenna
-local function getTurtleInventory()
+local function getTurtleInventoryOld()
   local inventory = { }
   for i = 1,16 do
     if turtle.getItemCount(i) > 0 then
@@ -790,6 +811,20 @@ local function getTurtleInventory()
         damage = item.damage,
         count = item.count,
       }
+    end
+  end
+  return inventory
+end
+
+local function getTurtleInventory()
+  local inventory = { }
+  for i = 1,16 do
+    local qty = turtle.getItemCount(i)
+    if qty > 0 then
+      turtleChestProvider:insert(i, qty)
+      local items = turtleChestProvider:listItems()
+      _, inventory[i] = next(items)
+      turtleChestProvider:extract(1, qty, i)
     end
   end
   return inventory
@@ -817,10 +852,10 @@ local function learnRecipe(page)
 
         clearGrid()
 
-        filter(recipe, { 'name', 'damage', 'nbtHash', 'count' })
+        filter(recipe, { 'name', 'damage', 'nbtHash', 'count', 'maxCount' })
 
         for _,ingredient in pairs(ingredients) do
-          filter(ingredient, { 'name', 'damage', 'nbtHash', 'count' })
+          filter(ingredient, { 'name', 'damage', 'nbtHash', 'count', 'maxCount' })
           --if ingredient.max_dmg > 0 then -- let's try this...
            -- ingredient.dmg = 0
           --end
@@ -829,7 +864,7 @@ local function learnRecipe(page)
 
         recipes[key] = recipe
 
-        Util.writeTable('recipes', recipes)
+        Util.writeTable(RECIPES_FILE, recipes)
 
         local displayName = getName(recipe)
 
@@ -849,13 +884,10 @@ local function learnRecipe(page)
   end
 end
 
-craftPage = UI.Dialog {
+local learnPage = UI.Dialog {
   height = 7, width = UI.term.width - 6,
   backgroundColor = colors.lightGray,
-  titleBar = UI.TitleBar {
-    title = 'Learn Recipe',
-    previousPage = true,
-  },
+  title = 'Learn Recipe',
   idField = UI.Text {
     x = 5,
     y = 3,
@@ -875,6 +907,61 @@ craftPage = UI.Dialog {
   }
 }
 
+function learnPage:enable()
+  craftingPaused = true
+  self:focusFirst()
+  UI.Dialog.enable(self)
+end
+
+function learnPage:disable()
+  craftingPaused = false
+  UI.Dialog.disable(self)
+end
+ 
+function learnPage:eventHandler(event)
+  if event.type == 'cancel' then
+    UI:setPreviousPage()
+  elseif event.type == 'accept' then
+    if learnRecipe(self) then
+      UI:setPreviousPage()
+    end
+  else
+    return UI.Dialog.eventHandler(self, event)
+  end
+  return true
+end
+
+local craftPage = UI.Dialog {
+  height = 6, width = UI.term.width - 10,
+  backgroundColor = colors.lightGray,
+  title = 'Enter amount to craft',
+  idField = UI.TextEntry {
+    x = 15,
+    y = 3,
+    width = 10,
+    limit = 6,
+    value = '1',
+    backgroundColor = colors.black,
+    backgroundFocusColor = colors.black,
+  },
+  accept = UI.Button {
+    rx = -7, ry = -1,
+    backgroundColor = colors.green,
+    text = '+', event = 'accept',
+  },
+  cancel = UI.Button {
+    rx = -3, ry = -1,
+    backgroundColor = colors.red,
+    backgroundFocusColor = colors.red,
+    text = '\215', event = 'cancel'
+  },
+}
+
+function craftPage:draw()
+  UI.Dialog.draw(self)
+  self:write(6, 3, 'Quantity')
+end
+
 function craftPage:enable()
   craftingPaused = true
   self:focusFirst()
@@ -890,9 +977,7 @@ function craftPage:eventHandler(event)
   if event.type == 'cancel' then
     UI:setPreviousPage()
   elseif event.type == 'accept' then
-    if learnRecipe(self) then
-      UI:setPreviousPage()
-    end
+    
   else
     return UI.Dialog.eventHandler(self, event)
   end
@@ -902,6 +987,7 @@ end
 UI:setPages({
   listing = listingPage,
   item = itemPage,
+  learn = learnPage,
   craft = craftPage,
 })
 
@@ -913,15 +999,12 @@ jobMonitor()
 jobListGrid:draw()
 jobListGrid:sync()
 
-function craftingThread()
+local function craftingThread()
 
   while true do
     os.sleep(5)
-
     if not craftingPaused then
-
       local items = chestProvider:listItems()
-
       if Util.size(items) == 0 then
         jobListGrid.parent:clear()
         jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'No items in system')
@@ -942,8 +1025,6 @@ function craftingThread()
     end
   end
 end
---craftingThread()
-UI:pullEvents(craftingThread)
 
-UI.term:reset()
+UI:pullEvents(craftingThread)
 jobListGrid.parent:reset()

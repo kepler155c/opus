@@ -243,6 +243,159 @@ turtle.run(function()
 end)
 ]]
 
+local levelScript = [[
+
+require = requireInjector(getfenv(1))
+local Point = require('point')
+
+local checkedNodes = { }
+local nodes = { }
+local box = { }
+
+local function inBox(pt, box)
+  return pt.x >= box.x and
+         pt.y >= box.y and
+         pt.z >= box.z and
+         pt.x <= box.ex and
+         pt.y <= box.ey and
+         pt.z <= box.ez
+end
+
+local function toKey(pt)
+  return table.concat({ pt.x, pt.y, pt.z }, ':')
+end
+
+local function addNode(node)
+
+  for i = 0, 5 do
+    local hi = turtle.getHeadingInfo(i)
+    local testNode = { x = node.x + hi.xd, y = node.y + hi.yd, z = node.z + hi.zd }
+
+    if inBox(testNode, box) then
+      local key = toKey(testNode)
+      if not checkedNodes[key] then
+        nodes[key] = testNode
+      end
+    end
+  end
+end
+
+local function dig(action)
+
+  local directions = {
+    top = 'up',
+    bottom = 'down',
+  }
+
+  -- convert to up, down, north, south, east, west
+  local direction = directions[action.side] or 
+                    turtle.getHeadingInfo(turtle.point.heading).direction
+
+  local hi = turtle.getHeadingInfo(direction)
+  local node = { x = turtle.point.x + hi.xd, y = turtle.point.y + hi.yd, z = turtle.point.z + hi.zd }
+  if inBox(node, box) then
+
+    local key = toKey(node)
+    checkedNodes[key] = true
+    nodes[key] = nil
+
+    if action.dig() then
+      addNode(node)
+      repeat until not action.dig() -- sand, etc
+      return true
+    end
+  end
+end
+
+local function move(action)
+  if action == 'turn' then
+    dig(turtle.getAction('forward'))
+  elseif action == 'up' then
+    dig(turtle.getAction('up'))
+  elseif action == 'down' then
+    dig(turtle.getAction('down'))
+  elseif action == 'back' then
+    dig(turtle.getAction('up'))
+    dig(turtle.getAction('down'))
+  end
+end
+
+local function getAdjacentPoint(pt)
+  local t = { }
+  table.insert(t, pt)
+  for i = 0, 5 do
+    local hi = turtle.getHeadingInfo(i)
+    local heading
+    if i < 4 then
+      heading = (hi.heading + 2) % 4
+    end
+    table.insert(t, { x = pt.x + hi.xd, z = pt.z + hi.zd, y = pt.y + hi.yd, heading = heading })
+  end
+
+  return Point.closest2(turtle.getPoint(), t)
+end
+
+local function level()
+
+  box.x = math.min(data.startPt.x, data.endPt.x)
+  box.y = math.min(data.startPt.y, data.endPt.y)
+  box.z = math.min(data.startPt.z, data.endPt.z)
+  box.ex = math.max(data.startPt.x, data.endPt.x)
+  box.ey = math.max(data.startPt.y, data.endPt.y)
+  box.ez = math.max(data.startPt.z, data.endPt.z)
+
+  turtle.pathfind(data.firstPt)
+
+  turtle.setPolicy("attack", { dig = dig }, "assuredMove")
+  turtle.setMoveCallback(move)
+
+  repeat
+    local key = toKey(turtle.point)
+
+    checkedNodes[key] = true
+    nodes[key] = nil
+
+    dig(turtle.getAction('down'))
+    dig(turtle.getAction('up'))
+    dig(turtle.getAction('forward'))
+
+    print(string.format('%d nodes remaining', Util.size(nodes)))
+
+    if Util.size(nodes) == 0 then
+      break
+    end
+
+    local node = Point.closest2(turtle.point, nodes)
+    node = getAdjacentPoint(node)
+    if not turtle.gotoPoint(node) then
+      break
+    end
+  until turtle.abort
+
+  turtle.resetState()
+end
+
+local s, m = turtle.run(function()
+  turtle.status = 'Leveling'
+
+  if turtle.enableGPS() then
+
+    local pt = Util.shallowCopy(turtle.point)
+    local s, m = pcall(level)
+    turtle.pathfind(pt)
+
+    if not s and m then
+      error(m)
+    end
+  end
+end)
+
+if not s then
+  error(m)
+end
+]]
+
+
 local data = Util.readTable('/usr/config/shapes') or { }
 
 local page = UI.Page {
@@ -251,6 +404,7 @@ local page = UI.Page {
   startCoord = UI.Button {  x =  2,  y =  6, text = 'Start   ', event = 'startCoord' },
   endCoord   = UI.Button {  x =  2,  y =  8, text = 'End     ', event = 'endCoord'   },
   supplies   = UI.Button {  x =  2,  y = 10, text = 'Supplies', event = 'supplies'   },
+  first      = UI.Button {  x =  2,  y = 11, text = 'First',    event = 'firstCoord' },
   cancel     = UI.Button { rx =  2, ry = -2, text = 'Abort',    event = 'cancel'     },
   begin      = UI.Button { rx = -7, ry = -2, text = 'Begin',    event = 'begin'      },
   accelerators = { q = 'quit' },
@@ -286,6 +440,7 @@ end
 
 function page:runFunction(id, script)
 
+Util.writeFile('script.tmp', script)
   self.notification:info('Connecting')
   local fn, msg = loadstring(script, 'script')
   if not fn then
@@ -299,7 +454,6 @@ function page:runFunction(id, script)
     self.notification:error('Unable to connect')
     return
   end
-
   socket:write({ type = 'script', args = script })
   socket:close()
 
@@ -321,6 +475,13 @@ function page:eventHandler(event)
       Util.writeTable('/usr/config/shapes', data)
     end
     self:draw()
+  elseif event.type == 'firstCoord' then
+    data.firstPt = self:getPoint()
+    if data.firstPt then
+      self.statusBar:setStatus('first point set')
+      Util.writeTable('/usr/config/shapes', data)
+    end
+    self:draw()
   elseif event.type == 'supplies' then
     data.suppliesPt = self:getPoint()
     if data.suppliesPt then
@@ -329,7 +490,7 @@ function page:eventHandler(event)
     end
   elseif event.type == 'begin' then
     if data.startPt and data.endPt then
-      local s = 'local data = ' .. textutils.serialize(data) .. script
+      local s = 'local data = ' .. textutils.serialize(data) .. levelScript
       self:runFunction(turtleId, s)
     else
       self.notification:error('Corners not set')

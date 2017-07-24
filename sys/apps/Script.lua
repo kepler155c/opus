@@ -532,34 +532,30 @@ if not fs.exists(GROUPS_PATH) then
   fs.makeDir(GROUPS_PATH)
 end
 
-Event.addHandler('network_attach', function()
+Event.on('network_attach', function()
   if mainPage.enabled then
     mainPage:draw()
   end
 end)
 
-Event.addHandler('network_detach', function()
+Event.on('network_detach', function()
   if mainPage.enabled then
     mainPage:draw()
   end
 end)
 
-function statusUpdate()
-  while true do
-    if mainPage.enabled then
-      local selected = mainPage.computers:getSelected()
-      if selected then
-        local computer = _G.network[selected.id]
-        mainPage.statusBar.values = { computer }
-        mainPage.statusBar:draw()
-        mainPage:sync()
-      end
+Event.onInterval(1, function()
+  if mainPage.enabled then
+    local selected = mainPage.computers:getSelected()
+    if selected then
+      local computer = _G.network[selected.id]
+      mainPage.statusBar.values = { computer }
+      mainPage.statusBar:draw()
+      mainPage:sync()
     end
-    os.sleep(1)
   end
-end
+end)
 
 UI:setPage(mainPage)
-
-Event.pullEvents(statusUpdate)
+UI:pullEvents()
 UI.term:reset()

@@ -100,15 +100,15 @@ function Schematic:parse(a, h, containsName, spinner)
     local i4 = h:readbyte(h)
     local i = bit.blshift(i1, 24) + bit.blshift(i2, 16) + bit.blshift(i3, 8) + i4
 
-    if not self.length or not self.width then
-
-      self:discardBytes(h,i, spinner)
-      self.twopass = true
-
-    elseif name == "Blocks" then
+    if name == "Blocks" then
       for i = 1, i do
         local id = h:readbyte(h)
-        self:assignCoord(i, id)
+        if id > 0 then
+          table.insert(self.blocks, {
+            id = id,
+            index = i,
+          })
+        end
         if (i % 1000) == 0 then
           spinner:spin()
         end
@@ -269,14 +269,35 @@ function Schematic:loadpass(fh, spinner)
       break
     end
     self:parse(a, fh, true, spinner)
-    if self.twopass and self.width and self.length then
-      break
-    end
 
     spinner:spin()
   end
 
   fh:close()
+
+  print('Assigning coords ')
+  local index = 1
+  for _, b in ipairs(self.blocks) do
+    while index < b.index do
+      self.x = self.x + 1
+      if self.x >= self.width then
+        self.x = 0
+        self.z = self.z + 1
+      end
+      if self.z >= self.length then
+        self.z = 0
+        self.y = self.y + 1
+      end
+      if self.y >= self.height then
+        self.height = self.y + 1
+      end
+      index = index + 1
+    end
+    b.x = self.x
+    b.y = self.y
+    b.z = self.z
+    spinner:spin()
+  end
 
   self:assignDamages(spinner)
   self.damages = nil
@@ -313,21 +334,8 @@ function Schematic:load(filename)
 
   self:checkFileType(f)
 
-  print('Initial pass     ')
+  print('Loading blocks   ')
   self:loadpass(f, spinner)
-
-  if self.twopass then
-    self.twopass = nil
-    self.blocks = { }
-    self.damages = { }
-    self.originalBlocks = { }
-    self.x, self.y, self.z = 0, 0, 0
-    self.height = 0
-    self.index = 1
-
-    print('Second pass      ')
-    self:loadpass(f, spinner)
-  end 
 
   self.rowIndex = { }
   for k,b in ipairs(self.blocks) do
@@ -342,42 +350,12 @@ function Schematic:load(filename)
   self.cache = Util.readTable('usr/builder/' .. self.filename .. '.cache') or { }
 end
 
-function Schematic:assignCoord(i, id)
-
-  if id > 0 then
-    table.insert(self.blocks, {
-      id = id,
-      index = i,
-      x = self.x,
-      z = self.z,
-      y = self.y,
-    })
-  end
-
-  self.x = self.x + 1
-  if self.x >= self.width then
-    self.x = 0
-    self.z = self.z + 1
-  end
-  if self.z >= self.length then
-    self.z = 0
-    self.y = self.y + 1
-  end
-  if self.y >= self.height then
-    self.height = self.y + 1
-  end
-end
-
 function Schematic:assignDamages(spinner)
   print('Assigning damages')
 
-  local i = 0
   for _,b in pairs(self.blocks) do
     b.dmg = self.damages[b.index] or 0
-    i = i + 1
-    if (i % 1000) == 0 then
-      spinner:spin()
-    end
+    spinner:spin()
   end
 end
 
@@ -849,6 +827,7 @@ function Schematic:getComputedBlock(i)
   -- has this level been computed ?
   if not self.rowIndex[b.y].loaded then
     -- compute each level up til this one (unless saved in cache)
+
     for y = 0, b.y - 1 do
       if not self.cache[y] then
         self:determineBlockPlacement(y)
@@ -858,7 +837,6 @@ function Schematic:getComputedBlock(i)
     -- get the block now at the computed location
     b = self.blocks[i]
   end
-
   return b
 end
 

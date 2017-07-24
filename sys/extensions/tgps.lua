@@ -6,15 +6,14 @@ require = requireInjector(getfenv(1))
 local GPS = require('gps')
 
 function turtle.enableGPS(timeout)
-  if turtle.getState().coordSystem == 'GPS' then
+  if turtle.point.gps == 'GPS' then
     return turtle.point
   end
 
   local pt = GPS.getPointAndHeading(timeout)
   if pt then
-    turtle.setPoint(pt)
-    turtle.getState().coordSystem = 'GPS'
-    return true
+    turtle.setPoint(pt, true)
+    return turtle.point
   end
 end
 

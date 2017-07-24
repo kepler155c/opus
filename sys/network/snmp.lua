@@ -129,7 +129,6 @@ local function sendInfo()
     info.status = turtle.status
     info.point = turtle.point
     info.inventory = turtle.getInventory()
-    info.coordSystem = turtle.getState().coordSystem
     info.slotIndex = turtle.getSelectedSlot()
   end
   device.wireless_modem.transmit(999, os.getComputerID(), info)

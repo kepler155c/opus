@@ -7,30 +7,40 @@ local function noop() end
 turtle.point = { x = 0, y = 0, z = 0, heading = 0 }
 turtle.status = 'idle'
 turtle.abort = false
+local state = { }
 
-function turtle.getPoint()
-  return turtle.point
+function turtle.getPoint()  return turtle.point end
+function turtle.getState()  return state end
+
+local function _defaultMove(action)
+  while not action.move() do
+    if not state.digPolicy(action) and not state.attackPolicy(action) then
+      return false
+    end
+  end
+  return true
 end
 
-local state = {
-  moveAttack = noop,
-  moveDig = noop,
-  moveCallback = noop,
-  locations = {},
-  coordSystem = 'relative', -- type of coordinate system being used
-}
-
-function turtle.getState()
-  return state
-end
-
-function turtle.setPoint(pt)
+function turtle.setPoint(pt, isGPS)
   turtle.point.x = pt.x
   turtle.point.y = pt.y
   turtle.point.z = pt.z
   if pt.heading then
     turtle.point.heading = pt.heading
   end
+  turtle.point.gps = isGPS
+  return true
+end
+
+function turtle.resetState()
+  --turtle.abort = false -- should be part of state
+  --turtle.status = 'idle' -- should be part of state
+  state.attackPolicy = noop
+  state.digPolicy = noop
+  state.movePolicy = _defaultMove
+  state.moveCallback = noop
+  state.locations = { }
+
   return true
 end
 
@@ -39,27 +49,16 @@ function turtle.reset()
   turtle.point.y = 0
   turtle.point.z = 0
   turtle.point.heading = 0
+  turtle.point.gps = false
   turtle.abort = false -- should be part of state
   --turtle.status = 'idle' -- should be part of state
-  state.moveAttack = noop
-  state.moveDig = noop
-  state.moveCallback = noop
-  state.locations = {}
-  state.coordSystem = 'relative'
+
+  turtle.resetState()
 
   return true
 end
 
-function turtle.resetState()
-  --turtle.abort = false -- should be part of state
-  --turtle.status = 'idle' -- should be part of state
-  state.moveAttack = noop
-  state.moveDig = noop
-  state.moveCallback = noop
-  state.locations = {}
-
-  return true
-end
+turtle.reset()
 
 local actions = {
   up = {
@@ -116,12 +115,12 @@ end
 
 -- [[ Heading data ]] --
 local headings = {
-  [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east' },
+  [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
   [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
-  [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west' },
+  [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
   [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
-  [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up' },
-  [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down' }
+  [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
+  [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  }
 }
 
 local namedHeadings = {
@@ -133,9 +132,7 @@ local namedHeadings = {
   down  = headings[5]
 }
 
-function turtle.getHeadings()
-  return headings
-end
+function turtle.getHeadings()  return headings end
 
 function turtle.getHeadingInfo(heading)
   if heading and type(heading) == 'string' then
@@ -181,8 +178,8 @@ local function _place(action, indexOrId)
     if result[1] then
       return true
     end
-    if not state.moveDig(action) then
-      state.moveAttack(action)
+    if not state.digPolicy(action) then
+      state.attackPolicy(action)
     end
     return unpack(result)
   end)
@@ -267,48 +264,66 @@ turtle.digPolicies = {
   end
 }
 
-turtle.policies = {
-  none       = { dig = turtle.digPolicies.none,        attack = turtle.attackPolicies.none },
-  digOnly    = { dig = turtle.digPolicies.dig,         attack = turtle.attackPolicies.none },
-  attackOnly = { dig = turtle.digPolicies.none,        attack = turtle.attackPolicies.attack },
-  digAttack  = { dig = turtle.digPolicies.dig,         attack = turtle.attackPolicies.attack },
-  turtleSafe = { dig = turtle.digPolicies.turtleSafe,  attack = turtle.attackPolicies.attack },
+turtle.movePolicies = {
+  none = noop,
+  default = _defaultMove,
+  assured = function(action)
+    if not _defaultMove(action) then
+      if action.side == 'back' then
+        return false
+      end
+      local oldStatus = turtle.status
+      print('stuck')
+      turtle.status = 'stuck'
+      repeat
+        os.sleep(1)
+      until _defaultMove(action)
+      turtle.status = oldStatus
+    end
+    return true
+  end,
 }
 
-function turtle.setPolicy(policy)
-  if type(policy) == 'string' then
-    policy = turtle.policies[policy]
+turtle.policies = {
+  none        = { dig = turtle.digPolicies.none,        attack = turtle.attackPolicies.none },
+  digOnly     = { dig = turtle.digPolicies.dig,         attack = turtle.attackPolicies.none },
+  attackOnly  = { dig = turtle.digPolicies.none,        attack = turtle.attackPolicies.attack },
+  digAttack   = { dig = turtle.digPolicies.dig,         attack = turtle.attackPolicies.attack },
+  turtleSafe  = { dig = turtle.digPolicies.turtleSafe,  attack = turtle.attackPolicies.attack },
+
+  attack      = { attack = turtle.attackPolicies.attack },
+
+  defaultMove = { move = turtle.movePolicies.default },
+  assuredMove = { move = turtle.movePolicies.assured },
+}
+
+function turtle.setPolicy(...)
+  local args = { ... }
+  for _, policy in pairs(args) do
+    if type(policy) == 'string' then
+      policy = turtle.policies[policy]
+    end
+    if not policy then
+      error('Invalid policy')
+      -- return false, 'Invalid policy'
+    end
+    if policy.dig then
+      state.digPolicy = policy.dig
+    end
+    if policy.attack then
+      state.attackPolicy = policy.attack
+    end
+    if policy.move then
+      state.movePolicy = policy.move
+    end
   end
-  if not policy then
-    return false, 'Invalid policy'
-  end
-  state.moveDig = policy.dig
-  state.moveAttack = policy.attack
   return true
 end
 
-function turtle.setDigPolicy(policy)
-  state.moveDig = policy
-end
-
-function turtle.setAttackPolicy(policy)
-  state.moveAttack = policy
-end
-
-function turtle.setMoveCallback(cb)
-  state.moveCallback = cb
-end
-
-function turtle.clearMoveCallback()
-  state.moveCallback = noop
-end
-
-local function infoMoveCallback()
-  local pt = turtle.point
-  print(string.format('x:%d y:%d z:%d heading:%d', pt.x, pt.y, pt.z, pt.heading))
-end
--- TESTING
---turtle.setMoveCallback(infoMoveCallback)
+function turtle.setDigPolicy(policy)     state.digPolicy = policy    end
+function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
+function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
+function turtle.clearMoveCallback()      state.moveCallback = noop   end
 
 -- [[ Locations ]] --
 function turtle.getLocation(name)
@@ -364,6 +379,7 @@ function turtle.turnAround()
   return turtle.point
 end
 
+-- combine with setHeading
 function turtle.setNamedHeading(headingName)
   local headingInfo = namedHeadings[headingName]
   if headingInfo then 
@@ -432,17 +448,8 @@ function turtle.headTowards(pt)
 end
 
 -- [[ move ]] --
-local function _move(action)
-  while not action.move() do
-    if not state.moveDig(action) and not state.moveAttack(action) then
-      return false
-    end
-  end
-  return true
-end
-
 function turtle.up()
-  if _move(actions.up) then
+  if state.movePolicy(actions.up) then
     turtle.point.y = turtle.point.y + 1
     state.moveCallback('up', turtle.point)
     return true, turtle.point
@@ -450,7 +457,7 @@ function turtle.up()
 end
 
 function turtle.down()
-  if _move(actions.down) then
+  if state.movePolicy(actions.down) then
     turtle.point.y = turtle.point.y - 1
     state.moveCallback('down', turtle.point)
     return true, turtle.point
@@ -458,7 +465,7 @@ function turtle.down()
 end
 
 function turtle.forward()
-  if _move(actions.forward) then
+  if state.movePolicy(actions.forward) then
     turtle.point.x = turtle.point.x + headings[turtle.point.heading].xd
     turtle.point.z = turtle.point.z + headings[turtle.point.heading].zd
     state.moveCallback('forward', turtle.point)
@@ -467,7 +474,7 @@ function turtle.forward()
 end
 
 function turtle.back()
-  if _move(actions.back) then
+  if state.movePolicy(actions.back) then
     turtle.point.x = turtle.point.x - headings[turtle.point.heading].xd
     turtle.point.z = turtle.point.z - headings[turtle.point.heading].zd
     state.moveCallback('back', turtle.point)

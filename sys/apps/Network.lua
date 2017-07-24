@@ -116,23 +116,20 @@ function page.grid:getDisplayValues(row)
   return row
 end
 
-Event.addThread(function()
-  while true do
-    page.grid:update()
-    page.grid:draw()
-    page:sync()
-    os.sleep(1)
-  end
+Event.onInterval(1, function()
+  page.grid:update()
+  page.grid:draw()
+  page:sync()
 end)
 
-Event.addHandler('device_attach', function(h, deviceName)
+Event.on('device_attach', function(h, deviceName)
   if deviceName == 'wireless_modem' then
     page.notification:success('Modem connected')
     page:sync()
   end
 end)
 
-Event.addHandler('device_detach', function(h, deviceName)
+Event.on('device_detach', function(h, deviceName)
   if deviceName == 'wireless_modem' then
     page.notification:error('Wireless modem not attached')
     page:sync()

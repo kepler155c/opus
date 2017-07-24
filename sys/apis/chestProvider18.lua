@@ -14,7 +14,6 @@ local keys = Util.transpose({
 })
 
 function ChestProvider:init(args)
-  
   local defaults = {
     items = { },
     name = 'chest',
@@ -43,11 +42,9 @@ function ChestProvider:getCachedItemDetails(item, k)
     if not detail then
       return
     end
+-- NOT SUFFICIENT
     if detail.name ~= item.name then
       return
-    end
-    if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
-      detail.displayName = detail.displayName .. ' (damaged)'
     end
 
     for _,k in ipairs(Util.keys(detail)) do
@@ -135,8 +132,8 @@ function ChestProvider:provide(item, qty, slot, direction)
   end
 end
 
-function ChestProvider:extract(slot, qty)
-  self.pushItems(self.direction, slot, qty)
+function ChestProvider:extract(slot, qty, toSlot)
+  self.pushItems(self.direction, slot, qty, toSlot)
 end
 
 function ChestProvider:insert(slot, qty)

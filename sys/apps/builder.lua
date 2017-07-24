@@ -41,6 +41,7 @@ local Builder = {
   resourceSlots = 14,
   facing = 'south',
   confirmFacing = false,
+  wrenchSucks = false,
 }
 
 local pistonFacings
@@ -95,6 +96,7 @@ function subDB:seedDB()
     [ "minecraft:wall_banner:0"          ] = "minecraft:banner:0",
     [ "minecraft:standing_banner:0"      ] = "minecraft:banner:0",
     [ "minecraft:tripwire:0"             ] = "minecraft:string:0",
+    [ "minecraft:pumpkin_stem:0"         ] = "minecraft:pumpkin_seeds:0",
   }
   self.dirty = true
   self:flush()
@@ -266,7 +268,7 @@ function Builder:getAirResupplyList(blockIndex)
   local fuel = subDB:getSubstitutedItem(Builder.fuelItem.id, Builder.fuelItem.dmg)
 
   slots[15] = {
-    id = 'ironchest:BlockIronChest',  -- 'minecraft:chest',
+    id = 'minecraft:chest', --'ironchest:BlockIronChest',  -- 
     dmg = 0,
     qty = 0,
     need = 1,
@@ -821,6 +823,14 @@ function Builder:placePiston(b)
     return
   end
 
+  if self.wrenchSucks then
+    turtle.turnRight()
+    turtle.forward()
+    turtle.turnLeft()
+    turtle.forward()
+    turtle.turnLeft()
+  end
+
   local success = self:wrenchBlock('forward', 'down', pistonFacings) --wrench piston to point downwards
 
   rs.setOutput('front', true)
@@ -829,6 +839,11 @@ function Builder:placePiston(b)
   os.sleep(.25)
   turtle.select(ps.index)
   turtle.dig()
+
+  if not success and not self.wrenchSucks then
+    self.wrenchSucks = true
+    success = self:placePiston(b)
+  end
 
   return success
 end
@@ -2029,12 +2044,9 @@ UI:setPages({
 
 UI:setPage('start')
 
-turtle.run(function()
+local s, m = turtle.run(function()
   turtle.setPolicy(turtle.policies.digAttack)
   turtle.setPoint({ x = -1, z = -1, y = 0, heading = 0 })
-  turtle.getState().coordSystem = 'relative'
   turtle.saveLocation('supplies')
-  Event.pullEvents()
+  UI:pullEvents()
 end)
-
-UI.term:reset()

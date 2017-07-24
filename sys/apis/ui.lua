@@ -67,7 +67,7 @@ function Manager:init(args)
   local mouseDragged = false
   local pages = { }
 
-  Event.addHandler('term_resize', function(h, side)
+  Event.on('term_resize', function(h, side)
     if self.currentPage then
       -- the parent doesn't have any children set...
       -- that's why we have to resize both the parent and the current page
@@ -81,7 +81,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('mouse_scroll', function(h, direction, x, y)
+  Event.on('mouse_scroll', function(h, direction, x, y)
     if self.target then
       local event = self:pointToChild(self.target, x, y)
       local directions = {
@@ -97,7 +97,7 @@ function Manager:init(args)
   end)
 
   -- this should be moved to the device !
-  Event.addHandler('monitor_touch', function(h, side, x, y)
+  Event.on('monitor_touch', function(h, side, x, y)
     if self.currentPage then
       if self.currentPage.parent.device.side == side then
         self:click(1, x, y)
@@ -105,7 +105,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('mouse_click', function(h, button, x, y)
+  Event.on('mouse_click', function(h, button, x, y)
 
     mouseDragged = false
     if button == 1 and shift and control then -- debug hack
@@ -123,7 +123,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('mouse_up', function(h, button, x, y)
+  Event.on('mouse_up', function(h, button, x, y)
 
     if self.currentPage and not mouseDragged then
       if not self.currentPage.parent.device.side then
@@ -132,7 +132,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('mouse_drag', function(h, button, x, y)
+  Event.on('mouse_drag', function(h, button, x, y)
 
     mouseDragged = true
     if self.target then
@@ -146,7 +146,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('paste', function(h, text)
+  Event.on('paste', function(h, text)
     if clipboard.isInternal() then
       text = clipboard.getData()
     end
@@ -156,7 +156,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('char', function(h, ch)
+  Event.on('char', function(h, ch)
     control = false
     if self.currentPage then
       self:inputEvent(self.currentPage.focused, { type = 'key', key = ch })
@@ -164,7 +164,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('key_up', function(h, code)
+  Event.on('key_up', function(h, code)
     if code == keys.leftCtrl or code == keys.rightCtrl then
       control = false
     elseif code == keys.leftShift or code == keys.rightShift then
@@ -172,7 +172,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.addHandler('key', function(h, code)
+  Event.on('key', function(h, code)
     local ch = keys.getName(code)
     if not ch then
       return
@@ -1282,6 +1282,8 @@ function UI.Device:runTransitions(transitions, canvas)
     if Util.empty(transitions) then
       break
     end
+    os.sleep(0)
+--[[
     local timerId = os.startTimer(0)
     while true do
       local e = { os.pullEvent() }
@@ -1290,10 +1292,11 @@ function UI.Device:runTransitions(transitions, canvas)
       end
       table.insert(queue, e)
     end
+--]]
   end
-  for _, e in ipairs(queue) do
-    Event.processEvent(e)
-  end
+--  for _, e in ipairs(queue) do
+--    Event.processEvent(e)
+--  end
 end
 
 function UI.Device:sync()

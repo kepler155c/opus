@@ -75,9 +75,9 @@ process:newThread('vnc_server', function()
 
     local termInfo = socket:read(5)
     if termInfo then
-        -- no new process - only 1 connection allowed
-        -- due to term size issues
-        vncHost(socket, termInfo) 
+      -- no new process - only 1 connection allowed
+      -- due to term size issues
+      vncHost(socket, termInfo) 
     else
       socket:close()
     end

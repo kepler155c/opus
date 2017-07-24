@@ -2,7 +2,7 @@ require = requireInjector(getfenv(1))
 local UI = require('ui')
 local Socket = require('socket')
 local Terminal = require('terminal')
-local TableDB = require('tableDB')
+local itemDB = require('itemDB')
 
 multishell.setTitle(multishell.getCurrent(), 'Turtles')
 UI.Button.defaults.focusIndicator = ' '
@@ -30,12 +30,6 @@ local policies = {
   { label = 'digAttack' },
   { label = 'turtleSafe' },
 }
-
-local itemInfoDB = TableDB({
-  fileName = 'items.db'
-})
-
-itemInfoDB:load()
 
 local page = UI.Page {
 --[[
@@ -177,7 +171,7 @@ function page.coords:draw()
     self:clear()
     self:setCursorPos(1, 1)
     local ind = 'GPS'
-    if t.coordSystem ~= 'GPS' then
+    if not t.point.gps then
       ind = 'REL'
     end
     self:print(string.format('%s : %d,%d,%d\nFuel: %s\n', 
@@ -204,7 +198,7 @@ function page.tabs.inventory:draw()
           v.selected = true
         end
         if v.id then
-          local item = itemInfoDB:get({ v.id, v.dmg })
+          local item = itemDB:get({ v.id, v.dmg })
           if item then
             v.id = item.displayName
           else

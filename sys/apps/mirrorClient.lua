@@ -2,7 +2,7 @@ require = requireInjector(getfenv(1))
 local Socket = require('socket')
 local Terminal = require('terminal')
 local Logger = require('logger')
-local process = require('process')
+local Event = require('event')
 
 Logger.setScreenLogging()
 
@@ -31,7 +31,12 @@ local function wrapTerm(socket)
     socket.term[k] = function(...)
       if not socket.queue then
         socket.queue = { }
-        os.queueEvent('mirror_flush')
+        Event.onTimeout(0, function()
+          if socket.queue then
+            socket:write(socket.queue)
+            socket.queue = nil
+          end
+        end)
       end
       table.insert(socket.queue, {
         f = k,
@@ -61,16 +66,12 @@ while true do
   os.queueEvent('term_resize')
 
   while true do
-    local e = process:pullEvent('mirror_flush')
+    local e = Event.pullEvent()
     if e == 'terminate' then
     	break
     end
     if not socket.connected then
       break
-    end
-    if socket.queue then
-      socket:write(socket.queue)
-      socket.queue = nil
     end
   end
 

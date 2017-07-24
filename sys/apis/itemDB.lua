@@ -1,6 +1,6 @@
 local TableDB = require('tableDB')
 
-local itemDB = TableDB({ fileName = 'usr/config/items.db' })
+local itemDB = TableDB({ fileName = 'usr/etc/items.db' })
 
 function itemDB:get(key)
 
@@ -13,6 +13,9 @@ function itemDB:get(key)
   if key[2] ~= 0 then
     item = TableDB.get(self, { key[1], 0, key[3] })
     if item and item.maxDamage > 0 then
+      item = Util.shallowCopy(item)
+      item.damage = key[2]
+      item.displayName = string.format('%s (damage: %d)', item.displayName, item.damage)
       return item
     end
   end

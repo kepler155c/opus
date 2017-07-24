@@ -429,7 +429,6 @@ end
 
 turtle.run(function()
   turtle.setPoint({ x = -1, z = -2, y = -1, heading = 1 })
-  turtle.getState().coordSystem = 'relative'
 
   turtle.saveLocation('supplies')
 

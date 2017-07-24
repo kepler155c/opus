@@ -48,9 +48,6 @@ function RefinedProvider:getCachedItemDetails(item)
         return
       end
       Util.merge(detail, meta)
-      if detail.maxDamage and detail.maxDamage > 0 and detail.damage > 0 then
-        detail.displayName = detail.displayName .. ' (damaged)'
-      end
       detail.lname = detail.displayName:lower()
 
       local t = { }

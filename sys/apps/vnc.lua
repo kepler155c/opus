@@ -1,5 +1,5 @@
 require = requireInjector(getfenv(1))
-local process = require('process')
+local Event = require('event')
 local Socket = require('socket')
 local Terminal = require('terminal')
 
@@ -39,7 +39,7 @@ if not ct.isColor() then
   Terminal.toGrayscale(ct)
 end
 
-process:newThread('vnc_read', function()
+Event.addRoutine(function()
   while true do
     local data = socket:read()
     if not data then
@@ -60,7 +60,7 @@ local filter = Util.transpose({
 })
 
 while true do
-  local e = { process:pullEvent() }
+  local e = Event.pullEvent()
   local event = e[1]
 
   if not socket.connected then

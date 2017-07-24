@@ -12,9 +12,9 @@ local PASTEBIN_URL  = 'http://pastebin.com/raw'
 local GIT_URL       = 'https://raw.githubusercontent.com'
 
 local function standardSearcher(modname, env, shell)
-  if package.loaded[modname] then
+  if _G.package.loaded[modname] then
     return function()
-      return package.loaded[modname]
+      return _G.package.loaded[modname]
     end
   end
 end
@@ -33,7 +33,7 @@ end
 local function pathSearcher(modname, env, shell)
   local fname = modname:gsub('%.', '/') .. '.lua'
 
-  for dir in string.gmatch(package.path, "[^:]+") do
+  for dir in string.gmatch(_G.package.path, "[^:]+") do
     local path = fs.combine(dir, fname)
     if fs.exists(path) and not fs.isDir(path) then
       return loadfile(path, env)
@@ -109,7 +109,7 @@ local function urlSearcher(modname, env, shell)
   local fname = modname:gsub('%.', '/') .. '.lua'
 
   if fname:sub(1, 1) ~= '/' then
-    for entry in string.gmatch(package.upath, "[^;]+") do
+    for entry in string.gmatch(_G.package.upath, "[^;]+") do
       local url = entry .. '/' .. fname
       local c = loadUrl(url)
       if c then
@@ -150,7 +150,7 @@ local function requireWrapper(env)
       return loaded[modname]
     end
 
-    for _,searcher in ipairs(package.loaders) do
+    for _,searcher in ipairs(_G.package.loaders) do
       local fn, msg = searcher(modname, env, shell)
       if fn then
         local module, msg = fn(modname, env)
