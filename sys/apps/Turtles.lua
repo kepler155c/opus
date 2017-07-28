@@ -1,4 +1,5 @@
 require = requireInjector(getfenv(1))
+local Event = require('event')
 local UI = require('ui')
 local Socket = require('socket')
 local Terminal = require('terminal')
@@ -320,20 +321,6 @@ function page:enable()
 --  self.tabs:activateTab(page.tabs.turtles)
 end
 
-local function updateThread()
-
-  while true do
-    if page.turtle then
-      local t = _G.network[page.turtle.id]
-      page.turtle = t
-      page:draw()
-      page:sync()
-    end
-
-    os.sleep(1)
-  end
-end
-
 if not Util.getOptions(options, { ... }, true) then
   return
 end
@@ -348,9 +335,17 @@ if options.turtle.value >= 0 then
   end
 end
 
+Event.onInterval(1, function()
+  if page.turtle then
+    local t = _G.network[page.turtle.id]
+    page.turtle = t
+    page:draw()
+    page:sync()
+  end
+end)
+
 UI:setPage(page)
 
 page.tabs:activateTab(page.tabs[options.tab.value])
 
-UI:pullEvents(updateThread)
-UI.term:reset()
+UI:pullEvents()

@@ -1,4 +1,4 @@
-print('\nStarting multishell..')
+print('\nStarting Opus..')
 
 LUA_PATH = '/sys/apis'
 

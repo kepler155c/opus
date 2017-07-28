@@ -1,121 +1,153 @@
 local Util = require('util')
 
 local Event = {
-  uid = 1,  -- unique id for handlers
-  routines = { },
-  handlers = { namedTimers = { } },
+  uid       = 1,       -- unique id for handlers
+  routines  = { },     -- coroutines
+  types     = { },     -- event handlers
+  timers    = { },     -- named timers
   terminate = false,
 }
 
-function Event.addHandler(type, f)
-  local event = Event.handlers[type]
+local Routine = { }
+
+function Routine:isDead()
+  if not self.co then
+    return true
+  end
+  return coroutine.status(self.co) == 'dead'
+end
+
+function Routine:terminate()
+  if self.co then
+    self:resume('terminate')
+  end
+end
+
+function Routine:resume(event, ...)
+
+  if not self.co then
+    debug(event)
+    debug(self)
+    debug(getfenv(1))
+    error('Cannot resume a dead routine')
+  end
+
+  if not self.filter or self.filter == event or event == "terminate" then
+    local s, m = coroutine.resume(self.co, event, ...)
+
+    if coroutine.status(self.co) == 'dead' then
+      self.co = nil
+      self.filter = nil
+      Event.routines[self.uid] = nil
+    else
+      self.filter = m
+    end
+
+    if not s and event ~= 'terminate' then
+      debug({s, m})
+      debug(self)
+      debug(getfenv(1))
+      error('\n' .. (m or 'Error processing event'))
+    end
+
+    return s, m
+  end
+
+  return true, self.filter
+end
+
+local function nextUID()
+  Event.uid = Event.uid + 1
+  return Event.uid - 1
+end
+
+function Event.on(type, fn)
+  local event = Event.types[type]
   if not event then
-    event = { handlers = { } }
-    Event.handlers[type] = event
+    event = { }
+    Event.types[type] = event
   end
 
   local handler = {
-    uid     = Event.uid,
+    uid     = nextUID(),
     event   = type,
-    f       = f,
+    fn      = fn,
   }
-  Event.uid = Event.uid + 1
-  event.handlers[handler.uid] = handler
+  event[handler.uid] = handler
+  setmetatable(handler, { __index = Routine })
 
   return handler
 end
 
-function Event.removeHandler(h)
+function Event.off(h)
   if h and h.event then
-    Event.handlers[h.event].handlers[h.uid] = nil
+    Event.types[h.event][h.uid] = nil
   end
 end
 
-function Event.queueTimedEvent(name, timeout, event, args)
-  Event.addNamedTimer(name, timeout, false,
-    function()
-      os.queueEvent(event, args)
+local function addTimer(interval, recurring, fn)
+
+  local timerId = os.startTimer(interval)
+
+  return Event.on('timer', function(t, id)
+    if timerId == id then
+      fn(t, id)
+      if recurring then
+        timerId = os.startTimer(interval)
+      else
+        Event.off(t)
+      end
     end
-  )
+  end)
 end
 
-function Event.addNamedTimer(name, interval, recurring, f)
+function Event.onInterval(interval, fn)
+  return addTimer(interval, true, fn)
+end
+
+function Event.onTimeout(timeout, fn)
+  return addTimer(timeout, false, fn)
+end
+
+function Event.addNamedTimer(name, interval, recurring, fn)
   Event.cancelNamedTimer(name)
-  Event.handlers.namedTimers[name] = Event.addTimer(interval, recurring, f)
-end
-
-function Event.getNamedTimer(name)
-  return Event.handlers.namedTimers[name]
+  Event.timers[name] = addTimer(interval, recurring, fn)
 end
 
 function Event.cancelNamedTimer(name)
-  local timer = Event.getNamedTimer(name)
+  local timer = Event.timers[name]
   if timer then
-    timer.enabled = false
-    Event.removeHandler(timer)
+    Event.off(timer)
   end
-end
-
-function Event.addTimer(interval, recurring, f)
-  local timer = Event.addHandler('timer',
-    function(t, id)
-      if t.timerId ~= id then
-        return
-      end
-      if t.enabled then
-        t.fired = true
-        t.cf(t, id)
-      end
-      if t.recurring then
-        t.fired = false
-        t.timerId = os.startTimer(t.interval)
-      else
-        Event.removeHandler(t)
-      end
-    end
-  )
-  timer.cf = f
-  timer.interval = interval
-  timer.recurring = recurring
-  timer.enabled = true
-  timer.timerId = os.startTimer(interval)
-
-  return timer
-end
-
-function Event.onInterval(interval, f)
-  return Event.addTimer(interval, true, f)
-end
-
-function Event.onTimeout(timeout, f)
-  return Event.addTimer(timeout, false, f)
 end
 
 function Event.waitForEvent(event, timeout)
   local timerId = os.startTimer(timeout)
   repeat
-    local e, p1, p2, p3, p4 = os.pullEvent()
-    if e == event then
-      return e, p1, p2, p3, p4
+    local e = { os.pullEvent() }
+    if e[1] == event then
+      return table.unpack(e)
     end 
-  until e == 'timer' and p1 == timerId
+  until e[1] == 'timer' and e[2] == timerId
 end
 
-function Event.addRoutine(routine)
-  local r = { co = coroutine.create(routine) }
-  local s, m = coroutine.resume(r.co)
-  if not s then
-    error(m or 'Error processing routine')
-  end
-  Event.routines[r] = true
-  r.filter = m
+function Event.addRoutine(fn)
+  local r = {
+    co  = coroutine.create(fn), 
+    uid = nextUID()
+  }
+  setmetatable(r, { __index = Routine })
+  Event.routines[r.uid] = r
+
+  r:resume()
+
   return r
 end
 
 function Event.pullEvents(...)
 
-  for _, r in ipairs({ ... }) do
-    Event.addRoutine(r)
+  for _, fn in ipairs({ ... }) do
+    Event.addRoutine(fn)
   end
 
   repeat
@@ -128,28 +160,43 @@ function Event.exitPullEvents()
   os.sleep(0)
 end
 
+local function processHandlers(e, ...)
+
+  local event = Event.types[e]
+  if event then
+
+    local keys = Util.keys(event)
+    for _,key in pairs(keys) do
+
+      local h = event[key]
+      if h and not h.co then
+        -- callbacks are single threaded (only 1 co per handler)
+        h.co = coroutine.create(h.fn)
+        Event.routines[h.uid] = h
+        h:resume(h, ...)
+      end
+    end
+  end
+end
+
+local function processRoutines(...)
+  local keys = Util.keys(Event.routines)
+  for _,key in ipairs(keys) do
+    local r = Event.routines[key]
+    if r then
+      r:resume(...)
+    end
+  end
+end
+
 function Event.pullEvent(eventType)
 
   while true do
     local e = { os.pullEventRaw() }
-    local routines = Util.keys(Event.routines)
-    for _, r in ipairs(routines) do
-      if not r.filter or r.filter == e[1] then
-        local s, m = coroutine.resume(r.co, table.unpack(e))
-        if not s and e[1] ~= 'terminate' then
-          debug({s, m})
-          debug(r)
-          error(m or 'Error processing event')
-        end
-        if coroutine.status(r.co) == 'dead' then
-          r.co = nil
-          Event.routines[r] = nil
-        else
-          r.filter = m
-        end
-      end
-    end
-    Event.processEvent(e)
+
+    processHandlers(table.unpack(e))
+    processRoutines(table.unpack(e))
+
     if Event.terminate or e[1] == 'terminate' then
       Event.terminate = false
       return { 'terminate' }
@@ -160,38 +207,5 @@ function Event.pullEvent(eventType)
     end
   end
 end
-
-function Event.processEvent(pe)
-
-  local e, p1, p2, p3, p4, p5 = unpack(pe)
-
-  local event = Event.handlers[e]
-  if event then
-    local keys = Util.keys(event.handlers)
-    for _,key in pairs(keys) do
-      local h = event.handlers[key]
-      if h and not h.co then
-        local co = coroutine.create(function()
-          h.f(h, p1, p2, p3, p4, p5)
-        end)
-        local s, m = coroutine.resume(co)
-        if not s then
-          debug({s, m})
-          debug(h)
-          error(m or 'Error processing ' .. e)
-        elseif coroutine.status(co) ~= 'dead' then
-          h.co = co
-          h.filter = m
-          Event.routines[h] = true
-        end
-      end
-    end
-  end
-
-  return e, p1, p2, p3, p4, p5
-end
-
-Event.on = Event.addHandler
-Event.off = Event.removeHandler
 
 return Event

@@ -141,5 +141,4 @@ if not device.wireless_modem then
 end
 
 UI:setPage(page)
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

@@ -201,11 +201,11 @@ function methodsPage.viewportConsole:draw()
   c.ymax = c.cursorY + 1
 end
 
-Event.addHandler('peripheral', function()
+Event.on('peripheral', function()
   peripheralsPage:updatePeripherals()
 end)
 
-Event.addHandler('peripheral_detach', function()
+Event.on('peripheral_detach', function()
   peripheralsPage:updatePeripherals()
 end)
 
@@ -215,5 +215,4 @@ UI:setPages({
   methods = methodsPage,
 })
 
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

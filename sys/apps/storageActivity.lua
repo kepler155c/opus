@@ -164,11 +164,10 @@ function changedPage:refresh()
   self.grid:draw()
 end
  
-Event.addTimer(5, true, function()
+Event.onInterval(5, function()
   changedPage:refresh()
   changedPage:sync()
 end)
  
 UI:setPage(changedPage)
 UI:pullEvents()
-UI.term:reset()

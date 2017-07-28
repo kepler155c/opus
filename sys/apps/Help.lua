@@ -50,9 +50,11 @@ function page:eventHandler(event)
     Event.exitPullEvents()
 
   elseif event.type == 'key' and event.key == 'enter' then
-    showHelp(self.grid:getSelected().name)
-    self:setFocus(self.filter)
-    self:draw()
+    if self.grid:getSelected() then
+      showHelp(self.grid:getSelected().name)
+      self:setFocus(self.filter)
+      self:draw()
+    end
 
   elseif event.type == 'grid_select' then
     showHelp(event.selected.name)
@@ -80,5 +82,4 @@ function page:eventHandler(event)
 end
 
 UI:setPage(page)
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

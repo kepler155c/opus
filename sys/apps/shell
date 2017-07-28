@@ -612,7 +612,7 @@ while not bExit do
   term.setTextColour(_colors.textColor)
   if #sLine > 0 then
     local result, err = shell.run( sLine )
-    if not result then
+    if not result and err then
       printError(err)
     end
   end

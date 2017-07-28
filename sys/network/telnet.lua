@@ -1,7 +1,10 @@
 local Socket = require('socket')
 local process = require('process')
 
-local function wrapTerm(socket, termInfo)
+local function telnetHost(socket, termInfo)
+
+  require = requireInjector(getfenv(1))
+  local Event = require('event')
   local methods = { 'clear', 'clearLine', 'setCursorPos', 'write', 'blit',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
                     'setBackgroundColour', 'scroll', 'setCursorBlink', }
@@ -11,10 +14,15 @@ local function wrapTerm(socket, termInfo)
 
   for _,k in pairs(methods) do
     socket.term[k] = function(...)
+
       if not socket.queue then
         socket.queue = { }
-        os.startTimer(0)
+        Event.onTimeout(0, function()
+          socket:write(socket.queue)
+          socket.queue = nil
+        end)
       end
+
       table.insert(socket.queue, {
         f = k,
         args = { ... },
@@ -26,54 +34,28 @@ local function wrapTerm(socket, termInfo)
   socket.term.getSize = function()
     return termInfo.width, termInfo.height
   end
-end
 
-local function telnetHost(socket, termInfo)
-
-  require = requireInjector(getfenv(1))
-  local process = require('process')
-
-  wrapTerm(socket, termInfo)
-
-  local shellThread = process:newThread('shell_wrapper', function()
+  local shellThread = Event.addRoutine(function()
     os.run(getfenv(1), 'sys/apps/shell')
-    socket:close()
+    Event.exitPullEvents()
   end)
 
-  process:newThread('telnet_read', function()
+  Event.addRoutine(function()
     while true do
       local data = socket:read()
       if not data then
+        Event.exitPullEvents()
         break
       end
 
-      if data.type == 'shellRemote' then
-        local event = table.remove(data.event, 1)
-        shellThread:resume(event, unpack(data.event))
-      end
+      shellThread:resume(table.unpack(data))
     end
   end)
 
-  while true do
-    local e = process:pullEvent('timer')
-
-    if e == 'terminate' then
-      break
-    end
-    if not socket.connected then
-      break
-    end
-    if socket.queue then
-      if not socket:write(socket.queue) then
-        print('telnet: connection lost to ' .. socket.dhost)
-        break
-      end
-      socket.queue = nil
-    end
-  end
+  Event.pullEvents()
 
   socket:close()
-  process:threadEvent('terminate')
+  shellThread:terminate()
 end
 
 process:newThread('telnet_server', function()

@@ -103,7 +103,7 @@ function page.grid:draw()
   UI.Grid.draw(self)
 end
 
-function eventLoop()
+Event.addRoutine(function()
 
   while true do
     local e = { os.pullEvent() }
@@ -124,8 +124,7 @@ function eventLoop()
       page:sync()
     end
   end
-end
+end)
 
 UI:setPage(page)
-Event.pullEvents(eventLoop)
-UI.term:reset()
+UI:pullEvents()

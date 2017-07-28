@@ -999,32 +999,29 @@ jobMonitor()
 jobListGrid:draw()
 jobListGrid:sync()
 
-local function craftingThread()
+Event.onInterval(5, function()
 
-  while true do
-    os.sleep(5)
-    if not craftingPaused then
-      local items = chestProvider:listItems()
-      if Util.size(items) == 0 then
-        jobListGrid.parent:clear()
-        jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'No items in system')
-        jobListGrid:sync()
+  if not craftingPaused then
+    local items = chestProvider:listItems()
+    if Util.size(items) == 0 then
+      jobListGrid.parent:clear()
+      jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'No items in system')
+      jobListGrid:sync()
 
-      else
-        local craftList = watchResources(items)
-        jobListGrid:setValues(craftList)
-        --jobListGrid:draw()
-        --jobListGrid:sync()
-        craftItems(craftList, items)
-        jobListGrid:update()
-        jobListGrid:draw()
-        jobListGrid:sync()
-        craftList = getAutocraftItems(items) -- autocrafted items don't show on job monitor
-        craftItems(craftList, items)
-      end
+    else
+      local craftList = watchResources(items)
+      jobListGrid:setValues(craftList)
+      --jobListGrid:draw()
+      --jobListGrid:sync()
+      craftItems(craftList, items)
+      jobListGrid:update()
+      jobListGrid:draw()
+      jobListGrid:sync()
+      craftList = getAutocraftItems(items) -- autocrafted items don't show on job monitor
+      craftItems(craftList, items)
     end
   end
-end
+end)
 
-UI:pullEvents(craftingThread)
+UI:pullEvents()
 jobListGrid.parent:reset()

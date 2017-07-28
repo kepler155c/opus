@@ -4,7 +4,7 @@ local Socket = require('socket')
 local MEProvider = require('meProvider')
 local Logger = require('logger')
 local Point = require('point')
-local process = require('process')
+local Event = require('event')
 
 if not device.wireless_modem then
   error('Modem is required')
@@ -15,14 +15,6 @@ Logger.setWirelessLogging()
 if not turtle then
   error('Can only be run on a turtle')
 end
-
-turtle.clearMoveCallback()
-
-local gps = GPS.getPointAndHeading()
-if not gps then
-  error('could not get gps location')
-end
-turtle.setPoint(gps)
 
 local blocks = { }
 local meProvider = MEProvider()
@@ -50,7 +42,7 @@ turtle.setMoveCallback(function(action, pt)
     for _,slot in pairs(slots) do
       if turtle.getItemCount(slot.index) ~= slot.qty then
         printError('Slots changed')
-        process:terminate()
+        Event.exitPullEvents()
       end
     end
   end
@@ -109,7 +101,8 @@ function gotoPoint(pt, doDetect)
   end
 
   if doDetect and not turtle.detectDown() then
-    error('Missing target')
+    printError('Missing target')
+    Event.exitPullEvents()
   end
 end
 
@@ -254,14 +247,14 @@ local function pickupHost(socket)
   end
 end
 
-process:newThread('pickup', function()
+Event.addRoutine(function()
   while true do
     print('waiting for connection on port 5222')
     local socket = Socket.server(5222)
 
     print('pickup: connection from ' .. socket.dhost)
 
-    process:newThread('pickup_connection', function() pickupHost(socket) end)
+    Event.addRoutine(function() pickupHost(socket) end)
   end
 end)
 
@@ -304,10 +297,7 @@ local function eachClosestEntry(t, fn)
   end
 end
 
-refuel()
-turtle.abort = false
-
-local deliveryThread = process:newThread('deliveries', function()
+Event.addRoutine(function()
 
   while true do
     if chestPt then
@@ -327,17 +317,17 @@ local deliveryThread = process:newThread('deliveries', function()
     end
     os.sleep(60)
   end
+
+  Event.exitPullEvents()
 end)
 
-turtle.run(function() 
+turtle.run(function()
 
-  while true do
-    local e = process:pullEvent()
-    if e == 'terminate' or deliveryThread:isDead() then
-      break
-    end
+  if not turtle.enableGPS() then
+    error('turtle: No GPS found')
   end
 
-end)
+  refuel()
+  Event.pullEvents()
 
-process:threadEvent('terminate')
+end)

@@ -18,7 +18,7 @@ if device and device.wireless_modem then
   Message.enable()
 end
 
-Event.addHandler('device_attach', function(event, deviceName)
+Event.on('device_attach', function(event, deviceName)
   if deviceName == 'wireless_modem' then
     Message.enable()
   end
@@ -41,7 +41,7 @@ function Message.removeHandler(h)
   end
 end
 
-Event.addHandler('modem_message',
+Event.on('modem_message',
   function(event, side, sendChannel, replyChannel, msg, distance)
     if msg and msg.type then -- filter out messages from other systems
       local id = replyChannel

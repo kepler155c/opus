@@ -62,12 +62,11 @@ function page.grid:getDisplayValues(row)
   return row
 end
 
-Event.addTimer(1, true, function()
+Event.onInterval(1, function()
   page.grid:update()
   page.grid:draw()
   page:sync()
 end)
 
 UI:setPage(page)
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

@@ -475,7 +475,7 @@ function Builder:getSupplies()
   return t
 end
 
-Event.addHandler('build', function()
+Event.on('build', function()
   Builder:build()
 end)
 

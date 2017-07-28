@@ -375,7 +375,7 @@ Message.addHandler('finished',
     Builder:finish()
   end)
 
-Event.addHandler('turtle_abort',
+Event.on('turtle_abort',
   function()
     turtle.abort = false
     turtle.status = 'aborting'

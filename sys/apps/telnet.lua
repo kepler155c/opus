@@ -30,7 +30,6 @@ end
 
 local w, h = ct.getSize()
 socket:write({
-  type = 'termInfo',
   width = w,
   height = h,
   isColor = ct.isColor(),
@@ -70,7 +69,7 @@ while true do
 
   if filter[event] then
 
-    if not socket:write({ type = 'shellRemote', event = e }) then
+    if not socket:write(e) then
       socket:close()
       break
     end

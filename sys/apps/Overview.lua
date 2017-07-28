@@ -476,7 +476,7 @@ UI:setPages({
   main = page,
 })
 
-Event.addHandler('os_register_app', function()
+Event.on('os_register_app', function()
   loadApplications()
   page:refresh()
   page:draw()

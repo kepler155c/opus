@@ -66,8 +66,20 @@ function Manager:init(args)
   local shift = false
   local mouseDragged = false
   local pages = { }
+  local running = false
 
-  Event.on('term_resize', function(h, side)
+  -- single thread all input events
+  local function singleThread(event, fn)
+    Event.on(event, function(...)
+      if not running then
+        running = true
+        fn(...)
+        running = false
+      end
+    end)
+  end
+
+  singleThread('term_resize', function(h, side)
     if self.currentPage then
       -- the parent doesn't have any children set...
       -- that's why we have to resize both the parent and the current page
@@ -81,7 +93,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('mouse_scroll', function(h, direction, x, y)
+  singleThread('mouse_scroll', function(h, direction, x, y)
     if self.target then
       local event = self:pointToChild(self.target, x, y)
       local directions = {
@@ -97,7 +109,7 @@ function Manager:init(args)
   end)
 
   -- this should be moved to the device !
-  Event.on('monitor_touch', function(h, side, x, y)
+  singleThread('monitor_touch', function(h, side, x, y)
     if self.currentPage then
       if self.currentPage.parent.device.side == side then
         self:click(1, x, y)
@@ -105,7 +117,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('mouse_click', function(h, button, x, y)
+  singleThread('mouse_click', function(h, button, x, y)
 
     mouseDragged = false
     if button == 1 and shift and control then -- debug hack
@@ -123,7 +135,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('mouse_up', function(h, button, x, y)
+  singleThread('mouse_up', function(h, button, x, y)
 
     if self.currentPage and not mouseDragged then
       if not self.currentPage.parent.device.side then
@@ -132,7 +144,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('mouse_drag', function(h, button, x, y)
+  singleThread('mouse_drag', function(h, button, x, y)
 
     mouseDragged = true
     if self.target then
@@ -146,7 +158,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('paste', function(h, text)
+  singleThread('paste', function(h, text)
     if clipboard.isInternal() then
       text = clipboard.getData()
     end
@@ -156,7 +168,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('char', function(h, ch)
+  singleThread('char', function(h, ch)
     control = false
     if self.currentPage then
       self:inputEvent(self.currentPage.focused, { type = 'key', key = ch })
@@ -164,7 +176,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('key_up', function(h, code)
+  singleThread('key_up', function(h, code)
     if code == keys.leftCtrl or code == keys.rightCtrl then
       control = false
     elseif code == keys.leftShift or code == keys.rightShift then
@@ -172,7 +184,7 @@ function Manager:init(args)
     end
   end)
 
-  Event.on('key', function(h, code)
+  singleThread('key', function(h, code)
     local ch = keys.getName(code)
     if not ch then
       return
@@ -337,6 +349,9 @@ function Manager:click(button, x, y)
         button = 3
         self.doubleClickTimer = nil
       else
+if self.doubleClickTimer then
+debug(c - self.doubleClickTimer)
+end
         self.doubleClickTimer = c
         self.doubleClickX = x
         self.doubleClickY = y
