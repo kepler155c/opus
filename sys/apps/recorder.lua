@@ -71,28 +71,23 @@ if #filename == 0 then
 end
 
 print('Initializing...')
-fs.mount('.recGif', 'ramfs', 'directory')
-fs.mount('.recGif/GIF', 'urlfs', 'http://pastebin.com/raw/5uk9uRjC')
-fs.mount('.recGif/package', 'urlfs', 'http://pastebin.com/raw/cUYTGbpb')
 
 -- don't pollute global env
-local function loadAPI(filename, env)
+-- convert these to require style apis
+local function loadAPI(url, env)
 	local apiEnv = Util.shallowCopy(env)
 	apiEnv.shell = nil
 	apiEnv.multishell = nil
 	setmetatable(apiEnv, { __index = _G })
-	local fn = loadfile(filename, apiEnv)
+	local fn = Util.loadUrl(url, apiEnv)
 	fn()
 	return apiEnv
 end
 
-package = loadAPI('.recGif/package', getfenv(1))
-GIF     = loadAPI('.recGif/GIF',     getfenv(1))
+bbpack  = loadAPI('http://pastebin.com/raw/PdrJjb5S', getfenv(1))
+GIF     = loadAPI('http://pastebin.com/raw/5uk9uRjC', getfenv(1))
 
-local oldDir = shell.dir()
-shell.setDir('.recGif')
-shell.run("package get Y0eLUPtr")
-shell.setDir(oldDir)
+Util.runUrl(getfenv(1), 'http://pastebin.com/raw/cUYTGbpb', 'get', 'Y0eLUPtr')
 
 local function snooze()
 	local myEvent = tostring({})
@@ -239,7 +234,7 @@ snooze()
 
 -- Load font data:
 do
-	local ascii, counter = GIF.toPaintutils(GIF.flattenGIF(GIF.loadGIF(".recGif/ascii.gif"))), 0
+	local ascii, counter = GIF.toPaintutils(GIF.flattenGIF(GIF.loadGIF("ascii.gif"))), 0
 	local newFont, ybump, xbump = #ascii ~= #ascii[1], 0, 0
 	charW, charH, chars = newFont and #ascii[1] / 16 or #ascii[1] * 3 / 64, #ascii / 16, {}
 
@@ -534,6 +529,6 @@ buffer = nil
 
 GIF.saveGIF(image, filename)
 
-fs.unmount('.recGif')
+fs.delete('ascii.gif')
 
 print("Encode complete")

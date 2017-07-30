@@ -61,19 +61,20 @@ local function nextUID()
   return Event.uid - 1
 end
 
-function Event.on(type, fn)
-  local event = Event.types[type]
-  if not event then
-    event = { }
-    Event.types[type] = event
+function Event.on(event, fn)
+
+  local handlers = Event.types[event]
+  if not handlers then
+    handlers = { }
+    Event.types[event] = handlers
   end
 
   local handler = {
     uid     = nextUID(),
-    event   = type,
+    event   = event,
     fn      = fn,
   }
-  event[handler.uid] = handler
+  handlers[handler.uid] = handler
   setmetatable(handler, { __index = Routine })
 
   return handler
@@ -88,14 +89,15 @@ end
 local function addTimer(interval, recurring, fn)
 
   local timerId = os.startTimer(interval)
+  local handler
 
-  return Event.on('timer', function(t, id)
+  handler = Event.on('timer', function(t, id)
     if timerId == id then
       fn(t, id)
       if recurring then
         timerId = os.startTimer(interval)
       else
-        Event.off(t)
+        Event.off(handler)
       end
     end
   end)
@@ -160,26 +162,22 @@ function Event.exitPullEvents()
   os.sleep(0)
 end
 
-local function processHandlers(e, ...)
+local function processHandlers(event)
 
-  local event = Event.types[e]
-  if event then
-
-    local keys = Util.keys(event)
-    for _,key in pairs(keys) do
-
-      local h = event[key]
-      if h and not h.co then
+  local handlers = Event.types[event]
+  if handlers then
+    for _,h in pairs(handlers) do
+      if not h.co then
         -- callbacks are single threaded (only 1 co per handler)
         h.co = coroutine.create(h.fn)
         Event.routines[h.uid] = h
-        h:resume(h, ...)
       end
     end
   end
 end
 
 local function processRoutines(...)
+
   local keys = Util.keys(Event.routines)
   for _,key in ipairs(keys) do
     local r = Event.routines[key]
@@ -194,7 +192,7 @@ function Event.pullEvent(eventType)
   while true do
     local e = { os.pullEventRaw() }
 
-    processHandlers(table.unpack(e))
+    processHandlers(e[1])
     processRoutines(table.unpack(e))
 
     if Event.terminate or e[1] == 'terminate' then

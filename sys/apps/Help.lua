@@ -41,7 +41,9 @@ local function showHelp(name)
   UI.term:reset()
   shell.run('help ' .. name)
   print('Press enter to return')
-  read()
+  repeat
+    local _, k = os.pullEvent('key_up')
+  until k == keys.enter
 end
 
 function page:eventHandler(event)
