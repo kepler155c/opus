@@ -321,7 +321,6 @@ function page:eventHandler(event)
 
   elseif event.type == 'delete' then
     local focused = page:getFocused()
-    debug(focused.app)
     if focused.app then
       focused.app.disabled = true
       local filename = focused.app.filename or fs.combine(REGISTRY_DIR, focused.app.key)

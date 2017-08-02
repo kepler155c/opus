@@ -349,9 +349,6 @@ function Manager:click(button, x, y)
         button = 3
         self.doubleClickTimer = nil
       else
-if self.doubleClickTimer then
-debug(c - self.doubleClickTimer)
-end
         self.doubleClickTimer = c
         self.doubleClickX = x
         self.doubleClickY = y

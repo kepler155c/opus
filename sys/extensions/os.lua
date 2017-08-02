@@ -158,8 +158,6 @@ end
 function os.registerApp(app, key)
 
   app.key = SHA1.sha1(key)
-debug(fs.combine(REGISTRY_DIR, app.key))
-debug(app)
   Util.writeTable(fs.combine(REGISTRY_DIR, app.key), app)
   os.queueEvent('os_register_app')
 end

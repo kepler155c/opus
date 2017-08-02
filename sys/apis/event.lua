@@ -1,5 +1,3 @@
-local Util = require('util')
-
 local Event = {
   uid       = 1,       -- unique id for handlers
   routines  = { },     -- coroutines
@@ -26,10 +24,7 @@ end
 function Routine:resume(event, ...)
 
   if not self.co then
-    debug(event)
-    debug(self)
-    debug(getfenv(1))
-    error('Cannot resume a dead routine')
+    error('Cannot resume a dead routine\n' .. Util.tostring(self))
   end
 
   if not self.filter or self.filter == event or event == "terminate" then
@@ -44,10 +39,7 @@ function Routine:resume(event, ...)
     end
 
     if not s and event ~= 'terminate' then
-      debug({s, m})
-      debug(self)
-      debug(getfenv(1))
-      error('\n' .. (m or 'Error processing event'))
+      error('\n' .. (m or 'Error processing event') .. '\n' .. Util.tostring(self))
     end
 
     return s, m
@@ -101,6 +93,8 @@ local function addTimer(interval, recurring, fn)
       end
     end
   end)
+
+  return handler
 end
 
 function Event.onInterval(interval, fn)
@@ -176,9 +170,17 @@ local function processHandlers(event)
   end
 end
 
+local function tokeys(t)
+  local keys = { }
+  for k in pairs(t) do
+    keys[#keys+1] = k
+  end
+  return keys
+end
+
 local function processRoutines(...)
 
-  local keys = Util.keys(Event.routines)
+  local keys = tokeys(Event.routines)
   for _,key in ipairs(keys) do
     local r = Event.routines[key]
     if r then
