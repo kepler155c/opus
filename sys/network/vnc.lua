@@ -1,5 +1,5 @@
 local Socket = require('socket')
-local process = require('process')
+local Event  = require('event')
 
 local function wrapTerm(socket, termInfo)
   local methods = { 'blit', 'clear', 'clearLine', 'setCursorPos', 'write',
@@ -13,7 +13,10 @@ local function wrapTerm(socket, termInfo)
     socket.term[k] = function(...)
       if not socket.queue then
         socket.queue = { }
-        os.queueEvent('vnc_flush')
+        Event.onTimeout(0, function()
+          socket:write(socket.queue)
+          socket.queue = nil
+        end)
       end
       table.insert(socket.queue, {
         f = k,
@@ -32,16 +35,6 @@ local function vncHost(socket, termInfo)
 
   wrapTerm(socket, termInfo)
 
-  local queueThread = process:newThread('queue_writer', function()
-    while true do
-      os.pullEvent('vnc_flush')
-      if socket.queue then
-        socket:write(socket.queue)
-        socket.queue = nil
-      end
-    end
-  end)
-
   os.queueEvent('term_resize')
 
   while true do
@@ -56,15 +49,13 @@ local function vncHost(socket, termInfo)
     end
   end
 
-  queueThread:terminate()
-
   for k,v in pairs(socket.oldTerm) do
     socket.term[k] = v
   end
   os.queueEvent('term_resize')
 end
 
-process:newThread('vnc_server', function()
+Event.addRoutine(function()
 
   print('vnc: listening on port 5900')
 

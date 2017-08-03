@@ -1,6 +1,6 @@
 local Socket = require('socket')
 local GPS = require('gps')
-local process = require('process')
+local Event = require('event')
 
 -- move this into gps api
 local gpsRequested
@@ -77,42 +77,37 @@ local function snmpConnection(socket)
   end
 end
 
-process:newThread('snmp_server', function()
+Event.addRoutine(function()
 
   print('snmp: listening on port 161')
 
   while true do
     local socket = Socket.server(161)
-    print('snmp: connection from ' .. socket.dhost)
 
-    process:newThread('snmp_connection', function()
+    Event.addRoutine(function()
+      print('snmp: connection from ' .. socket.dhost)
       snmpConnection(socket)
       print('snmp: closing connection to ' .. socket.dhost)
     end)
   end
 end)
 
-process:newThread('discovery_server', function()
-  device.wireless_modem.open(999)
+device.wireless_modem.open(999)
+print('discovery: listening on port 999')
 
-  --os.sleep(1) -- allow services a chance to startup
-  print('discovery: listening on port 999')
+Event.on('modem_message', function(e, s, sport, id, info, distance)
 
-  while true do
-    local e, s, sport, id, info, distance = os.pullEvent('modem_message')
+  if sport == 999 and tonumber(id) and type(info) == 'table' then
+    if not network[id] then
+      network[id] = { }
+    end
+    Util.merge(network[id], info)
+    network[id].distance = distance
+    network[id].timestamp = os.clock()
 
-    if sport == 999 and tonumber(id) and type(info) == 'table' then
-      if not network[id] then
-        network[id] = { }
-      end
-      Util.merge(network[id], info)
-      network[id].distance = distance
-      network[id].timestamp = os.clock()
-
-      if not network[id].active then
-        network[id].active = true
-        os.queueEvent('network_attach', network[id])
-      end
+    if not network[id].active then
+      network[id].active = true
+      os.queueEvent('network_attach', network[id])
     end
   end
 end)
@@ -135,33 +130,20 @@ local function sendInfo()
 end
 
 -- every 10 seconds, send out this computer's info
-process:newThread('discovery_heartbeat', function()
-  --os.sleep(1)
-
-  while true do
-    sendInfo()
-
-    for _,c in pairs(_G.network) do
-      local elapsed = os.clock()-c.timestamp
-      if c.active and elapsed > 15 then
-        c.active = false
-        os.queueEvent('network_detach', c)
-      end
+Event.onInterval(10, function()
+  sendInfo()
+  for _,c in pairs(_G.network) do
+    local elapsed = os.clock()-c.timestamp
+    if c.active and elapsed > 15 then
+      c.active = false
+      os.queueEvent('network_detach', c)
     end
-
-    os.sleep(10)
   end
 end)
 
-if os.isTurtle() then
-  process:newThread('turtle_heartbeat', function()
-
-    while true do
-      os.pullEvent('turtle_response')
-      if turtle.status ~= info.status or
-         turtle.fuel ~= info.fuel then
-        sendInfo()
-      end
-    end
-  end)
-end
+Event.on('turtle_response', function()
+  if turtle.status ~= info.status or
+     turtle.fuel ~= info.fuel then
+    sendInfo()
+  end
+end)

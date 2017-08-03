@@ -6,7 +6,8 @@ multishell.setTitle(multishell.getCurrent(), 'Net Daemon')
 _G.network = { }
 
 local function netUp()
-  local process = require('process')
+  require = requireInjector(getfenv(1))
+  local Event = require('event')
 
   local files = fs.list('/sys/network')
 
@@ -19,19 +20,20 @@ local function netUp()
     end
   end
 
-  while true do
-    local e = process:pullEvent('device_detach')
-    if not device.wireless_modem or e == 'terminate' then
-      for _,c in pairs(network) do
-        c.active = false
-        os.queueEvent('network_detach', c)
-      end
-      os.queueEvent('network_down')
-      process:pullEvent('network_down')
-      process:threadEvent('terminate')
-      break
+  Event.on('device_detach', function()
+    if not device.wireless_modem then
+      Event.exitPullEvents()
     end
+  end)
+
+  Event.pullEvents()
+
+  for _,c in pairs(network) do
+    c.active = false
+    os.queueEvent('network_detach', c)
   end
+  os.queueEvent('network_down')
+  Event.pullEvent('network_down')
 
   Util.clear(_G.network)
 end

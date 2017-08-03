@@ -1,5 +1,5 @@
 local Socket = require('socket')
-local process = require('process')
+local Event = require('event')
 
 local fileUid = 0
 local fileHandles = { }
@@ -57,31 +57,26 @@ local function sambaConnection(socket)
   print('samba: Connection closed')
 end
 
-process:newThread('samba_server', function()
+Event.addRoutine(function()
 
   print('samba: listening on port 139')
 
   while true do
     local socket = Socket.server(139)
 
-    print('samba: connection from ' .. socket.dhost)
-
-    process:newThread('samba_connection', function()
+    Event.addRoutine('samba_connection', function()
+      print('samba: connection from ' .. socket.dhost)
       sambaConnection(socket)
       print('samba: closing connection to ' .. socket.dhost)
     end)
   end
 end)
 
-process:newThread('samba_manager', function()
-  while true do
-    local e, computer = os.pullEvent()
+Event.on('network_attach', function(e, computer)
+  fs.mount(fs.combine('network', computer.label), 'netfs', computer.id)
+end)
 
-    if e == 'network_attach' then
-      fs.mount(fs.combine('network', computer.label), 'netfs', computer.id)
-    elseif e == 'network_detach' then
-      print('samba: detaching ' .. computer.label)
-      fs.unmount(fs.combine('network', computer.label))
-    end
-  end
+Event.on('network_detach', function(e, computer)
+  print('samba: detaching ' .. computer.label)
+  fs.unmount(fs.combine('network', computer.label))
 end)

@@ -1,8 +1,8 @@
 local Socket = require('socket')
-local process = require('process')
+local Event  = require('event')
 local Crypto = require('crypto')
 
-process:newThread('trust_server', function()
+Event.addRoutine(function()
 
   print('trust: listening on port 19')
   while true do

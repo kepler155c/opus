@@ -1,13 +1,19 @@
 local Socket = require('socket')
-local process = require('process')
+local Event = require('event')
 
-local function telnetHost(socket, termInfo)
+local function telnetHost(socket)
 
   require = requireInjector(getfenv(1))
   local Event = require('event')
   local methods = { 'clear', 'clearLine', 'setCursorPos', 'write', 'blit',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
                     'setBackgroundColour', 'scroll', 'setCursorBlink', }
+
+  local termInfo = socket:read(5)
+  if not termInfo then
+    printtError('read failed')
+    return
+  end
 
   socket.term = term.current()
   local oldWindow = Util.shallowCopy(socket.term)
@@ -47,7 +53,6 @@ local function telnetHost(socket, termInfo)
         Event.exitPullEvents()
         break
       end
-
       shellThread:resume(table.unpack(data))
     end
   end)
@@ -58,7 +63,7 @@ local function telnetHost(socket, termInfo)
   shellThread:terminate()
 end
 
-process:newThread('telnet_server', function()
+Event.addRoutine(function()
 
   print('telnet: listening on port 23')
   while true do
@@ -66,15 +71,12 @@ process:newThread('telnet_server', function()
 
     print('telnet: connection from ' .. socket.dhost)
 
-    local termInfo = socket:read(5)
-    if termInfo then
-      multishell.openTab({
-        fn = telnetHost,
-        args = { socket, termInfo },
-        env = getfenv(1),
-        title = 'Telnet Client',
-        hidden = true,
-      })
-    end
+    multishell.openTab({
+      fn = telnetHost,
+      args = { socket },
+      env = getfenv(1),
+      title = 'Telnet Client',
+      hidden = true,
+    })
   end
 end)
