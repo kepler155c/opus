@@ -44,25 +44,6 @@ function nativefs.list(node, dir, full)
     error('Not a directory')
   end
 
-  if full then
-    local t = { }
-    pcall(function()
-      for _,f in ipairs(files) do
-        local fullName = fs.combine(dir, f)
-        local file = {
-          name = f,
-          isDir = fs.isDir(fullName),
-          isReadOnly = fs.isReadOnly(fullName),
-        }
-        if not file.isDir then
-          file.size = fs.getSize(fullName)
-        end
-        table.insert(t, file)
-      end
-    end)
-    return t
-  end
-
   return files
 end
 
@@ -161,6 +142,32 @@ function fs.complete(partial, dir, includeFiles, includeSlash)
     return node.fs.complete(node, partial, dir, includeFiles, includeSlash)
   end
   return fs.native.complete(partial, dir, includeFiles, includeSlash)
+end
+
+function fs.listEx(dir)
+  local node = getNode(dir)
+  if node.fs.listEx then
+    return node.fs.listEx(node, dir)
+  end
+
+  local t = { }
+  local files = node.fs.list(node, dir)
+
+  pcall(function()
+    for _,f in ipairs(files) do
+      local fullName = fs.combine(dir, f)
+      local file = {
+        name = f,
+        isDir = fs.isDir(fullName),
+        isReadOnly = fs.isReadOnly(fullName),
+      }
+      if not file.isDir then
+        file.size = fs.getSize(fullName)
+      end
+      table.insert(t, file)
+    end
+  end)
+  return t
 end
 
 function fs.copy(s, t)

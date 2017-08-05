@@ -67,7 +67,7 @@ while true do
 
   while true do
     local e = Event.pullEvent()
-    if e == 'terminate' then
+    if e[1] == 'terminate' then
     	break
     end
     if not socket.connected then

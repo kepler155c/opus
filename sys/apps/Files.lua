@@ -204,7 +204,7 @@ function Browser:updateDirectory(dir)
   dir.totalSize = 0
   Util.clear(dir.files)
 
-  local files = fs.list(dir.name, true)
+  local files = fs.listEx(dir.name)
   if files then
     dir.size = #files
     for _, file in pairs(files) do

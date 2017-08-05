@@ -130,7 +130,7 @@ function MEProvider:insert(slot, qty)
     print(m)
     Logger.log('MEProvider', 'Insert failed, trying again')
     sleep(1)
-    s, m = pcall(function() self.pullItem('up', slot, qty) end)
+    s, m = pcall(function() self.pullItem(self.oside, slot, qty) end)
     if not s and m then
       print('MEProvider:pullItem')
       print(m)

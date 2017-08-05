@@ -1,7 +1,7 @@
 local linkfs = { }
 
 local methods = { 'exists', 'getFreeSpace', 'getSize', 
-  'isDir', 'isReadOnly', 'list', 'makeDir', 'open', 'getDrive' }
+  'isDir', 'isReadOnly', 'list', 'listEx', 'makeDir', 'open', 'getDrive' }
 
 for _,m in pairs(methods) do
   linkfs[m] = function(node, dir, ...)

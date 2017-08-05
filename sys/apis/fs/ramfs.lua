@@ -47,18 +47,8 @@ end
 function ramfs.list(node, dir, full)
   if node.nodes and node.mountPoint == dir then
     local files = { }
-    if full then
-      for f,n in pairs(node.nodes) do
-        table.insert(files, {
-          name = f,
-          isDir = fs.isDir(fs.combine(dir, f)),
-          size = fs.getSize(fs.combine(dir, f)),
-        })
-      end
-    else
-      for k,v in pairs(node.nodes) do
-        table.insert(files, k)
-      end
+    for k,v in pairs(node.nodes) do
+      table.insert(files, k)
     end
     return files
   end

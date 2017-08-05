@@ -64,7 +64,7 @@ Event.addRoutine(function()
   while true do
     local socket = Socket.server(139)
 
-    Event.addRoutine('samba_connection', function()
+    Event.addRoutine(function()
       print('samba: connection from ' .. socket.dhost)
       sambaConnection(socket)
       print('samba: closing connection to ' .. socket.dhost)

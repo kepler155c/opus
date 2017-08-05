@@ -29,7 +29,7 @@ local function remoteCommand(node, msg)
   error('netfs: Connection failed', 2)
 end
 
-local methods = { 'delete', 'exists', 'getFreeSpace', 'makeDir' }
+local methods = { 'delete', 'exists', 'getFreeSpace', 'makeDir', 'list', 'listEx' }
 
 local function resolveDir(dir, node)
   dir = dir:gsub(node.mountPoint, '', 1)
@@ -123,16 +123,6 @@ function netfs.find(node, spec)
   end
 
   return list
-end
-
-function netfs.list(node, dir, full)
-  dir = resolveDir(dir, node)
-
-  local r = remoteCommand(node, {
-    fn = 'list',
-    args = { dir, full },
-  })
-  return r
 end
 
 function netfs.move(node, s, t)
