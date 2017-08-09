@@ -24,6 +24,9 @@ function ChestProvider:init(args)
   Util.merge(self, args)
   
   local chest = Peripheral.getBySide(self.wrapSide)
+  if not chest then
+    chest = Peripheral.getByMethod('list')
+  end
   if chest then
     Util.merge(self, chest)
   end

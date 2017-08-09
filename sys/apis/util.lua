@@ -168,10 +168,10 @@ function Util.findAll(t, name, value)
 end
 
 function Util.shallowCopy(t)
-  local t2 = {}
+  local t2 = { }
   for k,v in pairs(t) do
-    t2[k] = v 
-  end 
+    t2[k] = v
+  end
   return t2
 end
 

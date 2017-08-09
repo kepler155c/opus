@@ -1,4 +1,4 @@
-if not turtle then
+if not turtle and not commands then
   error('Must be run on a turtle')
 end
 
@@ -6,7 +6,6 @@ require = requireInjector(getfenv(1))
 local class = require('class')
 local Event = require('event')
 local Message = require('message')
-local Logger = require('logger')
 local UI = require('ui')
 local Schematic = require('schematic')
 local TableDB = require('tableDB')
@@ -19,14 +18,6 @@ if os.getVersion() == 1.8 then
   ChestProvider = require('chestProvider18')
 end
 
-Logger.filter('modem_send', 'event', 'ui')
-
-if device.wireless_modem then
-  Logger.setWirelessLogging()
-else
-  Logger.setDaemonLogging()
-end
-
 local BUILDER_DIR = 'usr/builder'
 
 local schematic = Schematic()
@@ -34,6 +25,7 @@ local blocks = Blocks({ dir = BUILDER_DIR })
 
 local Builder = {
   version = '1.71',
+  isCommandComputer = not turtle,
   slots = { },
   index = 1,
   mode = 'build',
@@ -54,7 +46,7 @@ subDB = TableDB({
 function subDB:load()
   if fs.exists(self.fileName) then
     TableDB.load(self)
-  else
+  elseif not Builder.isCommandComputer then
     self:seedDB()
   end
 end
@@ -197,22 +189,24 @@ function Builder:getBlockCounts()
   local blocks = { }
 
   -- add a couple essential items to the supply list to allow replacements
-  local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
-  wrench.qty = 0
-  wrench.need = 1
-  blocks[wrench.id .. ':' .. wrench.dmg] = wrench
+  if not self.isCommandComputer then
+    local wrench = subDB:getSubstitutedItem('SubstituteAWrench', 0)
+    wrench.qty = 0
+    wrench.need = 1
+    blocks[wrench.id .. ':' .. wrench.dmg] = wrench
 
-  local fuel = subDB:getSubstitutedItem(Builder.fuelItem.id, Builder.fuelItem.dmg)
-  fuel.qty = 0
-  fuel.need = 1
-  blocks[fuel.id .. ':' .. fuel.dmg] = fuel
+    local fuel = subDB:getSubstitutedItem(Builder.fuelItem.id, Builder.fuelItem.dmg)
+    fuel.qty = 0
+    fuel.need = 1
+    blocks[fuel.id .. ':' .. fuel.dmg] = fuel
 
-  blocks['minecraft:piston:0'] = {
-    id = 'minecraft:piston',
-    dmg = 0,
-    qty = 0,
-    need = 1,
-  }
+    blocks['minecraft:piston:0'] = {
+      id = 'minecraft:piston',
+      dmg = 0,
+      qty = 0,
+      need = 1,
+    }
+  end
 
   for k,b in ipairs(schematic.blocks) do
     if k >= self.index then
@@ -379,6 +373,7 @@ function Builder:substituteBlocks(throttle)
     b.dmg = pb.dmg
     b.direction = pb.direction
     b.extra = pb.extra
+    b.odmg = pb.odmg
 
     local sub = subDB:get({ b.id, b.dmg })
     if sub then
@@ -409,7 +404,6 @@ end
 function Builder:dumpInventoryWithCheck()
 
   while not self:dumpInventory() do
-    Logger.log('builder', 'Unable to dump inventory')
     print('Provider is full or missing - make space or replace')
     print('Press enter to continue')
     turtle.setHeading(0)
@@ -467,8 +461,6 @@ function Builder:getSupplies()
     end
     if s.qty < s.need then
       table.insert(t, s)
-      local name = s.name or s.id .. ':' .. s.dmg
-      Logger.log('builder', 'Need %d %s', s.need - s.qty, name)
     end
   end
 
@@ -481,14 +473,13 @@ end)
 
 function Builder:refuel()
   while turtle.getFuelLevel() < 4000 and self.fuelItem do
-    Logger.log('builder', 'Refueling')
+    print('Refueling')
     turtle.select(1)
 
     local fuel = subDB:getSubstitutedItem(self.fuelItem.id, self.fuelItem.dmg)
 
     self.itemProvider:provide(fuel, 64, 1)
     if turtle.getItemCount(1) == 0 then
-      Logger.log('builder', 'Out of fuel, add fuel to chest/ME system')
       print('Out of fuel, add fuel to chest/ME system')
       turtle.setHeading(0)
       turtle.status = 'waiting'
@@ -668,7 +659,6 @@ function Builder:resupply()
   else
     turtle.setHeading(0)
     self:autocraft(supplies)
-    Logger.log('builder', 'Waiting for supplies')
     supplyPage:setSupplies(supplies)
     UI:setPage('supply')
   end
@@ -850,7 +840,6 @@ end
 
 function Builder:goto(x, z, y, heading)
   if not turtle.goto(x, z, y, heading) then
-    Logger.log('builder', 'stuck')
     print('stuck')
     print('Press enter to continue')
     os.sleep(1)
@@ -1080,7 +1069,7 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     b.placed = self:place(slot)
   end
 
-  if b.extra then
+  if b.extra and b.extra.facing then
     self:rotateBlock('down', b.extra.facing)
   end
 
@@ -1101,7 +1090,6 @@ function Builder:reloadSchematic(throttle)
 end
 
 function Builder:log(...)
-  Logger.log('builder', ...)
   Util.print(...)
 end
 
@@ -1114,10 +1102,6 @@ function Builder:logBlock(index, b)
 
   if device.wireless_modem then
     Message.broadcast('builder', { x = b.x, y = b.y, z = b.z, heading = b.heading })
-  end
-
-  if b.info then
-    Logger.debug(b.info)
   end
 end
 
@@ -1152,13 +1136,7 @@ function Builder:findTravelPlane(index)
       y = y + 1
     end
     if not travelPlane or y > travelPlane then
---      if not b.twoHigh then
-        travelPlane = y
-
-        Logger.log('builder', 'adjusting travelPlane')
-        Logger.log('builder', b)
-        --read()
---      end
+      travelPlane = y
     elseif travelPlane and travelPlane - y > 2 then
       break
     end
@@ -1168,7 +1146,7 @@ function Builder:findTravelPlane(index)
 end
 
 function Builder:gotoTravelPlane(travelPlane)
-  if travelPlane > turtle.getPoint().y then
+  if travelPlane > turtle.point.y then
     turtle.gotoY(travelPlane)
   end
 end
@@ -1179,12 +1157,15 @@ function Builder:build()
   local last = #schematic.blocks
   local travelPlane = 0
   local minFuel = schematic.height + schematic.width + schematic.length + 100
+  local throttle = Util.throttle()
+
+  --commands.execAsync("fill " .. (x1 - 4) .. " " .. y .. " " .. (z1 - 4) .. " " .. (x1 + 131) .. " " .. y .. " " .. (z1 + 131) .. " minecraft:air")
 
   if self.mode == 'destroy' then
     direction = -1
     last = 1
     turtle.status = 'destroying'
-  else
+  elseif self.isCommandComputer then
     travelPlane = self:findTravelPlane(self.index)
     turtle.status = 'building'
     if not self.confirmFacing then
@@ -1200,11 +1181,51 @@ function Builder:build()
 
   for i = self.index, last, direction do
     self.index = i
+
     local b = schematic:getComputedBlock(i)
 
     if b.id ~= 'minecraft:air' then
 
-      if self.mode == 'destroy' then
+      if self.isCommandComputer then
+        self:logBlock(self.index, b)
+
+        local id = b.id
+        if self.mode == 'destroy' then
+          id = 'minecraft:air'
+        end
+
+        local function placeBlock(id, dmg, x, y, z)
+
+          local cx, cy, cz = commands.getBlockPosition()
+
+          local command = table.concat({
+            "setblock",
+            cx + x + 1,
+            "~" .. y,
+            cz + z + 1,
+            id,
+            dmg,
+          }, ' ')
+
+          commands.execAsync(command)
+
+          local result = { os.pullEvent("task_complete") }
+          if not result[4] then
+            Util.print(result[5])
+            if self.mode ~= 'destroy' then
+              read()
+            end
+          end
+        end
+
+        placeBlock(id, b.odmg, b.x, b.y, b.z)
+
+        if b.extra and b.extra.door then
+          local _, doorTop = schematic:findIndexAt(b.x, b.z, b.y + 1, true)
+          placeBlock(id, doorTop.odmg, b.x, b.y + 1, b.z)
+        end
+
+      elseif self.mode == 'destroy' then
 
         b.heading = nil -- don't make the supplier follow the block heading
         self:logBlock(self.index, b)
@@ -1217,7 +1238,6 @@ function Builder:build()
         -- if no supplier, then should fill all slots
 
         if turtle.getItemCount(self.resourceSlots) > 0 or turtle.getFuelLevel() < minFuel then
-          Logger.log('builder', 'Dropping off inventory')
           if turtle.getFuelLevel() < minFuel or not self:inAirDropoff() then
             turtle.gotoLocation('supplies')
             os.sleep(.1) -- random 'Computer is not connected' error...
@@ -1265,13 +1285,16 @@ function Builder:build()
         if b.placed then
           slot.qty = slot.qty - 1
         else
-          Logger.log('builder', 'failed to place block')
           print('failed to place block')
         end
       end
-      self:saveProgress(self.index+1)
-    elseif (i % 50) == 0 then -- is Air
-      os.sleep(0) -- sleep in case there are a large # of skipped blocks
+      if self.mode == 'destroy' then
+        self:saveProgress(math.max(self.index - 1, 1))
+      else
+        self:saveProgress(self.index + 1)
+      end
+    else
+      throttle() -- sleep in case there are a large # of skipped blocks
     end
 
     if turtle.abort then
@@ -1287,23 +1310,26 @@ function Builder:build()
     end
   end
 
-  Message.broadcast('finished')
-  self:gotoTravelPlane(travelPlane)
-  turtle.gotoLocation('supplies')
-  turtle.setHeading(0)
-  Builder:dumpInventory()
+  if device.wireless_modem then
+    Message.broadcast('finished')
+  end
+  if not self.isCommandComputer then
+    self:gotoTravelPlane(travelPlane)
+    turtle.gotoLocation('supplies')
+    turtle.setHeading(0)
+    Builder:dumpInventory()
 
-  for i = 1, 4 do
-    turtle.turnRight()
+    for i = 1, 4 do
+      turtle.turnRight()
+    end
   end
 
 --self.index = 1
 --os.queueEvent('build')
-  Event.exitPullEvents()
-  UI.term:reset()
+  --UI.term:reset()
   fs.delete(schematic.filename .. '.progress')
-  Logger.log('builder', 'Finished')
   print('Finished')
+  Event.exitPullEvents()
 end
 
 --[[-- blankPage --]]--
@@ -1792,13 +1818,22 @@ function listingPage:manageBlock(selected)
 end
 
 --[[-- startPage --]]--
+
+local wy = 2
+local my = 4
+
+if UI.term.width < 30 then
+  wy = 9
+  my = 2
+end
+
 local startPage = UI.Page {
   -- titleBar = UI.TitleBar({ title = 'Builder v' .. Builder.version }),
   window = UI.Window {
     x = UI.term.width-16,
-    y = 2,
+    y = wy,
     width = 16,
-    height = UI.term.height-2,
+    height = 9,
     backgroundColor = colors.gray,
     grid = UI.Grid {
       columns = {
@@ -1818,7 +1853,8 @@ local startPage = UI.Page {
   },
   menu = UI.Menu {
     x = 2,
-    y = 4,
+    y = my,
+    height = 7,
     menuItems = {
       { prompt = 'Set starting level', event = 'startLevel' },
       { prompt = 'Set starting block', event = 'startBlock' },
@@ -1845,7 +1881,7 @@ function startPage:draw()
     { name = 'mode', value = Builder.mode },
     { name = 'start', value = Builder.index },
     { name = 'blocks', value = #schematic.blocks },
-    { name = 'fuel', value = fuel },
+    --{ name = 'fuel', value = fuel },
     { name = 'facing', value = Builder.facing },
     { name = 'length', value = schematic.length },
     { name = 'width', value = schematic.width },
@@ -2016,6 +2052,39 @@ if not Builder.itemProvider:isValid() then
   end
 end
 
+if commands then
+  turtle = {
+    policies = { },
+    point = { x = -1, y = 0, z = -1, heading = 0 },
+    getFuelLevel = function() return 20000 end,
+    select = function() end,
+    getItemCount = function() return 0 end,
+    getHeadingInfo = function(heading)
+      local headings = {
+        [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
+        [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
+        [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
+        [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
+        [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
+        [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  }
+      }
+      local namedHeadings = {
+        east  = headings[0],
+        south = headings[1],
+        west  = headings[2],
+        north = headings[3],
+        up    = headings[4],
+        down  = headings[5]
+      }
+      if heading and type(heading) == 'string' then
+        return namedHeadings[heading]
+      end
+      heading = heading or 0
+      return headings[heading]
+    end,
+  }
+end
+
 multishell.setTitle(multishell.getCurrent(), 'Builder v' .. Builder.version)
 
 maxStackDB:load()
@@ -2044,9 +2113,13 @@ UI:setPages({
 
 UI:setPage('start')
 
-local s, m = turtle.run(function()
-  turtle.setPolicy(turtle.policies.digAttack)
-  turtle.setPoint({ x = -1, z = -1, y = 0, heading = 0 })
-  turtle.saveLocation('supplies')
-  UI:pullEvents()
-end)
+if Builder.isCommandComputer then
+  Event.pullEvents()
+else
+  local s, m = turtle.run(function()
+    turtle.setPolicy(turtle.policies.digAttack)
+    turtle.setPoint({ x = -1, z = -1, y = 0, heading = 0 })
+    turtle.saveLocation('supplies')
+    Event.pullEvents()
+  end)
+end

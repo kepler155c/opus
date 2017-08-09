@@ -1,5 +1,6 @@
 require = requireInjector(getfenv(1))
 local UI = require('ui')
+local Event = require('event')
 local Config = require('config')
 local ChestProvider = require('chestProvider18')
 local RefinedProvider = require('refinedProvider')

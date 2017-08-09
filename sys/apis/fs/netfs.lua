@@ -5,27 +5,29 @@ local netfs = { }
 
 local function remoteCommand(node, msg)
 
-  if not node.socket then
-    node.socket = Socket.connect(node.id, 139)
-  end
+  for i = 1, 2 do
+    if not node.socket then
+      node.socket = Socket.connect(node.id, 139)
+    end
 
-  if not node.socket then
-    error('netfs: Unable to establish connection to ' .. node.id)
-    fs.unmount(node.mountPoint)
-    return
-  end
+    if not node.socket then
+      error('netfs: Unable to establish connection to ' .. node.id)
+      fs.unmount(node.mountPoint)
+      return
+    end
 
-  local ret
-  synchronized(node.socket, function()
-    node.socket:write(msg)
-    ret = node.socket:read(2)
-  end)
+    local ret
+    synchronized(node.socket, function()
+      node.socket:write(msg)
+      ret = node.socket:read(1)
+    end)
 
-  if ret then
-    return ret.response
+    if ret then
+      return ret.response
+    end
+    node.socket:close()
+    node.socket = nil
   end
-  node.socket:close()
-  node.socket = nil
   error('netfs: Connection failed', 2)
 end
 

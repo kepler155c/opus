@@ -5,6 +5,8 @@ if not os.getComputerLabel() then
     os.setComputerLabel('turtle_' .. id)
   elseif pocket then
     os.setComputerLabel('pocket_' .. id)
+  elseif commands then
+    os.setComputerLabel('command_' .. id)
   else
     os.setComputerLabel('computer_' .. id)
   end

@@ -10,7 +10,7 @@ function Terminal.scrollable(ct, size)
 
   local function drawScrollbar(oldPos, newPos)
     local x, y = oldWin.getCursorPos()
-    
+
     local pos = math.floor(oldPos / size * (h - 1))
     oldWin.setCursorPos(w, oldPos + pos + 1)
     oldWin.write(' ')
@@ -18,7 +18,7 @@ function Terminal.scrollable(ct, size)
     pos = math.floor(newPos / size * (h - 1))
     oldWin.setCursorPos(w, newPos + pos + 1)
     oldWin.write('#')
-    
+
     oldWin.setCursorPos(x, y)
   end
 
@@ -44,7 +44,8 @@ function Terminal.scrollable(ct, size)
     if p ~= scrollPos then
       drawScrollbar(scrollPos, p)
       scrollPos = p
-      win.reposition(1, -scrollPos + 1)
+--local w, h = win.getSize()
+      win.reposition(1, -scrollPos + 1, w, h + size)
     end
   end
 

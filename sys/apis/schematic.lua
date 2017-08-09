@@ -151,9 +151,9 @@ end
 function Schematic:copyBlocks(iblocks, oblocks, throttle)
   for k,b in ipairs(iblocks) do
     oblocks[k] = Util.shallowCopy(b)
-    if (k % 1000) == 0 then
+    --if (k % 1000) == 0 then
       throttle()
-    end
+    --end
   end
 end
 
@@ -359,7 +359,7 @@ function Schematic:assignDamages(spinner)
   end
 end
 
-function Schematic:findIndexAt(x, z, y)
+function Schematic:findIndexAt(x, z, y, allBlocks)
   if y < 0 then
     return
   end
@@ -369,8 +369,8 @@ function Schematic:findIndexAt(x, z, y)
     for i = ri.s, ri.e do
       local b = self.blocks[i]
       if b.x == x and b.z == z and b.y == y then
-        if b.id == 'minecraft:air' then 
-          -- this will definitely screw up placement order if a substition is made with air after starting
+        if b.id == 'minecraft:air' and not allBlocks then
+          -- this will possibly screw up placement order if a substition is made with air after starting
           -- as blocks will be placed differently and could have a different heading
           break
         end

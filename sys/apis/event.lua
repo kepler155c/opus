@@ -189,6 +189,11 @@ local function processRoutines(...)
   end
 end
 
+function Event.processEvent(e)
+  processHandlers(e[1])
+  processRoutines(table.unpack(e))
+end
+
 function Event.pullEvent(eventType)
 
   while true do

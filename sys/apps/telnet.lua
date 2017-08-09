@@ -51,31 +51,25 @@ ct.clear()
 ct.setCursorPos(1, 1)
 
 local filter = Util.transpose({
-  'char', 'paste', 'key', 'key_up', 
+  'char', 'paste', 'key', 'key_up', 'terminate',
   'mouse_scroll', 'mouse_click', 'mouse_drag', 'mouse_up',
 })
 
 while true do
-  local e = Event.pullEvent()
+  local e = { os.pullEventRaw() }
   local event = e[1]
+
+  if filter[event] then
+    socket:write(e)
+  else
+    Event.processEvent(e)
+  end
 
   if not socket.connected then
     print()
     print('Connection lost')
     print('Press enter to exit')
     read()
-    break
-  end
-
-  if filter[event] then
-
-    if not socket:write(e) then
-      socket:close()
-      break
-    end
-
-  elseif event == 'terminate' then
-    socket:close()
     break
   end
 end
