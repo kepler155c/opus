@@ -367,7 +367,7 @@ function Builder:substituteBlocks(throttle)
   for _,b in pairs(schematic.blocks) do
 
     -- replace schematic block type with substitution
-    local pb = blocks:getRealBlock(b.id, b.dmg)
+    local pb = blocks:getPlaceableBlock(b.id, b.dmg)
 
     b.id = pb.id
     b.dmg = pb.dmg
@@ -1158,8 +1158,6 @@ function Builder:build()
   local travelPlane = 0
   local minFuel = schematic.height + schematic.width + schematic.length + 100
   local throttle = Util.throttle()
-
-  --commands.execAsync("fill " .. (x1 - 4) .. " " .. y .. " " .. (z1 - 4) .. " " .. (x1 + 131) .. " " .. y .. " " .. (z1 + 131) .. " minecraft:air")
 
   if self.mode == 'destroy' then
     direction = -1
