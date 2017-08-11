@@ -769,14 +769,14 @@ function blockTypeDB:seedDB()
     {  '+12', nil, nil },
   })
   blockTypeDB:addTemp('door', {
-    {  0, nil, 0, 'east-door',  { door = true } },
-    {  1, nil, 0, 'south-door', { door = true } },
-    {  2, nil, 0, 'west-door',  { door = true } },
-    {  3, nil, 0, 'north-door', { door = true } },
-    {  4, nil, 0, 'east-door',  { door = true } },
-    {  5, nil, 0, 'south-door', { door = true } },
-    {  6, nil, 0, 'west-door',  { door = true } },
-    {  7, nil, 0, 'north-door', { door = true } },
+    {  0, nil, 0, 'east-door' },
+    {  1, nil, 0, 'south-door' },
+    {  2, nil, 0, 'west-door' },
+    {  3, nil, 0, 'north-door' },
+    {  4, nil, 0, 'east-door' },
+    {  5, nil, 0, 'south-door' },
+    {  6, nil, 0, 'west-door' },
+    {  7, nil, 0, 'north-door' },
     {  8,'minecraft:air', 0 },
     {  9,'minecraft:air', 0 },
     { 10,'minecraft:air', 0 },
@@ -819,7 +819,7 @@ function Blocks:init(args)
 end
 
 -- for an ID / dmg (with placement info) - return the correct block (without the placment info embedded in the dmg)
-function Blocks:getRealBlock(id, dmg)
+function Blocks:getPlaceableBlock(id, dmg)
 
   local p = placementDB:get({id, dmg})
   if p then

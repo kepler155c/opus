@@ -373,7 +373,7 @@ function Builder:substituteBlocks(throttle)
     b.dmg = pb.dmg
     b.direction = pb.direction
     b.extra = pb.extra
-    b.odmg = pb.odmg
+    b.odmg = pb.odmg or pb.dmg
 
     local sub = subDB:get({ b.id, b.dmg })
     if sub then
@@ -1220,9 +1220,9 @@ function Builder:build()
 
         placeBlock(id, b.odmg, b.x, b.y, b.z)
 
-        if b.extra and b.extra.door then
-          local _, doorTop = schematic:findIndexAt(b.x, b.z, b.y + 1, true)
-          placeBlock(id, doorTop.odmg, b.x, b.y + 1, b.z)
+        if b.twoHigh then
+          local _, topBlock = schematic:findIndexAt(b.x, b.z, b.y + 1, true)
+          placeBlock(id, topBlock.odmg, b.x, b.y + 1, b.z)
         end
 
       elseif self.mode == 'destroy' then
