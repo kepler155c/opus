@@ -5,6 +5,7 @@ local JSON = require('json')
 -- see https://github.com/Khroki/MCEdit-Unified/blob/master/pymclevel/minecraft.yaml
 -- see https://github.com/Khroki/MCEdit-Unified/blob/master/Items/minecraft/blocks.json
 
+--[[-- nameDB --]]--
 local nameDB = TableDB({
   fileName = 'blocknames.db'
 })
@@ -35,31 +36,10 @@ function nameDB:lookupName(id, dmg)
   end
 end
 
-local blockDB = TableDB({
-  fileName = 'block.db',
-  tabledef = {
-    autokeys = false,
-    columns = {
-      { name = 'key',     type = 'key',    length = 8 },
-      { name = 'id',      type = 'number', length = 5 },
-      { name = 'dmg',     type = 'number', length = 2 },
-      { name = 'name',    type = 'string', length = 35 },
-      { name = 'refname', type = 'string', length = 35 },
-      { name = 'strId',   type = 'string', length = 80 },
-    }
-  }
-})
+--[[-- blockDB --]]--
+local blockDB = TableDB()
 
-function blockDB:load(dir)
-  self.fileName = fs.combine(dir, self.fileName)
-  if fs.exists(self.fileName) then
-    TableDB.load(self)
-  else
-    self:seedDB(dir)
-  end
-end
- 
-function blockDB:seedDB(dir)
+function blockDB:load()
 
   local blocks = JSON.decodeFromFile(fs.combine('sys/etc', 'blocks.json'))
 
@@ -70,50 +50,40 @@ function blockDB:seedDB(dir)
   for strId, block in pairs(blocks) do
     strId = 'minecraft:' .. strId
     if type(block.name) == 'string' then
-      self:add(block.id, 0, block.name, strId)
+      self:add(block.id, 0, block.name, strId, block.place)
     else
       for nid,name in pairs(block.name) do
-        self:add(block.id, nid - 1, name, strId)
+        self:add(block.id, nid - 1, name, strId, block.place)
       end
     end
   end
- 
-  self.dirty = true
-  -- self:flush()
 end
- 
-function blockDB:lookup(id, dmg)
 
+function blockDB:lookup(id, dmg)
   if not id then
     return
   end
-  if not id or not dmg then error('blockDB:lookup: nil passed', 2) end
-  local key = id .. ':' .. dmg
  
-  return self.data[key]
+  return self.data[id .. ':' .. dmg]
 end
 
-function blockDB:add(id, dmg, name, strId)
+function blockDB:add(id, dmg, name, strId, place)
   local key = id .. ':' .. dmg
- 
+
   TableDB.add(self, key, {
     id = id,
     dmg = dmg,
-    key = key,
     name = name,
     strId = strId,
+    place = place,
   })
 end
 
 --[[-- placementDB --]]--
 -- in memory table that expands the standardBlock and blockType tables for each item/dmg/placement combination
-local placementDB = TableDB({
-  fileName = 'placement.db'
-})
+local placementDB = TableDB()
 
-function placementDB:load(dir, sbDB, btDB)
-
-  self.fileName = fs.combine(dir, self.fileName)
+function placementDB:load(sbDB, btDB)
 
   for k,blockType in pairs(sbDB.data) do
     local bt = btDB.data[blockType]
@@ -123,11 +93,25 @@ function placementDB:load(dir, sbDB, btDB)
     local id, dmg = string.match(k, '(%d+):*(%d+)')
     self:addSubsForBlockType(tonumber(id), tonumber(dmg), bt)
   end
-
--- testing
-  self.dirty = true
-  --self:flush()
 end
+
+function placementDB:load2(sbDB, btDB)
+
+  for k,v in pairs(sbDB.data) do
+    if v.place then
+      local bt = btDB.data[v.place]
+      if not bt then
+        error('missing block type: ' .. v.place)
+      end
+      local id, dmg = string.match(k, '(%d+):*(%d+)')
+      self:addSubsForBlockType(tonumber(id), tonumber(dmg), bt)
+    end
+  end
+
+  -- special case for quartz pillars
+  self:addSubsForBlockType(155, 2, btDB.data['quartz-pillar'])
+end
+
 
 function placementDB:addSubsForBlockType(id, dmg, bt)
   for _,sub in pairs(bt) do
@@ -153,215 +137,26 @@ function placementDB:addSubsForBlockType(id, dmg, bt)
 end
  
 function placementDB:add(id, dmg, sid, sdmg, direction, extra)
-  if not id or not dmg then error('placementDB:add: nil passed', 2) end
- 
-  local key = id .. ':' .. dmg
- 
   if direction and #direction == 0 then
     direction = nil
   end
  
-  self.data[key] = {
-    id = id,      -- numeric ID
-    dmg = dmg,    -- dmg with placement info
-    key = key,
-    sid = sid,    -- string ID
-    sdmg = sdmg,  -- dmg without placement info
+  local entry = {
+    oid = id,      -- numeric ID
+    odmg = dmg,    -- dmg with placement info
+    id = sid,    -- string ID
+    dmg = sdmg,  -- dmg without placement info
     direction = direction,
-    extra = extra,
   }
-end
-
---[[-- StandardBlockDB --]]--
-local standardBlockDB = TableDB({
-  fileName = 'standard.db',
-  tabledef = {
-    autokeys = false,
-    type = 'simple',
-    columns = {
-      { label = 'Key', type = 'key', length = 8 },
-      { label = 'Block Type', type = 'string', length = 20 }
-    }
-  }
-})
- 
-function standardBlockDB:load(dir)
-  self.fileName = fs.combine(dir, self.fileName)
-
-  if fs.exists(self.fileName) then
-    TableDB.load(self)
-  else
-    self:seedDB()
+  if extra then
+    Util.merge(entry, extra)
   end
-end
- 
-function standardBlockDB:seedDB()
-  self.data = {
-    [ '6:0'  ] = 'sapling',
-    [ '6:1'  ] = 'sapling',
-    [ '6:2'  ] = 'sapling',
-    [ '6:3'  ] = 'sapling',
-    [ '6:4'  ] = 'sapling',
-    [ '6:5'  ] = 'sapling',
-    [ '8:0'  ] = 'truncate',
-    [ '9:0'  ] = 'truncate',
-    [ '17:0' ] = 'wood',
-    [ '17:1' ] = 'wood',
-    [ '17:2' ] = 'wood',
-    [ '17:3' ] = 'wood',
-    [ '18:0' ] = 'leaves',
-    [ '18:1' ] = 'leaves',
-    [ '18:2' ] = 'leaves',
-    [ '18:3' ] = 'leaves',
-    [ '23:0' ] = 'dispenser',
-    [ '26:0' ] = 'bed',
-    [ '27:0' ] = 'adp-rail',
-    [ '28:0' ] = 'adp-rail',
-    [ '29:0' ] = 'piston',
-    [ '33:0' ] = 'piston',
-    [ '34:0' ] = 'air',
-    [ '36:0' ] = 'air',
-    [ '44:0' ] = 'slab',
-    [ '44:1' ] = 'slab',
-    [ '44:2' ] = 'slab',
-    [ '44:3' ] = 'slab',
-    [ '44:4' ] = 'slab',
-    [ '44:5' ] = 'slab',
-    [ '44:6' ] = 'slab',
-    [ '44:7' ] = 'slab',
-    [ '50:0' ] = 'torch',
-    [ '51:0' ] = 'flatten',
-    [ '53:0' ] = 'stairs',
-    [ '54:0' ] = 'chest-furnace',
-    [ '55:0' ] = 'flatten',
-    [ '59:0' ] = 'flatten',
-    [ '60:0' ] = 'flatten',
-    [ '61:0' ] = 'chest-furnace',
-    [ '62:0' ] = 'chest-furnace',
-    [ '63:0' ] = 'signpost',
-    [ '64:0' ] = 'door',
-    [ '65:0' ] = 'wallsign-ladder',
-    [ '66:0' ] = 'rail',
-    [ '67:0' ] = 'stairs',
-    [ '68:0' ] = 'wallsign-ladder',
-    [ '69:0' ] = 'lever',
-    [ '71:0' ] = 'door',
-    [ '75:0' ] = 'torch',
-    [ '76:0' ] = 'torch',
-    [ '77:0' ] = 'button',
-    [ '78:0' ] = 'flatten',
-    [ '81:0' ] = 'flatten',
-    [ '83:0' ] = 'flatten',
-    [ '84:0' ] = 'flatten',  -- jukebox
-    [ '86:0' ] = 'pumpkin',
-    [ '90:0' ] = 'air',
-    [ '91:0' ] = 'pumpkin',
-    [ '92:0' ] = 'flatten', -- cake
-    [ '93:0' ] = 'repeater',
-    [ '94:0' ] = 'repeater',
-    [ '96:0' ] = 'trapdoor',
-    [ '99:0' ] = 'flatten',
-    [ '100:0' ] = 'flatten',
-    [ '106:0' ] = 'vine',
-    [ '107:0' ] = 'gate',
-    [ '108:0' ] = 'stairs',
-    [ '109:0' ] = 'stairs',
-    [ '114:0' ] = 'stairs',
-    [ '115:0' ] = 'flatten',
-    [ '117:0' ] = 'flatten',
-    [ '118:0' ] = 'cauldron',
-    [ '120:0' ] = 'flatten', -- end portal
-    [ '126:0' ] = 'slab',
-    [ '126:1' ] = 'slab',
-    [ '126:2' ] = 'slab',
-    [ '126:3' ] = 'slab',
-    [ '126:4' ] = 'slab',
-    [ '126:5' ] = 'slab',
-    [ '127:0' ] = 'cocoa',
-    [ '128:0' ] = 'stairs',
-    [ '130:0' ] = 'chest-furnace',
-    [ '131:0' ] = 'tripwire',
-    [ '132:0' ] = 'flatten',
-    [ '134:0' ] = 'stairs',
-    [ '135:0' ] = 'stairs',
-    [ '136:0' ] = 'stairs',
-    [ '140:0' ] = 'flatten',
-    [ '141:0' ] = 'flatten',
-    [ '142:0' ] = 'flatten',
-    [ '143:0' ] = 'button',
-    [ '144:0' ] = 'mobhead',
-    [ '145:0' ] = 'anvil',
-    [ '146:0' ] = 'chest-furnace',
-    [ '149:0' ] = 'comparator',
-    [ '151:0' ] = 'flatten',
-    [ '154:0' ] = 'hopper',
-    [ '155:2' ] = 'quartz-pillar',
-    [ '156:0' ] = 'stairs',
-    [ '157:0' ] = 'adp-rail',
-    [ '158:0' ] = 'dispenser',
-    [ '161:0' ] = 'leaves',
-    [ '161:1' ] = 'leaves',
-    [ '162:0' ] = 'wood',
-    [ '162:1' ] = 'wood',
-    [ '163:0' ] = 'stairs',
-    [ '164:0' ] = 'stairs',
-    [ '167:0' ] = 'trapdoor',
-    [ '170:0' ] = 'hay-bale', -- hay bale
-    [ '175:0' ] = 'largeplant',
-    [ '175:1' ] = 'largeplant',
-    [ '175:2' ] = 'largeplant', -- double tallgrass - an alternative would be to use grass as the bottom part, bonemeal as top part
-    [ '175:3' ] = 'largeplant',
-    [ '175:4' ] = 'largeplant',
-    [ '175:5' ] = 'largeplant',
-    [ '176:0' ] = 'signpost',
-    [ '177:0' ] = 'wallsign-ladder',
-    [ '178:0' ] = 'truncate',
-    [ '180:0' ] = 'stairs',
-    [ '182:0' ] = 'slab',
-    [ '183:0' ] = 'gate',
-    [ '184:0' ] = 'gate',
-    [ '185:0' ] = 'gate',
-    [ '186:0' ] = 'gate',
-    [ '187:0' ] = 'gate',
-    [ '193:0' ] = 'door',
-    [ '194:0' ] = 'door',
-    [ '195:0' ] = 'door',
-    [ '196:0' ] = 'door',
-    [ '197:0' ] = 'door',
-    [ '198:0' ] = 'end_rod',  -- end rod
-    [ '205:0' ] = 'slab',
-    [ '210:0' ] = 'flatten',
-    [ '355:0' ] = 'bed',
-    [ '356:0' ] = 'repeater',
-    [ '404:0' ] = 'comparator',
-  }
-  self.dirty = true
-  -- self:flush()
+
+  self.data[id .. ':' .. dmg] = entry
 end
 
 --[[-- BlockTypeDB --]]--
-local blockTypeDB = TableDB({
-  fileName = 'blocktype.db',
-  tabledef = {
-    autokeys = true,
-    columns = {
-      { name = 'odmg',   type = 'number', length = 2 },
-      { name = 'sid',    type = 'number', length = 5 },
-      { name = 'sdmg',   type = 'number', length = 2 },
-      { name = 'dir',    type = 'string', length = 20 },
-    }
-  }
-})
-
-function blockTypeDB:load(dir)
-  self.fileName = fs.combine(dir, self.fileName)
-
-  if fs.exists(self.fileName) then
-    TableDB.load(self)
-  else
-    self:seedDB()
-  end
-end
+local blockTypeDB = TableDB()
 
 function blockTypeDB:addTemp(blockType, subs)
   local bt = self.data[blockType]
@@ -381,7 +176,7 @@ function blockTypeDB:addTemp(blockType, subs)
   self.dirty = true
 end
  
-function blockTypeDB:seedDB()
+function blockTypeDB:load()
  
   blockTypeDB:addTemp('stairs', {
     { 0, nil, 0, 'east-up' },
@@ -718,48 +513,12 @@ function blockTypeDB:seedDB()
     {  '+8', nil, nil },
     {  '+12', nil, nil },
   })
-  blockTypeDB:addTemp('air', {
-    {  0, 'minecraft:air', 0 },
-    {  1, 'minecraft:air', 0 },
-    {  2, 'minecraft:air', 0 },
-    {  3, 'minecraft:air', 0 },
-    {  4, 'minecraft:air', 0 },
-    {  5, 'minecraft:air', 0 },
-    {  6, 'minecraft:air', 0 },
-    {  7, 'minecraft:air', 0 },
-    {  8, 'minecraft:air', 0 },
-    {  9, 'minecraft:air', 0 },
-    { 10, 'minecraft:air', 0 },
-    { 11, 'minecraft:air', 0 },
-    { 12, 'minecraft:air', 0 },
-    { 13, 'minecraft:air', 0 },
-    { 14, 'minecraft:air', 0 },
-    { 15, 'minecraft:air', 0 },
-  })
-  blockTypeDB:addTemp('truncate', {
-    {  0, nil, 0 },
-    {  1, 'minecraft:air', 0 },
-    {  2, 'minecraft:air', 0 },
-    {  3, 'minecraft:air', 0 },
-    {  4, 'minecraft:air', 0 },
-    {  5, 'minecraft:air', 0 },
-    {  6, 'minecraft:air', 0 },
-    {  7, 'minecraft:air', 0 },
-    {  8, 'minecraft:air', 0 },
-    {  9, 'minecraft:air', 0 },
-    { 10, 'minecraft:air', 0 },
-    { 11, 'minecraft:air', 0 },
-    { 12, 'minecraft:air', 0 },
-    { 13, 'minecraft:air', 0 },
-    { 14, 'minecraft:air', 0 },
-    { 15, 'minecraft:air', 0 },
-  })
   blockTypeDB:addTemp('slab', {
     {  '+0', nil, nil, 'bottom' },
     {  '+8', nil, nil, 'top' },
   })
   blockTypeDB:addTemp('largeplant', {
-    {  '+0', nil, nil, 'east-door' },   -- should use a generic double tall keyword
+    {  '+0', nil, nil, 'east-door', { twoHigh = true } },   -- should use a generic double tall keyword
     {  '+8', 'minecraft:air', 0 },
   })
   blockTypeDB:addTemp('wood', {
@@ -769,14 +528,14 @@ function blockTypeDB:seedDB()
     {  '+12', nil, nil },
   })
   blockTypeDB:addTemp('door', {
-    {  0, nil, 0, 'east-door' },
-    {  1, nil, 0, 'south-door' },
-    {  2, nil, 0, 'west-door' },
-    {  3, nil, 0, 'north-door' },
-    {  4, nil, 0, 'east-door' },
-    {  5, nil, 0, 'south-door' },
-    {  6, nil, 0, 'west-door' },
-    {  7, nil, 0, 'north-door' },
+    {  0, nil, 0, 'east-door',  { twoHigh = true } },
+    {  1, nil, 0, 'south-door', { twoHigh = true } },
+    {  2, nil, 0, 'west-door',  { twoHigh = true } },
+    {  3, nil, 0, 'north-door', { twoHigh = true } },
+    {  4, nil, 0, 'east-door',  { twoHigh = true } },
+    {  5, nil, 0, 'south-door', { twoHigh = true } },
+    {  6, nil, 0, 'west-door',  { twoHigh = true } },
+    {  7, nil, 0, 'north-door', { twoHigh = true } },
     {  8,'minecraft:air', 0 },
     {  9,'minecraft:air', 0 },
     { 10,'minecraft:air', 0 },
@@ -800,8 +559,6 @@ function blockTypeDB:seedDB()
     { 10, nil, 0, 'north-block' },
     { 11, nil, 0, 'east-block' },
   })
-  self.dirty = true
-  -- self:flush()
 end
 
 local Blocks = class()
@@ -811,11 +568,23 @@ function Blocks:init(args)
   self.blockDB = blockDB
   self.nameDB = nameDB
 
-  blockDB:load(self.dir)
-  standardBlockDB:load(self.dir)
-  blockTypeDB:load(self.dir)
+  blockDB:load()
+--  standardBlockDB:load()
+  blockTypeDB:load()
   nameDB:load(self.dir, blockDB)
-  placementDB:load(self.dir, standardBlockDB, blockTypeDB)
+--  placementDB:load(standardBlockDB, blockTypeDB)
+  placementDB:load2(blockDB, blockTypeDB)
+
+--  _G._b = blockDB
+--  _G._s = standardBlockDB
+--  _G._bt = blockTypeDB
+--  _G._p = placementDB
+
+--  Util.writeTable('pb1.lua', placementDB.data)
+
+--  placementDB.data = { }
+
+--  Util.writeTable('pb2.lua', placementDB.data)
 end
 
 -- for an ID / dmg (with placement info) - return the correct block (without the placment info embedded in the dmg)
@@ -823,15 +592,9 @@ function Blocks:getPlaceableBlock(id, dmg)
 
   local p = placementDB:get({id, dmg})
   if p then
-    return {
-      id = p.sid,
-      dmg = p.sdmg,
-      direction = p.direction,
-      extra = p.extra,
-      odmg = dmg
-    }
+    return Util.shallowCopy(p)
   end
- 
+
   local b = blockDB:get({id, dmg})
   if b then
     return { id = b.strId, dmg = b.dmg }
@@ -841,7 +604,7 @@ function Blocks:getPlaceableBlock(id, dmg)
   if b then
     return { id = b.strId, dmg = b.dmg }
   end
- 
+
   return { id = id, dmg = dmg }
 end
 

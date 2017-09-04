@@ -8,7 +8,7 @@ function TableDB:init(args)
     data = { },
     tabledef = { },
   }
-  Util.merge(defaults, args)  -- refactor
+  Util.merge(defaults, args)
   Util.merge(self, defaults)
 end
  
@@ -43,7 +43,7 @@ end
 function TableDB:flush()
   if self.dirty then
     Util.writeTable(self.fileName, {
-      tabledef = self.tabledef,
+      -- tabledef = self.tabledef,
       data = self.data,
     })
     self.dirty = false

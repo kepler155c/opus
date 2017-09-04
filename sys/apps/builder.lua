@@ -1,17 +1,17 @@
 if not turtle and not commands then
-  error('Must be run on a turtle')
+  error('Must be run on a turtle or a command computer')
 end
 
 require = requireInjector(getfenv(1))
-local class = require('class')
-local Event = require('event')
-local Message = require('message')
-local UI = require('ui')
-local Schematic = require('schematic')
-local TableDB = require('tableDB')
+local class      = require('class')
+local Event      = require('event')
+local Message    = require('message')
+local UI         = require('ui')
+local Schematic  = require('schematic')
+local TableDB    = require('tableDB')
 local MEProvider = require('meProvider')
-local Blocks = require('blocks')
-local Point = require('point')
+local Blocks     = require('blocks')
+local Point      = require('point')
 
 local ChestProvider = require('chestProvider')
 if os.getVersion() == 1.8 then
@@ -65,6 +65,8 @@ function subDB:seedDB()
     [ "minecraft:unpowered_comparator:0" ] = "minecraft:comparator:0",
     [ "minecraft:powered_comparator:0"   ] = "minecraft:comparator:0",
     [ "minecraft:piston_head:0"          ] = "minecraft:air:0",
+    [ "minecraft:piston_extension:0"     ] = "minecraft:air:0",
+    [ "minecraft:minecraft:portal:0"     ] = "minecraft:air:0",
     [ "minecraft:double_wooden_slab:0"   ] = "minecraft:planks:0",
     [ "minecraft:double_wooden_slab:1"   ] = "minecraft:planks:1",
     [ "minecraft:double_wooden_slab:2"   ] = "minecraft:planks:2",
@@ -369,10 +371,8 @@ function Builder:substituteBlocks(throttle)
     -- replace schematic block type with substitution
     local pb = blocks:getPlaceableBlock(b.id, b.dmg)
 
-    b.id = pb.id
-    b.dmg = pb.dmg
-    b.direction = pb.direction
-    b.extra = pb.extra
+    Util.merge(b, pb)
+
     b.odmg = pb.odmg or pb.dmg
 
     local sub = subDB:get({ b.id, b.dmg })
@@ -1069,8 +1069,8 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     b.placed = self:place(slot)
   end
 
-  if b.extra and b.extra.facing then
-    self:rotateBlock('down', b.extra.facing)
+  if b.facing then
+    self:rotateBlock('down', b.facing)
   end
 
 -- debug
@@ -1163,7 +1163,7 @@ function Builder:build()
     direction = -1
     last = 1
     turtle.status = 'destroying'
-  elseif self.isCommandComputer then
+  elseif not self.isCommandComputer then
     travelPlane = self:findTravelPlane(self.index)
     turtle.status = 'building'
     if not self.confirmFacing then
@@ -1220,7 +1220,9 @@ function Builder:build()
 
         if b.twoHigh then
           local _, topBlock = schematic:findIndexAt(b.x, b.z, b.y + 1, true)
-          placeBlock(id, topBlock.odmg, b.x, b.y + 1, b.z)
+          if topBlock then
+            placeBlock(id, topBlock.odmg, b.x, b.y + 1, b.z)
+          end
         end
 
       elseif self.mode == 'destroy' then
@@ -1287,7 +1289,7 @@ function Builder:build()
         end
       end
       if self.mode == 'destroy' then
-        self:saveProgress(math.max(self.index - 1, 1))
+        self:saveProgress(math.max(self.index, 1))
       else
         self:saveProgress(self.index + 1)
       end

@@ -30,7 +30,7 @@ term.setCursorPos(1, 1)
 print('Starting OS')
 print()
 print('Press any key for menu')
-local timerId = os.startTimer(.75)
+local timerId = os.startTimer(1.5)
 while true do
   local e, id = os.pullEvent()
   if e == 'timer' and id == timerId then

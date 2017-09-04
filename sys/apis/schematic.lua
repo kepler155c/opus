@@ -715,7 +715,6 @@ function Schematic:determineBlockPlacement(y)
 
       local hi = turtle.getHeadingInfo(doorDirections[d])
       b.heading = hi.heading
-      b.twoHigh = true
 
       self:addPlacementChain(chains, {
         { x = b.x, z = b.z, y = b.y },
