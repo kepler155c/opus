@@ -1,13 +1,4 @@
-local branch = 'master'
-if fs.exists('.branch') then
-  local f = fs.open('.branch', "r")
-  if f then
-    branch = f.readAll()
-    f.close()
-  end
-end
-
-local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/' .. branch .. '/sys/apis'
+local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis'
 local PASTEBIN_URL  = 'http://pastebin.com/raw'
 local GIT_URL       = 'https://raw.githubusercontent.com'
 
@@ -150,7 +141,7 @@ local function requireWrapper(env)
       if fn then
         local module, msg = fn(modname, env)
         if not module then
-          error(msg)
+          error(msg or (modname .. ' module returned nil'), 2)
         end
         package.loaded[modname] = module
         return module
