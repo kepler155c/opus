@@ -1,6 +1,8 @@
-local Socket = require('socket')
-local Event  = require('event')
-local Crypto = require('crypto')
+local Crypto   = require('crypto')
+local Event    = require('event')
+local Security = require('security')
+local Socket   = require('socket')
+local Util     = require('util')
 
 Event.addRoutine(function()
 
@@ -12,7 +14,7 @@ Event.addRoutine(function()
 
     local data = socket:read(2)
     if data then
-      local password = os.getPassword()
+      local password = Security.getPassword()
       if not password then
         socket:write({ msg = 'No password has been set' })
       else

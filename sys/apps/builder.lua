@@ -2,19 +2,21 @@ if not turtle and not commands then
   error('Must be run on a turtle or a command computer')
 end
 
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
+local Blocks     = require('blocks')
 local class      = require('class')
 local Event      = require('event')
+local MEProvider = require('meProvider')
 local Message    = require('message')
-local UI         = require('ui')
+local Point      = require('point')
 local Schematic  = require('schematic')
 local TableDB    = require('tableDB')
-local MEProvider = require('meProvider')
-local Blocks     = require('blocks')
-local Point      = require('point')
+local UI         = require('ui')
+local Util       = require('util')
 
 local ChestProvider = require('chestProvider')
-if os.getVersion() == 1.8 then
+if Util.getVersion() == 1.8 then
   ChestProvider = require('chestProvider18')
 end
 
@@ -685,7 +687,7 @@ end
 -- figure out our orientation in the world
 function Builder:getTurtleFacing()
 
-  if os.getVersion() == 1.8 then
+  if Util.getVersion() == 1.8 then
 
     local directions = { -- reversed directions
       [5] = 'west',
@@ -935,7 +937,7 @@ function Builder:placeDirectionalBlock(b, slot, travelPlane)
     local isSouth = (turtle.getHeadingInfo(Builder.facing).heading +
                     turtle.getHeadingInfo(stairUpDirections[d]).heading) % 4 == 1
 
-    if os.getVersion() == 1.8 then
+    if Util.getVersion() == 1.8 then
       isSouth = false -- no stair bug in this version
     end
 

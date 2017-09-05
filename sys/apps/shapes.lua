@@ -1,7 +1,9 @@
-require = requireInjector(getfenv(1))
-local UI = require('ui')
-local GPS = require('gps')
+requireInjector(getfenv(1))
+
+local GPS    = require('gps')
 local Socket = require('socket')
+local UI     = require('ui')
+local Util   = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Shapes')
 
@@ -11,10 +13,12 @@ turtleId = tonumber(turtleId)
 
 local script = [[
 
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local GPS = require('gps')
 local ChestProvider = require('chestProvider18')
 local Point = require('point')
+local Util   = require('util')
 
 local itemProvider
 
@@ -245,8 +249,10 @@ end)
 
 local levelScript = [[
 
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Point = require('point')
+local Util  = require('util')
 
 local checkedNodes = { }
 local nodes = { }

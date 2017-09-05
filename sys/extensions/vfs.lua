@@ -2,7 +2,9 @@ if fs.native then
   return
 end
 
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+local Util = require('util')
+
 fs.native = Util.shallowCopy(fs)
 
 local fstypes = { }

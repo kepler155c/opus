@@ -2,7 +2,7 @@ if not turtle then
   return
 end
 
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
 local GPS = require('gps')
 
 function turtle.enableGPS(timeout)

@@ -1,8 +1,15 @@
 local parentShell = shell
 
 shell = { }
-local sandboxEnv = Util.shallowCopy(getfenv(1))
+local sandboxEnv = { }
+for k,v in pairs(getfenv(1)) do
+  sandboxEnv[k] = v 
+end
 setmetatable(sandboxEnv, { __index = _G })
+
+requireInjector(getfenv(1))
+
+local Util = require('util')
 
 local DIR = (parentShell and parentShell.dir()) or ""
 local PATH = (parentShell and parentShell.path()) or ".:/rom/programs"
@@ -223,8 +230,7 @@ if #tArgs > 0 then
   return s, m
 end
 
-require = requireInjector(getfenv(1))
-local Config = require('config')
+local Config  = require('config')
 local History = require('history')
 
 local config = {

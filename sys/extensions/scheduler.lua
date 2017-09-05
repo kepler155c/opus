@@ -2,6 +2,10 @@ if not turtle then
   return
 end
 
+requireInjector(getfenv(1))
+
+local Util = require('util')
+
 local Scheduler = {
   uid = 0,
   queue = { },

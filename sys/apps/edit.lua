@@ -46,7 +46,7 @@ if not clipboard then
 
   function clipboard.getText()
     if clipboard.data then
-      return Util.tostring(clipboard.data)
+      return tostring(clipboard.data)
     end
   end
 

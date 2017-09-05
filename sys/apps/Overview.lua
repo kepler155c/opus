@@ -1,13 +1,14 @@
-require = requireInjector(getfenv(1))
-local Util = require('util')
-local Event = require('event')
-local UI = require('ui')
-local Config = require('config')
-local NFT = require('nft')
+requireInjector(getfenv(1))
+
 local class = require('class')
+local Config = require('config')
+local Event = require('event')
 local FileUI = require('fileui')
-local Tween = require('tween')
+local NFT = require('nft')
 local SHA1 = require('sha1')
+local Tween = require('tween')
+local UI = require('ui')
+local Util = require('util')
 
 local REGISTRY_DIR = 'usr/.registry'
 

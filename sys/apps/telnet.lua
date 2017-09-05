@@ -1,7 +1,9 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
-local Socket = require('socket')
+requireInjector(getfenv(1))
+
+local Event    = require('event')
+local Socket   = require('socket')
 local Terminal = require('terminal')
+local Util     = require('util')
 
 local remoteId
 local args = { ... }
@@ -69,7 +71,7 @@ while true do
     print()
     print('Connection lost')
     print('Press enter to exit')
-    read()
+    pcall(read)
     break
   end
 end

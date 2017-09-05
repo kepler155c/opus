@@ -1,6 +1,8 @@
 turtle.run(function()
-  require = requireInjector(getfenv(1))
-  local GPS = require('gps')
+
+  requireInjector(getfenv(1))
+
+  local GPS    = require('gps')
   local Socket = require('socket')
 
   local id = {COMPUTER_ID}

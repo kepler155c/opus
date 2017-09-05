@@ -1,6 +1,7 @@
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Event = require('event')
-local UI = require('ui')
+local UI    = require('ui')
 
 multishell.setTitle(multishell.getCurrent(), 'Help')
 UI:configure('Help', ...)

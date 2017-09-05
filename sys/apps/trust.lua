@@ -1,8 +1,10 @@
-require = requireInjector(getfenv(1))
-local Socket = require('socket')
-local SHA1 = require('sha1')
+requireInjector(getfenv(1))
+
+local Crypto   = require('crypto')
+local Security = require('security')
+local SHA1     = require('sha1')
+local Socket   = require('socket')
 local Terminal = require('terminal')
-local Crypto = require('crypto')
 
 local remoteId
 local args = { ... }
@@ -31,7 +33,7 @@ if not socket then
   error('Unable to connect to ' .. remoteId .. ' on port 19')
 end
 
-local publicKey = os.getPublicKey()
+local publicKey = Security.getPublicKey()
 local password = SHA1.sha1(password)
 
 socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, password))

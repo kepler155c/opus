@@ -1,6 +1,8 @@
-require = requireInjector(getfenv(1))
-local Point = require('point')
+requireInjector(getfenv(1))
+
 local Logger = require('logger')
+local Point  = require('point')
+local Util   = require('util')
 
 if device and device.wireless_modem then
   Logger.setWirelessLogging()

@@ -1,6 +1,6 @@
 if device.wireless_modem then
 
-  require = requireInjector(getfenv(1))
+  requireInjector(getfenv(1))
   local Config = require('config')
   local config = {
     host = false,

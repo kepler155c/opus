@@ -1,6 +1,7 @@
+local Event  = require('event')
+local GPS    = require('gps')
 local Socket = require('socket')
-local GPS = require('gps')
-local Event = require('event')
+local Util   = require('util')
 
 -- move this into gps api
 local gpsRequested

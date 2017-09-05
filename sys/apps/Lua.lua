@@ -1,14 +1,15 @@
 local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
-require = injector(getfenv(1))
-local Util = require('util')
-local UI = require('ui')
-local Event = require('event')
+injector(getfenv(1))
+
+local Event   = require('event')
 local History = require('history')
+local UI      = require('ui')
+local Util    = require('util')
 
 local sandboxEnv = Util.shallowCopy(getfenv(1))
-sandboxEnv.exit = function() Event.exitPullEvents() end
-sandboxEnv.require = injector(sandboxEnv)
 setmetatable(sandboxEnv, { __index = _G })
+sandboxEnv.exit = function() Event.exitPullEvents() end
+injector(sandboxEnv)
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
 UI:configure('Lua', ...)

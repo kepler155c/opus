@@ -14,6 +14,10 @@ local version = "Version 1.1.6"
 -- Original code by Bomb Bloke
 -- Modified to integrate with opus os
 
+requireInjector(getfenv(1))
+
+local Util = require('util')
+
 local recTerm, oldTerm, arg, showInput, skipLast, lastDelay, curInput = {}, Util.shallowCopy(multishell.term), {...}, false, false, 2, ""
 local curBlink, oldBlink, tTerm, buffer, colourNum, xPos, yPos, oldXPos, oldYPos, tCol, bCol, xSize, ySize = false, false, {}, {}, {}, 1, 1, 1, 1, colours.white, colours.black, oldTerm.getSize()
 local greys, buttons = {["0"] = true, ["7"] = true, ["8"] = true, ["f"] = true}, {"l", "r", "m"}

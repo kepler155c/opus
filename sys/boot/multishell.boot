@@ -2,7 +2,7 @@ print('\nStarting Opus..')
 
 LUA_PATH = '/sys/apis'
 
-_G.Util = dofile('sys/apis/util.lua')
+local Util = dofile('sys/apis/util.lua')
 _G.debug = function(...) Util.print(...) end
 _G.requireInjector = dofile('sys/apis/injector.lua')
 

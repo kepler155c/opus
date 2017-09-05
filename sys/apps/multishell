@@ -14,10 +14,15 @@ end
 
 multishell.term = term.current()
 
-local defaultEnv = Util.shallowCopy(getfenv(1))
+local defaultEnv = { }
+for k,v in pairs(getfenv(1)) do
+  defaultEnv[k] = v 
+end
 
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Config = require('config')
+local Util   = require('util')
 
 -- Begin multishell
 local parentTerm = term.current()
@@ -557,9 +562,7 @@ while true do
   elseif sEvent == "mouse_click" then
     local button, x, y = tEventData[1], tEventData[2], tEventData[3]
     lastClicked = nil
-    if y == 1 and os.locked then
-      -- ignore
-    elseif y == 1 then
+    if y == 1 then
       -- Switch process
       local w, h = parentTerm.getSize()
       if x == 1 then

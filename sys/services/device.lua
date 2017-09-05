@@ -1,6 +1,8 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
+requireInjector(getfenv(1))
+
+local Event      = require('event')
 local Peripheral = require('peripheral')
+local Util       = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Devices')
 

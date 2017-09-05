@@ -1,7 +1,9 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
-local UI = require('ui')
+requireInjector(getfenv(1))
+
 local Config = require('config')
+local Event  = require('event')
+local UI     = require('ui')
+local Util   = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'System')
 UI:configure('System', ...)
@@ -86,7 +88,7 @@ local systemPage = UI.Page {
       grid = UI.ScrollingGrid {
         y = 4,
         values = {
-          { name = 'CC version',  value = os.getVersion()                    },
+          { name = 'CC version',  value = Util.getVersion()                  },
           { name = 'Lua version', value = _VERSION                           },
           { name = 'MC version',  value = _MC_VERSION or 'unknown'           },
           { name = 'Disk free',   value = Util.toBytes(fs.getFreeSpace('/')) },

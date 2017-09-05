@@ -1,3 +1,5 @@
+local Util = require('util')
+
 local Peripheral = { }
 
 local function getDeviceList()

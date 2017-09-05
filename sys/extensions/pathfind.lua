@@ -2,10 +2,11 @@ if not turtle then
 	return
 end
 
-require = requireInjector(getfenv(1))
-local Grid = require ("jumper.grid")
+requireInjector(getfenv(1))
+
+local Grid       = require ("jumper.grid")
 local Pathfinder = require ("jumper.pathfinder")
-local Point = require('point')
+local Point      = require('point')
 
 local WALKABLE = 0
 

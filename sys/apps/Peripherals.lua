@@ -1,8 +1,8 @@
-local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
-require = injector(getfenv(1))
-local Util = require('util')
+requireInjector(getfenv(1))
+
 local Event = require('event')
-local UI = require('ui')
+local UI    = require('ui')
+local Util  = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Devices')
 

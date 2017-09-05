@@ -1,5 +1,6 @@
-local class = require('class')
-local Logger = require('logger')
+local class      = require('class')
+local Util       = require('util')
+local Logger     = require('logger')
 local Peripheral = require('peripheral')
 
 local MEProvider = class()

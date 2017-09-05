@@ -5,7 +5,8 @@ if turtle and device.wireless_modem then
 
     if homePt then
 
-      require = requireInjector(getfenv(1))
+      requireInjector(getfenv(1))
+
       local Config = require('config')
       local config = {
         destructive = false,

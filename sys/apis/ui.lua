@@ -1,7 +1,7 @@
-local Util  = require('util')
-local class = require('class')
-local Event = require('event')
-local Tween = require('tween')
+local Util   = require('util')
+local class  = require('class')
+local Event  = require('event')
+local Tween  = require('tween')
 local Region = require('region')
 
 local mapColorToGray = {
@@ -3425,7 +3425,7 @@ function UI.NftImage:setImage(image)
 end
 
 UI:loadTheme('usr/config/ui.theme')
-if os.getVersion and os.getVersion() >= 1.79 then
+if Util.getVersion() >= 1.79 then
   UI:loadTheme('sys/etc/ext.theme')
 end
 

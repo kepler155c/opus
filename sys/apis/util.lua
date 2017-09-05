@@ -69,6 +69,19 @@ function Util.print(pattern, ...)
   print(Util.tostring(pattern, ...))
 end
 
+function Util.getVersion()
+  local version
+
+  if _CC_VERSION then
+    version = tonumber(_CC_VERSION:gmatch('[%d]+%.?[%d][%d]', '%1')())
+  end
+  if not version and _HOST then
+    version = tonumber(_HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
+  end
+
+  return version or 1.7
+end
+
 function Util.runFunction(env, fn, ...)
   setfenv(fn, env)
   setmetatable(env, { __index = _G })

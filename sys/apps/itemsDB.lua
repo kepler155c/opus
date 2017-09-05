@@ -1,8 +1,7 @@
-local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
-require = injector(getfenv(1))
+requireInjector(getfenv(1))
 
 local RefinedProvider = require('refinedProvider')
-local TableDB = require('tableDB')
+local TableDB         = require('tableDB')
 
 local controller = RefinedProvider()
 if not controller:isValid() then

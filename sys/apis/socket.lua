@@ -1,5 +1,7 @@
-local Logger = require('logger')
-local Crypto = require('crypto')
+local Crypto   = require('crypto')
+local Logger   = require('logger')
+local Security = require('security')
+local Util     = require('util')
 
 local socketClass = { }
 
@@ -110,7 +112,7 @@ function Socket.connect(host, port)
     type = 'OPEN',
     shost = socket.shost,
     dhost = socket.dhost,
-    t = Crypto.encrypt({ ts = os.time(), seq = socket.seq }, os.getPublicKey()),
+    t = Crypto.encrypt({ ts = os.time(), seq = socket.seq }, Security.getPublicKey()),
     rseq = socket.wseq,
     wseq = socket.rseq,
   })

@@ -1,4 +1,5 @@
 local class = require('class')
+local Util  = require('util')
 
 local TableDB = class()
 function TableDB:init(args)

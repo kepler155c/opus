@@ -2,11 +2,13 @@ if not device.wireless_modem then
   error('Wireless modem is required')
 end
 
-require = requireInjector(getfenv(1))
-local GPS = require('gps')
-local Event = require('event')
-local UI = require('ui')
+requireInjector(getfenv(1))
+
+local Event  = require('event')
+local GPS    = require('gps')
 local Socket = require('socket')
+local UI     = require('ui')
+local Util   = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Pickup Remote')
 

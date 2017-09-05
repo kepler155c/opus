@@ -1,10 +1,11 @@
-require = requireInjector(getfenv(1))
-local Util = require('util')
-local Event = require('event')
-local UI = require('ui')
+requireInjector(getfenv(1))
+
+local ChestProvider   = require('chestProvider18')
+local Event           = require('event')
+local MEProvider      = require('meProvider')
 local RefinedProvider = require('refinedProvider')
-local MEProvider = require('meProvider')
-local ChestProvider = require('chestProvider18')
+local UI              = require('ui')
+local Util            = require('util')
 
 local storage = RefinedProvider()
 if not storage:isValid() then

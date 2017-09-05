@@ -1,7 +1,9 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
-local UI = require('ui')
+requireInjector(getfenv(1))
+
+local Event  = require('event')
 local Socket = require('socket')
+local UI     = require('ui')
+local Util   = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Network')
 UI:configure('Network', ...)

@@ -1,10 +1,12 @@
-require = requireInjector(getfenv(1))
-local Logger = require('logger')
-local Message = require('message')
-local Event = require('event')
-local Point = require('point')
-local TableDB = require('tableDB')
+requireInjector(getfenv(1))
+
+local Event      = require('event')
+local Logger     = require('logger')
 local MEProvider = require('meProvider')
+local Message    = require('message')
+local Point      = require('point')
+local TableDB    = require('tableDB')
+local Util       = require('util')
 
 --[[
   A supplier turtle for the builder turtle. For larger builds, use
@@ -19,7 +21,7 @@ local MEProvider = require('meProvider')
 ]]--
 
 local ChestProvider = require('chestProvider')
-if os.getVersion() == 1.8 then
+if Util.getVersion() == 1.8 then
   ChestProvider = require('chestProvider18')
 end
 

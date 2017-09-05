@@ -1,7 +1,9 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
+requireInjector(getfenv(1))
+
+local Event   = require('event')
 local Message = require('message')
-local UI = require('ui')
+local UI      = require('ui')
+local Util    = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Log Monitor')
 

@@ -1,7 +1,8 @@
-local class = require('class')
+local class   = require('class')
+local Util    = require('util')
 local DEFLATE = require('deflatelua')
-local UI = require('ui')
-local Point = require('point')
+local UI      = require('ui')
+local Point   = require('point')
 
 --[[
   Loading and manipulating a schematic

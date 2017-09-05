@@ -1,3 +1,5 @@
+local Util = require('util')
+
 local Terminal = { }
 
 function Terminal.scrollable(ct, size)

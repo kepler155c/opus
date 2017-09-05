@@ -1,6 +1,32 @@
-require = requireInjector(getfenv(1))
-local Util = require('util')
-local UI = require('ui')
+requireInjector(getfenv(1))
+
+local Config = require('config')
+local SHA1   = require('sha1')
+local UI     = require('ui')
+local Util   = require('util')
+
+-- scrap this entire file. don't muck with standard apis
+
+local REGISTRY_DIR = 'usr/.registry'
+
+
+--                                           FIX SOMEDAY
+function os.registerApp(app, key)
+
+  app.key = SHA1.sha1(key)
+  Util.writeTable(fs.combine(REGISTRY_DIR, app.key), app)
+  os.queueEvent('os_register_app')
+end
+
+function os.unregisterApp(key)
+
+  local filename = fs.combine(REGISTRY_DIR, SHA1.sha1(key))
+  if fs.exists(filename) then
+    fs.delete(filename)
+    os.queueEvent('os_register_app')
+  end
+end
+
 
 local sandboxEnv = Util.shallowCopy(getfenv(1))
 setmetatable(sandboxEnv, { __index = _G })
@@ -149,7 +175,7 @@ end
 local appPage = UI.Page({
   backgroundColor = UI.ViewportWindow.defaults.backgroundColor,
   menuBar = UI.MenuBar({
-    showBackButton = not os.isPocket(),
+    showBackButton = not pocket,
     buttons = {
       { text = 'Install', event = 'install' },
       { text = 'Run',     event = 'run'     },

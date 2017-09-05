@@ -1,9 +1,11 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
-local UI = require('ui')
-local ME = require('me')
+requireInjector(getfenv(1))
+
 local Config = require('config')
+local Event  = require('event')
 local Logger = require('logger')
+local ME     = require('me')
+local UI     = require('ui')
+local Util   = require('util')
 
 -- Must be a crafty turtle with duck antenna !
 -- 3 wide monitor (any side of turtle)

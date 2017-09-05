@@ -1,9 +1,10 @@
 local function follow(id)
 
-  require = requireInjector(getfenv(1))
-  local Socket = require('socket')
-  local Point  = require('point')
+  requireInjector(getfenv(1))
+
   local Event  = require('event')
+  local Point  = require('point')
+  local Socket = require('socket')
 
   turtle.status = 'follow ' .. id
 

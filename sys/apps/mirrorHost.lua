@@ -1,7 +1,8 @@
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Event  = require('event')
-local Socket = require('socket')
 local Logger = require('logger')
+local Socket = require('socket')
 
 Logger.setScreenLogging()
 

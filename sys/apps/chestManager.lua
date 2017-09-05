@@ -1,12 +1,14 @@
-require = requireInjector(getfenv(1))
-local UI = require('ui')
-local Event = require('event')
-local Config = require('config')
-local ChestProvider = require('chestProvider18')
+requireInjector(getfenv(1))
+
+local ChestProvider   = require('chestProvider18')
+local Config          = require('config')
+local Event           = require('event')
+local itemDB          = require('itemDB')
+local Peripheral      = require('peripheral')
 local RefinedProvider = require('refinedProvider')
-local itemDB = require('itemDB')
-local Terminal = require('terminal')
-local Peripheral = require('peripheral')
+local Terminal        = require('terminal')
+local UI              = require('ui')
+local Util            = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Resource Manager')
 

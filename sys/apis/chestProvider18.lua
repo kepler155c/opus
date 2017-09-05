@@ -1,5 +1,6 @@
-local class = require('class')
-local itemDB = require('itemDB')
+local class      = require('class')
+local Util       = require('util')
+local itemDB     = require('itemDB')
 local Peripheral = require('peripheral')
 
 local ChestProvider = class()

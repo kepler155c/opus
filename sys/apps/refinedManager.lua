@@ -1,10 +1,10 @@
-local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
-require = injector(getfenv(1))
+requireInjector(getfenv(1))
 
-local UI = require('ui')
+local Peripheral      = require('peripheral')
 local RefinedProvider = require('refinedProvider')
-local Terminal = require('terminal')
-local Peripheral = require('peripheral')
+local Terminal        = require('terminal')
+local UI              = require('ui')
+local Util            = require('util')
 
 local controller = RefinedProvider()
 if not controller:isValid() then

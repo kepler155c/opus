@@ -1,10 +1,12 @@
-require = requireInjector(getfenv(1))
-local GPS = require('gps')
-local Socket = require('socket')
-local MEProvider = require('meProvider')
-local Logger = require('logger')
-local Point = require('point')
+requireInjector(getfenv(1))
+
 local Event = require('event')
+local GPS = require('gps')
+local Logger = require('logger')
+local MEProvider = require('meProvider')
+local Point = require('point')
+local Socket = require('socket')
+local Util  = require('util')
 
 if not device.wireless_modem then
   error('Modem is required')

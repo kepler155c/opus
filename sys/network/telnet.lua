@@ -1,10 +1,13 @@
+local Event  = require('event')
 local Socket = require('socket')
-local Event = require('event')
+local Util   = require('util')
 
 local function telnetHost(socket)
 
-  require = requireInjector(getfenv(1))
+  requireInjector(getfenv(1))
+
   local Event = require('event')
+
   local methods = { 'clear', 'clearLine', 'setCursorPos', 'write', 'blit',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
                     'setBackgroundColour', 'scroll', 'setCursorBlink', }

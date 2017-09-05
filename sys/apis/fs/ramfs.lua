@@ -1,3 +1,5 @@
+local Util   = require('util')
+
 local ramfs = { }
 
 function ramfs.mount(dir, nodeType)

@@ -1,4 +1,5 @@
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 Base64 = require('base64')
 
 local args = { ... }

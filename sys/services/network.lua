@@ -1,4 +1,5 @@
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Util = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Net Daemon')
@@ -6,7 +7,7 @@ multishell.setTitle(multishell.getCurrent(), 'Net Daemon')
 _G.network = { }
 
 local function netUp()
-  require = requireInjector(getfenv(1))
+  requireInjector(getfenv(1))
   local Event = require('event')
 
   local files = fs.list('/sys/network')

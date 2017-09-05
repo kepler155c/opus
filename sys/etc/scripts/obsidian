@@ -1,5 +1,7 @@
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Point = require('point')
+local Util  = require('util')
 
 local checkedNodes, nodes
 

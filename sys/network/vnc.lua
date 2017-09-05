@@ -1,5 +1,6 @@
-local Socket = require('socket')
 local Event  = require('event')
+local Socket = require('socket')
+local Util   = require('util')
 
 local function wrapTerm(socket, termInfo)
   local methods = { 'blit', 'clear', 'clearLine', 'setCursorPos', 'write',

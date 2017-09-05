@@ -1,3 +1,5 @@
+local Util  = require('util')
+
 local Event = {
   uid       = 1,       -- unique id for handlers
   routines  = { },     -- coroutines

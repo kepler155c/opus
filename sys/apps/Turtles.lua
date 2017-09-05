@@ -1,9 +1,11 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
-local UI = require('ui')
-local Socket = require('socket')
+requireInjector(getfenv(1))
+
+local Event    = require('event')
+local itemDB   = require('itemDB')
+local Socket   = require('socket')
 local Terminal = require('terminal')
-local itemDB = require('itemDB')
+local UI       = require('ui')
+local Util     = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Turtles')
 UI.Button.defaults.focusIndicator = ' '

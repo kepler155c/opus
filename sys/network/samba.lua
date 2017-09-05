@@ -1,5 +1,5 @@
+local Event  = require('event')
 local Socket = require('socket')
-local Event = require('event')
 
 local fileUid = 0
 local fileHandles = { }

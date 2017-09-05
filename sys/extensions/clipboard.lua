@@ -1,3 +1,7 @@
+requireInjector(getfenv(1))
+
+local Util = require('util')
+
 _G.clipboard = { internal, data }
 
 function clipboard.getData()

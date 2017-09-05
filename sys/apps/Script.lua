@@ -1,8 +1,10 @@
-require = requireInjector(getfenv(1))
-local Event = require('event')
-local UI = require('ui')
-local Socket = require('socket')
+requireInjector(getfenv(1))
+
 local Config = require('config')
+local Event  = require('event')
+local Socket = require('socket')
+local UI     = require('ui')
+local Util   = require('util')
 
 local GROUPS_PATH = 'usr/groups'
 local SCRIPTS_PATH = 'sys/etc/scripts'

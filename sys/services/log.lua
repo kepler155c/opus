@@ -1,5 +1,7 @@
-require = requireInjector(getfenv(1))
+requireInjector(getfenv(1))
+
 local Terminal = require('terminal')
+local Util     = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Debug')
 
