@@ -1,4 +1,4 @@
-local injector = requireInjector or load(http.get('http://pastebin.com/raw/c0TWsScv').readAll())()
+local injector = requireInjector or load(http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
 injector(getfenv(1))
 
 local Event   = require('event')

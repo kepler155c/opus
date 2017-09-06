@@ -1,3 +1,7 @@
+if _G.device then
+  return
+end
+
 requireInjector(getfenv(1))
 
 local Peripheral = require('peripheral')

@@ -1,4 +1,4 @@
-if not turtle then
+if not turtle or turtle.pathfind then
 	return
 end
 

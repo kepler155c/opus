@@ -1,3 +1,7 @@
+if _G.clipboard then
+  return
+end
+
 requireInjector(getfenv(1))
 
 local Util = require('util')
@@ -32,6 +36,8 @@ function clipboard.useInternal(mode)
   end
 end
 
-multishell.addHotkey(20, function()
-  clipboard.useInternal(not clipboard.isInternal())
-end)
+if multishell and multishell.addHotkey then
+  multishell.addHotkey(20, function()
+    clipboard.useInternal(not clipboard.isInternal())
+  end)
+end

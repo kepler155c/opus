@@ -20,6 +20,11 @@ if Util.getVersion() == 1.8 then
   ChestProvider = require('chestProvider18')
 end
 
+if not turtle.point then
+  local Opus       = require('opus')
+  Opus.loadExtensions()
+end
+
 local BUILDER_DIR = 'usr/builder'
 
 local schematic = Schematic()
@@ -2034,6 +2039,7 @@ function startPage:eventHandler(event)
     Builder:build()
 
   elseif event.type == 'quit' then
+    UI.term:reset()
     Event.exitPullEvents()
   end
 

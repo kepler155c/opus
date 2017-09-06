@@ -22,6 +22,7 @@ end
 requireInjector(getfenv(1))
 
 local Config = require('config')
+local Opus   = require('opus')
 local Util   = require('util')
 
 -- Begin multishell
@@ -462,26 +463,9 @@ end)
 local function startup()
   local hasError
 
-  local function runDir(directory, desc, open)
-    if not fs.exists(directory) then
-      return
-    end
-
-    local files = fs.list(directory)
-    table.sort(files)
-
-    for _,file in ipairs(files) do
-      print(desc .. file)
-      os.sleep(0)
-      local result, err = open(directory .. '/' .. file)
-      if not result then
-        printError(err)
-        hasError = true
-      end
-    end
+  if not Opus.loadExtensions() then
+    hasError = true
   end
-
-  runDir('sys/extensions', '[ ext ] ', shell.run)
 
   local overviewId = multishell.openTab({
     path = 'sys/apps/Overview.lua',
@@ -491,9 +475,13 @@ local function startup()
   })
   overviewTab = tabs[overviewId]
 
-  runDir('sys/services', '[ svc ] ', shell.openHiddenTab)
-  runDir('sys/autorun', '[ aut ] ', shell.run)
-  runDir('usr/autorun', '[ aut ] ', shell.run)
+  if not Opus.loadServices() then
+    hasError = true
+  end
+
+  if not Opus.autorun() then
+    hasError = true
+  end
 
   if hasError then
     error('An autorun program has errored')
