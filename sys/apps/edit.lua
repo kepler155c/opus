@@ -1,13 +1,18 @@
--- Get file to edit
+shell.setCompletionFunction(shell.getRunningProgram(), function(shell, index, text)
+  if index == 1 then
+    return fs.complete(text, shell.dir(), true, false)
+  end
+end)
+
 local tArgs = { ... }
 if #tArgs == 0 then
   error( "Usage: edit <path>" )
 end
 
 -- Error checking
-local sPath = shell.resolve( tArgs[1] )
-local bReadOnly = fs.isReadOnly( sPath )
-if fs.exists( sPath ) and fs.isDir( sPath ) then
+local sPath = shell.resolve(tArgs[1])
+local bReadOnly = fs.isReadOnly(sPath)
+if fs.exists(sPath) and fs.isDir(sPath) then
   error( "Cannot edit a directory." )
 end
 
