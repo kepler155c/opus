@@ -17,11 +17,11 @@ local Util       = require('util')
 
 local ChestProvider = require('chestProvider')
 if Util.getVersion() == 1.8 then
-  ChestProvider = require('chestProvider18')
+  ChestProvider  = require('chestProvider18')
 end
 
-if not turtle.point then
-  local Opus       = require('opus')
+if not _G.device then
+  local Opus     = require('opus')
   Opus.loadExtensions()
 end
 
@@ -498,7 +498,7 @@ function Builder:refuel()
 end
 
 function Builder:inAirDropoff()
-    if not device.wireless_modem then
+  if not device.wireless_modem then
     return false
   end
 
@@ -632,10 +632,12 @@ end
 
 function Builder:sendSupplyRequest(lastBlock)
 
-  local slots = self:getAirResupplyList(lastBlock)
-  self.slotUid = os.clock()
+  if device.wireless_modem then
+    local slots = self:getAirResupplyList(lastBlock)
+    self.slotUid = os.clock()
 
-  Message.broadcast('supplyList', { uid = self.slotUid, slots = slots })
+    Message.broadcast('supplyList', { uid = self.slotUid, slots = slots })
+  end
 end
 
 function Builder:resupply()
