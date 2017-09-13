@@ -1,5 +1,3 @@
-local Util  = require('util')
-
 local Event = {
   uid       = 1,       -- unique id for handlers
   routines  = { },     -- coroutines
@@ -26,7 +24,7 @@ end
 function Routine:resume(event, ...)
 
   if not self.co then
-    error('Cannot resume a dead routine\n' .. Util.tostring(self))
+    error('Cannot resume a dead routine')
   end
 
   if not self.filter or self.filter == event or event == "terminate" then
@@ -41,7 +39,7 @@ function Routine:resume(event, ...)
     end
 
     if not s and event ~= 'terminate' then
-      error('\n' .. (m or 'Error processing event') .. '\n' .. Util.tostring(self))
+      error('\n' .. (m or 'Error processing event'))
     end
 
     return s, m

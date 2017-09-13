@@ -3,7 +3,9 @@ if not turtle or turtle.enableGPS then
 end
 
 requireInjector(getfenv(1))
-local GPS = require('gps')
+
+local GPS    = require('gps')
+local Config = require('config')
 
 function turtle.enableGPS(timeout)
   if turtle.point.gps then
@@ -18,17 +20,23 @@ function turtle.enableGPS(timeout)
 end
 
 function turtle.gotoGPSHome()
-  local homePt = turtle.loadLocation('gpsHome')
-  if homePt then
+  local config = { }
+  Config.load('gps', config)
+
+  if config.home then
     if turtle.enableGPS() then
-      turtle.pathfind(homePt)
+      turtle.pathfind(config.home)
     end
   end
 end
 
 function turtle.setGPSHome()
+  local config = { }
+  Config.load('gps', config)
+
   if turtle.enableGPS() then
-    turtle.storeLocation('gpsHome', turtle.point)
+    config.home = turtle.point
+    Config.update('gps', config)
     turtle.gotoPoint(turtle.point)
   end
 end

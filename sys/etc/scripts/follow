@@ -46,7 +46,7 @@ local function follow(id)
     addBlocks(pt)
     addBlocks({ x = pt.x, z = pt.z, y = pt.y + 1 })
 
-    if turtle.pathfind(cpt, blocks) then
+    if turtle.pathfind(cpt, { blocks = blocks }) then
       turtle.headTowards(pt)
     end
     following = false

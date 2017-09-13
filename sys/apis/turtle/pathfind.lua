@@ -1,22 +1,19 @@
-if not turtle or turtle.pathfind then
-	return
-end
-
 requireInjector(getfenv(1))
 
 local Grid       = require ("jumper.grid")
 local Pathfinder = require ("jumper.pathfinder")
 local Point      = require('point')
+local Util       = require('util')
 
 local WALKABLE = 0
 
 local function createMap(dim)
 	local map = { }
-	for z = 0, dim.ez do
+	for z = 1, dim.ez do
 		local row = {}
-		for x = 0, dim.ex do
+		for x = 1, dim.ex do
 			local col = { }
-			for y = 0, dim.ey do
+			for y = 1, dim.ey do
 				table.insert(col, WALKABLE)
 			end
 			table.insert(row, col)
@@ -65,12 +62,21 @@ local function mapDimensions(dest, blocks, boundingBox)
 	end
 
 	-- expand one block out in all directions
-	sx = math.max(sx - 1, boundingBox.sx)
-	sz = math.max(sz - 1, boundingBox.sz)
-	sy = math.max(sy - 1, boundingBox.sy)
-	ex = math.min(ex + 1, boundingBox.ex)
-	ez = math.min(ez + 1, boundingBox.ez)
-	ey = math.min(ey + 1, boundingBox.ey)
+	if boundingBox then
+		sx = math.max(sx - 1, boundingBox.x)
+		sz = math.max(sz - 1, boundingBox.z)
+		sy = math.max(sy - 1, boundingBox.y)
+		ex = math.min(ex + 1, boundingBox.ex)
+		ez = math.min(ez + 1, boundingBox.ez)
+		ey = math.min(ey + 1, boundingBox.ey)
+	else
+		sx = sx - 1
+		sz = sz - 1
+		sy = sy - 1
+		ex = ex + 1
+		ez = ez + 1
+		ey = ey + 1
+	end
 
 	return {
 		ex = ex - sx + 1,
@@ -138,22 +144,14 @@ local function addSensorBlocks(blocks, sblocks)
 	end
 end
 
-local function pathTo(dest, blocks, maxRadius)
+local function pathTo(dest, options)
 
-	blocks = blocks or { }
-	maxRadius = maxRadius or 1000000
+	local blocks = options.blocks or { }
+	local allDests = options.dest or { }  -- support alternative destinations
 
 	local lastDim = nil
 	local map = nil
 	local grid = nil
-	local boundingBox = {
-		sx = math.min(turtle.point.x, dest.x) - maxRadius,
-		sy = math.min(turtle.point.y, dest.y) - maxRadius,
-		sz = math.min(turtle.point.z, dest.z) - maxRadius,
-		ex = math.max(turtle.point.x, dest.x) + maxRadius,
-		ey = math.max(turtle.point.y, dest.y) + maxRadius,
-		ez = math.max(turtle.point.z, dest.z) + maxRadius,
-	}
 
 	-- Creates a pathfinder object
 	local myFinder = Pathfinder(grid, 'ASTAR', walkable)
@@ -164,7 +162,7 @@ local function pathTo(dest, blocks, maxRadius)
 	while turtle.point.x ~= dest.x or turtle.point.z ~= dest.z or turtle.point.y ~= dest.y do
 
 		-- map expands as we encounter obstacles
-		local dim = mapDimensions(dest, blocks, boundingBox)
+		local dim = mapDimensions(dest, blocks, options.box)
 
 		-- reuse map if possible
 		if not lastDim or not dimsAreEqual(dim, lastDim) then
@@ -189,23 +187,33 @@ local function pathTo(dest, blocks, maxRadius)
 		local path = myFinder:getPath(startPt.x, startPt.y, startPt.z, turtle.point.heading, endPt.x, endPt.y, endPt.z, dest.heading)
 
 		if not path then
-			return false, 'failed to recalculate'
-		end
+	    Util.removeByValue(allDests, dest)
+	    dest = Point.closest(turtle.point, allDests)
 
-		for node, count in path:nodes() do
-			local pt = nodeToPoint(dim, node)
-
-			if turtle.abort then
-				return false, 'aborted'
+	    if not dest then
+				return false, 'failed to recalculate'
 			end
+		else
 
-			-- use single turn method so the turtle doesn't turn around when encountering obstacles
-			if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y) then
+			for node, count in path:nodes() do
+				local pt = nodeToPoint(dim, node)
+
+				if turtle.abort then
+					return false, 'aborted'
+				end
+
+				-- use single turn method so the turtle doesn't turn around
+				-- when encountering obstacles -- IS THIS RIGHT ??
+				if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y, node.heading) then
 			  	table.insert(blocks, pt)
+			  	if #allDests > 0 then
+			  		dest = Point.closest(turtle.point, allDests)
+			  	end
 			  	--if device.turtlesensorenvironment then
 			  	--	addSensorBlocks(blocks, device.turtlesensorenvironment.sonicScan())
 			  	--end
-				break
+					break
+				end
 			end
 		end
 	end
@@ -213,12 +221,13 @@ local function pathTo(dest, blocks, maxRadius)
 	if dest.heading then
 		turtle.setHeading(dest.heading)
 	end
-	return true
+	return dest
 end
 
-turtle.pathfind = function(dest, blocks, maxRadius)
-	if not blocks and turtle.gotoPoint(dest) then
-		return true
+return function(dest, options)
+	options = options or { }
+	if not options.blocks and turtle.gotoPoint(dest) then
+		return dest
 	end
-	return pathTo(dest, blocks, maxRadius)
+	return pathTo(dest, options)
 end

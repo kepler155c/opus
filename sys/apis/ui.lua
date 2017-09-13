@@ -343,7 +343,7 @@ function Manager:click(button, x, y)
 
     if button == 1 then
       local c = os.clock()
-      if self.doubleClickTimer and (c - self.doubleClickTimer < 1.5) and
+      if self.doubleClickTimer and (c - self.doubleClickTimer < 1.9) and
          self.doubleClickX == x and self.doubleClickY == y and
          self.doubleClickElement == clickEvent.element then
         button = 3

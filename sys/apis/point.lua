@@ -1,3 +1,5 @@
+local Util = require('util')
+
 local Point = { }
 
 function Point.copy(pt)
@@ -8,6 +10,14 @@ function Point.same(pta, ptb)
   return pta.x == ptb.x and
          pta.y == ptb.y and
          pta.z == ptb.z
+end
+
+function Point.above(pt)
+  return { x = pt.x, y = pt.y + 1, z = pt.z, heading = pt.heading }
+end
+
+function Point.below(pt)
+  return { x = pt.x, y = pt.y - 1, z = pt.z, heading = pt.heading }
 end
 
 function Point.subtract(a, b)
@@ -123,30 +133,17 @@ function Point.closest(reference, pts)
   return lpt
 end
 
--- find the closest block
--- * favor same plane
--- * going backwards only if the dest is above or below
-function Point.closest2(reference, pts)
-  local lpt, lm -- lowest
-  for _,pt in pairs(pts) do
-    local m = Point.turtleDistance(reference, pt)
-    local h = Point.calculateHeading(reference, pt)
-    local t = Point.calculateTurns(reference.heading, h)
-    if pt.y ~= reference.y then -- try and stay on same plane
-      m = m + .01
+function Point.eachClosest(spt, ipts, fn)
+
+  local pts = Util.shallowCopy(ipts)
+  while #pts > 0 do
+    local pt = Point.closest(spt, pts)
+    local r = fn(pt)
+    if r then
+      return r
     end
-    if t ~= 2 or pt.y == reference.y then
-      m = m + t
-      if t > 0 then
-        m = m + .01
-      end
-    end
-    if not lm or m < lm then
-      lpt = pt
-      lm = m
-    end
+    Util.removeByValue(pts, pt)
   end
-  return lpt
 end
 
 function Point.adjacentPoints(pt)
@@ -159,26 +156,28 @@ function Point.adjacentPoints(pt)
   return pts
 end
 
-return Point
-
---[[
-function Point.toBox(pt, width, length, height)
-  return { ax = pt.x,
-           ay = pt.y,
-           az = pt.z,
-           bx = pt.x + width - 1,
-           by = pt.y + height - 1,
-           bz = pt.z + length - 1
-         }
+function Point.normalizeBox(box)
+  return {
+    x = math.min(box.x, box.ex),
+    y = math.min(box.y, box.ey),
+    z = math.min(box.z, box.ez),
+    ex = math.max(box.x, box.ex),
+    ey = math.max(box.y, box.ey),
+    ez = math.max(box.z, box.ez),
+  }
 end
 
 function Point.inBox(pt, box)
-  return pt.x >= box.ax and
-         pt.z >= box.az and
-         pt.x <= box.bx and
-         pt.z <= box.bz
+  return pt.x >= box.x and
+         pt.y >= box.y and
+         pt.z >= box.z and
+         pt.x <= box.ex and
+         pt.z <= box.ez
 end
 
+return Point
+
+--[[
 Box = { }
 
 function Box.contain(boundingBox, containedBox)

@@ -243,6 +243,15 @@ function Util.size(list)
   return 0
 end
 
+function Util.removeByValue(t, e)
+  for k,v in pairs(t) do
+    if v == e then
+      table.remove(t, k)
+      break
+    end
+  end
+end
+
 function Util.each(list, func)
   for index, value in pairs(list) do
     func(value, index, list)

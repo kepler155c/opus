@@ -2,6 +2,7 @@ requireInjector(getfenv(1))
 
 local ChestProvider   = require('chestProvider18')
 local Config          = require('config')
+local Craft           = require('turtle.craft')
 local Event           = require('event')
 local itemDB          = require('itemDB')
 local Peripheral      = require('peripheral')
@@ -34,12 +35,14 @@ local chestProvider = ChestProvider({ direction = 'west', wrapSide = 'back' })
 local turtleChestProvider = ChestProvider({ direction = 'up', wrapSide = 'bottom' })
 
 local RESOURCE_FILE = 'usr/etc/resources.db'
-local RECIPES_FILE = 'usr/etc/recipes.db'
+local RECIPES_FILE = 'sys/etc/recipes.db'
 
 local jobListGrid
 local craftingPaused = false
 local recipes = Util.readTable(RECIPES_FILE) or { }
 local resources = Util.readTable(RESOURCE_FILE) or { }
+
+Craft.setRecipes(recipes)
 
 for _,r in pairs(resources) do
   r.maxDamage = nil
@@ -68,6 +71,17 @@ local function getItem(items, inItem, ignoreDamage)
       end
     end
   end
+end
+
+local function splitKey(key)
+  local t = Util.split(key, '(.-):')
+  local item = { }
+  if #t[#t] > 2 then
+    item.nbtHash = table.remove(t)
+  end
+  item.damage = tonumber(table.remove(t))
+  item.name = table.concat(t, ':')
+  return item
 end
 
 local function getItemQuantity(items, item)
@@ -114,7 +128,8 @@ local function mergeResources(t)
     end
   end
 
-  for _,v in pairs(recipes) do
+  for k in pairs(recipes) do
+    local v = splitKey(k)
     local item = getItem(t, v)
     if not item then
       item = Util.shallowCopy(v)
@@ -149,8 +164,8 @@ end
 local function sumItems3(ingredients, items, summedItems, count)
 
   local canCraft = 0
-  for _,item in pairs(ingredients) do
-    local key = uniqueKey(item)
+  for _,key in pairs(ingredients) do
+    local item = splitKey(key)
     local summedItem = summedItems[key]
     if not summedItem then
       summedItem = Util.shallowCopy(item)
@@ -165,52 +180,6 @@ local function sumItems3(ingredients, items, summedItems, count)
       sumItems3(summedItem.recipe.ingredients, items, summedItems, need)
     end
   end
-end
-
-local function sumItems2(ingredients, items, summedItems, count)
-
-  local canCraft = 0
-
-  for i = 1, count do
-    for _,item in pairs(ingredients) do
-      local key = uniqueKey(item)
-      local summedItem = summedItems[key]
-      if not summedItem then
-        summedItem = Util.shallowCopy(item)
-        summedItem.recipe = recipes[key]
-        summedItem.count = getItemQuantity(items, summedItem)
-        summedItems[key] = summedItem
-      end
-      if summedItem.recipe and summedItem.count <= 0 then
-        summedItem.count = sumItems2(summedItem.recipe.ingredients, items, summedItems, 1)
-      end
-      if summedItem.count <= 0 then
-        return canCraft
-      end
-      summedItem.count = summedItem.count - item.count
-    end
-    canCraft = canCraft + 1
-  end
-
-  return canCraft
-end
-
-local function sumItems(items)
-  local t = {}
-
-  for _,item in pairs(items) do
-    local key = uniqueKey(item)
-    local summedItem = t[key]
-    if summedItem then
-      summedItem.count = summedItem.count + item.count
-    else
-      summedItem = Util.shallowCopy(item)
-      summedItem.recipe = recipes[key]
-      t[key] = summedItem
-    end
-  end
-
-  return t
 end
 
 local function isGridClear()
@@ -235,32 +204,6 @@ local function clearGrid()
   return true
 end
 
-local function turtleCraft(recipe, originalItem, qty)
-
-  for k,v in pairs(recipe.ingredients) do
-
-    chestProvider:provide({ id = v.name, dmg = v.damage, nbt_hash = v.nbtHash }, v.count * qty, k)
-    if turtle.getItemCount(k) ~= v.count * qty then
-      clearGrid()
-      originalItem.status = v.name .. ' (extract failed)'
-      return false
-    end
-  end
-
-  if not turtle.craft() then
-    clearGrid()
-    return false
-  end
-
-  --for k,ingredient in pairs(recipe.ingredients) do
-  --  local item = getItem(items, ingredient)
-  --  item.count = item.count - ingredient.count
-  --end
-
-  clearGrid()
-  return true
-end
-
 local function addCraftingRequest(item, craftList, count)
   local key = uniqueKey(item)
   local request = craftList[key]
@@ -272,64 +215,30 @@ local function addCraftingRequest(item, craftList, count)
   request.count = request.count + count
 end
 
-local function craftRecipe(recipe, items, originalItem, count)
-
-  local maxCount = recipe.maxCount
-
-  if not maxCount then -- temporary
-    local cItem = itemDB:get(itemDB:makeKey(recipe))
-    if cItem then
-      maxCount = cItem.maxCount
-    else
-      maxCount = 1
-    end
-  end
-
-  local summedItems = sumItems(recipe.ingredients)
-  for key,ingredient in pairs(summedItems) do
-    local details = getItemDetails(items, ingredient)
-    maxCount = math.min(details.maxCount, maxCount)
-    if details.count < ingredient.count * count then
-      if ingredient.recipe then
-        if not craftRecipe(ingredient.recipe, items, originalItem, ingredient.count * count - details.count) then
-          return
-        end
-      end
-    end
-  end
-  repeat
-    if not turtleCraft(recipe, originalItem, math.min(count, maxCount)) then
-      return false
-    end
-    count = count - maxCount
-  until count < 0
-
-  return true
-end
-
 local function craftItem(recipe, items, originalItem, craftList, count)
 
   if craftingPaused or not device.workbench or not isGridClear() then
     return
   end
 
-  count = math.ceil(count / recipe.count)
-
-  local toCraft = sumItems2(recipe.ingredients, items, { }, count)
+  local toCraft = Craft.getCraftableAmount(recipe, count, items)
 
   if toCraft > 0 then
-    craftRecipe(recipe, items, originalItem, toCraft)
+    Craft.craftRecipe(recipe, toCraft, chestProvider)
+    clearGrid()
     items = chestProvider:listItems()
   end
 
   count = count - toCraft
 
-  local summedItems = { }
-  sumItems3(recipe.ingredients, items, summedItems, count)
+  if count > 0 then
+    local summedItems = { }
+    sumItems3(recipe.ingredients, items, summedItems, math.ceil(count / recipe.count))
 
-  for key,ingredient in pairs(summedItems) do
-    if not ingredient.recipe and ingredient.count < 0 then
-      addCraftingRequest(ingredient, craftList, -ingredient.count)
+    for key,ingredient in pairs(summedItems) do
+      if not ingredient.recipe and ingredient.count < 0 then
+        addCraftingRequest(ingredient, craftList, -ingredient.count)
+      end
     end
   end
 end

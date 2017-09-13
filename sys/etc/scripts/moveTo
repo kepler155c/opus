@@ -23,7 +23,7 @@ turtle.run(function()
     error('turtle: No GPS response')
   end
 
-  if not turtle.pathfind(pt, nil, 64) then
+  if not turtle.pathfind(pt) then
     error('Unable to go to location')
   end
 end)

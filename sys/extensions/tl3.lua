@@ -4,7 +4,10 @@ end
 
 requireInjector(getfenv(1))
 
-local Util = require('util')
+local Point        = require('point')
+local synchronized = require('sync')
+local Util         = require('util')
+turtle.pathfind    = require('turtle.pathfind')
 
 local function noop() end
 
@@ -147,6 +150,29 @@ function turtle.getHeadingInfo(heading)
 end
 
 -- [[ Basic turtle actions ]] --
+local function inventoryAction(fn, name, qty)
+  local slots = turtle.getFilledSlots()
+  local s
+  for _,slot in pairs(slots) do
+    if slot.key == name or slot.name == name then
+      turtle.native.select(slot.index)
+      if not qty then
+        s = fn()
+      else
+        s = fn(math.min(qty, slot.count))
+        qty = qty - slot.count
+        if qty < 0 then
+          break
+        end
+      end
+    end
+  end
+  if not s then
+    return false, 'No items found'
+  end
+  return s
+end
+
 local function _attack(action)
   if action.attack() then
     repeat until not action.attack()
@@ -193,24 +219,23 @@ function turtle.place(slot)     return _place(actions.forward, slot) end
 function turtle.placeUp(slot)   return _place(actions.up, slot)      end
 function turtle.placeDown(slot) return _place(actions.down, slot)    end
 
-local function _drop(action, count, indexOrId)
-
-  if indexOrId then
-    local slot = turtle.getSlot(indexOrId)
-    if not slot or slot.qty == 0 then
-      return false, 'No items to drop'
-    end
-    turtle.select(slot.index)
+local function _drop(action, qtyOrName, qty)
+  if not qtyOrName or type(qtyOrName) == 'number' then
+    return action.drop(qtyOrName)
   end
-  if not count then
-    return action.drop() -- wtf
-  end
-  return action.drop(count)
+  return inventoryAction(action.drop, qtyOrName, qty)
 end
 
 function turtle.drop(count, slot)     return _drop(actions.forward, count, slot) end
 function turtle.dropUp(count, slot)   return _drop(actions.up, count, slot)      end
 function turtle.dropDown(count, slot) return _drop(actions.down, count, slot)    end
+
+function turtle.refuel(qtyOrName, qty)
+  if not qtyOrName or type(qtyOrName) == 'number' then
+    return turtle.native.refuel(qtyOrName)
+  end
+  return inventoryAction(turtle.native.refuel, qtyOrName, qty)
+end
 
 --[[
 function turtle.dig()           return state.dig(actions.forward) end
@@ -277,7 +302,7 @@ turtle.movePolicies = {
         return false
       end
       local oldStatus = turtle.status
-      print('stuck')
+      print('assured move: stuck')
       turtle.status = 'stuck'
       repeat
         os.sleep(1)
@@ -328,6 +353,7 @@ function turtle.setDigPolicy(policy)     state.digPolicy = policy    end
 function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
 function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
 function turtle.clearMoveCallback()      state.moveCallback = noop   end
+function turtle.getMoveCallback()        return state.moveCallback   end
 
 -- [[ Locations ]] --
 function turtle.getLocation(name)
@@ -751,29 +777,45 @@ function turtle.getSlot(indexOrId, slots)
   local detail = turtle.getItemDetail(indexOrId)
   if detail then
     return {
+      name = detail.name,
+      damage = detail.damage,
+      count = detail.count,
+      key = detail.name .. ':' .. detail.damage,
+
+      index = indexOrId,
+
+      -- deprecate
       qty = detail.count,
       dmg = detail.damage,
       id = detail.name,
       iddmg = detail.name .. ':' .. detail.damage,
-      index = indexOrId,
     }
   end
 
   return {
-    qty = 0,
+    qty = 0,  -- deprecate
+    count = 0,
     index = indexOrId,
   }
 end
 
-function turtle.selectSlot(indexOrId)
+function turtle.select(indexOrId)
+
+  if type(indexOrId) == 'number' then
+    return turtle.native.select(indexOrId)
+  end
 
   local s = turtle.getSlot(indexOrId)
   if s then
-    turtle.select(s.index)
+    turtle.native.select(s.index)
     return s
   end
 
   return false, 'Inventory does not contain item'
+end
+
+function turtle.selectSlot(indexOrId)  -- deprecated
+  return turtle.select(indexOrId)
 end
 
 function turtle.getInventory(slots)
@@ -784,11 +826,38 @@ function turtle.getInventory(slots)
   return slots
 end
 
+function turtle.getSummedInventory()
+  local slots = turtle.getFilledSlots()
+  local t = { }
+  for _,slot in pairs(slots) do
+    local entry = t[slot.iddmg]
+    if not entry then
+      entry = {
+        count = 0,
+        damage = slot.damage,
+        name = slot.name,
+        key = slot.key,
+
+        -- deprecate
+        qty = 0,
+        dmg = slot.dmg,
+        id = slot.id,
+        iddmg = slot.iddmg,
+      }
+      t[slot.iddmg] = entry
+    end
+    entry.qty = entry.qty + slot.qty
+    entry.count = entry.qty
+  end
+  return t
+end
+
 function turtle.emptyInventory(dropAction)
   dropAction = dropAction or turtle.drop
   for i = 1, 16 do
     turtle.emptySlot(i, dropAction)
   end
+  turtle.select(1)
 end
 
 function turtle.emptySlot(slot, dropAction)
@@ -857,28 +926,243 @@ function turtle.selectSlotWithQuantity(qty, startSlot)
   end
 end
 
-function turtle.condense(startSlot)
-  startSlot = startSlot or 1
-  local aslots = turtle.getInventory()
-  
-  for _,slot in ipairs(aslots) do
-    if slot.qty < 64 then
-      for i = slot.index + 1, 16 do
-        local fslot = aslots[i]
-        if fslot.qty > 0 then
-          if slot.qty == 0 or slot.iddmg == fslot.iddmg then
-            turtle.select(fslot.index)
-            turtle.transferTo(slot.index, 64)
-            local transferred = turtle.getItemCount(slot.index) - slot.qty
-            slot.qty = slot.qty + transferred
-            fslot.qty = fslot.qty - transferred
-            slot.iddmg = fslot.iddmg
-            if slot.qty == 64 then
-              break
-            end
+function turtle.condense()
+  local slots = turtle.getInventory()
+
+  for i = 16, 1, -1 do
+    if slots[i].count > 0 then
+      for j = 1, i - 1 do
+        if slots[j].count == 0 or slots[i].key == slots[j].key then
+          turtle.select(i)
+          turtle.transferTo(j, 64)
+          local transferred = slots[i].qty - turtle.getItemCount(i)
+          slots[j].count = slots[j].count + transferred
+          slots[i].count = slots[i].count - transferred
+          slots[j].key = slots[i].key
+          if slots[i].count == 0 then
+            break
           end
         end
       end
     end
   end
+  return true
 end
+
+function turtle.getItemCount(idOrName)
+  if type(idOrName) == 'number' then
+    return turtle.native.getItemCount(idOrName)
+  end
+  local slots = turtle.getFilledSlots()
+  local count = 0
+  for _,slot in pairs(slots) do
+    if slot.iddmg == idOrName or slot.name == idOrName then
+      count = count + slot.qty
+    end
+  end
+  return count
+end
+
+function turtle.equip(side, item)
+
+  if item then
+    if not turtle.select(item) then
+      return false, 'Unable to equip ' .. item
+    end
+  end
+
+  if side == 'left' then
+    return turtle.equipLeft()
+  end
+  return turtle.equipRight()
+end
+
+function turtle.run(fn, ...)
+  local args = { ... }
+  local s, m
+
+  if type(fn) == 'string' then
+    fn = turtle[fn]
+  end
+
+  synchronized(turtle, function()
+    turtle.abort = false
+    turtle.status = 'busy'
+    turtle.resetState()
+    s, m = pcall(function() fn(unpack(args)) end)
+    turtle.abort = false
+    turtle.status = 'idle'
+    if not s and m then
+      printError(m)
+    end
+  end)
+
+  return s, m
+end
+
+function turtle.abortAction()
+  if turtle.status ~= 'idle' then
+    turtle.abort = true
+    os.queueEvent('turtle_abort')
+  end
+end
+
+-- [[ Pathing ]] --
+function turtle.faceAgainst(pt) -- 4 sided
+
+  local pts = { }
+
+  for i = 0, 3 do
+    local hi = turtle.getHeadingInfo(i)
+
+    table.insert(pts, { 
+      x = pt.x + hi.xd, 
+      z = pt.z + hi.zd, 
+      y = pt.y + hi.yd, 
+      heading = (hi.heading + 2) % 4,
+    })
+  end
+
+  return turtle.pathfind(Point.closest(turtle.point, pts), { dest = pts })
+end
+
+function turtle.moveAgainst(pt) -- 6 sided
+
+  local pts = { }
+
+  for i = 0, 5 do
+    local hi = turtle.getHeadingInfo(i)
+    local heading, direction
+    if i < 4 then
+      heading = (hi.heading + 2) % 4
+      direction = 'forward'
+    elseif i == 4 then
+      direction = 'down'
+    elseif i == 5 then
+      direction = 'up'
+    end
+
+    table.insert(pts, {
+      x = pt.x + hi.xd, 
+      z = pt.z + hi.zd, 
+      y = pt.y + hi.yd,
+      direction = direction,
+      heading = heading,
+    })
+  end
+
+  return turtle.pathfind(Point.closest(turtle.point, pts), { dest = pts })
+end
+
+local actionsAt = {
+  detect = {
+    up = turtle.detectUp,
+    down = turtle.detectDown,
+    forward = turtle.detect,
+  },
+  dig = {
+    up = turtle.digUp,
+    down = turtle.digDown,
+    forward = turtle.dig,
+  },
+  move = {
+    up = turtle.moveUp,
+    down = turtle.moveDown,
+    forward = turtle.move,
+  },
+  attack = {
+    up = turtle.attackUp,
+    down = turtle.attackDown,
+    forward = turtle.attack,
+  },
+  place = {
+    up = turtle.placeUp,
+    down = turtle.placeDown,
+    forward = turtle.place,
+  },
+  drop = {
+    up = turtle.dropUp,
+    down = turtle.dropDown,
+    forward = turtle.drop,
+  },
+  suck = {
+    up = turtle.suckUp,
+    down = turtle.suckDown,
+    forward = turtle.suck,
+  },
+  compare = {
+    up = turtle.compareUp,
+    down = turtle.compareDown,
+    forward = turtle.compare,
+  },
+  inspect = {
+    up = turtle.inspectUp,
+    down = turtle.inspectDown,
+    forward = turtle.inspect,
+  },
+}
+
+local function _actionAt(action, pt, ...)
+  local pt = turtle.moveAgainst(pt)
+  if pt then
+    return action[pt.direction](...)
+  end
+end
+
+function _actionDownAt(action, pt, ...)
+  if turtle.pathfind(Point.above(pt)) then
+    return action.down(...)
+  end
+end
+
+function _actionForwardAt(action, pt, ...)
+  if turtle.faceAgainst(pt) then
+    return action.forward(...)
+  end
+end
+
+function _actionUpAt(action, pt, ...)
+  if turtle.pathfind(Point.below(pt)) then
+    return action.up(...)
+  end
+end
+
+function turtle.detectAt(pt)            return _actionAt(actionsAt.detect, pt) end
+function turtle.detectDownAt(pt)        return _actionDownAt(actionsAt.detect, pt) end
+function turtle.detectForwardAt(pt)     return _actionForwardAt(actionsAt.detect, pt) end
+function turtle.detectUpAt(pt)          return _actionUpAt(actionsAt.detect, pt) end
+
+function turtle.digAt(pt)               return _actionAt(actionsAt.dig, pt) end
+function turtle.digDownAt(pt)           return _actionDownAt(actionsAt.dig, pt) end
+function turtle.digForwardAt(pt)        return _actionForwardAt(actionsAt.dig, pt) end
+function turtle.digUpAt(pt)             return _actionUpAt(actionsAt.dig, pt) end
+
+function turtle.attackAt(pt)            return _actionAt(actionsAt.attack, pt) end
+function turtle.attackDownAt(pt)        return _actionDownAt(actionsAt.attack, pt) end
+function turtle.attackForwardAt(pt)     return _actionForwardAt(actionsAt.attack, pt) end
+function turtle.attackUpAt(pt)          return _actionUpAt(actionsAt.attack, pt) end
+
+function turtle.placeAt(pt, arg)        return _actionAt(actionsAt.place, pt, arg) end
+function turtle.placeDownAt(pt, arg)    return _actionDownAt(actionsAt.place, pt, arg) end
+function turtle.placeForwardAt(pt, arg) return _actionForwardAt(actionsAt.place, pt, arg) end
+function turtle.placeUpAt(pt, arg)      return _actionUpAt(actionsAt.place, pt, arg) end
+
+function turtle.dropAt(pt, ...)         return _actionAt(actionsAt.drop, pt, ...) end
+function turtle.dropDownAt(pt, ...)     return _actionDownAt(actionsAt.drop, pt, ...) end
+function turtle.dropForwardAt(pt, ...)  return _actionForwardAt(actionsAt.drop, pt, ...) end
+function turtle.dropUpAt(pt, ...)       return _actionUpAt(actionsAt.drop, pt, ...) end
+
+function turtle.suckAt(pt, qty)         return _actionAt(actionsAt.suck, pt, qty) end
+function turtle.suckDownAt(pt, qty)     return _actionDownAt(actionsAt.suck, pt, qty) end
+function turtle.suckForwardAt(pt, qty)  return _actionForwardAt(actionsAt.suck, pt, qty) end
+function turtle.suckUpAt(pt, qty)       return _actionUpAt(actionsAt.suck, pt, qty) end
+
+function turtle.compareAt(pt)           return _actionAt(actionsAt.compare, pt) end
+function turtle.compareDownAt(pt)       return _actionDownAt(actionsAt.compare, pt) end
+function turtle.compareForwardAt(pt)    return _actionForwardAt(actionsAt.compare, pt) end
+function turtle.compareUpAt(pt)         return _actionUpAt(actionsAt.compare, pt) end
+
+function turtle.inspectAt(pt)           return _actionAt(actionsAt.inspect, pt) end
+function turtle.inspectDownAt(pt)       return _actionDownAt(actionsAt.inspect, pt) end
+function turtle.inspectForwardAt(pt)    return _actionForwardAt(actionsAt.inspect, pt) end
+function turtle.inspectUpAt(pt)         return _actionUpAt(actionsAt.inspect, pt) end
