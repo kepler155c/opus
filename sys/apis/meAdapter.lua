@@ -1,6 +1,5 @@
 local class      = require('class')
 local Util       = require('util')
-local Logger     = require('logger')
 local Peripheral = require('peripheral')
 
 local MEProvider = class()
@@ -58,11 +57,28 @@ local function safeString(text)
   return text
 end
 
+local convertNames = {
+  name = 'id',
+  damage = 'dmg',
+  maxCount = 'max_size',
+  count = 'qty',
+  displayName = 'display_name',
+  maxDamage = 'max_dmg',
+}
+
+local function convertItem(item)
+  for k,v in pairs(convertNames) do
+    item[k] = item[v]
+    item[v] = nil
+  end
+  item.displayName = safeString(item.displayName)
+end
+
 function MEProvider:refresh()
   self.items = self.getAvailableItems('all')
   for _,v in pairs(self.items) do
     Util.merge(v, v.item)
-    v.name = safeString(v.display_name)
+    convertItem(v)
   end
   return self.items
 end
@@ -72,25 +88,24 @@ function MEProvider:listItems()
   return self.items
 end
  
-function MEProvider:getItemInfo(id, dmg)
+function MEProvider:getItemInfo(name, damage)
  
   for key,item in pairs(self.items) do
-    if item.id == id and item.dmg == dmg then
+    if item.name == name and item.damage == damage then
       return item
     end
   end
 end
  
-function MEProvider:craft(id, dmg, qty)
+function MEProvider:craft(name, damage, count)
 
   self:refresh()
 
-  local item = self:getItemInfo(id, dmg)
+  local item = self:getItemInfo(name, damage)
 
   if item and item.is_craftable then
 
-    Logger.log('MEProvider', 'requested crafting for: ' .. id .. ':' .. dmg .. ' qty: ' .. qty)
-    self.requestCrafting({ id = id, dmg = dmg }, qty)
+    self.requestCrafting({ id = name, dmg = damage }, count)
     return true
   end
 end
@@ -109,36 +124,32 @@ function MEProvider:craftItems(items)
     if count >= #cpus then
       break
     end
-    if self:craft(item.id, item.dmg, item.qty) then
+    if self:craft(item.name, item.damage, item.count) then
       count = count + 1
     end
   end
 end
 
-function MEProvider:provide(item, qty, slot)
+function MEProvider:provide(item, count, slot)
   return pcall(function()
     self.exportItem({
-      id = item.id,
-      dmg = item.dmg
-    }, self.oside, qty, slot)
+      id = item.name,
+      dmg = item.damage
+    }, self.oside, count, slot)
   end)
 end
  
-function MEProvider:insert(slot, qty)
-  local s, m = pcall(function() self.pullItem(self.oside, slot, qty) end)
+function MEProvider:insert(slot, count)
+  local s, m = pcall(function() self.pullItem(self.oside, slot, count) end)
   if not s and m then
     print('MEProvider:pullItem')
     print(m)
-    Logger.log('MEProvider', 'Insert failed, trying again')
     sleep(1)
-    s, m = pcall(function() self.pullItem(self.oside, slot, qty) end)
+    s, m = pcall(function() self.pullItem(self.oside, slot, count) end)
     if not s and m then
       print('MEProvider:pullItem')
       print(m)
-      Logger.log('MEProvider', 'Insert failed again')
       read()
-    else
-      Logger.log('MEProvider', 'Insert successful')
     end
   end
 end

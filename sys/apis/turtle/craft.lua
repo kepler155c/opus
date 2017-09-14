@@ -3,11 +3,11 @@ local Util   = require('util')
 
 local Craft = { }
 
-local function clearGrid(chestProvider)
+local function clearGrid(chestAdapter)
   for i = 1, 16 do
     local count = turtle.getItemCount(i)
     if count > 0 then
-      chestProvider:insert(i, count)
+      chestAdapter:insert(i, count)
       if turtle.getItemCount(i) ~= 0 then
         return false
       end
@@ -39,13 +39,13 @@ local function getItemCount(items, key)
   return 0
 end
 
-local function turtleCraft(recipe, qty, chestProvider)
+local function turtleCraft(recipe, qty, chestAdapter)
 
-  clearGrid(chestProvider)
+  clearGrid(chestAdapter)
 
   for k,v in pairs(recipe.ingredients) do
     local item = splitKey(v)
-    chestProvider:provide({ id = item.name, dmg = item.damage, nbt_hash = item.nbtHash }, qty, k)
+    chestAdapter:provide(item, qty, k)
     if turtle.getItemCount(k) == 0 then -- ~= qty then
                                         -- FIX: ingredients cannot be stacked
       return false
@@ -55,9 +55,9 @@ local function turtleCraft(recipe, qty, chestProvider)
   return turtle.craft()
 end
 
-function Craft.craftRecipe(recipe, count, chestProvider)
+function Craft.craftRecipe(recipe, count, chestAdapter)
 
-  local items = chestProvider:listItems()
+  local items = chestAdapter:listItems()
 
   local function sumItems(items)
     -- produces { ['minecraft:planks:0'] = 8 }
@@ -81,7 +81,7 @@ function Craft.craftRecipe(recipe, count, chestProvider)
 Util.print('Crafting %d %s', icount * count - itemCount, key)
         if not Craft.craftRecipe(irecipe,
                                  icount * count - itemCount,
-                                 chestProvider) then
+                                 chestAdapter) then
           turtle.select(1)
           return
         end
@@ -89,7 +89,7 @@ Util.print('Crafting %d %s', icount * count - itemCount, key)
     end
   end
   repeat
-    if not turtleCraft(recipe, math.min(count, maxCount), chestProvider) then
+    if not turtleCraft(recipe, math.min(count, maxCount), chestAdapter) then
       turtle.select(1)
       return false
     end
@@ -157,10 +157,10 @@ function Craft.getCraftableAmountTest()
 end
 
 function Craft.craftRecipeTest(name, count)
-  local ChestProvider = require('chestProvider18')
-  local chestProvider = ChestProvider({ wrapSide = 'top', direction = 'down' })
+  local ChestAdapter = require('chestAdapter18')
+  local chestAdapter = ChestAdapter({ wrapSide = 'top', direction = 'down' })
   Craft.setRecipes(Util.readTable('usr/etc/recipes.db'))
-  return { Craft.craftRecipe(Craft.recipes[name], count, chestProvider) }
+  return { Craft.craftRecipe(Craft.recipes[name], count, chestAdapter) }
 end
 
 return Craft

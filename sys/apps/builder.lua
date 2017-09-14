@@ -4,20 +4,20 @@ end
 
 requireInjector(getfenv(1))
 
-local Blocks     = require('blocks')
-local class      = require('class')
-local Event      = require('event')
-local MEProvider = require('meProvider')
-local Message    = require('message')
-local Point      = require('point')
-local Schematic  = require('schematic')
-local TableDB    = require('tableDB')
-local UI         = require('ui')
-local Util       = require('util')
+local Blocks    = require('blocks')
+local class     = require('class')
+local Event     = require('event')
+local MEAdapter = require('meAdapter')
+local Message   = require('message')
+local Point     = require('point')
+local Schematic = require('schematic')
+local TableDB   = require('tableDB')
+local UI        = require('ui')
+local Util      = require('util')
 
-local ChestProvider = require('chestProvider')
+local ChestAdapter = require('chestAdapter')
 if Util.getVersion() == 1.8 then
-  ChestProvider  = require('chestProvider18')
+  ChestAdapter  = require('chestAdapter18')
 end
 
 if not _G.device then
@@ -44,6 +44,40 @@ local Builder = {
 }
 
 local pistonFacings
+
+-- Temp functions until conversion to new adapters is complete
+local function convertSingleForward(item)
+  item.name = item.id
+  item.damage = item.dmg
+  item.count = item.count
+  item.maxCount = item.max_size
+  return item
+end
+
+local function convertForward(t)
+  for _,v in pairs(t) do
+    convertSingleForward(v)
+  end
+  return t
+end
+
+local function convertSingleBack(item)
+  if item then
+    item.id = item.name
+    item.dmg = item.damage
+    item.qty = item.count
+    item.max_size = item.maxCount
+    item.display_name = item.displayName
+  end
+  return item
+end
+
+local function convertBack(t)
+  for _,v in pairs(t) do
+    convertSingleBack(v)
+  end
+  return t
+end
 
 --[[-- SubDB --]]--
 subDB = TableDB({
@@ -397,7 +431,7 @@ function Builder:dumpInventory()
   for i = 1, 16 do
     local qty = turtle.getItemCount(i)
     if qty > 0 then
-      self.itemProvider:insert(i, qty)
+      self.itemAdapter:insert(i, qty)
     end
     if turtle.getItemCount(i) ~= 0 then
       success = false
@@ -411,7 +445,7 @@ end
 function Builder:dumpInventoryWithCheck()
 
   while not self:dumpInventory() do
-    print('Provider is full or missing - make space or replace')
+    print('Storage is full or missing - make space or replace')
     print('Press enter to continue')
     turtle.setHeading(0)
     read()
@@ -435,17 +469,17 @@ function Builder:autocraft(supplies)
     item.qty = item.qty + (s.need - s.qty)
   end
 
-  Builder.itemProvider:craftItems(t)
+  Builder.itemAdapter:craftItems(convertForward(t))
 end
 
 function Builder:getSupplies()
 
-  self.itemProvider:refresh()
+  self.itemAdapter:refresh()
 
   local t = { }
   for _,s in ipairs(self.slots) do
     if s.need > 0 then
-      local item = self.itemProvider:getItemInfo(s.id, s.dmg)
+      local item = convertSingleBack(self.itemAdapter:getItemInfo(s.id, s.dmg))
       if item then
         s.name = item.display_name
 
@@ -459,7 +493,7 @@ function Builder:getSupplies()
           s.need = qty
         end
         if qty > 0 then
-          self.itemProvider:provide(item, qty, s.index)
+          self.itemAdapter:provide(convertSingleForward(item), qty, s.index)
           s.qty = turtle.getItemCount(s.index)
         end
       else
@@ -485,7 +519,7 @@ function Builder:refuel()
 
     local fuel = subDB:getSubstitutedItem(self.fuelItem.id, self.fuelItem.dmg)
 
-    self.itemProvider:provide(fuel, 64, 1)
+    self.itemAdapter:provide(convertSingleForward(fuel), 64, 1)
     if turtle.getItemCount(1) == 0 then
       print('Out of fuel, add fuel to chest/ME system')
       turtle.setHeading(0)
@@ -523,23 +557,23 @@ function Builder:inAirDropoff()
       turtle.goto(pt.x, pt.z, pt.y)
       os.sleep(.1)  -- random computer is not connected error
 
-      local chestProvider = ChestProvider({ direction = 'down', wrapSide = 'top' })
+      local chestAdapter = ChestAdapter({ direction = 'down', wrapSide = 'top' })
 
-      if not chestProvider:isValid() then
+      if not chestAdapter:isValid() then
         self:log('Chests above is not valid')
         return false
       end
 
-      local oldProvider = self.itemProvider
-      self.itemProvider = chestProvider
+      local oldAdapter = self.itemAdapter
+      self.itemAdapter = chestAdapter
 
       if not self:dumpInventory() then
         self:log('Unable to dump inventory')
-        self.itemProvider = oldProvider
+        self.itemAdapter = oldAdapter
         return false
       end
 
-      self.itemProvider = oldProvider
+      self.itemAdapter = oldAdapter
 
       Message.broadcast('thanks', { })
 
@@ -563,7 +597,7 @@ function Builder:inAirResupply()
     return false
   end
 
-  local oldProvider = self.itemProvider
+  local oldAdapter = self.itemAdapter
 
   self:log('Requesting air supply drop for supply #: ' .. self.slotUid)
   while true do
@@ -571,7 +605,7 @@ function Builder:inAirResupply()
     local _, id, msg, _ = Message.waitForMessage('gotSupplies', 1)
 
     if not msg or not msg.contents then
-      self.itemProvider = oldProvider
+      self.itemAdapter = oldAdapter
       return false
     end
 
@@ -586,17 +620,17 @@ function Builder:inAirResupply()
       turtle.goto(pt.x, pt.z, pt.y)
       os.sleep(.1)  -- random computer is not connected error
 
-      local chestProvider = ChestProvider({ direction = 'down', wrapSide = 'top' })
+      local chestAdapter = ChestAdapter({ direction = 'down', wrapSide = 'top' })
 
-      if not chestProvider:isValid() then
+      if not chestAdapter:isValid() then
         Util.print('not valid')
         read()
       end
 
-      self.itemProvider = chestProvider
+      self.itemAdapter = chestAdapter
 
       if not self:dumpInventory() then
-        self.itemProvider = oldProvider
+        self.itemAdapter = oldAdapter
         return false
       end
       self:refuel()
@@ -606,7 +640,7 @@ function Builder:inAirResupply()
 
       Message.broadcast('thanks', { })
 
-      self.itemProvider = oldProvider
+      self.itemAdapter = oldAdapter
 
       if #supplies == 0 then
 
@@ -1449,7 +1483,7 @@ end
 
 function substitutionPage:enable()
 
-  self.allItems = Builder.itemProvider:refresh()
+  self.allItems = convertBack(Builder.itemAdapter:refresh())
   self.grid.values = self.allItems
   for _,item in pairs(self.grid.values) do
     item.key = item.id .. ':' .. item.dmg
@@ -1583,7 +1617,7 @@ function supplyPage:eventHandler(event)
 
   if event.type == 'craft' then
     local s = self.grid:getSelected()
-    if Builder.itemProvider:craft(s.id, s.dmg, s.need-s.qty) then
+    if Builder.itemAdapter:craft(s.id, s.dmg, s.need-s.qty) then
       local name = s.name or ''
       self.statusBar:timedStatus('Requested ' .. s.need-s.qty .. ' ' .. name, 3)
     else
@@ -1708,12 +1742,12 @@ function listingPage:eventHandler(event)
 
   if event.type == 'craft' then
     local s = self.grid:getSelected()
-    local item = Builder.itemProvider:getItemInfo(s.id, s.dmg)
+    local item = convertSingleBack(Builder.itemAdapter:getItemInfo(s.id, s.dmg))
     if item and item.is_craftable then
       local qty = math.max(0, s.need - item.qty)
 
       if item then
-        Builder.itemProvider:craft(s.id, s.dmg, qty)
+        Builder.itemAdapter:craft(s.id, s.dmg, qty)
         local name = s.name or s.key
         self.statusBar:timedStatus('Requested ' .. qty .. ' ' .. name, 3)
       end
@@ -1768,11 +1802,11 @@ function listingPage:refresh(throttle)
 
   local supplyList = Builder:getBlockCounts()
 
-  Builder.itemProvider:refresh(throttle)
+  Builder.itemAdapter:refresh(throttle)
 
   for _,b in pairs(supplyList) do
     if b.need > 0 then
-      local item = Builder.itemProvider:getItemInfo(b.id, b.dmg)
+      local item = convertSingleBack(Builder.itemAdapter:getItemInfo(b.id, b.dmg))
 
       if item then
         local block = blocks.blockDB:lookup(b.id, b.dmg)
@@ -2054,10 +2088,10 @@ if #args < 1 then
   error('supply file name')
 end
 
-Builder.itemProvider = MEProvider()
-if not Builder.itemProvider:isValid() then
-  Builder.itemProvider = ChestProvider()
-  if not Builder.itemProvider:isValid() then
+Builder.itemAdapter = MEAdapter()
+if not Builder.itemAdapter:isValid() then
+  Builder.itemAdapter = ChestAdapter()
+  if not Builder.itemAdapter:isValid() then
     error('A chest or ME interface must be below turtle')
   end
 end

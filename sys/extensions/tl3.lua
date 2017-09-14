@@ -430,18 +430,17 @@ function turtle.setHeading(heading)
     end
     if heading - turtle.point.heading == 3 then
       turtle.native.turnLeft()
-      turtle.point.heading = turtle.point.heading - 1
+      turtle.point.heading = (turtle.point.heading - 1) % 4
+      state.moveCallback('turn', turtle.point)
     else
       local turns = heading - turtle.point.heading
       while turns > 0 do
         turns = turns - 1
-        turtle.point.heading = turtle.point.heading + 1
         turtle.native.turnRight()
+        turtle.point.heading = (turtle.point.heading + 1) % 4
+        state.moveCallback('turn', turtle.point)
       end
     end
-
-    turtle.point.heading = turtle.point.heading % 4
-    state.moveCallback('turn', turtle.point)
   end
 
   return turtle.point

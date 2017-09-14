@@ -6,7 +6,7 @@ if device.wireless_modem then
   local config = { }
   Config.load('gps', config)
 
-  if config.host then
+  if config.host and type(config.host) == 'table' then
 
     multishell.setTitle(multishell.getCurrent(), 'GPS Daemon')
 

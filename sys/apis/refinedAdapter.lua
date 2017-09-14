@@ -3,7 +3,7 @@ local Util       = require('util')
 local Peripheral = require('peripheral')
 local itemDB     = require('itemDB')
 
-local RefinedProvider = class()
+local RefinedAdapter = class()
 
 local keys = { 
   'damage',
@@ -14,7 +14,7 @@ local keys = {
   'nbtHash',
 }
 
-function RefinedProvider:init(args)
+function RefinedAdapter:init(args)
   local defaults = {
     items = { },
     name = 'refinedStorage',
@@ -28,15 +28,15 @@ function RefinedProvider:init(args)
   end
 end
  
-function RefinedProvider:isValid()
+function RefinedAdapter:isValid()
   return not not self.listAvailableItems
 end
 
-function RefinedProvider:isOnline()
+function RefinedAdapter:isOnline()
   return self.getNetworkEnergyStored() > 0
 end
 
-function RefinedProvider:getCachedItemDetails(item)
+function RefinedAdapter:getCachedItemDetails(item)
   local key = { item.name, item.damage, item.nbtHash }
 
   local detail = itemDB:get(key)
@@ -49,7 +49,6 @@ function RefinedProvider:getCachedItemDetails(item)
         return
       end
       Util.merge(detail, meta)
-      detail.lname = detail.displayName:lower()
 
       local t = { }
       for _,k in pairs(keys) do
@@ -65,7 +64,7 @@ function RefinedProvider:getCachedItemDetails(item)
   end
 end
 
-function RefinedProvider:listItems()
+function RefinedAdapter:listItems()
   local items = { }
   local list
 
@@ -80,10 +79,7 @@ function RefinedProvider:listItems()
     for _,v in pairs(list) do
       local item = self:getCachedItemDetails(v)
       if item then
-        item.display_name = item.displayName
-        item.id = v.name
         item.count = v.count
-        item.qty = v.count
         table.insert(items, item)
       end
       throttle()
@@ -94,7 +90,7 @@ function RefinedProvider:listItems()
   return items
 end
 
-function RefinedProvider:getItemInfo(fingerprint)
+function RefinedAdapter:getItemInfo(fingerprint)
 
   local key = { fingerprint.name, fingerprint.damage, fingerprint.nbtHash }
 
@@ -106,12 +102,11 @@ function RefinedProvider:getItemInfo(fingerprint)
   local detail = self.findItem(item)
   if detail then
     item.count = detail.count
-    item.qty = detail.count
     return item
   end
 end
 
-function RefinedProvider:isCrafting(item)
+function RefinedAdapter:isCrafting(item)
   for _,task in pairs(self.getCraftingTasks()) do
     local output = task.getPattern().outputs[1]
     if output.name == item.name and 
@@ -123,26 +118,26 @@ function RefinedProvider:isCrafting(item)
   return false
 end
 
-function RefinedProvider:craft(item, qty)
+function RefinedAdapter:craft(item, qty)
   local detail = self.findItem(item)
   if detail then
     return detail.craft(qty)
   end
 end
 
-function RefinedProvider:craftItems(items)
+function RefinedAdapter:craftItems(items)
   return false
 end
 
-function RefinedProvider:provide(item, qty, slot)
+function RefinedAdapter:provide(item, qty, slot)
 end
  
-function RefinedProvider:extract(slot, qty)
+function RefinedAdapter:extract(slot, qty)
 --  self.pushItems(self.direction, slot, qty)
 end
 
-function RefinedProvider:insert(slot, qty)
+function RefinedAdapter:insert(slot, qty)
 --  self.pullItems(self.direction, slot, qty)
 end
 
-return RefinedProvider
+return RefinedAdapter

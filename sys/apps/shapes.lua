@@ -15,22 +15,22 @@ local script = [[
 
 requireInjector(getfenv(1))
 
-local GPS = require('gps')
-local ChestProvider = require('chestProvider18')
-local Point = require('point')
-local Util   = require('util')
+local GPS          = require('gps')
+local ChestAdapter = require('chestAdapter18')
+local Point        = require('point')
+local Util         = require('util')
 
-local itemProvider
+local itemAdapter
 
 function dumpInventory()
 
   for i = 1, 16 do
     local qty = turtle.getItemCount(i)
     if qty > 0 then
-      itemProvider:insert(i, qty)
+      itemAdapter:insert(i, qty)
     end
     if turtle.getItemCount(i) ~= 0 then
-      print('Provider is full or missing - make space or replace')
+      print('Adapter is full or missing - make space or replace')
       print('Press enter to continue')
       read()
     end
@@ -43,7 +43,7 @@ local function refuel()
     print('Refueling')
     turtle.select(1)
 
-    itemProvider:provide({ id = 'minecraft:coal', dmg = 0 }, 64, 1)
+    itemAdapter:provide({ name = 'minecraft:coal', damage = 0 }, 64, 1)
     if turtle.getItemCount(1) == 0 then
       print('Out of fuel, add fuel to chest/ME system')
       turtle.status = 'waiting'
@@ -73,7 +73,7 @@ local function resupply()
   if data.suppliesPt then
     pathTo(data.suppliesPt)
 
-    itemProvider = ChestProvider({ direction = 'up', wrapSide = 'bottom' })
+    itemAdapter = ChestAdapter({ direction = 'up', wrapSide = 'bottom' })
     dumpInventory()
     refuel()
   end

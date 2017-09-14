@@ -1,17 +1,17 @@
 requireInjector(getfenv(1))
 
-local ChestProvider   = require('chestProvider18')
+local ChestAdapter    = require('chestAdapter18')
 local Event           = require('event')
-local MEProvider      = require('meProvider')
-local RefinedProvider = require('refinedProvider')
+local MEAdapter       = require('meAdapter')
+local RefinedAdapter  = require('refinedAdapter')
 local UI              = require('ui')
 local Util            = require('util')
 
-local storage = RefinedProvider()
+local storage = RefinedAdapter()
 if not storage:isValid() then
-  storage = MEProvider()
+  storage = MEAdapter()
   if not storage:isValid() then
-    storage = ChestProvider()
+    storage = ChestAdapter()
   end
 end
 
@@ -25,11 +25,11 @@ UI:configure('StorageActivity', ...)
 local changedPage = UI.Page({
   grid = UI.Grid({
     columns = {
-      { heading = 'Qty',    key = 'qty',          width = 5                  },
-      { heading = 'Change', key = 'change',       width = 6                  },
-      { heading = 'Name',   key = 'display_name', width = UI.term.width - 15 },
+      { heading = 'Qty',    key = 'count',       width = 5                  },
+      { heading = 'Change', key = 'change',      width = 6                  },
+      { heading = 'Name',   key = 'displayName', width = UI.term.width - 15 },
     },
-    sortColumn = 'display_name',
+    sortColumn = 'displayName',
     rey = -6,
   }),
   buttons = UI.Window({
@@ -77,7 +77,7 @@ function changedPage.grid:getDisplayValues(row)
     ind = ''
   end
   row.change = ind .. Util.toBytes(row.change)
-  row.qty = Util.toBytes(row.qty)
+  row.count = Util.toBytes(row.count)
 
   return row
 end
@@ -132,9 +132,9 @@ function changedPage:refresh()
       found = false
       for k2,v2 in pairs(t) do
         if uniqueKey(v) == uniqueKey(v2) then
-          if v.qty ~= v2.qty then
+          if v.count ~= v2.count then
             local c = Util.shallowCopy(v2)
-            c.lastQty = v.qty
+            c.lastCount = v.count
             table.insert(changedItems, c)
           end
           table.remove(t, k2)
@@ -145,19 +145,19 @@ function changedPage:refresh()
       -- New item
       if not found then
         local c = Util.shallowCopy(v)
-        c.lastQty = v.qty
-        c.qty = 0
+        c.lastCount = v.count
+        c.count = 0
         table.insert(changedItems, c)
       end
     end
     -- No items left
     for k,v in pairs(t) do
-      v.lastQty = 0
+      v.lastCount = 0
       table.insert(changedItems, v)
     end
 
     for k,v in pairs(changedItems) do
-      v.change  = v.qty - v.lastQty
+      v.change  = v.count - v.lastCount
     end
 
     self.grid:setValues(changedItems)

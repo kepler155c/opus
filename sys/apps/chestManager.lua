@@ -1,15 +1,15 @@
 requireInjector(getfenv(1))
 
-local ChestProvider   = require('chestProvider18')
-local Config          = require('config')
-local Craft           = require('turtle.craft')
-local Event           = require('event')
-local itemDB          = require('itemDB')
-local Peripheral      = require('peripheral')
-local RefinedProvider = require('refinedProvider')
-local Terminal        = require('terminal')
-local UI              = require('ui')
-local Util            = require('util')
+local ChestAdapter   = require('chestAdapter18')
+local Config         = require('config')
+local Craft          = require('turtle.craft')
+local Event          = require('event')
+local itemDB         = require('itemDB')
+local Peripheral     = require('peripheral')
+local RefinedAdapter = require('refinedAdapter')
+local Terminal       = require('terminal')
+local UI             = require('ui')
+local Util           = require('util')
 
 multishell.setTitle(multishell.getCurrent(), 'Resource Manager')
 
@@ -25,14 +25,14 @@ local config = {
 
 Config.load('resourceManager', config)
 
-local controller = RefinedProvider()
+local controller = RefinedAdapter()
 if not controller:isValid() then
 --  error('Refined storage controller not found')
   controller = nil
 end
 
-local chestProvider = ChestProvider({ direction = 'west', wrapSide = 'back' })
-local turtleChestProvider = ChestProvider({ direction = 'up', wrapSide = 'bottom' })
+local chestAdapter = ChestAdapter({ direction = 'west', wrapSide = 'back' })
+local turtleChestAdapter = ChestAdapter({ direction = 'up', wrapSide = 'bottom' })
 
 local RESOURCE_FILE = 'usr/etc/resources.db'
 local RECIPES_FILE = 'sys/etc/recipes.db'
@@ -195,7 +195,7 @@ local function clearGrid()
   for i = 1, 16 do
     local count = turtle.getItemCount(i)
     if count > 0 then
-      chestProvider:insert(i, count)
+      chestAdapter:insert(i, count)
       if turtle.getItemCount(i) ~= 0 then
         return false
       end
@@ -224,9 +224,9 @@ local function craftItem(recipe, items, originalItem, craftList, count)
   local toCraft = Craft.getCraftableAmount(recipe, count, items)
 
   if toCraft > 0 then
-    Craft.craftRecipe(recipe, toCraft, chestProvider)
+    Craft.craftRecipe(recipe, toCraft, chestAdapter)
     clearGrid()
-    items = chestProvider:listItems()
+    items = chestAdapter:listItems()
   end
 
   count = count - toCraft
@@ -250,7 +250,7 @@ local function craftItems(craftList, allItems)
     local recipe = recipes[key]
     if recipe then
       craftItem(recipe, allItems, item, craftList, item.count)
-      allItems = chestProvider:listItems() -- refresh counts
+      allItems = chestAdapter:listItems() -- refresh counts
     elseif item.rsControl then
       item.status = 'Activated'
     end
@@ -368,7 +368,7 @@ local function watchResources(items)
     end
 
     if res.limit and item.count > res.limit then
-      chestProvider:provide({ id = res.name, dmg = res.damage, nbtHash = res.nbt_hash }, item.count - res.limit, nil, config.trashDirection)
+      chestAdapter:provide(res, item.count - res.limit, nil, config.trashDirection)
 
     elseif res.low and item.count < res.low then
       if res.ignoreDamage then
@@ -701,7 +701,7 @@ function listingPage:enable()
 end
 
 function listingPage:refresh()
-  self.allItems = chestProvider:listItems()
+  self.allItems = chestAdapter:listItems()
   mergeResources(self.allItems)
   self:applyFilter()
 end
@@ -733,10 +733,10 @@ local function getTurtleInventory()
   for i = 1,16 do
     local qty = turtle.getItemCount(i)
     if qty > 0 then
-      turtleChestProvider:insert(i, qty)
-      local items = turtleChestProvider:listItems()
+      turtleChestAdapter:insert(i, qty)
+      local items = turtleChestAdapter:listItems()
       _, inventory[i] = next(items)
-      turtleChestProvider:extract(1, qty, i)
+      turtleChestAdapter:extract(1, qty, i)
     end
   end
   return inventory
@@ -759,26 +759,26 @@ local function learnRecipe(page)
     if device.workbench and turtle.craft() then
       recipe = getTurtleInventory()
       if recipe and recipe[1] then
-        recipe = recipe[1]
-        local key = uniqueKey(recipe)
-
         clearGrid()
 
-        filter(recipe, { 'name', 'damage', 'nbtHash', 'count', 'maxCount' })
-
-        for _,ingredient in pairs(ingredients) do
-          filter(ingredient, { 'name', 'damage', 'nbtHash', 'count', 'maxCount' })
-          --if ingredient.max_dmg > 0 then -- let's try this...
-           -- ingredient.dmg = 0
-          --end
+        local key = uniqueKey(recipe[1])
+        local newRecipe = {
+          count = recipe[1].count,
+          ingredients = ingredients,
+        }
+        if recipe[1].maxCount ~= 64 then
+          newRecipe.maxCount = recipe[1].maxCount
         end
-        recipe.ingredients = ingredients
 
-        recipes[key] = recipe
+        for k,ingredient in pairs(ingredients) do
+          ingredients[k] = uniqueKey(ingredient)
+        end
+
+        recipes[key] = newRecipe
 
         Util.writeTable(RECIPES_FILE, recipes)
 
-        local displayName = getName(recipe)
+        local displayName = getName(recipe[1])
 
         listingPage.statusBar.filter:setValue(displayName)
         listingPage.statusBar:timedStatus('Learned: ' .. displayName, 3)
@@ -914,7 +914,7 @@ jobListGrid:sync()
 Event.onInterval(5, function()
 
   if not craftingPaused then
-    local items = chestProvider:listItems()
+    local items = chestAdapter:listItems()
     if Util.size(items) == 0 then
       jobListGrid.parent:clear()
       jobListGrid.parent:centeredWrite(math.ceil(jobListGrid.parent.height/2), 'No items in system')

@@ -4,7 +4,7 @@ requireInjector(getfenv(1))
   Requirements:
     Place turtle against an oak tree or oak sapling
     Area around turtle must be flat and can only be dirt or grass
-      (9 blocks in each direction from turtle)
+      (10 blocks in each direction from turtle)
     Turtle must have: crafting table, chest
     Turtle must have a pick equipped on the left side
 
@@ -16,15 +16,15 @@ requireInjector(getfenv(1))
     down another sapling in front of the turtle.
 
     The program will be able to survive server restarts as long as it has
-    created the cobble line. If the program is stopped before that time,
+    created the cobblestone line. If the program is stopped before that time,
     place the turtle in the original position before restarting the program.
 ]]--
 
-local ChestProvider = require('chestProvider18')
-local Craft         = require('turtle.craft')
-local Level         = require('turtle.level')
-local Point         = require('point')
-local Util          = require('util')
+local ChestAdapter = require('chestAdapter18')
+local Craft        = require('turtle.craft')
+local Level        = require('turtle.level')
+local Point        = require('point')
+local Util         = require('util')
 
 local FUEL_BASE = 0
 local FUEL_DIRE = FUEL_BASE + 10
@@ -126,18 +126,18 @@ local function craftItem(item, qty)
 
     if turtle.equip('left', 'minecraft:crafting_table') then
 
-      local chestProvider = ChestProvider({
+      local chestAdapter = ChestAdapter({
         wrapSide = 'top',
         direction = 'down',
       })
-      if not chestProvider:isValid() then
-        print('invalid chestProvider')
+      if not chestAdapter:isValid() then
+        print('invalid chestAdapter')
         read()
       end
       -- turtle.emptyInventory(turtle.dropUp)
 
       Util.print('Crafting %d %s', (qty or 1), item)
-      success = Craft.craftRecipe(recipes[item], qty or 1, chestProvider)
+      success = Craft.craftRecipe(recipes[item], qty or 1, chestAdapter)
 
       repeat until not turtle.suckUp()
     end
@@ -265,7 +265,7 @@ local function getCobblestone(count)
       turtle.select(1)
       turtle.digDown()
       turtle.down()
-      for i = 1, 3 do
+      for i = 1, 4 do
         if inspect(turtle.inspect) == STONE then
           turtle.dig()
         end
@@ -353,7 +353,7 @@ local function createChests()
     return false
   end
   if state.perimeter and
-     turtle.getFuelLevel() > FUEL_BASE + 100 and
+     turtle.getFuelLevel() > FUEL_GOOD and
      Craft.canCraft(CHEST, 4, turtle.getSummedInventory()) then
 
     print('Adding storage')
@@ -428,8 +428,8 @@ local function placeTorches()
     return
   end
 
-  if Craft.canCraft(TORCH, 4, turtle.getSummedInventory()) and
-     turtle.getFuelLevel() > 100 then
+  if turtle.getFuelLevel() > 100 and
+     Craft.canCraft(TORCH, 4, turtle.getSummedInventory()) then
 
     print('Placing torches')
 
@@ -525,6 +525,7 @@ local function fell()
       fellTree(pt)
     end
     turtle.placeAt(pt, randomSapling())
+    turtle.select(1)
   end)
 
   print('Used ' .. (fuel - turtle.getFuelLevel()) .. ' fuel')
@@ -635,14 +636,14 @@ local function findHome()
   while inspect(turtle.inspectDown) ~= COBBLESTONE do
     pt.x = pt.x - 1
     turtle.pathfind(pt)
-    if pt.x < -16 then
+    if pt.x < -20 then
       error('lost')
     end
   end
   while inspect(turtle.inspectDown) == COBBLESTONE do
     pt.z = pt.z - 1
     turtle.pathfind(pt)
-    if pt.z < -16 then
+    if pt.z < -20 then
       error('lost')
     end
   end

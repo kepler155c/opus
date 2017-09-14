@@ -3,7 +3,7 @@ local Util       = require('util')
 local itemDB     = require('itemDB')
 local Peripheral = require('peripheral')
 
-local ChestProvider = class()
+local ChestAdapter = class()
 
 local keys = Util.transpose({ 
   'damage',
@@ -14,7 +14,7 @@ local keys = Util.transpose({
   'nbtHash',
 })
 
-function ChestProvider:init(args)
+function ChestAdapter:init(args)
   local defaults = {
     items = { },
     name = 'chest',
@@ -33,11 +33,11 @@ function ChestProvider:init(args)
   end
 end
 
-function ChestProvider:isValid()
+function ChestAdapter:isValid()
   return not not self.list
 end
 
-function ChestProvider:getCachedItemDetails(item, k)
+function ChestAdapter:getCachedItemDetails(item, k)
   local key = { item.name, item.damage, item.nbtHash }
 
   local detail = itemDB:get(key)
@@ -64,12 +64,12 @@ function ChestProvider:getCachedItemDetails(item, k)
   end
 end
 
-function ChestProvider:refresh(throttle)
+function ChestAdapter:refresh(throttle)
   return self:listItems(throttle)
 end
 
 -- provide a consolidated list of items
-function ChestProvider:listItems(throttle)
+function ChestAdapter:listItems(throttle)
   self.cache = { }
   local items = { }
 
@@ -82,13 +82,7 @@ function ChestProvider:listItems(throttle)
     if not entry then
       entry = self:getCachedItemDetails(v, k)
       if entry then
-        entry.dmg = entry.damage
-        entry.id = entry.name
         entry.count = 0
-        entry.display_name = entry.displayName
-        entry.max_size = entry.maxCount
-        entry.nbt_hash = entry.nbtHash
-        entry.lname = entry.displayName:lower()
         self.cache[key] = entry
         table.insert(items, entry)
       end
@@ -96,7 +90,6 @@ function ChestProvider:listItems(throttle)
 
     if entry then
       entry.count = entry.count + v.count
-      entry.qty = entry.count
     end
     throttle()
   end
@@ -106,24 +99,24 @@ function ChestProvider:listItems(throttle)
   return items
 end
 
-function ChestProvider:getItemInfo(id, dmg, nbtHash)
+function ChestAdapter:getItemInfo(name, damage, nbtHash)
   if not self.cache then
     self:listItems()
   end
-  local key = table.concat({ id, dmg, nbtHash }, ':')
+  local key = table.concat({ name, damage, nbtHash }, ':')
   return self.cache[key]
 end
 
-function ChestProvider:craft(id, dmg, qty)
+function ChestAdapter:craft(name, damage, qty)
 end
 
-function ChestProvider:craftItems(items)
+function ChestAdapter:craftItems(items)
 end
 
-function ChestProvider:provide(item, qty, slot, direction)
+function ChestAdapter:provide(item, qty, slot, direction)
   local stacks = self.list()
   for key,stack in pairs(stacks) do
-    if stack.name == item.id and stack.damage == item.dmg then
+    if stack.name == item.name and stack.damage == item.damage then
       local amount = math.min(qty, stack.count)
       if amount > 0 then
         self.pushItems(direction or self.direction, key, amount, slot)
@@ -136,12 +129,12 @@ function ChestProvider:provide(item, qty, slot, direction)
   end
 end
 
-function ChestProvider:extract(slot, qty, toSlot)
+function ChestAdapter:extract(slot, qty, toSlot)
   self.pushItems(self.direction, slot, qty, toSlot)
 end
 
-function ChestProvider:insert(slot, qty)
+function ChestAdapter:insert(slot, qty)
   self.pullItems(self.direction, slot, qty)
 end
 
-return ChestProvider
+return ChestAdapter

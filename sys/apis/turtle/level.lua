@@ -38,6 +38,7 @@ local function dig(action)
 
   local hi = turtle.getHeadingInfo(direction)
   local node = { x = turtle.point.x + hi.xd, y = turtle.point.y + hi.yd, z = turtle.point.z + hi.zd }
+
   if Point.inBox(node, box) then
 
     local key = toKey(node)
@@ -57,8 +58,10 @@ local function move(action)
     dig(turtle.getAction('forward'))
   elseif action == 'up' then
     dig(turtle.getAction('up'))
+    dig(turtle.getAction('forward'))
   elseif action == 'down' then
     dig(turtle.getAction('down'))
+    dig(turtle.getAction('forward'))
   elseif action == 'back' then
     dig(turtle.getAction('up'))
     dig(turtle.getAction('down'))
@@ -123,7 +126,9 @@ return function(startPt, endPt, firstPt, verbose)
   box.ey = math.max(startPt.y, endPt.y)
   box.ez = math.max(startPt.z, endPt.z)
 
-  turtle.pathfind(firstPt)
+  if not turtle.pathfind(firstPt) then
+    error('failed to reach starting point')
+  end
 
   turtle.setPolicy("attack", { dig = dig }, "assuredMove")
 
