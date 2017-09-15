@@ -103,7 +103,7 @@
     icon = "\030f     \
 \030f\0310lua>\031  \
 \030f     ",
-    run = "Lua.lua",
+    run = "sys/apps/Lua.lua",
   },
   [ "89307d419a2fe4fbb69af92b3d3af27b6ec14d3e" ] = {
     title = "Telnet",
@@ -177,14 +177,6 @@
  \031e\\/\031  \0319c",
     run = "vnc.lua",
   },
-  [ "4759bf14d7a511508e86c343c934894b6e8db533" ] = {
-    title = "Builder",
-    category = "Apps",
-    icon = "\0317_____\
-\030e\031c###\0308\0317=\030e\031c#\
-\030e\031c#\0307\031f.\030e\031c###",
-    run = "builder.lua",
-  },
   [ "6ce6c512ea433a7fc5c8841628e7696cd0ff7f2b" ] = {
     title = "Files",
     category = "Apps",
@@ -216,5 +208,37 @@
 \0304 \030f\0314> \0310_\031  \
 \0304 \030f    \030  ",
     run = "shell",
+  },
+  [ "131f0b008f44298812221d120d982940609be781" ] = {
+    title = "Builder",
+    category = "Apps",
+    icon = "\0317_____\
+\030e\031c###\0308\0317=\030e\031c#\
+\030e\031c#\0307\031f.\030e\031c###",
+    run = "usr/apps/builder.lua",
+  },
+  [ "d8c298dd41e4a4ec20e8307901797b64688b3b77" ] = {
+    title = "GPS Deploy",
+    category = "Apps",
+    run = "http://pastebin.com/raw/qLthLak5",
+    requires = "turtle",
+  },
+  [ "53a5d150062b1e03206b9e15854b81060e3c7552" ] = {
+    apptype = "url",
+    title = "Minesweeper",
+    category = "Games",
+    run = "http://pastebin.com/raw/nsKrHTbN",
+  },
+  [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
+    apptype = "url",
+    title = "Micropaint",
+    category = "Apps",
+    run = "http://pastebin.com/raw/tMRzJXx2",
+  },
+  [ "d78f28759f255a0db76604ee560b87c4715a0da5" ] = {
+    apptype = "url",
+    title = "Sketch",
+    category = "Apps",
+    run = "http://pastebin.com/raw/Mm5hd97E",
   },
 }

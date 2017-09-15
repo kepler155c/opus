@@ -3,14 +3,26 @@ requireInjector(getfenv(1))
 local class = require('class')
 local Config = require('config')
 local Event = require('event')
-local FileUI = require('fileui')
+local FileUI = require('ui.fileui')
 local NFT = require('nft')
 local SHA1 = require('sha1')
-local Tween = require('tween')
+local Tween = require('ui.tween')
 local UI = require('ui')
 local Util = require('util')
 
 local REGISTRY_DIR = 'usr/.registry'
+local TEMPLATE = [[
+local env = { }
+for k,v in pairs(getfenv(1)) do
+  env[k] = v 
+end
+setmetatable(env, { __index = _G })
+
+local s, m = os.run(env, 'sys/apps/appRun.lua',  %s, ...)
+if not s then
+  error(m)
+end
+]]
 
 multishell.setTitle(multishell.getCurrent(), 'Overview')
 UI:configure('Overview', ...)
@@ -39,6 +51,11 @@ local function loadApplications()
 
   Util.each(applications, function(v, k) v.key = k end)
   applications = Util.filter(applications, function(_, a) return not a.disabled end)
+
+  applications = Util.filter(applications, function(_, a) 
+    return Util.startsWidth(a.run, 'http') or shell.resolveProgram(a.run) 
+  end)
+
 end
 
 loadApplications()
@@ -285,6 +302,7 @@ function page:eventHandler(event)
     end
     Config.update('Overview', config)
     multishell.openTab({
+      title = event.button.app.title,
       path = 'sys/apps/shell',
       args = { event.button.app.run },
       focused = true,

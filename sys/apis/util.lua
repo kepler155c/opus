@@ -426,6 +426,10 @@ function Util.matches(str, pattern)
   return t
 end
 
+function Util.startsWidth(s, match)
+  return string.sub(s, 1, #match) == match
+end
+
 function Util.widthify(s, len)
   s = s or ''
   local slen = #s

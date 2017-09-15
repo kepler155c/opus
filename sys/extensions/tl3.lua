@@ -7,10 +7,11 @@ requireInjector(getfenv(1))
 local Point        = require('point')
 local synchronized = require('sync')
 local Util         = require('util')
-turtle.pathfind    = require('turtle.pathfind')
+local Pathing      = require('turtle.pathfind')
 
 local function noop() end
 
+turtle.pathfind = Pathing.pathfind
 turtle.point = { x = 0, y = 0, z = 0, heading = 0 }
 turtle.status = 'idle'
 turtle.abort = false
@@ -46,7 +47,7 @@ function turtle.resetState()
   state.digPolicy = noop
   state.movePolicy = _defaultMove
   state.moveCallback = noop
-  state.locations = { }
+  Pathing.reset()
 
   return true
 end
@@ -354,40 +355,6 @@ function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
 function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
 function turtle.clearMoveCallback()      state.moveCallback = noop   end
 function turtle.getMoveCallback()        return state.moveCallback   end
-
--- [[ Locations ]] --
-function turtle.getLocation(name)
-  return state.locations[name]
-end
-
-function turtle.saveLocation(name, pt)
-  pt = pt or turtle.point
-  state.locations[name] = { x = pt.x, y = pt.y, z = pt.z }
-end
-
-function turtle.gotoLocation(name)
-  local pt = turtle.getLocation(name)
-  if pt then
-    return turtle.goto(pt.x, pt.z, pt.y, pt.heading)
-  end
-end
-
-function turtle.storeLocation(name, pt)
-  pt = pt or turtle.point
-  Util.writeTable(name .. '.pt', pt)
-  return true
-end
-
-function turtle.loadLocation(name)
-  return Util.readTable(name .. '.pt')
-end
-
-function turtle.gotoStoredLocation(name)
-  local pt = turtle.loadLocation(name)
-  if pt then
-    return turtle.gotoPoint(pt)
-  end
-end
 
 -- [[ Heading ]] --
 function turtle.getHeading()
@@ -813,10 +780,6 @@ function turtle.select(indexOrId)
   return false, 'Inventory does not contain item'
 end
 
-function turtle.selectSlot(indexOrId)  -- deprecated
-  return turtle.select(indexOrId)
-end
-
 function turtle.getInventory(slots)
   slots = slots or { }
   for i = 1, 16 do
@@ -851,24 +814,6 @@ function turtle.getSummedInventory()
   return t
 end
 
-function turtle.emptyInventory(dropAction)
-  dropAction = dropAction or turtle.drop
-  for i = 1, 16 do
-    turtle.emptySlot(i, dropAction)
-  end
-  turtle.select(1)
-end
-
-function turtle.emptySlot(slot, dropAction)
-  dropAction = dropAction or turtle.drop
-  local count = turtle.getItemCount(slot)
-  if count > 0 then
-    turtle.select(slot)
-    return dropAction(count)
-  end
-  return false, 'No items to drop'
-end
-
 function turtle.getFilledSlots(startSlot)
   startSlot = startSlot or 1
 
@@ -887,6 +832,15 @@ function turtle.eachFilledSlot(fn)
   for _,slot in pairs(slots) do
     fn(slot)
   end
+end
+
+function turtle.emptyInventory(dropAction)
+  dropAction = dropAction or turtle.native.drop
+  turtle.eachFilledSlot(function(slot)
+    turtle.select(slot.index)
+    dropAction()
+  end)
+  turtle.select(1)
 end
 
 function turtle.reconcileInventory(slots, dropAction)
@@ -910,10 +864,6 @@ function turtle.selectSlotWithItems(startSlot)
   end
 end
 
-function turtle.selectOpenSlot(startSlot)
-  return turtle.selectSlotWithQuantity(0, startSlot)
-end
-
 function turtle.selectSlotWithQuantity(qty, startSlot)
   startSlot = startSlot or 1
 
@@ -923,6 +873,10 @@ function turtle.selectSlotWithQuantity(qty, startSlot)
       return i
     end
   end
+end
+
+function turtle.selectOpenSlot(startSlot)
+  return turtle.selectSlotWithQuantity(0, startSlot)
 end
 
 function turtle.condense()
@@ -1007,14 +961,15 @@ function turtle.abortAction()
 end
 
 -- [[ Pathing ]] --
-function turtle.faceAgainst(pt) -- 4 sided
+function turtle.faceAgainst(pt, options) -- 4 sided
 
-  local pts = { }
+  options = options or { }
+  options.dest = { }
 
   for i = 0, 3 do
     local hi = turtle.getHeadingInfo(i)
 
-    table.insert(pts, { 
+    table.insert(options.dest, { 
       x = pt.x + hi.xd, 
       z = pt.z + hi.zd, 
       y = pt.y + hi.yd, 
@@ -1022,12 +977,13 @@ function turtle.faceAgainst(pt) -- 4 sided
     })
   end
 
-  return turtle.pathfind(Point.closest(turtle.point, pts), { dest = pts })
+  return turtle.pathfind(Point.closest(turtle.point, options.dest), options)
 end
 
-function turtle.moveAgainst(pt) -- 6 sided
+function turtle.moveAgainst(pt, options) -- 6 sided
 
-  local pts = { }
+  options = options or { }
+  options.dest = { }
 
   for i = 0, 5 do
     local hi = turtle.getHeadingInfo(i)
@@ -1041,7 +997,7 @@ function turtle.moveAgainst(pt) -- 6 sided
       direction = 'up'
     end
 
-    table.insert(pts, {
+    table.insert(options.dest, {
       x = pt.x + hi.xd, 
       z = pt.z + hi.zd, 
       y = pt.y + hi.yd,
@@ -1050,7 +1006,7 @@ function turtle.moveAgainst(pt) -- 6 sided
     })
   end
 
-  return turtle.pathfind(Point.closest(turtle.point, pts), { dest = pts })
+  return turtle.pathfind(Point.closest(turtle.point, options.dest), options)
 end
 
 local actionsAt = {

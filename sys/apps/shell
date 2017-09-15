@@ -41,7 +41,12 @@ end
 function shell.run(...)
 
   local path, args = parseCommandLine(...)
-  path = shell.resolveProgram(path)
+  local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
+
+  if not isUrl then
+    path = shell.resolveProgram(path)
+  end
+
   if path then
     tProgramStack[#tProgramStack + 1] = path
     local oldTitle
@@ -51,7 +56,15 @@ function shell.run(...)
       multishell.setTitle(multishell.getCurrent(), fs.getName(path))
     end
 
-    local result, err = os.run(Util.shallowCopy(sandboxEnv), path, unpack(args))
+    local result, err
+
+    if isUrl then
+      local env = Util.shallowCopy(sandboxEnv)
+      setmetatable(env, { __index = _G })
+      result, err = Util.runUrl(env, path, unpack(args))
+    else
+      result, err = os.run(Util.shallowCopy(sandboxEnv), path, unpack(args))
+    end
 
     if multishell then
       local title = 'shell'

@@ -38,6 +38,11 @@ end
 
 function urlfs.open(node, fn, fl)
 
+  if fl == 'w' or fl == 'wb' then
+    fs.delete(fn)
+    return fs.open(fn, fl)
+  end
+
   if fl ~= 'r' and fl ~= 'rb' then
     error('Unsupported mode')
   end

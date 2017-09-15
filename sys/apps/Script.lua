@@ -7,7 +7,7 @@ local UI     = require('ui')
 local Util   = require('util')
 
 local GROUPS_PATH = 'usr/groups'
-local SCRIPTS_PATH = 'sys/etc/scripts'
+local SCRIPTS_PATH = 'usr/etc/scripts'
 
 multishell.setTitle(multishell.getCurrent(), 'Script')
 UI:configure('script', ...)

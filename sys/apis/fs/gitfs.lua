@@ -9,8 +9,10 @@ function gitfs.mount(dir, user, repo, branch)
 
   local list = git.list(user, repo, branch)
   for path, entry in pairs(list) do
-    local node = fs.mount(fs.combine(dir, path), 'urlfs', entry.url)
-    node.size = entry.size
+    if not fs.exists(fs.combine(dir, path)) then
+      local node = fs.mount(fs.combine(dir, path), 'urlfs', entry.url)
+      node.size = entry.size
+    end
   end
 end
 

@@ -172,6 +172,7 @@ function Point.inBox(pt, box)
          pt.y >= box.y and
          pt.z >= box.z and
          pt.x <= box.ex and
+         pt.y <= box.ey and
          pt.z <= box.ez
 end
 

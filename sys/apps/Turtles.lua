@@ -20,8 +20,7 @@ local options = {
                  desc = 'Displays the options' },
 }
 
-local USR_SCRIPTS_PATH = 'usr/scripts'
-local SYS_SCRIPTS_PATH = 'sys/etc/scripts'
+local SCRIPTS_PATH = 'usr/etc/scripts'
 
 local nullTerm = Terminal.getNullTerm(term.current())
 local turtles = { }
@@ -228,21 +227,8 @@ end
 
 function page.tabs.scripts:draw()
 
-  local function combineDirs(...)
-    local list = { }
-    for _,path in pairs({...}) do
-      if fs.exists(path) then
-        local files = fs.list(path)
-        for _,f in pairs(files) do
-          list[f] = fs.combine(path, f)
-        end
-      end
-    end
-    return list
-  end
-
   Util.clear(self.values)
-  local files = combineDirs(SYS_SCRIPTS_PATH, USR_SCRIPTS_PATH)
+  local files = fs.list(SCRIPTS_PATH)
   for f,path in pairs(files) do
     table.insert(self.values, { label = f, path = path })
   end

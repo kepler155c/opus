@@ -88,10 +88,6 @@ local function mapDimensions(dest, blocks, boundingBox)
 	}
 end
 
-local function nodeToString(n)
-	return string.format('%d:%d:%d:%d', n._x, n._y, n._z, n.__heading or 9)
-end
-
 -- shifting and coordinate flipping
 local function pointToMap(dim, pt)
 	return { x = pt.x + dim.ox, z = pt.y + dim.oy, y = pt.z + dim.oz }
@@ -144,14 +140,33 @@ local function addSensorBlocks(blocks, sblocks)
 	end
 end
 
+local function selectDestination(pts, box, map, dim)
+
+	while #pts > 0 do
+		local pt = Point.closest(turtle.point, pts)
+
+		if (box and not Point.inBox(pt, box)) or
+			map[pt.z + dim.oz][pt.x + dim.ox][pt.y + dim.oy] == 1 then
+	    Util.removeByValue(pts, pt)
+	  else
+	  	return pt
+	  end
+	end
+end
+
 local function pathTo(dest, options)
 
-	local blocks = options.blocks or { }
-	local allDests = options.dest or { }  -- support alternative destinations
+	local blocks = options.blocks or turtle.getState().blocks or { }
+	local dests  = options.dest   or { dest }  -- support alternative destinations
+	local box    = options.box    or turtle.getState().box
 
 	local lastDim = nil
 	local map = nil
 	local grid = nil
+
+	if box then
+		box = Point.normalizeBox(box)
+	end
 
 	-- Creates a pathfinder object
 	local myFinder = Pathfinder(grid, 'ASTAR', walkable)
@@ -162,7 +177,7 @@ local function pathTo(dest, options)
 	while turtle.point.x ~= dest.x or turtle.point.z ~= dest.z or turtle.point.y ~= dest.y do
 
 		-- map expands as we encounter obstacles
-		local dim = mapDimensions(dest, blocks, options.box)
+		local dim = mapDimensions(dest, blocks, box)
 
 		-- reuse map if possible
 		if not lastDim or not dimsAreEqual(dim, lastDim) then
@@ -179,6 +194,15 @@ local function pathTo(dest, options)
 			addBlock(map, dim, b)
 		end
 
+		dest = selectDestination(dests, box, map, dim)
+		if not dest then
+			error('failed to reach destination')
+--			return false, 'failed to reach destination'
+		end
+		if turtle.point.x == dest.x and turtle.point.z == dest.z and turtle.point.y == dest.y then
+			break
+		end
+
 		-- Define start and goal locations coordinates
 		local startPt = pointToMap(dim, turtle.point)
 		local endPt = pointToMap(dim, dest)
@@ -187,14 +211,8 @@ local function pathTo(dest, options)
 		local path = myFinder:getPath(startPt.x, startPt.y, startPt.z, turtle.point.heading, endPt.x, endPt.y, endPt.z, dest.heading)
 
 		if not path then
-	    Util.removeByValue(allDests, dest)
-	    dest = Point.closest(turtle.point, allDests)
-
-	    if not dest then
-				return false, 'failed to recalculate'
-			end
+	    Util.removeByValue(dests, dest)
 		else
-
 			for node, count in path:nodes() do
 				local pt = nodeToPoint(dim, node)
 
@@ -206,9 +224,6 @@ local function pathTo(dest, options)
 				-- when encountering obstacles -- IS THIS RIGHT ??
 				if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y, node.heading) then
 			  	table.insert(blocks, pt)
-			  	if #allDests > 0 then
-			  		dest = Point.closest(turtle.point, allDests)
-			  	end
 			  	--if device.turtlesensorenvironment then
 			  	--	addSensorBlocks(blocks, device.turtlesensorenvironment.sonicScan())
 			  	--end
@@ -224,10 +239,27 @@ local function pathTo(dest, options)
 	return dest
 end
 
-return function(dest, options)
-	options = options or { }
-	if not options.blocks and turtle.gotoPoint(dest) then
-		return dest
-	end
-	return pathTo(dest, options)
-end
+return {
+	pathfind = function(dest, options)
+		options = options or { }
+		--if not options.blocks and turtle.gotoPoint(dest) then
+		--	return dest
+		--end
+		return pathTo(dest, options)
+	end,
+
+	-- set a global bounding box
+	-- box can be overridden by passing box in pathfind options
+	setBox = function(box)
+		turtle.getState().box = box
+	end,
+
+	setBlocks = function(blocks)
+		turtle.getState().blocks = blocks
+	end,
+
+	reset = function()
+		turtle.getState().box    = nil
+		turtle.getState().blocks = nil
+	end,
+}

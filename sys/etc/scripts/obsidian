@@ -28,7 +28,7 @@ local function findObsidian()
 
     local _,b = turtle.inspectDown()
     if b and (b.name == 'minecraft:lava' or b.name == 'minecraft:flowing_lava') then
-      if turtle.selectSlot('minecraft:water_bucket') then
+      if turtle.select('minecraft:water_bucket') then
         while true do
           if turtle.up() then
             break
@@ -84,7 +84,7 @@ local s, m = turtle.run(function()
     end
 
     findObsidian()
-    if not turtle.selectSlot('minecraft:water_bucket') then
+    if not turtle.select('minecraft:water_bucket') then
       break
     end
     turtle.goto(0, 0)

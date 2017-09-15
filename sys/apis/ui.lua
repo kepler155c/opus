@@ -1,8 +1,8 @@
 local Util   = require('util')
 local class  = require('class')
 local Event  = require('event')
-local Tween  = require('tween')
-local Region = require('region')
+local Tween  = require('ui.tween')
+local Region = require('ui.region')
 
 local mapColorToGray = {
   [ colors.white     ] = colors.white,

@@ -1,6 +1,6 @@
 print('\nStarting Opus..')
 
-LUA_PATH = '/sys/apis'
+LUA_PATH = '/sys/apis:/usr/apis'
 
 local Util = dofile('sys/apis/util.lua')
 _G.debug = function(...) Util.print(...) end
@@ -15,7 +15,7 @@ if not s then
 end
 
 -- process fstab
-local mounts = Util.readFile('sys/etc/fstab')
+local mounts = Util.readFile('usr/etc/fstab')
 if mounts then
   for _,l in ipairs(Util.split(mounts)) do
     if l:sub(1, 1) ~= '#' then
@@ -24,6 +24,8 @@ if mounts then
     end
   end
 end
+
+fs.mount('usr', 'gitfs', 'kepler155c', 'opus-apps', 'develop')
 
 -- user environment
 if not fs.exists('usr/apps') then
