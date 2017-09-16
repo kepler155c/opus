@@ -379,8 +379,15 @@ function Util.download(url, filename)
 end
 
 function Util.loadUrl(url, env)  -- loadfile equivalent
-  local c = Util.download(url)
-  return load(c, url, nil, env)
+  local s, m = pcall(function()
+    local c = Util.download(url)
+    return load(c, url, nil, env)
+  end)
+
+  if s then
+    return m
+  end
+  return s, m
 end
 
 function Util.runUrl(env, url, ...)   -- os.run equivalent
@@ -390,7 +397,7 @@ function Util.runUrl(env, url, ...)   -- os.run equivalent
     fn, m = pcall(function() fn(unpack(args)) end)
   end
   if not fn and m and m ~= '' then
-    printError(m)
+--    printError(m)
   end
   return fn, m
 end

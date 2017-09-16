@@ -36,6 +36,15 @@ Config.load('Overview', config)
 local applications = { }
 
 local function loadApplications()
+
+  local requirements = {
+    turtle = function() return turtle end,
+    advancedTurtle = function() return turtle and term.isColor() end,
+    pocket = function() return pocket end,
+    advancedPocket = function() return pocket and term.isColor() end,
+    advancedComputer = function() return not turtle and not pocket and term.isColor() end,
+  }
+
   applications = Util.readTable('sys/etc/app.db')
 
   if fs.exists(REGISTRY_DIR) then
@@ -50,12 +59,20 @@ local function loadApplications()
   end
 
   Util.each(applications, function(v, k) v.key = k end)
-  applications = Util.filter(applications, function(_, a) return not a.disabled end)
+  applications = Util.filter(applications, function(_, a)
+    if a.disabled then
+      return false
+    end
 
-  applications = Util.filter(applications, function(_, a) 
-    return Util.startsWidth(a.run, 'http') or shell.resolveProgram(a.run) 
+    if a.requires then
+      local fn = requirements[a.requires]
+      if fn and not fn() then
+        return false
+      end
+    end
+
+    return Util.startsWidth(a.run, 'http') or shell.resolveProgram(a.run)
   end)
-
 end
 
 loadApplications()

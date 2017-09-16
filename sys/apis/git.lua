@@ -6,8 +6,13 @@ local FILE_URL = 'https://raw.github.com/%s/%s/%s/%s'
 
 local git = { }
 
-function git.list(user, repo, branch)
-  branch = branch or 'master'
+function git.list(repo)
+
+  local t = Util.split(repo, '(.-)/')
+
+  local user = t[1]
+  local repo = t[2]
+  local branch = t[3] or 'master'
 
   local dataUrl = string.format(TREE_URL, user, repo, branch)
   local contents = Util.download(dataUrl)

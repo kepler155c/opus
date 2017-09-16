@@ -6,7 +6,6 @@
 \030f \0304 \0307 \030 \031f)",
     title = "Network",
     run = "Network.lua",
-    requires = "wireless_modem",
   },
   [ "90ef98d4b6fd15466f0a1f212ec1db8d9ebe018c" ] = {
     title = "Turtles",
@@ -55,7 +54,6 @@
 \0300\0317retu",
     title = "Scripts",
     run = "Script.lua",
-    requires = "wireless_modem",
   },
   db56e2e1db9f7accfc37f2b132d27505c66ba521 = {
     title = "Adventure",
@@ -71,7 +69,7 @@
     icon = "\0301\03171\03180\030 \031   \
 \0301\03181\030 \031    \
 \0301\03170\03180\03171\0307\031f>",
-    run = "update.lua",
+    run = "http://pastebin.com/raw/sj4VMVJj",
   },
   [ "7ef35cac539f84722b0a988caee03b2df734c56a" ] = {
     title = "AppStore",
@@ -88,6 +86,7 @@
  \0304\031f _ \030 \031c/\0315\\\
  \0304   ",
     run = "simpleMiner.lua",
+    requires = 'turtle',
   },
   c47ae15370cfe1ed2781eedc1dc2547d12d9e972 = {
     title = "Help",
@@ -128,6 +127,7 @@
 \0309  \0302 \0301 \
 \030e \0309  \0301 ",
     run = "rom/programs/pocket/falling",
+    requires = 'advancedPocket',
   },
   bc0792d8dc81e8aa30b987246a5ce97c40cd6833 = {
     title = "System",
@@ -143,7 +143,8 @@
     icon = "\0307       \
 \0307 \0308\0311 \0305 \0308\031  \0307 \0308 \0301 \
 \0307       ",
-    run = "storageManager.lua",
+    run = "chestManager.lua",
+    requires = 'turtle',
   },
   c5497bca58468ae64aed6c0fd921109217988db3 = {
     title = "Events",
@@ -216,6 +217,7 @@
 \030e\031c###\0308\0317=\030e\031c#\
 \030e\031c#\0307\031f.\030e\031c###",
     run = "usr/apps/builder.lua",
+    requires = "turtle",
   },
   [ "d8c298dd41e4a4ec20e8307901797b64688b3b77" ] = {
     title = "GPS Deploy",
@@ -234,6 +236,7 @@
     title = "Micropaint",
     category = "Apps",
     run = "http://pastebin.com/raw/tMRzJXx2",
+    requires = "advancedComputer",
   },
   [ "d78f28759f255a0db76604ee560b87c4715a0da5" ] = {
     apptype = "url",

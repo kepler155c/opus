@@ -1,0 +1,2108 @@
+{
+  [ "minecraft:wool:4" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:9" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:trapdoor:0" ] = {
+    count = 2,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:dark_oak_fence:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:dirt:1" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:carpet:4" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:1" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wooden_pressure_plate:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:hay_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:13" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:11" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:dye:10" ] = {
+    count = 2,
+    ingredients = {
+      "",
+      "",
+    },
+  },
+  [ "minecraft:wooden_slab:0" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:carpet:12" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:birch_fence_gate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:acacia_fence:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:diamond_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stone:1" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+    },
+  },
+  [ "minecraft:wooden_slab:2" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:14" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:6" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:carpet:9" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:carpet:0" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:glass_pane:0" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:pumpkin_seeds:0" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:4" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:carpet:10" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:prismarine:2" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wool:3" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:cobblestone_wall:0" ] = {
+    count = 6,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:wooden_button:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:book:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:stone_pressure_plate:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:planks:4" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:7" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:sandstone:1" ] = {
+    count = 1,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:jungle_fence_gate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:red_sandstone:2" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dye:5" ] = {
+    count = 2,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone_brick_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:banner:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 10 ] = "",
+    },
+  },
+  [ "minecraft:carpet:13" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:sign:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 10 ] = "",
+    },
+  },
+  [ "minecraft:light_weighted_pressure_plate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+    },
+  },
+  [ "minecraft:flower_pot:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      [ 6 ] = "",
+      [ 3 ] = "",
+    },
+  },
+  [ "minecraft:wooden_door:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      [ 6 ] = "",
+      [ 10 ] = "",
+      [ 5 ] = "",
+      [ 9 ] = "",
+    },
+  },
+  [ "minecraft:wool:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:14" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:comparator:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 7 ] = "",
+      [ 2 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 9 ] = "",
+    },
+  },
+  [ "minecraft:acacia_fence_gate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:3" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stick:0" ] = {
+    count = 4,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:0" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:wool:6" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:snow_layer:0" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:emerald_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wool:13" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:noteblock:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:sea_lantern:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:dye:9" ] = {
+    count = 2,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:15" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:5" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:3" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:8" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:beacon:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:iron_bars:0" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stonebrick:3" ] = {
+    count = 1,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:2" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wooden_slab:1" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:carpet:2" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:glowstone:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:bone_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:3" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:fence:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:wool:11" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dispenser:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:redstone_lamp:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 7 ] = "",
+      [ 2 ] = "",
+      [ 10 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:heavy_weighted_pressure_plate:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:wool:15" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:bed:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:tnt:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:nether_brick_fence:0" ] = {
+    count = 6,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:14" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:furnace:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wooden_slab:5" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:anvil:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:4" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:4" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:paper:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+    },
+  },
+  [ "minecraft:bookshelf:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stonebrick:0" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:ladder:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 3 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:trapped_chest:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:1" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:carpet:8" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:7" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:9" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:bow:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 9 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+      [ 10 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:15" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:spruce_fence_gate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:acacia_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:quartz_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:birch_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:7" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stone:4" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:chest:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stone:3" ] = {
+    count = 2,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:wool:14" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dark_oak_fence_gate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:birch_fence:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:dye:7" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:redstone_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wool:8" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:coal_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:15" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:dye:14" ] = {
+    count = 2,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:quartz_block:1" ] = {
+    count = 1,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:1" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:ender_eye:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:jungle_fence:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:dye:8" ] = {
+    count = 2,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dark_oak_door:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      [ 6 ] = "",
+      [ 10 ] = "",
+      [ 5 ] = "",
+      [ 9 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:9" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:7" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:1" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:detector_rail:0" ] = {
+    count = 6,
+    ingredients = {
+      "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 3 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:10" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stone_button:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:5" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:planks:5" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:wool:10" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dye:6" ] = {
+    count = 2,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:13" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:sugar:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:6" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:stone:6" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dye:13" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:5" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:carpet:6" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:6" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:3" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:sandstone:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:11" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:gold_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wool:9" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:carpet:11" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:8" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:carpet:7" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:wool:2" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:end_rod:0" ] = {
+    count = 4,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:sandstone_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:11" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stone_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:2" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:hopper:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      [ 3 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 10 ] = "",
+    },
+  },
+  [ "minecraft:nether_brick_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:13" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:wool:12" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:birch_door:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:ender_chest:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:brick_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:prismarine:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone:5" ] = {
+    count = 2,
+    ingredients = {
+      "",
+      "",
+    },
+  },
+  [ "minecraft:torch:0" ] = {
+    count = 4,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:iron_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:12" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:8" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_hardened_clay:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wooden_slab:4" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:carpet:3" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:carpet:14" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:12" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:planks:1" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:spruce_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:quartz_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:cauldron:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 3 ] = "",
+    },
+  },
+  [ "minecraft:fence_gate:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:end_bricks:0" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:red_sandstone:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:enchanting_table:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 7 ] = "",
+      [ 2 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 9 ] = "",
+    },
+  },
+  [ "minecraft:lapis_block:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:quartz_block:2" ] = {
+    count = 2,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:wool:5" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dye:12" ] = {
+    count = 2,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:carpet:5" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:dark_oak_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stone_slab:0" ] = {
+    count = 6,
+    ingredients = {
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 5 ] = "",
+    },
+  },
+  [ "minecraft:mossy_cobblestone:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+    },
+  },
+  [ "minecraft:dropper:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:4" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:prismarine:1" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:carpet:15" ] = {
+    count = 3,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:wool:7" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:iron_trapdoor:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:planks:2" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:planks:0" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass_pane:5" ] = {
+    count = 16,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:10" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:lever:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:nether_brick:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:crafting_table:0" ] = {
+    count = 1,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:oak_stairs:0" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:redstone_torch:0" ] = {
+    count = 1,
+    ingredients = {
+      [ 2 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:spruce_door:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:stained_glass:12" ] = {
+    count = 8,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+      [ 9 ] = "",
+      [ 10 ] = "",
+      [ 11 ] = "",
+    },
+  },
+  [ "minecraft:wool:1" ] = {
+    count = 1,
+    ingredients = {
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:planks:3" ] = {
+    count = 4,
+    ingredients = {
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:sandstone:2" ] = {
+    count = 4,
+    ingredients = {
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+    },
+  },
+  [ "minecraft:spruce_fence:0" ] = {
+    count = 3,
+    ingredients = {
+      "",
+      "",
+      "",
+      [ 5 ] = "",
+      [ 6 ] = "",
+      [ 7 ] = "",
+    },
+  },
+}
