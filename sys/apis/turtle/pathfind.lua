@@ -196,8 +196,8 @@ local function pathTo(dest, options)
 
 		dest = selectDestination(dests, box, map, dim)
 		if not dest then
-			error('failed to reach destination')
---			return false, 'failed to reach destination'
+--			error('failed to reach destination')
+			return false, 'failed to reach destination'
 		end
 		if turtle.point.x == dest.x and turtle.point.z == dest.z and turtle.point.y == dest.y then
 			break

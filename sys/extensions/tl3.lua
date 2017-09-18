@@ -222,7 +222,7 @@ function turtle.placeDown(slot) return _place(actions.down, slot)    end
 
 local function _drop(action, qtyOrName, qty)
   if not qtyOrName or type(qtyOrName) == 'number' then
-    return action.drop(qtyOrName)
+    return action.drop(qtyOrName or 64)
   end
   return inventoryAction(action.drop, qtyOrName, qty)
 end

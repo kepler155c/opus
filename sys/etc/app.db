@@ -226,20 +226,17 @@
     requires = "turtle",
   },
   [ "53a5d150062b1e03206b9e15854b81060e3c7552" ] = {
-    apptype = "url",
     title = "Minesweeper",
     category = "Games",
     run = "http://pastebin.com/raw/nsKrHTbN",
   },
   [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
-    apptype = "url",
     title = "Micropaint",
     category = "Apps",
     run = "http://pastebin.com/raw/tMRzJXx2",
     requires = "advancedComputer",
   },
   [ "d78f28759f255a0db76604ee560b87c4715a0da5" ] = {
-    apptype = "url",
     title = "Sketch",
     category = "Apps",
     run = "http://pastebin.com/raw/Mm5hd97E",
