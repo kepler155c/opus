@@ -116,18 +116,23 @@ end)
 local info = {
   id = os.getComputerID()
 }
+local infoTimer = os.clock()
 
 local function sendInfo()
-  info.label = os.getComputerLabel()
-  info.uptime = math.floor(os.clock())
-  if turtle then
-    info.fuel = turtle.getFuelLevel()
-    info.status = turtle.status
-    info.point = turtle.point
-    info.inventory = turtle.getInventory()
-    info.slotIndex = turtle.getSelectedSlot()
+
+  if os.clock() - infoTimer >= 1 then -- don't flood
+    infoTimer = os.clock()
+    info.label = os.getComputerLabel()
+    info.uptime = math.floor(os.clock())
+    if turtle then
+      info.fuel = turtle.getFuelLevel()
+      info.status = turtle.status
+      info.point = turtle.point
+      info.inventory = turtle.getInventory()
+      info.slotIndex = turtle.getSelectedSlot()
+    end
+    device.wireless_modem.transmit(999, os.getComputerID(), info)
   end
-  device.wireless_modem.transmit(999, os.getComputerID(), info)
 end
 
 -- every 10 seconds, send out this computer's info

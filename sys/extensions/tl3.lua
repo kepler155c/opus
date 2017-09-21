@@ -1107,10 +1107,10 @@ function turtle.dropDownAt(pt, ...)     return _actionDownAt(actionsAt.drop, pt,
 function turtle.dropForwardAt(pt, ...)  return _actionForwardAt(actionsAt.drop, pt, ...) end
 function turtle.dropUpAt(pt, ...)       return _actionUpAt(actionsAt.drop, pt, ...) end
 
-function turtle.suckAt(pt, qty)         return _actionAt(actionsAt.suck, pt, qty) end
-function turtle.suckDownAt(pt, qty)     return _actionDownAt(actionsAt.suck, pt, qty) end
-function turtle.suckForwardAt(pt, qty)  return _actionForwardAt(actionsAt.suck, pt, qty) end
-function turtle.suckUpAt(pt, qty)       return _actionUpAt(actionsAt.suck, pt, qty) end
+function turtle.suckAt(pt, qty)         return _actionAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckDownAt(pt, qty)     return _actionDownAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckForwardAt(pt, qty)  return _actionForwardAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckUpAt(pt, qty)       return _actionUpAt(actionsAt.suck, pt, qty or 64) end
 
 function turtle.compareAt(pt)           return _actionAt(actionsAt.compare, pt) end
 function turtle.compareDownAt(pt)       return _actionDownAt(actionsAt.compare, pt) end
