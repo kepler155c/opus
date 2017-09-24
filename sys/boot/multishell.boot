@@ -26,7 +26,7 @@ if mounts then
 end
 
 pcall(function()
-  fs.mount('usr', 'gitfs', 'kepler155c/opus-apps/develop')
+  fs.mount('usr', 'gitfs', 'kepler155c/opus-apps/master')
 end)
 
 -- user environment
