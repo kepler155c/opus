@@ -5,9 +5,6 @@ local Event  = require('event')
 local UI     = require('ui')
 local Util   = require('util')
 
-local cleanEnv = Util.shallowCopy(getfenv(1))
-cleanEnv.require = nil
-
 multishell.setTitle(multishell.getCurrent(), 'Files')
 UI:configure('Files', ...)
 
@@ -265,7 +262,7 @@ function Browser:setDir(dirName, noStatus)
 end
 
 function Browser:run(path, ...)
-  local tabId = multishell.launch(cleanEnv, path, ...)
+  local tabId = shell.openTab(path, ...)
   multishell.setFocus(tabId)
 end
 
@@ -288,7 +285,7 @@ function Browser:eventHandler(event)
     Event.exitPullEvents()
 
   elseif event.type == 'edit' and file then
-    self:run('sys/apps/shell', 'edit', file.name)
+    self:run('edit', file.name)
 
   elseif event.type == 'shell' then
     self:run('sys/apps/shell')
@@ -340,7 +337,7 @@ function Browser:eventHandler(event)
       if file.isDir then
         self:setDir(file.fullName)
       else
-        self:run('sys/apps/shell', file.name)
+        self:run(file.name)
       end
     end
 

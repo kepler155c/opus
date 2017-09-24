@@ -25,7 +25,9 @@ if mounts then
   end
 end
 
-fs.mount('usr', 'gitfs', 'kepler155c/opus-apps/develop')
+pcall(function()
+  fs.mount('usr', 'gitfs', 'kepler155c/opus-apps/develop')
+end)
 
 -- user environment
 if not fs.exists('usr/apps') then

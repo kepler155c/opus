@@ -344,9 +344,9 @@ function Manager:click(button, x, y)
     if button == 1 then
       local c = os.clock()
 
-      if self.doubleClickTimer then
-        debug(c - self.doubleClickTimer)
-      end
+      --if self.doubleClickTimer then
+      --  debug(c - self.doubleClickTimer)
+      --end
 
       if self.doubleClickTimer and (c - self.doubleClickTimer < 1.9) and
          self.doubleClickX == x and self.doubleClickY == y and

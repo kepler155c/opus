@@ -177,14 +177,6 @@ function shell.getRunningProgram()
   return tProgramStack[#tProgramStack]
 end
 
-function shell.set(name, value)
-  getfenv(1)[name] = value
-end
-
-function shell.get(name)
-  return getfenv(1)[name]
-end
-
 function shell.setAlias( _sCommand, _sProgram )
   ALIASES[ _sCommand ] = _sProgram
 end
@@ -208,9 +200,13 @@ function shell.newTab(tabInfo, ...)
   if path then
     tabInfo.path = path
     tabInfo.env = sandboxEnv
-    tabInfo.args = args
+    tabInfo.args = Util.shallowCopy(args)
     tabInfo.title = fs.getName(path)
 
+    if path ~= 'sys/apps/shell' then
+      table.insert(tabInfo.args, 1, tabInfo.path)
+      tabInfo.path = 'sys/apps/shell'
+    end
     return multishell.openTab(tabInfo)
   end
   return nil, 'No such program'
