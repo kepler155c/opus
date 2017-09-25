@@ -32,7 +32,9 @@ if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
 if not fs.exists('usr/etc/fstab') then
-  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/master')
+  local file = io.open('usr/etc/fstab', "w")
+  file:write('usr gitfs kepler155c/opus-apps/master')
+  file:close()
 end
 
 local dir = 'sys/extensions'
