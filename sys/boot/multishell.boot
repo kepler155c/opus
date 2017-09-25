@@ -17,7 +17,8 @@ local function run(file, ...)
   end
 
   if not s then
-    error(m or ('Error running ' .. file))
+    printError('Error loading ' .. file)
+    error(m)
   end
   return m
 end
