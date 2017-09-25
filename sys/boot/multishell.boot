@@ -46,8 +46,6 @@ end
 fs.loadTab('usr/etc/fstab')
 
 local args = { ... }
-if #args == 0 then
-  args = { 'sys/apps/shell', 'sys/apps/multishell' }
-end
+args[1] = args[1] or 'sys/apps/multishell'
 
-run(table.unpack(args))
+run('sys/apps/shell', table.unpack(args))
