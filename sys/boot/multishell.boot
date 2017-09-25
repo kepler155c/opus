@@ -24,6 +24,7 @@ local function run(file, ...)
 end
 
 _G.requireInjector = run('sys/apis/injector.lua')
+shell.setPath('usr/apps:sys/apps:' .. shell.path())
 
 -- user environment
 if not fs.exists('usr/apps') then
