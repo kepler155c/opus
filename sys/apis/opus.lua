@@ -10,7 +10,7 @@ local function runDir(directory, desc, open)
   table.sort(files)
 
   for _,file in ipairs(files) do
-    print(desc .. file)
+    --print(desc .. file)
     os.sleep(0)
     local result, err = open(directory .. '/' .. file)
     if not result then
@@ -23,7 +23,8 @@ local function runDir(directory, desc, open)
 end
 
 function Opus.loadExtensions()
-  return runDir('sys/extensions', '[ ext ] ', shell.run)
+  --return runDir('sys/extensions', '[ ext ] ', shell.run)
+  return true
 end
 
 function Opus.loadServices()

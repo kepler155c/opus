@@ -1,11 +1,13 @@
 local parentShell = shell
 
-shell = { }
-local sandboxEnv = { }
+local shell = { }
+
+local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(getfenv(1)) do
   sandboxEnv[k] = v 
 end
-setmetatable(sandboxEnv, { __index = _G })
+sandboxEnv.shell = shell
+sandboxEnv.multishell = multishell or { }
 
 requireInjector(getfenv(1))
 
@@ -66,7 +68,7 @@ function shell.run(...)
       result, err = os.run(Util.shallowCopy(sandboxEnv), path, unpack(args))
     end
 
-    if multishell then
+    if multishell and multishell.getTitle then
       local title = 'shell'
       if #tProgramStack > 0 then
         title = fs.getName(tProgramStack[#tProgramStack])

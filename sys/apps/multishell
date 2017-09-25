@@ -463,9 +463,9 @@ end)
 local function startup()
   local hasError
 
-  if not Opus.loadExtensions() then
-    hasError = true
-  end
+  --if not Opus.loadExtensions() then
+  --  hasError = true
+  --end
 
   local overviewId = multishell.openTab({
     path = 'sys/apps/Overview.lua',

@@ -1,33 +1,28 @@
 print('\nStarting Opus..')
 
-LUA_PATH = '/sys/apis:/usr/apis'
-
-local Util = dofile('sys/apis/util.lua')
-_G.debug = function(...) Util.print(...) end
-_G.requireInjector = dofile('sys/apis/injector.lua')
-
-os.run(Util.shallowCopy(getfenv(1)), 'sys/extensions/device.lua')
-
--- vfs
-local s, m = os.run(Util.shallowCopy(getfenv(1)), 'sys/extensions/vfs.lua')
-if not s then
-  error(m)
-end
-
--- process fstab
-local mounts = Util.readFile('usr/etc/fstab')
-if mounts then
-  for _,l in ipairs(Util.split(mounts)) do
-    if l:sub(1, 1) ~= '#' then
-      print('mounting ' .. l)
-      fs.mount(unpack(Util.matches(l)))
-    end
+local function run(file, ...)
+  local env = setmetatable({
+    LUA_PATH = '/sys/apis:/usr/apis'
+  }, { __index = _G })
+  for k,v in pairs(getfenv(1)) do
+    env[k] = v 
   end
+
+  local s, m = loadfile(file, env)
+  if s then
+    local args = { ... }
+    s, m = pcall(function()
+      return s(table.unpack(args))
+    end)
+  end
+
+  if not s then
+    error(m or ('Error running ' .. file))
+  end
+  return m
 end
 
-pcall(function()
-  fs.mount('usr', 'gitfs', 'kepler155c/opus-apps/master')
-end)
+_G.requireInjector = run('sys/apis/injector.lua')
 
 -- user environment
 if not fs.exists('usr/apps') then
@@ -36,9 +31,20 @@ end
 if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
+if not fs.exists('usr/etc/fstab') then
+  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/master')
+end
 
-local env = Util.shallowCopy(getfenv(1))
-env.multishell = { }
+local dir = 'sys/extensions'
+for _,file in ipairs(fs.list(dir)) do
+  run('sys/apps/shell', fs.combine(dir, file))
+end
 
-local _, m = os.run(env, 'sys/apps/shell', 'sys/apps/multishell')
-printError(m or 'Multishell aborted')
+fs.loadTab('usr/etc/fstab')
+
+local args = { ... }
+if #args == 0 then
+  args = { 'sys/apps/shell', 'sys/apps/multishell' }
+end
+
+run(table.unpack(args))

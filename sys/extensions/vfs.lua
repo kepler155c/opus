@@ -284,6 +284,23 @@ function fs.mount(path, fstype, ...)
   return node
 end
 
+function fs.loadTab(path)
+  local mounts = Util.readFile(path)
+  if mounts then
+    for _,l in ipairs(Util.split(mounts)) do
+      if l:sub(1, 1) ~= '#' then
+        local s, m = pcall(function()
+          fs.mount(table.unpack(Util.matches(l)))
+        end)
+        if not s then
+          printError('Mount failed')
+          printError(l)
+        end
+      end
+    end
+  end
+end
+
 local function getNodeByParts(parts)
   local node = fs.nodes
 
