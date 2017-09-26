@@ -391,13 +391,21 @@ function Util.loadUrl(url, env)  -- loadfile equivalent
 end
 
 function Util.runUrl(env, url, ...)   -- os.run equivalent
+  setmetatable(env, { __index = _G })
   local fn, m = Util.loadUrl(url, env)
   if fn then
     local args = { ... }
-    fn, m = pcall(function() fn(unpack(args)) end)
+    return pcall(function() return fn(table.unpack(args)) end)
   end
-  if not fn and m and m ~= '' then
---    printError(m)
+  return fn, m
+end
+
+function Util.run(env, path, ...)
+  setmetatable(env, { __index = _G })
+  local fn, m = loadfile(path, env)
+  if fn then
+    local args = { ... }
+    return pcall(function() return fn(table.unpack(args)) end)
   end
   return fn, m
 end

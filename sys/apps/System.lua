@@ -13,7 +13,7 @@ local env = {
   aliases = shell.aliases(),
   lua_path = LUA_PATH,
 }
-Config.load('multishell', env)
+Config.load('shell', env)
 
 UI.TextEntry.defaults.backgroundFocusColor = colors.black
 
@@ -126,7 +126,7 @@ function systemPage.tabs.pathTab:eventHandler(event)
     env.path = self.entry.value
     self.grid:setIndex(self.grid:getIndex())
     self.grid:draw()
-    Config.update('multishell', env)
+    Config.update('shell', env)
     systemPage.notification:success('reboot to take effect')
     return true
   end
@@ -148,7 +148,7 @@ function systemPage.tabs.aliasTab:eventHandler(event)
     env.aliases[self.grid:getSelected().alias] = nil
     self.grid:setIndex(self.grid:getIndex())
     self.grid:draw()
-    Config.update('multishell', env)
+    Config.update('shell', env)
     systemPage.notification:success('reboot to take effect')
     return true
 
@@ -158,7 +158,7 @@ function systemPage.tabs.aliasTab:eventHandler(event)
     self.path:reset()
     self:draw()
     self:setFocus(self.alias)
-    Config.update('multishell', env)
+    Config.update('shell', env)
     systemPage.notification:success('reboot to take effect')
     return true
   end

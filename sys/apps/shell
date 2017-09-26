@@ -61,14 +61,12 @@ function shell.run(...)
 
     local result, err
 
+    local env = Util.shallowCopy(sandboxEnv)
     if isUrl then
-      local env = Util.shallowCopy(sandboxEnv)
-      setmetatable(env, { __index = _G })
       result, err = Util.runUrl(env, path, unpack(args))
     else
-      result, err = os.run(Util.shallowCopy(sandboxEnv), path, unpack(args))
+      result, err = Util.run(env, path, unpack(args))
     end
-
     if multishell and multishell.getTitle then
       local title = 'shell'
       if #tProgramStack > 0 then
@@ -237,7 +235,7 @@ if #tArgs > 0 then
   -- Run the program specified in this new shell
   local s, m = shell.run( ... )
   if not s and m and m ~= 'Terminated' then
-    error(m or '')
+    error(m)
   end
   return s, m
 end

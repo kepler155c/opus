@@ -44,16 +44,9 @@ end
 local function run(file, ...)
   local s, m = loadfile(file, makeEnv())
   if s then
-    local args = { ... }
-    s, m = pcall(function()
-      return s(table.unpack(args))
-    end)
+    return s(...)
   end
-
-  if not s and m then
-    error('Error loading ' .. file .. '\n' .. m)
-  end
-  return m
+  error('Error loading ' .. file .. '\n' .. m)
 end
 
 local function runUrl(file, ...)
@@ -98,7 +91,7 @@ if not fs.exists('usr/config/shell') then
   Util.writeTable('usr/config/shell', {
     aliases  = shell.aliases(),
     path     = 'usr/apps:sys/apps:' .. shell.path(),
-    LUA_PATH = '/sys/apis:/usr/apis',
+    lua_path = '/sys/apis:/usr/apis',
   })
 end
 
@@ -113,7 +106,7 @@ if config.aliases then
   end
 end
 shell.setPath(config.path)
-LUA_PATH = config.LUA_PATH
+LUA_PATH = config.lua_path
 
 -- extensions
 local dir = 'sys/extensions'
