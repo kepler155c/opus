@@ -13,12 +13,16 @@ local function runDir(directory, desc, open)
     os.sleep(0)
     local result, err = open(directory .. '/' .. file)
     if result then
-      term.setTextColor(colors.green)
+      if term.isColor() then
+        term.setTextColor(colors.green)
+      end
       term.write('[PASS] ')
       term.setTextColor(colors.white)
       term.write(fs.combine(directory, file))
     else
-      term.setTextColor(colors.red)
+      if term.isColor() then
+        term.setTextColor(colors.red)
+      end
       term.write('[FAIL] ')
       term.setTextColor(colors.white)
       term.write(fs.combine(directory, file))

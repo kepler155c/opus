@@ -3,7 +3,11 @@
 local w, h = term.getSize()
 local str = 'Opus OS'
 term.setTextColor(colors.white)
-term.setBackgroundColor(colors.cyan)
+if term.isColor() then
+  term.setBackgroundColor(colors.cyan)
+else
+  term.setBackgroundColor(colors.lightGray)
+end
 term.setCursorPos((w - #str) / 2, h / 2)
 term.clear()
 term.write(str)
