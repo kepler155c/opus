@@ -37,23 +37,23 @@ local tabsDirty = false
 
 local config = {
   standard = {
+    textColor  = colors.lightGray,
+    tabBarTextColor = colors.lightGray,
     focusTextColor = colors.white,
+    backgroundColor = colors.gray,
+    tabBarBackgroundColor = colors.gray,
     focusBackgroundColor = colors.gray,
-    textColor  = colors.gray,
-    backgroundColor = colors.lightGray,
-    tabBarTextColor = colors.black,
-    tabBarBackgroundColor = colors.lightGray,
   },
   color = {
-    focusTextColor = colors.white,
-    focusBackgroundColor = colors.black,
     textColor  = colors.lightGray,
-    backgroundColor = colors.black,
     tabBarTextColor = colors.lightGray,
-    tabBarBackgroundColor = colors.black,
+    focusTextColor = colors.white,
+    backgroundColor = colors.gray,
+    tabBarBackgroundColor = colors.gray,
+    focusBackgroundColor = colors.gray,
   },
 --  path = '.:/apps:' .. shell.path():sub(3),
-  path = 'usr/apps:sys/apps:' .. shell.path(),
+  path = shell.path(),
 }
 
 Config.load('multishell', config)
@@ -462,10 +462,6 @@ end)
 
 local function startup()
   local hasError
-
-  --if not Opus.loadExtensions() then
-  --  hasError = true
-  --end
 
   local overviewId = multishell.openTab({
     path = 'sys/apps/Overview.lua',

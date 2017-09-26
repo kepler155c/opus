@@ -134,6 +134,7 @@ local page = UI.Page {
   accelerators = {
     r = 'refresh',
     e = 'edit',
+    f = 'files',
     s = 'shell',
     l = 'lua',
     [ 'control-l' ] = 'refresh',
@@ -334,6 +335,12 @@ function page:eventHandler(event)
   elseif event.type == 'lua' then
     multishell.openTab({
       path = 'sys/apps/Lua.lua',
+      focused = true,
+    })
+
+  elseif event.type == 'files' then
+    multishell.openTab({
+      path = 'sys/apps/Files.lua',
       focused = true,
     })
 

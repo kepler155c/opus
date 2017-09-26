@@ -1,6 +1,6 @@
 local Opus = { }
 
-local function runDir(directory, desc, open)
+local function runDir(directory, open)
   if not fs.exists(directory) then
     return true
   end
@@ -37,18 +37,13 @@ local function runDir(directory, desc, open)
   return success
 end
 
-function Opus.loadExtensions()
-  --return runDir('sys/extensions', '[ ext ] ', shell.run)
-  return true
-end
-
 function Opus.loadServices()
-  return runDir('sys/services', '[ svc ] ', shell.openHiddenTab)
+  return runDir('sys/services', shell.openHiddenTab)
 end
 
 function Opus.autorun()
-  local s = runDir('sys/autorun', '[ aut ] ', shell.run)
-  return runDir('usr/autorun', '[ aut ] ', shell.run) and s
+  local s = runDir('sys/autorun', shell.run)
+  return runDir('usr/autorun', shell.run) and s
 end
 
 return Opus

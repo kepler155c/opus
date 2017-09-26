@@ -1,17 +1,33 @@
 -- Loads the Opus environment regardless if the file system is local or not
 
 local w, h = term.getSize()
-local str = 'Opus OS'
+local str = 'Loading Opus...'
 term.setTextColor(colors.white)
 if term.isColor() then
   term.setBackgroundColor(colors.cyan)
-else
-  term.setBackgroundColor(colors.lightGray)
+  term.clear()
+  local opus = {
+    '9999900',
+    '999907000',
+    '9900770b00 4444',
+    '99077777444444444',
+    '907777744444444444',
+    '90000777444444444',
+    '070000111744444',
+    '777770000',
+    '7777000000',
+    '70700000000',
+    '077000000000',
+  }
+  for k,line in ipairs(opus) do
+    term.setCursorPos((w - 18) / 2, k + (h - #opus) / 2)
+    term.blit(string.rep(' ', #line), string.rep('a', #line), line)
+  end
 end
-term.setCursorPos((w - #str) / 2, h / 2)
-term.clear()
+
+term.setCursorPos((w - #str) / 2, h)
 term.write(str)
-term.setCursorPos(1, h / 2 + 2)
+term.setCursorPos(w, h)
 
 local GIT_REPO = 'kepler155c/opus/develop'
 local BASE     = 'https://raw.githubusercontent.com/' .. GIT_REPO
@@ -37,6 +53,8 @@ local function run(file, ...)
   end
 
   if not s then
+--    term.setBackgroundColor(colors.black)
+--    term.clear()
     printError('Error loading ' .. file)
     error(m)
   end
@@ -54,6 +72,8 @@ local function runUrl(file, ...)
       return fn(...)
     end
   end
+--  term.setBackgroundColor(colors.black)
+--  term.clear()
   error('Failed to download ' .. url)
 end
 

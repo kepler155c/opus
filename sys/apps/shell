@@ -1,13 +1,14 @@
 local parentShell = shell
 
 local shell = { }
+local multishell = multishell or { }
 
 local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(getfenv(1)) do
   sandboxEnv[k] = v 
 end
 sandboxEnv.shell = shell
-sandboxEnv.multishell = multishell or { }
+sandboxEnv.multishell = multishell
 
 requireInjector(getfenv(1))
 
