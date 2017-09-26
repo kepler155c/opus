@@ -37,9 +37,9 @@ local tabsDirty = false
 
 local config = {
   standard = {
-    focusTextColor = colors.lightGray,
+    focusTextColor = colors.white,
     focusBackgroundColor = colors.gray,
-    textColor  = colors.black,
+    textColor  = colors.gray,
     backgroundColor = colors.lightGray,
     tabBarTextColor = colors.black,
     tabBarBackgroundColor = colors.lightGray,
