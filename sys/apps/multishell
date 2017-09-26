@@ -46,11 +46,11 @@ local config = {
   },
   color = {
     focusTextColor = colors.white,
-    focusBackgroundColor = colors.brown,
-    textColor  = colors.gray,
-    backgroundColor = colors.brown,
+    focusBackgroundColor = colors.black,
+    textColor  = colors.lightGray,
+    backgroundColor = colors.black,
     tabBarTextColor = colors.lightGray,
-    tabBarBackgroundColor = colors.brown,
+    tabBarBackgroundColor = colors.black,
   },
 --  path = '.:/apps:' .. shell.path():sub(3),
   path = 'usr/apps:sys/apps:' .. shell.path(),
@@ -124,7 +124,7 @@ local function draw()
     end
   end
   if currentTab and not currentTab.isOverview then
-    parentTerm.setTextColor(_colors.textColor)
+    parentTerm.setTextColor(_colors.focusTextColor)
     parentTerm.setBackgroundColor(_colors.backgroundColor)
     parentTerm.setCursorPos( w, 1 )
     parentTerm.write('*')
@@ -215,7 +215,7 @@ local function launchProcess(tab)
       if err then
         printError(tostring(err))
       end
-      printError('Press enter to exit')
+      printError('Press enter to close')
       tab.isDead = true
       while true do
         local e, code = os.pullEventRaw('key')
@@ -484,6 +484,7 @@ local function startup()
   end
 
   if hasError then
+    print()
     error('An autorun program has errored')
   end
 end

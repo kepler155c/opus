@@ -18,7 +18,7 @@ Config.load('multishell', env)
 UI.TextEntry.defaults.backgroundFocusColor = colors.black
 
 local systemPage = UI.Page {
-  backgroundColor = colors.blue,
+  backgroundColor = colors.cyan,
   tabs = UI.Tabs {
     pathTab = UI.Window {
       tabTitle = 'Path',
@@ -86,8 +86,9 @@ local systemPage = UI.Page {
         },
       },
       grid = UI.ScrollingGrid {
-        y = 4,
+        y = 3,
         values = {
+          { name = '',  value = ''                  },
           { name = 'CC version',  value = Util.getVersion()                  },
           { name = 'Lua version', value = _VERSION                           },
           { name = 'MC version',  value = _MC_VERSION or 'unknown'           },
@@ -96,7 +97,7 @@ local systemPage = UI.Page {
           { name = 'Day',         value = tostring(os.day())                 },
         },
         selectable = false,
-        backgroundColor = colors.blue,
+        --backgroundColor = colors.blue,
         columns = {
           { key = 'name',  width = 12                 },
           { key = 'value', width = UI.term.width - 15 },

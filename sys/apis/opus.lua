@@ -10,13 +10,24 @@ local function runDir(directory, desc, open)
   table.sort(files)
 
   for _,file in ipairs(files) do
-    --print(desc .. file)
     os.sleep(0)
     local result, err = open(directory .. '/' .. file)
-    if not result then
-      printError(err)
+    if result then
+      term.setTextColor(colors.green)
+      term.write('[PASS] ')
+      term.setTextColor(colors.white)
+      term.write(fs.combine(directory, file))
+    else
+      term.setTextColor(colors.red)
+      term.write('[FAIL] ')
+      term.setTextColor(colors.white)
+      term.write(fs.combine(directory, file))
+      if err then
+        printError(err)
+      end
       success = false
     end
+    print()
   end
 
   return success

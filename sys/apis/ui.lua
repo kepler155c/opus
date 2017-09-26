@@ -1500,7 +1500,7 @@ UI.Grid.defaults = {
   textSelectedColor = colors.white,
   backgroundColor = colors.black,
   backgroundSelectedColor = colors.gray,
-  headerBackgroundColor = colors.blue,
+  headerBackgroundColor = colors.cyan,
   headerTextColor = colors.white,
   unfocusedTextSelectedColor = colors.white,
   unfocusedBackgroundSelectedColor = colors.gray,
@@ -2032,7 +2032,7 @@ end
 UI.ViewportWindow = class(UI.Window)
 UI.ViewportWindow.defaults = {
   UIElement = 'ViewportWindow',
-  backgroundColor = colors.blue,
+  backgroundColor = colors.cyan,
   accelerators = {
     down            = 'scroll_down',
     up              = 'scroll_up',
@@ -2163,7 +2163,7 @@ UI.MenuBar.defaults = {
   UIElement = 'MenuBar',
   buttons = { },
   height = 1,
-  backgroundColor = colors.lightBlue,
+  backgroundColor = colors.lightGray,
   textColor = colors.black,
   spacing = 2,
   showBackButton = false,
@@ -2311,7 +2311,7 @@ end
 UI.TabBar = class(UI.MenuBar)
 UI.TabBar.defaults = {
   UIElement = 'TabBar',
-  selectedBackgroundColor = colors.blue,
+  selectedBackgroundColor = colors.cyan,
   focusBackgroundColor = colors.green,
 }
 function UI.TabBar:init(args)
