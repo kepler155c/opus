@@ -236,7 +236,7 @@ if #tArgs > 0 then
   -- "shell x y z"
   -- Run the program specified in this new shell
   local s, m = shell.run( ... )
-  if not s and m ~= 'Terminated' then
+  if not s and m and m ~= 'Terminated' then
     error(m or '')
   end
   return s, m

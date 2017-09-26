@@ -33,9 +33,7 @@ local GIT_REPO = 'kepler155c/opus/develop'
 local BASE     = 'https://raw.githubusercontent.com/' .. GIT_REPO
 
 local function makeEnv()
-  local env = setmetatable({
-    LUA_PATH = '/sys/apis:/usr/apis'
-  }, { __index = _G })
+  local env = setmetatable({ }, { __index = _G })
   for k,v in pairs(getfenv(1)) do
     env[k] = v 
   end
@@ -52,11 +50,8 @@ local function run(file, ...)
     end)
   end
 
-  if not s then
---    term.setBackgroundColor(colors.black)
---    term.clear()
-    printError('Error loading ' .. file)
-    error(m)
+  if not s and m then
+    error('Error loading ' .. file .. '\n' .. m)
   end
   return m
 end
@@ -72,13 +67,10 @@ local function runUrl(file, ...)
       return fn(...)
     end
   end
---  term.setBackgroundColor(colors.black)
---  term.clear()
   error('Failed to download ' .. url)
 end
 
-shell.setPath('usr/apps:sys/apps:' .. shell.path())
-
+-- Install require shim
 if fs.exists('sys/apis/injector.lua') then
   _G.requireInjector = run('sys/apis/injector.lua')
 else
@@ -90,6 +82,8 @@ else
   fs.mount('', 'gitfs', GIT_REPO)
 end
 
+local Util = run('sys/apis/util.lua')
+
 -- user environment
 if not fs.exists('usr/apps') then
   fs.makeDir('usr/apps')
@@ -98,10 +92,28 @@ if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
 if not fs.exists('usr/etc/fstab') then
-  local file = io.open('usr/etc/fstab', "w")
-  file:write('usr gitfs kepler155c/opus-apps/master')
-  file:close()
+  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/develop')
 end
+if not fs.exists('usr/config/shell') then
+  Util.writeTable('usr/config/shell', {
+    aliases  = shell.aliases(),
+    path     = 'usr/apps:sys/apps:' .. shell.path(),
+    LUA_PATH = '/sys/apis:/usr/apis',
+  })
+end
+
+-- shell environment
+local config = Util.readTable('usr/config/shell')
+if config.aliases then
+  for k in pairs(shell.aliases()) do
+    shell.clearAlias(k)
+  end
+  for k,v in pairs(config.aliases) do
+    shell.setAlias(k, v)
+  end
+end
+shell.setPath(config.path)
+LUA_PATH = config.LUA_PATH
 
 -- extensions
 local dir = 'sys/extensions'

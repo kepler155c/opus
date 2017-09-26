@@ -52,22 +52,9 @@ local config = {
     tabBarBackgroundColor = colors.gray,
     focusBackgroundColor = colors.gray,
   },
---  path = '.:/apps:' .. shell.path():sub(3),
-  path = shell.path(),
 }
 
 Config.load('multishell', config)
-
-shell.setPath(config.path)
-
-if config.aliases then
-  for k in pairs(shell.aliases()) do
-    shell.clearAlias(k)
-  end
-  for k,v in pairs(config.aliases) do
-    shell.setAlias(k, v)
-  end
-end
 
 local _colors = config.standard
 if parentTerm.isColor() then
