@@ -6,10 +6,9 @@ local History = require('history')
 local UI      = require('ui')
 local Util    = require('util')
 
-local sandboxEnv = Util.shallowCopy(getfenv(1))
-setmetatable(sandboxEnv, { __index = _G })
+local sandboxEnv = setmetatable(Util.shallowCopy(getfenv(1)), { __index = _G })
 sandboxEnv.exit = function() Event.exitPullEvents() end
-injector(sandboxEnv)
+requireInjector(sandboxEnv)
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
 UI:configure('Lua', ...)
