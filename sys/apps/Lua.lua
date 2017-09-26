@@ -1,5 +1,5 @@
-local injector = requireInjector or load(http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
-injector(getfenv(1))
+requireInjector = requireInjector or load(http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
+requireInjector(getfenv(1))
 
 local Event   = require('event')
 local History = require('history')
