@@ -228,17 +228,43 @@
   [ "53a5d150062b1e03206b9e15854b81060e3c7552" ] = {
     title = "Minesweeper",
     category = "Games",
+    icon = "\030f\031f \03131\0308\031f  \030f\031d2\
+\030f\031f \031d2\03131\0308\031f \030f\03131\
+\030f\03131\0308\031f  \030f\03131\031e3",
     run = "http://pastebin.com/raw/nsKrHTbN",
   },
   [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
     title = "Micropaint",
     category = "Apps",
+  icon = "\030 \031f   \030f   \
+\030 \031f^ \0300   \030f \
+\030 \031fv \0300   \030  ",
     run = "http://pastebin.com/raw/tMRzJXx2",
     requires = "advancedComputer",
   },
   [ "d78f28759f255a0db76604ee560b87c4715a0da5" ] = {
     title = "Sketch",
     category = "Apps",
+    icon = " \031bskch\
+\0303\031f  \030d  \
+\030d\031f   ",
     run = "http://pastebin.com/raw/Mm5hd97E",
+  },
+  [ "58ec8d6e36e346d9f42eb43935652e3e58e2c829" ] = {
+    category = "Apps",
+    icon = "\030f\031f      \0304 \
+\030f\031dshell]\0304\0314 \
+\0304\031f       ",
+    title = "Mwm",
+    run = "wmw.lua usr/config/mwm",
+  },
+  [ "8d1b0a73bedc0dc492377c2f6ab880940b97ec6e" ] = {
+    icon = "\030 \031f \0305 \030    \030d \030  \
+\0305\031f \030d  \030  \030d \0305 \030d \
+\030 \031f \030c \030  \0304 \030  \030c \030  ",
+    category = "Apps",
+    title = "Treefarm",
+    run = "treefarm.lua",
+    requires = "turtle",
   },
 }

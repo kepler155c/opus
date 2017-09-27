@@ -82,16 +82,6 @@ function Util.getVersion()
   return version or 1.7
 end
 
-function Util.runFunction(env, fn, ...)
-  setfenv(fn, env)
-  setmetatable(env, { __index = _G })
-
-  local args = { ... }
-  return pcall(function()
-    return fn(table.unpack(args))
-  end)
-end
-
 -- http://lua-users.org/wiki/SimpleRound
 function Util.round(num, idp)
   local mult = 10^(idp or 0)
@@ -360,7 +350,7 @@ function Util.loadTable(fname)
   return s, m
 end
 
---[[ URL functions ]] --
+--[[ loading and running functions ]] --
 function Util.download(url, filename)
   local h = http.get(url)
   if not h then
@@ -408,6 +398,14 @@ function Util.run(env, path, ...)
     return pcall(function() return fn(table.unpack(args)) end)
   end
   return fn, m
+end
+
+function Util.runFunction(env, fn, ...)
+  setfenv(fn, env)
+  setmetatable(env, { __index = _G })
+
+  local args = { ... }
+  return pcall(function() return fn(table.unpack(args)) end)
 end
 
 --[[ String functions ]] --

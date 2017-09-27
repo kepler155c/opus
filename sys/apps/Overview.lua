@@ -1,14 +1,14 @@
 requireInjector(getfenv(1))
 
-local class = require('class')
+local class  = require('class')
 local Config = require('config')
-local Event = require('event')
+local Event  = require('event')
 local FileUI = require('ui.fileui')
-local NFT = require('nft')
-local SHA1 = require('sha1')
-local Tween = require('ui.tween')
-local UI = require('ui')
-local Util = require('util')
+local NFT    = require('nft')
+local SHA1   = require('sha1')
+local Tween  = require('ui.tween')
+local UI     = require('ui')
+local Util   = require('util')
 
 local REGISTRY_DIR = 'usr/.registry'
 local TEMPLATE = [[
@@ -71,16 +71,15 @@ local function loadApplications()
       end
     end
 
-    return Util.startsWidth(a.run, 'http') or shell.resolveProgram(a.run)
+    return true -- Util.startsWidth(a.run, 'http') or shell.resolveProgram(a.run)
   end)
 end
 
 loadApplications()
 
-local defaultIcon = NFT.parse([[
-8071180
-8007180
-7180071]])
+local defaultIcon = NFT.parse("\03180\031711\03180\
+\031800\03171\03180\
+\03171\031800\03171")
 
 local sx, sy = term.current().getSize()
 local maxRecent = math.ceil(sx * sy / 62)
@@ -123,12 +122,34 @@ local function parseIcon(iconText)
   return s, m
 end
 
+UI.VerticalTabBar = class(UI.TabBar)
+function UI.VerticalTabBar:init(args)
+  UI.TabBar.init(self, args)
+  self.x = 1
+  self.width = 8
+  self.rey = -1
+  for k,c in pairs(self.children) do
+    c.x = 1
+    c.y = k + 1
+    c.width = 8
+  end
+end
+
+local cx = 9
+local cy = 1
+if sx < 30 then
+  UI.VerticalTabBar = UI.TabBar
+  cx = 1
+  cy = 2
+end
+
 local page = UI.Page {
-  tabBar = UI.TabBar {
+  tabBar = UI.VerticalTabBar {
     buttons = buttons,
   },
   container = UI.ViewportWindow {
-    y = 2,
+    x = cx,
+    y = cy,
   },
   notification = UI.Notification(),
   accelerators = {
@@ -249,13 +270,13 @@ function page.container:setCategory(categoryName)
 
   -- reposition all children
   for k,child in ipairs(self.children) do
-    child.x = -10
+    child.x = self.width
     child.y = math.floor(self.height)
     child.tween = Tween.new(6, child, { x = col, y = row }, 'outSine')
 
     if k < count then
       col = col + child.width
-      if col + self.children[k + 1].width + gutter - 2 > UI.term.width then
+      if col + self.children[k + 1].width + gutter - 2 > self.width then
         col = gutter
         row = row + 5
       end

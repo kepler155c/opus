@@ -63,6 +63,8 @@ local function runUrl(file, ...)
   error('Failed to download ' .. url)
 end
 
+_G.debug = function() end
+
 -- Install require shim
 if fs.exists('sys/apis/injector.lua') then
   _G.requireInjector = run('sys/apis/injector.lua')

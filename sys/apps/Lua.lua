@@ -269,12 +269,18 @@ function page.grid:eventHandler(event)
 end
 
 function page:rawExecute(s)
-
-  local fn, m = loadstring("return (" .. s .. ')', 'lua')
-  if not fn then
-    fn, m = loadstring(s, 'lua')
+  local fn, m = loadstring('return (' .. s .. ')', 'lua')
+  if fn then
+    setfenv(fn, sandboxEnv)
+    m = { pcall(fn) }
+    fn = table.remove(m, 1)
+    if #m == 1 then
+      m = m[1]
+    end
+    return fn, m
   end
 
+  fn, m = loadstring(s, 'lua')
   if fn then
     setfenv(fn, sandboxEnv)
     fn, m = pcall(fn)
@@ -290,8 +296,6 @@ function page:executeStatement(statement)
   local s, m = self:rawExecute(command)
 
   if s and m then
-    self:setResult(m)
-  elseif s and type(m) == 'boolean' then
     self:setResult(m)
   else
     self.grid:setValues({ })

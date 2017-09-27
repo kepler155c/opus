@@ -1,7 +1,7 @@
 local parentShell = shell
 
-local shell = { }
-local multishell = multishell or { }
+shell = { }
+multishell = multishell or { }
 
 local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(getfenv(1)) do
@@ -231,13 +231,31 @@ end
 
 local tArgs = { ... }
 if #tArgs > 0 then
-  -- "shell x y z"
-  -- Run the program specified in this new shell
-  local s, m = shell.run( ... )
-  if not s and m and m ~= 'Terminated' then
-    error(m)
+
+  local path, args = parseCommandLine(...)
+
+  if not path then
+    error('No such program')
   end
-  return s, m
+
+  local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
+  if not isUrl then
+    path = shell.resolveProgram(path)
+  end
+
+  local fn, err
+
+  if isUrl then
+    fn, err = Util.loadUrl(path, getfenv(1))
+  else
+    fn, err = loadfile(path, getfenv(1))
+  end
+
+  if not fn then
+    error(err)
+  end
+  tProgramStack[#tProgramStack + 1] = path
+  return fn(table.unpack(args))
 end
 
 local Config  = require('config')

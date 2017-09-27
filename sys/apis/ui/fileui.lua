@@ -68,7 +68,7 @@ return function(args)
   end
 
   function selectFile.grid:draw()
-    local files = fs.list(self.dir, true)
+    local files = fs.listEx(self.dir)
     if #self.dir > 0 then
       table.insert(files, {
         name = '..',
