@@ -10,13 +10,9 @@ local function netUp()
   requireInjector(getfenv(1))
   local Event = require('event')
 
-  local files = fs.list('/sys/network')
-
-  for _,file in pairs(files) do
-    local fn, msg = loadfile('/sys/network/' .. file, getfenv(1))
-    if fn then
-      fn()
-    else
+  for _,file in pairs(fs.list('sys/network')) do
+    local fn, msg = Util.run(getfenv(1), 'sys/network/' .. file)
+    if not fn then
       printError(msg)
     end
   end

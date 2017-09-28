@@ -254,6 +254,7 @@ function page.container:setCategory(categoryName)
         y = 4,
         text = title,
         backgroundColor = self.backgroundColor,
+        --backgroundFocusColor = colors.gray,
         width = #title + 2,
         event = 'button',
         app = program,
@@ -414,7 +415,7 @@ function page:eventHandler(event)
   return true
 end
 
-local formWidth = math.max(UI.term.width - 14, 26)
+local formWidth = math.max(UI.term.width - 8, 26)
 
 local editor = UI.Dialog {
   height = 11,

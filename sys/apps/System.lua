@@ -15,10 +15,7 @@ local env = {
 }
 Config.load('shell', env)
 
-UI.TextEntry.defaults.backgroundFocusColor = colors.black
-
 local systemPage = UI.Page {
-  backgroundColor = colors.cyan,
   tabs = UI.Tabs {
     pathTab = UI.Window {
       tabTitle = 'Path',
@@ -80,7 +77,6 @@ local systemPage = UI.Page {
         x = 9, y = 2, rex = -4,
         limit = 32,
         value = os.getComputerLabel(),
-        backgroundFocusColor = colors.black,
         accelerators = {
           enter = 'update_label',
         },
@@ -97,7 +93,6 @@ local systemPage = UI.Page {
           { name = 'Day',         value = tostring(os.day())                 },
         },
         selectable = false,
-        --backgroundColor = colors.blue,
         columns = {
           { key = 'name',  width = 12                 },
           { key = 'value', width = UI.term.width - 15 },

@@ -114,7 +114,7 @@ local function draw()
     parentTerm.setTextColor(_colors.focusTextColor)
     parentTerm.setBackgroundColor(_colors.backgroundColor)
     parentTerm.setCursorPos( w, 1 )
-    parentTerm.write('*')
+    parentTerm.write('\215')
   end
 
   if currentTab then

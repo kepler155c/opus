@@ -24,7 +24,6 @@ return function(args)
 --    rey = args.rey or -3,
     height = args.height,
     width = args.width,
-    backgroundColor = colors.brown,
     title = 'Select file',
     grid = UI.ScrollingGrid {
       x  =  2,

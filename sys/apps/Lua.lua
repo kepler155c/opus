@@ -27,7 +27,6 @@ local page = UI.Page({
   prompt = UI.TextEntry({
     y = 2,
     shadowText = 'enter command',
-    backgroundFocusColor = colors.black,
     limit = 256,
     accelerators = {
       enter               = 'command_enter',

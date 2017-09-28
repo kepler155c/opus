@@ -12,4 +12,8 @@
     focusIndicator = '\183',
     inverseSortIndicator = '\24',
   },
+  TitleBar = {
+    frameChar = '\140',
+    closeInd = '\215',
+  },
 }

@@ -1366,6 +1366,37 @@ function UI.StringBuffer:clear()
   self.buffer = { }
 end
 
+-- alternate - better ?
+local SB = { }
+function SB:new(width)
+  return setmetatable({
+    width = width,
+    buf = string.rep(' ', width)
+  }, { __index = SB })
+end
+function SB:insert(x, str, width)
+  if x < 1 then
+    x = self.width + x + 1
+  end
+  width = width or #str
+  if x + width - 1 > self.width then
+    width = self.width - x
+  end
+  if width > 0 then
+    self.buf = self.buf:sub(1, x - 1) .. str:sub(1, width) .. self.buf:sub(x + width)
+  end
+end
+function SB:fill(x, ch, width)
+  width = width or self.width - x + 1
+  self:insert(x, string.rep(ch, width))
+end
+function SB:center(str)
+  self:insert(math.max(1, math.ceil((self.width - #str + 1) / 2)), str)
+end
+function SB:get()
+  return self.buf
+end
+
 --[[-- Page (focus manager) --]]--
 UI.Page = class(UI.Window)
 UI.Page.defaults = {
@@ -1377,7 +1408,7 @@ UI.Page.defaults = {
     shiftTab = 'focus_prev',
     up = 'focus_prev',
   },
-  backgroundColor = colors.black,
+  backgroundColor = colors.cyan,
   textColor = colors.white,
 }
 function UI.Page:init(args)
@@ -2123,8 +2154,11 @@ UI.TitleBar = class(UI.Window)
 UI.TitleBar.defaults = {
   UIElement = 'TitleBar',
   height = 1,
-  backgroundColor = colors.brown,
-  title = ''
+  textColor = colors.lightGray,
+  backgroundColor = colors.gray,
+  title = '',
+  frameChar = '-',
+  closeInd = '*',
 }
 function UI.TitleBar:init(args)
   local defaults = UI:getDefaults(UI.TitleBar, args)
@@ -2132,13 +2166,13 @@ function UI.TitleBar:init(args)
 end
 
 function UI.TitleBar:draw()
-  self:clear()
-  local centered = math.ceil((self.width - #self.title) / 2)
-  self:write(1 + centered, 1, self.title, self.backgroundColor)
+  local sb = SB:new(self.width)
+  sb:fill(2, self.frameChar, sb.width - 3)
+  sb:center(string.format(' %s ', self.title))
   if self.previousPage or self.event then
-    self:write(self.width, 1, '*', self.backgroundColor, colors.black)
+    sb:insert(-1, self.closeInd)
   end
-  --self:write(self.width-1, 1, '?', self.backgroundColor)
+  self:write(1, 1, sb:get())
 end
 
 function UI.TitleBar:eventHandler(event)
@@ -2186,6 +2220,7 @@ function UI.MenuBar:init(args)
         x = x,
         width = #button.text + self.spacing,
         backgroundColor = self.backgroundColor,
+        backgroundFocusColor = colors.gray,
         textColor = self.textColor,
         centered = false,
       }
@@ -2712,7 +2747,8 @@ end
 UI.StatusBar = class(UI.GridLayout)
 UI.StatusBar.defaults = {
   UIElement = 'StatusBar',
-  backgroundColor = colors.gray,
+  backgroundColor = colors.lightGray,
+  textColor = colors.gray,
   columns = {
     { '', 'status', 10 },
   },
@@ -2848,7 +2884,7 @@ UI.Button.defaults = {
   UIElement = 'Button',
   text = 'button',
   backgroundColor = colors.gray,
-  backgroundFocusColor = colors.green,
+  backgroundFocusColor = colors.lightGray,
   textFocusColor = colors.black,
   centered = true,
   height = 1,
@@ -2912,8 +2948,9 @@ UI.TextEntry.defaults = {
   value = '',
   shadowText = '',
   focused = false,
-  backgroundColor = colors.lightGray,
-  backgroundFocusColor = colors.lightGray,
+  textColor = colors.white,
+  backgroundColor = colors.black, -- colors.lightGray,
+  backgroundFocusColor = colors.black, --lightGray,
   height = 1,
   limit = 6,
   pos = 0,
@@ -3093,8 +3130,8 @@ UI.Chooser.defaults = {
   UIElement = 'Chooser',
   choices = { },
   nochoice = 'Select',
-  backgroundColor = colors.lightGray,
-  backgroundFocusColor = colors.green,
+  --backgroundColor = colors.lightGray,
+  backgroundFocusColor = colors.lightGray,
   height = 1,
 }
 function UI.Chooser:init(args)
@@ -3320,6 +3357,7 @@ UI.Dialog.defaults = {
   y = 4,
   z = 2,
   height = 7,
+  textColor = colors.black,
   backgroundColor = colors.white,
 }
 function UI.Dialog:init(args)
