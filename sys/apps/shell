@@ -241,6 +241,9 @@ if #tArgs > 0 then
   local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
   if not isUrl then
     path = shell.resolveProgram(path)
+    if not path then
+      error('No such program')
+    end
   end
 
   local fn, err

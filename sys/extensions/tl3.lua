@@ -233,9 +233,9 @@ function turtle.dropDown(count, slot) return _drop(actions.down, count, slot)   
 
 function turtle.refuel(qtyOrName, qty)
   if not qtyOrName or type(qtyOrName) == 'number' then
-    return turtle.native.refuel(qtyOrName)
+    return turtle.native.refuel(qtyOrName or 64)
   end
-  return inventoryAction(turtle.native.refuel, qtyOrName, qty)
+  return inventoryAction(turtle.native.refuel, qtyOrName, qty or 64)
 end
 
 --[[

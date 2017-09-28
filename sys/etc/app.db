@@ -256,7 +256,7 @@
 \030f\031dshell]\0304\0314 \
 \0304\031f       ",
     title = "Mwm",
-    run = "wmw.lua usr/config/mwm",
+    run = "mwm.lua usr/config/mwm",
   },
   [ "8d1b0a73bedc0dc492377c2f6ab880940b97ec6e" ] = {
     icon = "\030 \031f \0305 \030    \030d \030  \
