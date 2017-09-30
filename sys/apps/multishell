@@ -34,6 +34,11 @@ local _tabId = 0
 local overviewTab
 local runningTab
 local tabsDirty = false
+local closeInd = '*'
+
+if Util.getVersion() >= 1.79 then
+  closeInd = '\215'
+end
 
 local config = {
   standard = {
@@ -114,7 +119,7 @@ local function draw()
     parentTerm.setTextColor(_colors.focusTextColor)
     parentTerm.setBackgroundColor(_colors.backgroundColor)
     parentTerm.setCursorPos( w, 1 )
-    parentTerm.write('\215')
+    parentTerm.write(closeInd)
   end
 
   if currentTab then

@@ -86,6 +86,7 @@ function Manager:init(args)
       -- kinda makes sense
       if self.currentPage.parent.device.side == side then
         self.currentPage.parent:resize()
+
         self.currentPage:resize()
         self.currentPage:draw()
         self.currentPage:sync()
@@ -556,32 +557,35 @@ function UI.Window:initChildren()
   end
 end
 
--- bad name... should be called something like postInit
--- normally used to determine sizes since the parent is
--- only known at this point
-function UI.Window:setParent()
-  self.oh, self.ow = self.height, self.width
-
-  if self.rx then
-    if self.rx > 0 then
-      self.x = self.rx
-    else
-      self.x = self.parent.width + self.rx
-    end
+local function setSize(self)
+  if self.x < 0 then
+    self.x = self.parent.width + self.x + 1
   end
-  if self.ry then
-    if self.ry > 0 then
-      self.y = self.ry
-    else
-      self.y = self.parent.height + self.ry
-    end
+  if self.y < 0 then
+    self.y = self.parent.height + self.y + 1
   end
 
-  if self.rex then
-    self.width = self.parent.width - self.x + self.rex + 2
+  if self.ex then
+    local ex = self.ex
+    if self.ex <= 1 then
+      ex = self.parent.width + self.ex + 1
+    end
+    if self.width then
+      self.x = ex - self.width + 1
+    else
+      self.width = ex - self.x + 1
+    end
   end
-  if self.rey then
-    self.height = self.parent.height - self.y + self.rey + 2
+  if self.ey then
+    local ey = self.ey
+    if self.ey <= 1 then
+      ey = self.parent.height + self.ey + 1
+    end
+    if self.height then
+      self.y = ey - self.height + 1
+    else
+      self.height = ey - self.y + 1
+    end
   end
 
   if not self.width then
@@ -590,6 +594,16 @@ function UI.Window:setParent()
   if not self.height then
     self.height = self.parent.height - self.y + 1
   end
+end
+
+-- bad name... should be called something like postInit
+-- normally used to determine sizes since the parent is
+-- only known at this point
+function UI.Window:setParent()
+  self.oh, self.ow = self.height, self.width
+  self.ox, self.oy = self.x, self.y
+
+  setSize(self)
 
   self:initChildren()
 end
@@ -632,32 +646,12 @@ end
 
 function UI.Window:resize()
 
-  if self.rx then
-    if self.rx > 0 then
-      self.x = self.rx
-    else
-      self.x = self.parent.width + self.rx
-    end
-  end
-  if self.ry then
-    if self.ry > 0 then
-      self.y = self.ry
-    else
-      self.y = self.parent.height + self.ry
-    end
-  end
+  self.height = self.oh
+  self.width = self.ow
+  self.x = self.ox
+  self.y = self.oy
 
-  if self.rex then
-    self.width = self.parent.width - self.x + self.rex + 2
-  elseif not self.ow and self.parent then
-    self.width = self.parent.width - self.x + 1
-  end
-
-  if self.rey then
-    self.height = self.parent.height - self.y + self.rey + 2
-  elseif not self.oh and self.parent then
-    self.height = self.parent.height - self.y + 1
-  end
+  setSize(self)
 
   if self.children then
     for _,child in ipairs(self.children) do
@@ -904,6 +898,28 @@ function Canvas:init(args)
   for i = 1, self.height do
     self.lines[i] = { }
   end
+end
+
+function Canvas:resize(w, h)
+  for i = self.height, h do
+    self.lines[i] = { }
+  end
+
+  while #self.lines > h do
+    table.remove(self.lines, #self.lines)
+  end
+
+  if w ~= self.width then
+    for i = 1, self.height do
+      self.lines[i] = { }
+    end
+  end
+
+  self.ex = self.x + w - 1
+  self.ey = self.y + h - 1
+
+  self.width = w
+  self.height = h
 end
 
 function Canvas:colorToPaintColor(c)
@@ -1226,8 +1242,10 @@ end
 
 function UI.Device:resize()
   self.width, self.height = self.device.getSize()
-  self.lines = { } -- TODO -- resize canvas
-  UI.Window.resize(self)
+  self.lines = { }
+  self.canvas:resize(self.width, self.height)
+  self.canvas:clear(self.backgroundColor, self.textColor)
+  --UI.Window.resize(self)
 end
 
 function UI.Device:setCursorPos(x, y)
@@ -1348,7 +1366,7 @@ function UI.StringBuffer:init(bufSize)
 end
 
 function UI.StringBuffer:insert(s, width)
-  local len = #tostring(s)
+  local len = #tostring(s or '')
   if len > width then
     s = s:sub(1, width)
   end
@@ -1557,9 +1575,10 @@ function UI.Grid:init(args)
   local defaults = UI:getDefaults(UI.Grid, args)
   UI.Window.init(self, defaults)
 
-  for _,h in pairs(self.columns) do
-    if not h.heading then
-      h.heading = ''
+  for _,c in pairs(self.columns) do
+    c.cw = c.width
+    if not c.heading then
+      c.heading = ''
     end
   end
 end
@@ -1585,41 +1604,77 @@ function UI.Grid:resize()
   else
     self.pageSize = self.height - 1
   end
+  self:adjustWidth()
 end
 
 function UI.Grid:adjustWidth()
-  if self.autospace then
-    for _,col in pairs(self.columns) do
-      col.width = #col.heading
+
+  local t = { }        -- cols without width
+  local w = self.width - #self.columns - 1 -- width remaing
+
+  for _,c in pairs(self.columns) do
+    if c.width then
+      c.cw = c.width
+      w = w - c.cw
+    else
+      table.insert(t, c)
+    end
+  end
+
+  if #t == 0 then
+    return
+  end
+
+  if #t == 1 then
+    t[1].cw = #(t[1].heading or '')
+    t[1].cw = math.max(t[1].cw, w)
+    return
+  end
+
+  if not self.autospace then
+    for k,c in ipairs(t) do
+      c.cw = math.floor(w / (#t - k + 1))
+      w = w - c.cw
     end
 
-    for _,col in pairs(self.columns) do
-      for key,row in pairs(self.values) do
-        row = self:getDisplayValues(row, key)
+  else
+    for k,c in ipairs(t) do
+      c.cw = #(t[1].heading or '')
+      w = w - c.cw
+    end
+    -- adjust the size to the length of the value
+    for key,row in pairs(self.values) do
+      row = self:getDisplayValues(row, key)
+      for _,col in pairs(t) do
         local value = row[col.key]
         if value then
           value = tostring(value)
-          if #value > col.width then
-            col.width = #value
+          if #value > col.cw then
+            w = w + col.cw
+            col.cw = math.min(#value, w)
+            w = w - col.cw
+            if w <= 0 then
+              break
+            end
           end
         end
       end
+      if w <= 0 then
+        break
+      end
     end
 
-    local colswidth = 1
-    for _,c in pairs(self.columns) do
-      colswidth = colswidth + c.width
+    -- last column does not get padding (right alignment)
+    if not self.columns[#self.columns].width then
+      Util.removeByValue(t, self.columns[#self.columns])
     end
 
-    local spacing = (self.width - 1 - colswidth) 
-    if spacing > 0 then
-      local left = self.width - 1
-      for k,c in pairs(self.columns) do
-        local totalSpacing = left - colswidth
-        local space = totalSpacing / (#self.columns - k + 1)
-        colswidth = colswidth - c.width
-        c.width = c.width + math.floor(space)
-        left = left - c.width
+    -- got some extra room - add some padding
+    if w > 0 then
+      for k,c in ipairs(t) do
+        local padding = math.floor(w / (#t - k + 1))
+        c.cw = c.cw + padding
+        w = w - padding
       end
     end
   end
@@ -1721,7 +1776,7 @@ function UI.Grid:drawHeadings()
         ind = self.sortIndicator
       end
     end
-    sb:insert(ind .. col.heading, col.width + 1)
+    sb:insert(ind .. col.heading, col.cw + 1)
   end
   self:write(1, 1, sb:get(), self.headerBackgroundColor, self.headerTextColor)
 end
@@ -1760,7 +1815,7 @@ function UI.Grid:drawRows()
     end
 
     for _,col in pairs(self.columns) do
-      sb:insert(ind .. safeValue(row[col.key] or ''), col.width + 1)
+      sb:insert(ind .. safeValue(row[col.key] or ''), col.cw + 1)
       ind = ' '
     end
 
@@ -1853,7 +1908,7 @@ function UI.Grid:eventHandler(event)
       if event.y == 1 then
         local col = 2
         for _,c in ipairs(self.columns) do
-          if event.x < col + c.width then
+          if event.x < col + c.cw then
             if self.sortColumn == c.key then
               self:setInverseSort(not self.inverseSort)
             else
@@ -1863,7 +1918,7 @@ function UI.Grid:eventHandler(event)
             self:draw()
             break
           end
-          col = col + c.width + 1
+          col = col + c.cw + 1
         end
         return true
       end
@@ -2405,8 +2460,8 @@ function UI.Tabs:setParent()
 
   for _,child in pairs(self.children) do
     if child ~= self.tabBar then
-      child.y = 2
-      child.height = self.height - 1
+      child.oy = 2
+      --child.height = self.height - 1
       child:resize()
     end
   end
@@ -2641,152 +2696,66 @@ function UI.Throttle:update()
   end
 end
 
---[[-- GridLayout --]]--
-UI.GridLayout = class(UI.Window)
-UI.GridLayout.defaults = {
-  UIElement = 'GridLayout',
-  x = 1,
-  y = 1,
-  textColor = colors.white,
-  backgroundColor = colors.black,
-  values = { },
-  columns = { },
-}
-function UI.GridLayout:init(args)
-  local defaults = UI:getDefaults(UI.GridLayout, args)
-  UI.Window.init(self, defaults)
-end
-
-function UI.GridLayout:setParent()
-  UI.Window.setParent(self)
-  self:adjustWidth()
-end
-
-function UI.GridLayout:adjustWidth()
-  if not self.width then
-    self.width = self:calculateWidth()
-  end
-  if self.autospace then
-    local width
-    for _,col in pairs(self.columns) do
-      width = 1
-      for _,row in pairs(self.values) do
-        local value = row[col[2]]
-        if value then
-          value = tostring(value)
-          if #value > width then
-            width = #value
-          end
-        end
-      end
-      col[3] = width
-    end
-
-    local colswidth = 0
-    for _,c in pairs(self.columns) do
-      colswidth = colswidth + c[3] + 1
-    end
-
-    local spacing = (self.width - colswidth - 1) 
-    if spacing > 0 then
-      spacing = math.floor(spacing / (#self.columns - 1) )
-      for _,c in pairs(self.columns) do
-        c[3] = c[3] + spacing
-      end
-    end
-  end
-end
-
-function UI.GridLayout:calculateWidth()
-  -- gutters on each side
-  local width = 2
-  for _,col in pairs(self.columns) do
-    width = width + col[3] + 1
-  end
-  return width - 1
-end
-
-function UI.GridLayout:drawRow(row, y)
-  local sb = UI.StringBuffer(self.width)
-  for _,col in pairs(self.columns) do
-    local value = row[col[2]]
-    sb:insert(' ' .. (value or ''), col[3] + 1)
-  end
-
-  local selected = index == self.index and self.selectable
-  if selected then
-    self:setSelected(row)
-  end
-
-  self:write(1, y, sb:get())
-end
-
-function UI.GridLayout:draw()
-
-  local size = #self.values
-  local startRow = self:getStartRow()
-  local endRow = startRow + self.height - 1
-  if endRow > size then
-    endRow = size
-  end
-
-  for i = startRow, endRow do
-    self:drawRow(self.values[i], i)
-  end
-
-  if endRow - startRow < self.height - 1 then
-    self:clearArea(1, endRow, self.width, self.height - endRow)
-  end
-end
-
-function UI.GridLayout:getStartRow()
-  return 1
-end
-
 --[[-- StatusBar --]]--
-UI.StatusBar = class(UI.GridLayout)
+UI.StatusBar = class(UI.Window)
 UI.StatusBar.defaults = {
   UIElement = 'StatusBar',
   backgroundColor = colors.lightGray,
   textColor = colors.gray,
-  columns = {
-    { '', 'status', 10 },
-  },
-  values = { },
-  status = { status = '' },
+  height = 1,
+  ey = -1,
 }
 function UI.StatusBar:init(args)
   local defaults = UI:getDefaults(UI.StatusBar, args)
-  UI.GridLayout.init(self, defaults)
-  self:setStatus(self.status, true)
+  UI.Window.init(self, defaults)
+end
+
+function UI.StatusBar:adjustWidth()
+  -- Can only have 1 adjustable width
+  if self.columns then
+    local w = self.width - #self.columns - 1
+    for _,c in pairs(self.columns) do
+      if c.width then
+        c.cw = c.width  -- computed width
+        w = w - c.width
+      end
+    end
+    for _,c in pairs(self.columns) do
+      if not c.width then
+        c.cw = w
+      end
+    end
+  end
+end
+
+function UI.StatusBar:resize()
+  UI.Window.resize(self)
+  self:adjustWidth()
 end
 
 function UI.StatusBar:setParent()
-  UI.GridLayout.setParent(self)
-  self.y = self.height
-  self.height = 1
-  if #self.columns == 1 then
-    self.columns[1][3] = self.width
-  end
+  UI.Window.setParent(self)
+  self:adjustWidth()
 end
 
-function UI.StatusBar:setStatus(status, noDraw)
-  if type(status) == 'string' then
-    self.values[1] = { status = status }
-  else
-    self.values[1] = status
-  end
-  if not noDraw then
+function UI.StatusBar:setStatus(status)
+  if self.values ~= status then
+    self.values = status
     self:draw()
   end
 end
 
 function UI.StatusBar:setValue(name, value)
-  self.status[name] = value
+  if not self.values then
+    self.values = { }
+  end
+  self.values[name] = value
 end
 
 function UI.StatusBar:getValue(name)
-  return self.status[name]
+  if self.values then
+    return self.values[name]
+  end
 end
 
 function UI.StatusBar:timedStatus(status, timeout)
@@ -2801,19 +2770,33 @@ function UI.StatusBar:timedStatus(status, timeout)
 end
 
 function UI.StatusBar:getColumnWidth(name)
-  for _,v in pairs(self.columns) do
-    if v[2] == name then
-      return v[3]
+  for _,c in pairs(self.columns) do
+    if c.key == name then
+      return c.cw
     end
   end
 end
 
 function UI.StatusBar:setColumnWidth(name, width)
-  for _,v in pairs(self.columns) do
-    if v[2] == name then
-      v[3] = width
+  for _,c in pairs(self.columns) do
+    if c.key == name then
+      c.cw = width
       break
     end
+  end
+end
+
+function UI.StatusBar:draw()
+  if not self.values then
+    self:clear()
+  elseif type(self.values) == 'string' then
+    self:write(1, 1, Util.widthify(' ' .. self.values, self.width))
+  else
+    local s = ''
+    for _,c in ipairs(self.columns) do
+      s = s .. ' ' .. Util.widthify(tostring(self.values[c.key] or ''), c.cw)
+    end
+    self:write(1, 1, Util.widthify(s, self.width))
   end
 end
 
@@ -2902,7 +2885,7 @@ function UI.Button:init(args)
 end
 
 function UI.Button:setParent()
-  if not self.width then
+  if not self.width and not self.ex then
     self.width = #self.text + 2
   end
   UI.Window.setParent(self)
@@ -3140,7 +3123,7 @@ function UI.Chooser:init(args)
 end
 
 function UI.Chooser:setParent()
-  if not self.width then
+  if not self.width and not self.ex then
     self.width = 1
     for _,v in pairs(self.choices) do
       if #v.name > self.width then
@@ -3218,7 +3201,7 @@ function UI.Text:init(args)
 end
 
 function UI.Text:setParent()
-  if not self.width then
+  if not self.width and not self.ex then
     self.width = #tostring(self.value)
   end
   UI.Window.setParent(self)
@@ -3284,8 +3267,8 @@ function UI.Form:createForm()
       if child.formKey then
         child.x = self.labelWidth + self.margin - 1
         child.y = y
-        if not child.width and not child.rex then
-          child.rex = -self.margin
+        if not child.width and not child.ex then
+          child.ex = -self.margin
         end
         child.value = self.values[child.formKey] or ''
       end
@@ -3305,12 +3288,12 @@ function UI.Form:createForm()
   end
 
   table.insert(self.children, UI.Button {
-    ry = -self.margin + 1, rx = -12 - self.margin + 1,
+    y = -self.margin, x = -12 - self.margin,
     text = 'Ok',
     event = 'form_ok',
   })
   table.insert(self.children, UI.Button {
-    ry = -self.margin + 1, rx = -7 - self.margin + 1,
+    y = -self.margin, x = -7 - self.margin,
     text = 'Cancel',
     event = 'form_cancel',
   })

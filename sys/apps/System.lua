@@ -20,7 +20,7 @@ local systemPage = UI.Page {
     pathTab = UI.Window {
       tabTitle = 'Path',
       entry = UI.TextEntry {
-        x = 2, y = 2, rex = -2,
+        x = 2, y = 2, ex = -2,
         limit = 256,
         value = shell.path(),
         shadowText = 'enter system path',
@@ -40,12 +40,12 @@ local systemPage = UI.Page {
     aliasTab = UI.Window {
       tabTitle = 'Aliases',
       alias = UI.TextEntry {
-        x = 2, y = 2, rex = -2, 
+        x = 2, y = 2, ex = -2, 
         limit = 32,
         shadowText = 'Alias',
       },
       path = UI.TextEntry {
-        y = 3, x = 2, rex = -2,
+        y = 3, x = 2, ex = -2,
         limit = 256,
         shadowText = 'Program path',
         accelerators = {
@@ -74,7 +74,7 @@ local systemPage = UI.Page {
         value = 'Label'
       },
       label = UI.TextEntry {
-        x = 9, y = 2, rex = -4,
+        x = 9, y = 2, ex = -4,
         limit = 32,
         value = os.getComputerLabel(),
         accelerators = {

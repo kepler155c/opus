@@ -127,7 +127,8 @@ function UI.VerticalTabBar:init(args)
   UI.TabBar.init(self, args)
   self.x = 1
   self.width = 8
-  self.rey = -1
+  self.height = nil
+  self.ey = -1
   for k,c in pairs(self.children) do
     c.x = 1
     c.y = k + 1

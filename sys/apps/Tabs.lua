@@ -17,7 +17,7 @@ local page = UI.Page {
   grid = UI.ScrollingGrid {
     y = 2,
     columns = {
-      { heading = 'ID',     key = 'tabId'     },
+      { heading = 'ID',     key = 'tabId',    width = 4 },
       { heading = 'Title',  key = 'title'     },
       { heading = 'Status', key = 'status'    },
       { heading = 'Time',   key = 'timestamp' },

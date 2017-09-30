@@ -28,16 +28,16 @@ return function(args)
     grid = UI.ScrollingGrid {
       x  =  2,
       y  =  2,
-      rex = -2,
-      rey = -4,
+      ex = -2,
+      ey = -4,
       path = '',
       sortColumn = 'name',
       columns = columns,
     },
     path = UI.TextEntry {
       x  =  2,
-      ry = -1,
-      rex = -11,
+      y  = -2,
+      ex = -11,
       limit = 256,
       accelerators = {
         enter = 'path_enter',
@@ -45,8 +45,8 @@ return function(args)
     },
     cancel = UI.Button {
       text = 'Cancel',
-      rx = -8,
-      ry = -1,
+      x = -9,
+      y = -2,
       event = 'cancel',
     },
   }

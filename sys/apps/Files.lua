@@ -71,19 +71,17 @@ local Browser = UI.Page {
   },
   grid = UI.ScrollingGrid {
     columns = { 
-      { heading = 'Name', key = 'name',  width = UI.term.width-11 },
-      {                   key = 'flags', width = 2                },
-      { heading = 'Size', key = 'fsize', width = 6                },
-    },  
+      { heading = 'Name', key = 'name'             },
+      {                   key = 'flags', width = 2 },
+      { heading = 'Size', key = 'fsize', width = 6 },
+    },
     sortColumn = 'name',
-    y = 2,
-    height = UI.term.height-2,
+    y = 2, ey = -2,
   },
   statusBar = UI.StatusBar {
     columns = { 
-      { '',       'status',    UI.term.width - 8 },
-      --{ '',       'info',      10                 },
-      { 'Size: ', 'totalSize', 8                  },
+      { key = 'status'               },
+      { key = 'totalSize', width = 6 },
     },
   },
   accelerators = {
