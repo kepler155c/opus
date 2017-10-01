@@ -1,16 +1,15 @@
-local Util   = require('util')
-local UI     = require('ui')
+local UI   = require('ui')
+local Util = require('util')
 
 return function(args)
 
   local columns = {
-    { heading = 'Name', key = 'name', width = UI.term.width - 9 },
+    { heading = 'Name', key = 'name' },
   }
 
   if UI.term.width > 28 then
-    columns[1].width = UI.term.width - 16
     table.insert(columns,
-      { heading = 'Size', key = 'size', width = 6 }
+      { heading = 'Size', key = 'size', width = 5 }
     )
   end
 

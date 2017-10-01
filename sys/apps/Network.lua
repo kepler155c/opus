@@ -15,7 +15,7 @@ local gridColumns = {
 }
 
 if UI.term.width >= 30 then
-  table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel'   })
+  table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5 })
   table.insert(gridColumns, { heading = 'Uptime', key = 'uptime' })
 end
 

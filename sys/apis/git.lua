@@ -2,7 +2,7 @@ local json = require('json')
 local Util = require('util')
 
 local TREE_URL = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1'
-local FILE_URL = 'https://raw.github.com/%s/%s/%s/%s'
+local FILE_URL = 'https://raw.githubusercontent.com/%s/%s/%s/%s'
 
 local git = { }
 

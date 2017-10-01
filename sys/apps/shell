@@ -53,7 +53,7 @@ function shell.run(...)
   if path then
     tProgramStack[#tProgramStack + 1] = path
     local oldTitle
-    
+
     if multishell and multishell.getTitle then
       oldTitle = multishell.getTitle(multishell.getCurrent())
       multishell.setTitle(multishell.getCurrent(), fs.getName(path))
@@ -67,11 +67,9 @@ function shell.run(...)
     else
       result, err = Util.run(env, path, unpack(args))
     end
+    tProgramStack[#tProgramStack] = nil
+
     if multishell and multishell.getTitle then
-      local title = 'shell'
-      if #tProgramStack > 0 then
-        title = fs.getName(tProgramStack[#tProgramStack])
-      end
       multishell.setTitle(multishell.getCurrent(), oldTitle or 'shell')
     end
 
@@ -257,6 +255,7 @@ if #tArgs > 0 then
   if not fn then
     error(err)
   end
+
   tProgramStack[#tProgramStack + 1] = path
   return fn(table.unpack(args))
 end

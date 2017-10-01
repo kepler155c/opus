@@ -7,42 +7,39 @@ multishell.setTitle(multishell.getCurrent(), 'Help')
 UI:configure('Help', ...)
 
 local files = { }
-for _,f in pairs(fs.list('/rom/help')) do
+for _,f in pairs(help.topics()) do
   table.insert(files, { name = f })
 end
 
-local page = UI.Page({
-  labelText = UI.Text({
-    y = 2,
-    x = 3,
+local page = UI.Page {
+  labelText = UI.Text {
+    x = 3, y = 2,
     value = 'Search',
-  }),
-  filter = UI.TextEntry({
-    y = 2,
-    x = 10,
-    width = UI.term.width - 13,
+  },
+  filter = UI.TextEntry {
+    x = 10, y = 2, ex = -3,
     limit = 32,
-  }),
-  grid = UI.ScrollingGrid({
+  },
+  grid = UI.ScrollingGrid {
     y = 4,
-    height = UI.term.height - 4,
     values = files,
     columns = {
-      { heading = 'Name', key = 'name', width = 12 },
+      { heading = 'Name', key = 'name' },
     },
     sortColumn = 'name',
-  }),
-  statusBar = UI.StatusBar(),
-  accelerators = {
-    q = 'quit',
   },
-})
+  accelerators = {
+    q     = 'quit',
+    enter = 'grid_select',
+  },
+}
 
 local function showHelp(name)
   UI.term:reset()
   shell.run('help ' .. name)
   print('Press enter to return')
   repeat
+    os.pullEvent('key')
     local _, k = os.pullEvent('key_up')
   until k == keys.enter
 end
@@ -52,17 +49,12 @@ function page:eventHandler(event)
   if event.type == 'quit' then
     Event.exitPullEvents()
 
-  elseif event.type == 'key' and event.key == 'enter' then
+  elseif event.type == 'grid_select' then
     if self.grid:getSelected() then
       showHelp(self.grid:getSelected().name)
       self:setFocus(self.filter)
       self:draw()
     end
-
-  elseif event.type == 'grid_select' then
-    showHelp(event.selected.name)
-    self:setFocus(self.filter)
-    self:draw()
 
   elseif event.type == 'text_change' then
     local text = event.text

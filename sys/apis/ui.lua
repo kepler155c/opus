@@ -608,6 +608,19 @@ function UI.Window:setParent()
   self:initChildren()
 end
 
+function UI.Window:resize()
+  self.height, self.width = self.oh, self.ow
+  self.x, self.y = self.ox, self.oy
+
+  setSize(self)
+
+  if self.children then
+    for _,child in ipairs(self.children) do
+      child:resize()
+    end
+  end
+end
+
 function UI.Window:add(children)
   UI.setProperties(self, children)
   self:initChildren()
@@ -630,7 +643,7 @@ end
 function UI.Window:draw()
   self:clear(self.backgroundColor)
   if self.children then
-    for k,child in pairs(self.children) do
+    for _,child in pairs(self.children) do
       if child.enabled then
         child:draw()
       end
@@ -644,26 +657,10 @@ function UI.Window:sync()
   end
 end
 
-function UI.Window:resize()
-
-  self.height = self.oh
-  self.width = self.ow
-  self.x = self.ox
-  self.y = self.oy
-
-  setSize(self)
-
-  if self.children then
-    for _,child in ipairs(self.children) do
-      child:resize()
-    end
-  end
-end
-
 function UI.Window:enable()
   self.enabled = true
   if self.children then
-    for k,child in pairs(self.children) do
+    for _,child in pairs(self.children) do
       child:enable()
     end
   end
@@ -672,7 +669,7 @@ end
 function UI.Window:disable()
   self.enabled = false
   if self.children then
-    for k,child in pairs(self.children) do
+    for _,child in pairs(self.children) do
       child:disable()
     end
   end
@@ -1305,8 +1302,6 @@ function UI.Device:runTransitions(transitions, canvas)
   canvas:blitClipped(self.device) -- and blit the remainder
   canvas:reset()
 
-  local queue = { } -- don't miss events while transition is running
-                    -- especially timers
   while true do
     for _,k in ipairs(Util.keys(transitions)) do
       local transition = transitions[k]
@@ -1318,20 +1313,7 @@ function UI.Device:runTransitions(transitions, canvas)
       break
     end
     os.sleep(0)
---[[
-    local timerId = os.startTimer(0)
-    while true do
-      local e = { os.pullEvent() }
-      if e[1] == 'timer' and e[2] == timerId then
-        break
-      end
-      table.insert(queue, e)
-    end
---]]
   end
---  for _, e in ipairs(queue) do
---    Event.processEvent(e)
---  end
 end
 
 function UI.Device:sync()
@@ -1359,6 +1341,7 @@ function UI.Device:sync()
 end
 
 --[[-- StringBuffer --]]--
+-- justs optimizes string concatenations
 UI.StringBuffer = class()
 function UI.StringBuffer:init(bufSize)
   self.bufSize = bufSize
@@ -1384,7 +1367,7 @@ function UI.StringBuffer:clear()
   self.buffer = { }
 end
 
--- alternate - better ?
+-- For manipulating text in a fixed width string
 local SB = { }
 function SB:new(width)
   return setmetatable({
@@ -1476,7 +1459,6 @@ function UI.Page:focusPrevious()
   end
 
   local focused = getPreviousFocus(self.focused)
-
   if focused then
     self:setFocus(focused)
   end
@@ -1639,11 +1621,14 @@ function UI.Grid:adjustWidth()
 
   else
     for k,c in ipairs(t) do
-      c.cw = #(t[1].heading or '')
+      c.cw = #(c.heading or '')
       w = w - c.cw
     end
     -- adjust the size to the length of the value
     for key,row in pairs(self.values) do
+      if w <= 0 then
+        break
+      end
       row = self:getDisplayValues(row, key)
       for _,col in pairs(t) do
         local value = row[col.key]
@@ -1658,9 +1643,6 @@ function UI.Grid:adjustWidth()
             end
           end
         end
-      end
-      if w <= 0 then
-        break
       end
     end
 
@@ -2274,22 +2256,22 @@ function UI.MenuBar:init(args)
       local buttonProperties = {
         x = x,
         width = #button.text + self.spacing,
-        backgroundColor = self.backgroundColor,
-        backgroundFocusColor = colors.gray,
-        textColor = self.textColor,
+--        backgroundColor = self.backgroundColor,
+--        backgroundFocusColor = colors.gray,
+--        textColor = self.textColor,
         centered = false,
       }
       x = x + buttonProperties.width
       UI.setProperties(buttonProperties, button)
       if button.name then
-        self[button.name] = UI.Button(buttonProperties)
+        self[button.name] = UI.MenuItem(buttonProperties)
       else
-        table.insert(self.children, UI.Button(buttonProperties))
+        table.insert(self.children, UI.MenuItem(buttonProperties))
       end
     end
   end
   if self.showBackButton then
-    table.insert(self.children, UI.Button({
+    table.insert(self.children, UI.MenuItem({
       x = UI.term.width - 2,
       width = 3,
       backgroundColor = self.backgroundColor,
@@ -2324,7 +2306,7 @@ end
 UI.DropMenu = class(UI.MenuBar)
 UI.DropMenu.defaults = {
   UIElement = 'DropMenu',
-  backgroundColor = colors.white,
+  backgroundColor = colors.lightGray,
 }
 function UI.DropMenu:init(args)
   local defaults = UI:getDefaults(UI.DropMenu, args)
@@ -2332,7 +2314,6 @@ function UI.DropMenu:init(args)
 end
 
 function UI.DropMenu:setParent()
-
   UI.MenuBar.setParent(self)
 
   local maxWidth = 1
@@ -2868,7 +2849,8 @@ UI.Button.defaults = {
   text = 'button',
   backgroundColor = colors.gray,
   backgroundFocusColor = colors.lightGray,
-  textFocusColor = colors.black,
+  textFocusColor = colors.white,
+  textColor = colors.white,
   centered = true,
   height = 1,
   focusIndicator = '>',
@@ -2922,6 +2904,21 @@ function UI.Button:eventHandler(event)
     return true
   end
   return false
+end
+
+--[[-- MenuItem --]]--
+UI.MenuItem = class(UI.Button)
+UI.MenuItem.defaults = {
+  UIElement = 'MenuItem',
+  textColor = colors.black,
+  backgroundColor = colors.lightGray,
+  textFocusColor = colors.white,
+  backgroundFocusColor = colors.lightGray,
+}
+
+function UI.MenuItem:init(args)
+  local defaults = UI:getDefaults(UI.MenuItem, args)
+  UI.Button.init(self, defaults)
 end
 
 --[[-- TextEntry --]]--

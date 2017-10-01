@@ -231,7 +231,15 @@
     icon = "\030f\031f \03131\0308\031f  \030f\031d2\
 \030f\031f \031d2\03131\0308\031f \030f\03131\
 \030f\03131\0308\031f  \030f\03131\031e3",
-    run = "http://pastebin.com/raw/nsKrHTbN",
+    run = "https://pastebin.com/raw/nsKrHTbN",
+  },
+  [ "48d6857f6b2869d031f463b13aa34df47e18c548" ] = {
+    title = "Breakout",
+    category = "Games",
+    icon = "\0301\031f \0309 \030c \030b \030e \030c \0306 \
+\030 \031f       \
+\030 \031f   \0300   \0310 ",
+    run = "https://pastebin.com/raw/LTRYaSKt",
   },
   [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
     title = "Micropaint",

@@ -94,8 +94,8 @@ local systemPage = UI.Page {
         },
         selectable = false,
         columns = {
-          { key = 'name',  width = 12                 },
-          { key = 'value', width = UI.term.width - 15 },
+          { key = 'name',  width = 12 },
+          { key = 'value' },
         },
       },
     },
