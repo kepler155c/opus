@@ -143,7 +143,7 @@ function Browser.grid:eventHandler(event)
   if event.type == 'copy' then -- let copy be handled by parent
     return false
   end
-  return UI.Grid.eventHandler(self, event)
+  return UI.ScrollingGrid.eventHandler(self, event)
 end
 
 function Browser.statusBar:draw()

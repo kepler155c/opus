@@ -26,7 +26,6 @@ local function snmpConnection(socket)
       socket:write('pong')
 
     elseif msg.type == 'script' then
-
       local fn, msg = loadstring(msg.args, 'script')
       if fn then
         multishell.openTab({
@@ -36,6 +35,21 @@ local function snmpConnection(socket)
         })
       else
         printError(msg)
+      end
+
+    elseif msg.type == 'scriptEx' then
+      local s, m = pcall(function()
+        local env = setmetatable(Util.shallowCopy(getfenv(1)), { __index = _G })
+        local fn, m = load(msg.args, 'script', nil, env)
+        if not fn then
+          error(m)
+        end
+        return { fn() }
+      end)
+      if s then
+        socket:write(m)
+      else
+        socket:write({ s, m })
       end
 
     elseif msg.type == 'gps' then

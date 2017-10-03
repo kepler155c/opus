@@ -489,16 +489,17 @@ local function autocomplete(line, suggestions)
   end
 end
 
-local function shellRead(_tHistory )
+local function shellRead(history)
   term.setCursorBlink( true )
 
   local sLine = ""
-  local nHistoryPos
   local nPos = 0
   local lastPattern
 
   local w = term.getSize()
   local sx = term.getCursorPos()
+
+  history:reset()
 
   local function redraw( sReplace )
     local nScroll = 0
@@ -563,32 +564,19 @@ local function shellRead(_tHistory )
           redraw()
         end
       elseif param == keys.up or param == keys.down then
-        if _tHistory then
-          redraw(" ")
-          if param == keys.up then
-            if nHistoryPos == nil then
-              if #_tHistory > 0 then
-                nHistoryPos = #_tHistory
-              end
-            elseif nHistoryPos > 1 then
-              nHistoryPos = nHistoryPos - 1
-            end
-          else
-            if nHistoryPos == #_tHistory then
-              nHistoryPos = nil
-            elseif nHistoryPos ~= nil then
-              nHistoryPos = nHistoryPos + 1
-            end                        
-          end
-          if nHistoryPos then
-            sLine = _tHistory[nHistoryPos]
-            nPos = string.len( sLine ) 
-          else
-            sLine = ""
-            nPos = 0
-          end
-          redraw()
+        redraw(" ")
+        if param == keys.up then
+          sLine = history:back()
+        else
+          sLine = history:forward()
         end
+        if sLine then
+          nPos = string.len(sLine)
+        else
+          sLine = ""
+          nPos = 0
+        end
+        redraw()
       elseif param == keys.backspace then
         if nPos > 0 then
           redraw(" ")
@@ -637,13 +625,13 @@ while not bExit do
   write("$ " )
   term.setTextColour(_colors.commandTextColor)
   term.setBackgroundColor(colors.black)
-  local sLine = shellRead(history.entries)
+  local sLine = shellRead(history)
   if bExit then -- terminated
     break
   end
   sLine = Util.trim(sLine)
   if #sLine > 0 and sLine ~= 'exit' then
-    history.add(sLine)
+    history:add(sLine)
   end
   term.setTextColour(_colors.textColor)
   if #sLine > 0 then

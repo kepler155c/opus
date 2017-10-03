@@ -473,27 +473,25 @@ end
 -- word wrapping based on:
 -- https://www.rosettacode.org/wiki/Word_wrap#Lua and
 -- http://lua-users.org/wiki/StringRecipes
-local function splittokens(s)
-    local res = {}
-    for w in s:gmatch("%S+") do
-        res[#res+1] = w
-    end
-    return res
-end
- 
 local function paragraphwrap(text, linewidth, res)
   linewidth = linewidth or 75
   local spaceleft = linewidth
-  local line = {}
+  local line = { }
 
-  for _, word in ipairs(splittokens(text)) do
-    if #word + 1 > spaceleft then
+  for word in text:gmatch("%S+") do
+    local len = #word + 1
+
+    --if colorMode then
+    --  word:gsub('()@([@%d])', function(pos, c) len = len - 2 end)
+    --end
+
+    if len > spaceleft then
       table.insert(res, table.concat(line, ' '))
       line = { word }
-      spaceleft = linewidth - #word
+      spaceleft = linewidth - len - 1
     else
       table.insert(line, word)
-      spaceleft = spaceleft - (#word + 1)
+      spaceleft = spaceleft - len
     end
   end
 

@@ -1,47 +1,50 @@
 local Util = require('util')
 
-local History = { }
+local History    = { }
+local History_mt = { __index = History }
 
 function History.load(filename, limit)
 
-  local entries = Util.readLines(filename) or { }
-  local pos = #entries + 1
+  local self = setmetatable({
+    limit = limit,
+    filename = filename,
+  }, History_mt)
 
-  return {
-    entries = entries,
+  self.entries = Util.readLines(filename) or { }
+  self.pos = #self.entries + 1
 
-    add = function(line)
-      local last = entries[pos] or entries[pos - 1]
-      if not last or line ~= last then
-        table.insert(entries, line)
-        if limit then
-          while #entries > limit do
-            table.remove(entries, 1)
-          end
-        end
-        Util.writeLines(filename, entries)
-        pos = #entries + 1
+  return self
+end
+
+function History:add(line)
+  if line ~= self.entries[#self.entries] then
+    table.insert(self.entries, line)
+    if self.limit then
+      while #self.entries > self.limit do
+        table.remove(self.entries, 1)
       end
-    end,
+    end
+    Util.writeLines(self.filename, self.entries)
+    self.pos = #self.entries + 1
+  end
+end
 
-    setPosition = function(p)
-      pos = p
-    end,
+function History:reset()
+  self.pos = #self.entries + 1
+end
 
-    back = function()
-      if pos > 1 then
-        pos = pos - 1
-        return entries[pos]
-      end
-    end,
+function History:back()
+  if self.pos > 1 then
+    self.pos = self.pos - 1
+    return self.entries[self.pos]
+  end
+end
 
-    forward = function()
-      if pos <= #entries then
-        pos = pos + 1
-        return entries[pos]
-      end
-    end,
-  }
+function History:forward()
+  if self.pos <= #self.entries then
+    self.pos = self.pos + 1
+    return self.entries[self.pos]
+  end
 end
 
 return History

@@ -1,8 +1,9 @@
-local Util   = require('util')
+local Ansi   = require('ansi')
 local class  = require('class')
 local Event  = require('event')
-local Tween  = require('ui.tween')
 local Region = require('ui.region')
+local Tween  = require('ui.tween')
+local Util   = require('util')
 
 local mapColorToGray = {
   [ colors.white     ] = colors.white,
@@ -725,15 +726,6 @@ function UI.Window:centeredWrite(y, text, bg, fg)
   end
 end
 
--- deprecated - use print instead
-function UI.Window:wrappedWrite(x, y, text, len, bg, fg)
-  for _,v in pairs(Util.wordWrap(text, len)) do
-    self:write(x, y, v, bg, fg)
-    y = y + 1
-  end
-  return y
-end
-
 function UI.Window:print(text, bg, fg, indent)
   indent = indent or 1
 
@@ -752,40 +744,73 @@ function UI.Window:print(text, bg, fg, indent)
     end
   end
 
-  --[[
-  TODO
-  local test = "\027[0;1;33mYou tell foo, \"// Test string.\"\027[0;37mbar"
-  for sequence, text in string.gmatch (test, "\027%[([0-9;]+)m([^\027]+)") do
-    for ansi in string.gmatch (sequence, "%d+") do
-      print ("ANSI code: ", ansi)
-    end -- for
-    print ("Text: ", text)
+  local function pieces(f, bg, fg)
+    local pos = 1
+    local t = { }
+    while true do
+      local s = f:find('\027', pos)
+      if not s then
+        break
+      end
+      if pos < s then
+        table.insert(t, f:sub(pos, s - 1))
+      end
+      local seq = f:sub(s)
+      seq = seq:match("\027%[([%d;]+)m")
+      local e = { }
+      for color in string.gmatch(seq, "%d+") do
+        color = tonumber(color)
+        if color == 0 then
+          e.fg = fg
+          e.bg = bg
+        elseif color > 20 then
+          e.bg = 2 ^ (color - 21)
+        else
+          e.fg = 2 ^ (color - 1)
+        end
+      end
+      table.insert(t, e)
+      pos = s + #seq + 3
+    end
+    if pos < #f then
+      table.insert(t, f:sub(pos))
+    end
+    return t
   end
-  --]]
 
   local lines = Util.split(text)
   for k,line in pairs(lines) do
-    local lx = 1
-    while true do
-      local word = nextWord(line, lx)
-      if not word then
-        if lines[k + 1] then
-          self.cursorX = indent
-          self.cursorY = self.cursorY + 1
+    local fragments = pieces(line, bg, fg)
+    for l, fragment in ipairs(fragments) do
+      local lx = 1
+      if type(fragment) == 'table' then -- ansi sequence
+        fg = fragment.fg
+        bg = fragment.bg
+      else
+        while true do
+          local word = nextWord(fragment, lx)
+          if not word then
+            break
+          end
+          local w = word
+          if self.cursorX + #word > self.width then
+            self.cursorX = indent
+            self.cursorY = self.cursorY + 1
+            w = word:gsub(' ', '')
+          end
+          self:write(self.cursorX, self.cursorY, w, bg, fg)
+          self.cursorX = self.cursorX + #word
+          lx = lx + #word
         end
-        break
       end
-      local w = word
-      if self.cursorX + #word > self.width then
-        self.cursorX = indent
-        self.cursorY = self.cursorY + 1
-        w = word:gsub(' ', '')
-      end
-      self:write(self.cursorX, self.cursorY, w, bg, fg)
-      self.cursorX = self.cursorX + #word
-      lx = lx + #word
+    end
+    if lines[k + 1] then
+      self.cursorX = indent
+      self.cursorY = self.cursorY + 1
     end
   end
+
+  return self.cursorX, self.cursorY
 end
 
 function UI.Window:setFocus(focus)
@@ -852,22 +877,24 @@ function UI.Window:scrollIntoView()
   end
 end
 
-function UI.Window:addTransition(effect, x, y, width, height)
+function UI.Window:addTransition(effect, args)
   if self.parent then
-    x = x or 1
-    y = y or 1
-    width = width or self.width
-    height = height or self.height
-    self.parent:addTransition(effect, x + self.x - 1, y + self.y - 1, width, height)
+    args = args or { }
+    if not args.x then -- not good
+      args.x, args.y = getPosition(self)
+      args.width = self.width
+      args.height = self.height
+    end
+
+    args.canvas = args.canvas or self.canvas
+    self.parent:addTransition(effect, args)
   end
 end
 
 function UI.Window:emit(event)
   local parent = self
-  --debug(self.UIElement .. ' emitting ' .. event.type)
   while parent do
     if parent.eventHandler then
-      --debug('calling ' .. parent.UIElement)
       if parent:eventHandler(event) then
         return true
       end
@@ -1089,13 +1116,16 @@ function Canvas:blit(device, src, tgt)
 
   for i = 0, src.ey - src.y do
     local line = self.lines[src.y + i]
-    if line.dirty then
+    if line and line.dirty then
       local t, fg, bg = line.text, line.fg, line.bg
       if src.x > 1 or src.ex < self.ex then
         t  = t:sub(src.x, src.ex)
         fg = fg:sub(src.x, src.ex)
         bg = bg:sub(src.x, src.ex)
       end
+      --if tgt.y + i > self.ey then -- wrong place to do clipping ??
+      --  break
+      --end
       device.setCursorPos(tgt.x, tgt.y + i)
       device.blit(t, fg, bg)
     end
@@ -1106,7 +1136,7 @@ end
 UI.TransitionSlideLeft = class()
 UI.TransitionSlideLeft.defaults = {
   UIElement = 'TransitionSlideLeft',
-  ticks = 4,
+  ticks = 6,
   easing = 'outQuint',
 }
 function UI.TransitionSlideLeft:init(args)
@@ -1146,7 +1176,7 @@ end
 UI.TransitionSlideRight = class()
 UI.TransitionSlideRight.defaults = {
   UIElement = 'TransitionSlideRight',
-  ticks = 4,
+  ticks = 6,
   easing = 'outQuint',
 }
 function UI.TransitionSlideRight:init(args)
@@ -1199,6 +1229,31 @@ function UI.TransitionExpandUp:update(device)
   self.tween:update(1)
   self.canvas:blit(device, nil, { x = self.x, y = math.floor(self.pos.y) })
   return self.pos.y ~= self.y
+end
+
+--[[-- TransitionGrow --]]--
+UI.TransitionGrow = class()
+UI.TransitionGrow.defaults = {
+  UIElement = 'TransitionGrow',
+  ticks = 3,
+  easing = 'linear',
+}
+function UI.TransitionGrow:init(args)
+  local defaults = UI:getDefaults(UI.TransitionGrow, args)
+  UI.setProperties(self, defaults)
+  self.tween = Tween.new(self.ticks,
+    { x = self.width / 2 - 1, y = self.height / 2 - 1, w = 1, h = 1 },
+    { x = 1, y = 1, w = self.width, h = self.height }, self.easing)
+end
+
+function UI.TransitionGrow:update(device)
+  local finished = self.tween:update(1)
+  local subj = self.tween.subject
+  local rect = { x = math.floor(subj.x), y = math.floor(subj.y) }
+  rect.ex = math.floor(rect.x + subj.w - 1)
+  rect.ey = math.floor(rect.y + subj.h - 1)
+  self.canvas:blit(device, rect, { x = self.x + rect.x - 1, y = self.y + rect.y - 1})
+  return not finished
 end
 
 --[[-- Terminal for computer / advanced computer / monitor --]]--
@@ -1271,26 +1326,33 @@ function UI.Device:reset()
   self.device.setCursorPos(1, 1)
 end
 
-function UI.Device:addTransition(effect, x, y, width, height)
+-- refactor into canvas...
+function UI.Device:addTransition(effect, args)
   if not self.transitions then
     self.transitions = { }
   end
 
+  args = args or { }
+  args.ex = args.x + args.width - 1
+  args.ey = args.y + args.height - 1
+  args.canvas = args.canvas or self.canvas
+
   if type(effect) == 'string' then
-    local c
-    if effect == 'slideLeft' then
-      c = UI.TransitionSlideLeft
-    else
-      c = UI.TransitionSlideRight
-    end
-    effect = c {
-      x = x,
-      y = y,
-      ex = x + width - 1,
-      ey = y + height - 1,
-      canvas = self.canvas,
+    local transitions = {
+      slideLeft  = UI.TransitionSlideLeft,
+      slideRight = UI.TransitionSlideRight,
+      expandUp   = UI.TransitionExpandUp,
+      grow       = UI.TransitionGrow,
     }
+    local c = transitions[effect]
+    if not c then
+      error('Invalid transition: ' .. effect)
+    end
+    effect = c(args)
+  else
+    Util.merge(effect, args)
   end
+
   table.insert(self.transitions, effect)
 end
 
@@ -1335,8 +1397,8 @@ function UI.Device:sync()
   end
 
   if self:getCursorBlink() then
-    self.device.setCursorBlink(true)
     self.device.setCursorPos(self.cursorX, self.cursorY)
+    self.device.setCursorBlink(true)
   end
 end
 
@@ -1954,10 +2016,10 @@ UI.ScrollingGrid.defaults = {
   sliderChar = '#',
   upArrowChar = '^',
   downArrowChar = 'v',
+  scrollbarColor = colors.lightGray,
 }
 function UI.ScrollingGrid:init(args)
-  local defaults = UI:getDefaults(UI.ScrollingGrid, args)
-  UI.Grid.init(self, defaults)
+  UI.Grid.init(self, UI:getDefaults(UI.ScrollingGrid, args))
 end
 
 function UI.ScrollingGrid:drawRows()
@@ -1968,44 +2030,36 @@ end
 function UI.ScrollingGrid:drawScrollbar()
   local ts = Util.size(self.values)
   if ts > self.pageSize then
-    local sbSize = self.pageSize - 2
-    local sa = ts
-    sa = self.pageSize / sa
-    sa = math.floor(sbSize * sa)
-    if sa < 1 then
-      sa = 1
+    local maxScroll = ts - self.pageSize
+    local percent = (self.scrollOffset - 1) / maxScroll
+    local sliderSize = self.pageSize / ts * (self.pageSize - 2)
+    local row = 2
+
+    if self.disableHeader then
+      row = 1
     end
-    if sa > sbSize then
-      sa = sbSize
-    end
-    local sp = ts-self.pageSize
-    sp = self.scrollOffset / sp
-    sp = math.floor(sp * (sbSize-sa + 0.5))
 
     local x = self.width
+    for i = 1, self.pageSize - 2 do
+      self:write(x, row + i, self.lineChar, nil, self.scrollbarColor)
+    end
+
+    local y = Util.round((self.pageSize - 2 - sliderSize) * percent)
+    for i = 1, Util.round(sliderSize) do
+      self:write(x, row + y + i, self.sliderChar, nil, self.scrollbarColor)
+    end
+
+    local color = self.scrollbarColor
     if self.scrollOffset > 1 then
-      self:write(x, 2, self.upArrowChar)
-    else
-      self:write(x, 2, ' ')
+      color = colors.white
     end
-    local row = 0
-    for i = 1, sp - 1 do
-      self:write(x, row+3, self.lineChar)
-      row = row + 1
-    end
-    for i = 1, sa do
-      self:write(x, row+3, self.sliderChar)
-      row = row + 1
-    end
-    for i = row, sbSize do
-      self:write(x, row+3, self.lineChar)
-      row = row + 1
-    end
+    self:write(x, 2, self.upArrowChar, nil, color)
+
+    color = self.scrollbarColor
     if self.scrollOffset + self.pageSize - 1 < Util.size(self.values) then
-      self:write(x, self.pageSize + 1, self.downArrowChar)
-    else
-      self:write(x, self.pageSize + 1, ' ')
+      color = colors.white
     end
+    self:write(x, self.pageSize + 1, self.downArrowChar, nil, color)
   end
 end
 
@@ -2033,6 +2087,31 @@ function UI.ScrollingGrid:setIndex(index)
     end
   end
   UI.Grid.setIndex(self, index)
+end
+
+function UI.ScrollingGrid:eventHandler(event)
+
+  if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
+    if event.x == self.width then
+      local ts = Util.size(self.values)
+      if ts > self.pageSize then
+        local row = 2
+        if self.disableHeader then
+          row = 1
+        end
+        if event.y == row then
+          self:setIndex(self.scrollOffset - 1)
+        elseif event.y == self.height then
+          self:setIndex(self.scrollOffset + self.pageSize)
+        else
+          -- ... percentage ...
+        end
+        return true
+      end
+    end
+  end
+
+  return UI.Grid.eventHandler(self, event)
 end
 
 --[[-- Menu --]]--
@@ -2591,14 +2670,7 @@ function UI.Notification:display(value, timeout)
 
   -- need to get the current canvas - not ui.term.canvas
   self.canvas = UI.term.canvas:addLayer(self, self.backgroundColor, self.textColor or colors.white)
-  self:addTransition(UI.TransitionExpandUp {
-    x = self.x,
-    y = self.y,
-    ex = self.x + self.width - 1,
-    ey = self.y + self.height - 1,
-    canvas = self.canvas,
-    ticks = self.height,
-  })
+  self:addTransition('expandUp', { ticks = self.height })
   self.canvas:setVisible(true)
   self:clear()
   for k,v in pairs(lines) do
@@ -3209,6 +3281,29 @@ function UI.Text:draw()
   self:write(1, 1, Util.widthify(value, self.width), self.backgroundColor)
 end
 
+--[[-- Text --]]--
+UI.TextArea = class(UI.Window)
+UI.TextArea.defaults = {
+  UIElement = 'TextArea',
+  value = '',
+}
+function UI.TextArea:init(args)
+  local defaults = UI:getDefaults(UI.TextArea, args)
+  UI.Window.init(self, defaults)
+end
+
+function UI.TextArea:setText(text)
+  self.value = text
+  self:draw()
+end
+
+function UI.TextArea:draw()
+  local value = self.value or ''
+  self:clear()
+  self:setCursorPos(1, 1)
+  self:print(self.value)
+end
+
 --[[-- Form --]]--
 UI.Form = class(UI.Window)
 UI.Form.defaults = {
@@ -3347,8 +3442,6 @@ function UI.Dialog:init(args)
     defaults.width = UI.term.width-11
   end
   defaults.titleBar = UI.TitleBar({ previousPage = true, title = defaults.title })
-
-  --UI.setProperties(defaults, args)
   UI.Page.init(self, defaults)
 end
 
@@ -3356,6 +3449,11 @@ function UI.Dialog:setParent()
   UI.Window.setParent(self)
   self.x = math.floor((self.parent.width - self.width) / 2) + 1
   self.y = math.floor((self.parent.height - self.height) / 2) + 1
+end
+
+function UI.Dialog:enable(...)
+  self:addTransition('grow')
+  UI.Page.enable(self, ...)
 end
 
 function UI.Dialog:eventHandler(event)

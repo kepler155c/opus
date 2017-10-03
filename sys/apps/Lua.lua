@@ -8,6 +8,7 @@ local Util    = require('util')
 
 local sandboxEnv = setmetatable(Util.shallowCopy(getfenv(1)), { __index = _G })
 sandboxEnv.exit = function() Event.exitPullEvents() end
+sandboxEnv._echo = function( ... ) return ... end
 requireInjector(sandboxEnv)
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
@@ -16,15 +17,15 @@ UI:configure('Lua', ...)
 local command = ''
 local history = History.load('usr/.lua_history', 25)
 
-local page = UI.Page({
-  menuBar = UI.MenuBar({
+local page = UI.Page {
+  menuBar = UI.MenuBar {
     buttons = {
       { text = 'Local',  event = 'local'  },
       { text = 'Global', event = 'global' },
       { text = 'Device', event = 'device', name = 'Device' },
     },
-  }),
-  prompt = UI.TextEntry({
+  },
+  prompt = UI.TextEntry {
     y = 2,
     shadowText = 'enter command',
     limit = 256,
@@ -35,8 +36,8 @@ local page = UI.Page({
       mouse_rightclick    = 'clear_prompt',
 --      [ 'control-space' ] = 'autocomplete',
     },
-  }),
-  grid = UI.ScrollingGrid({
+  },
+  grid = UI.ScrollingGrid {
     y = 3,
     columns = {
       { heading = 'Key',   key = 'name'  },
@@ -44,9 +45,9 @@ local page = UI.Page({
     },
     sortColumn = 'name',
     autospace = true,
-  }),
+  },
   notification = UI.Notification(),
-})
+}
 
 function page:setPrompt(value, focus)
   self.prompt:setValue(value)
@@ -138,23 +139,24 @@ function page:eventHandler(event)
     self:executeStatement('device')
 
   elseif event.type == 'history_back' then
-    local value = history.back()
+    local value = history:back()
     if value then
       self:setPrompt(value)
     end
 
   elseif event.type == 'history_forward' then
-    self:setPrompt(history.forward() or '')
+    self:setPrompt(history:forward() or '')
 
   elseif event.type == 'clear_prompt' then
     self:setPrompt('')
-    history.setPosition(#history.entries + 1)
+    history:reset()
 
   elseif event.type == 'command_enter' then
     local s = tostring(self.prompt.value)
 
     if #s > 0 then
-      history.add(s)
+      history:add(s)
+      history:back()
       self:executeStatement(s)
     else
       local t = { }
@@ -166,7 +168,7 @@ function page:eventHandler(event)
           pos = k,
         })
       end
-      history.setPosition(#history.entries + 1)
+      history:reset()
       command = nil
       self.grid:setValues(t)
       self.grid:setIndex(1)
@@ -228,7 +230,7 @@ function page.grid:eventHandler(event)
 
   local function commandAppend()
     if entry.isHistory then
-      history.setPosition(entry.pos)
+      --history.setPosition(entry.pos)
       return entry.value
     end
     if type(entry.rawValue) == 'function' then
@@ -262,15 +264,14 @@ function page.grid:eventHandler(event)
       clipboard.setData(entry.rawValue)
     end
   else
-    return UI.Grid.eventHandler(self, event)
+    return UI.ScrollingGrid.eventHandler(self, event)
   end
   return true
 end
 
 function page:rawExecute(s)
-  local fn, m = loadstring('return (' .. s .. ')', 'lua')
+  local fn, m = load('return _echo(' ..s.. ');', 'lua', nil, sandboxEnv)
   if fn then
-    setfenv(fn, sandboxEnv)
     m = { pcall(fn) }
     fn = table.remove(m, 1)
     if #m == 1 then
@@ -279,9 +280,8 @@ function page:rawExecute(s)
     return fn, m
   end
 
-  fn, m = loadstring(s, 'lua')
+  fn, m = load(s, 'lua', nil, sandboxEnv)
   if fn then
-    setfenv(fn, sandboxEnv)
     fn, m = pcall(fn)
   end
 

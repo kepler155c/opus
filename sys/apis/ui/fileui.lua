@@ -53,7 +53,7 @@ return function(args)
   function selectFile:enable(path, fn)
     self:setPath(path)
     self.fn = fn
-    UI.Page.enable(self)
+    UI.Dialog.enable(self)
   end
 
   function selectFile:setPath(path)
@@ -133,7 +133,7 @@ return function(args)
       UI:setPreviousPage()
       self.fn()
     else
-      return UI.Page.eventHandler(self, event)
+      return UI.Dialog.eventHandler(self, event)
     end
     return true
   end

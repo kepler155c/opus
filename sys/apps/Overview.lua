@@ -270,11 +270,23 @@ function page.container:setCategory(categoryName)
   local col, row = gutter, 2
   local count = #self.children
 
+  local r = math.random(1, 4)
   -- reposition all children
   for k,child in ipairs(self.children) do
-    child.x = self.width
-    child.y = math.floor(self.height)
-    child.tween = Tween.new(6, child, { x = col, y = row }, 'outSine')
+    if r == 1 then
+      child.x = math.random(1, self.width)
+      child.y = math.random(1, self.height)
+    elseif r == 2 then
+      child.x = self.width
+      child.y = self.height
+    elseif r == 3 then
+      child.x = math.floor(self.width / 2)
+      child.y = math.floor(self.height / 2)
+    elseif r == 4 then
+      child.x = self.width - col
+      child.y = row
+    end
+    child.tween = Tween.new(6, child, { x = col, y = row }, 'linear')
 
     if k < count then
       col = col + child.width
@@ -286,25 +298,25 @@ function page.container:setCategory(categoryName)
   end
 
   self:initChildren()
-  self.animate = true
+
+  local transition = { i = 1, parent = self, children = self.children }
+  function transition:update(device)
+    self.parent:clear()
+    for _,child in ipairs(self.children) do
+      child.tween:update(1)
+      child.x = math.floor(child.x)
+      child.y = math.floor(child.y)
+      child:draw()
+    end
+    self.canvas:blit(device, self, self)
+    self.i = self.i + 1
+    return self.i < 7
+  end
+  self:addTransition(transition)
 end
 
 function page.container:draw()
-  if self.animate then
-    self.animate = false
-    for i = 1, 6 do
-      for _,child in ipairs(self.children) do
-        child.tween:update(1)
-        child.x = math.floor(child.x)
-        child.y = math.floor(child.y)
-      end
-      UI.ViewportWindow.draw(self)
-      self:sync()
-      os.sleep()
-    end
-  else
-    UI.ViewportWindow.draw(self)
-  end
+  UI.ViewportWindow.draw(self)
 end
 
 function page:refresh()
@@ -442,10 +454,7 @@ local editor = UI.Dialog {
       text = 'Icon', event = 'loadIcon', help = 'Select icon'
     },
     image = UI.NftImage {
-      y = 6,
-      x = 2,
-      height = 3,
-      width = 8,
+      y = 6, x = 2, height = 3, width = 8,
     },
   },
   statusBar = UI.StatusBar(),
@@ -462,7 +471,7 @@ function editor:enable(app)
     end
     self.form.image:setImage(icon)
   end
-  UI.Page.enable(self)
+  UI.Dialog.enable(self)
   self:focusFirst()
 end
 
@@ -531,7 +540,7 @@ function editor:eventHandler(event)
     page:refresh()
     page:draw()
   else
-    return UI.Page.eventHandler(self, event)
+    return UI.Dialog.eventHandler(self, event)
   end
   return true
 end
