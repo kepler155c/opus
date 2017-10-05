@@ -29,7 +29,7 @@ term.setCursorPos((w - #str) / 2, h)
 term.write(str)
 term.setCursorPos(w, h)
 
-local GIT_REPO = 'kepler155c/opus/develop'
+local GIT_REPO = 'kepler155c/opus/master'
 local BASE     = 'https://raw.githubusercontent.com/' .. GIT_REPO
 
 local function makeEnv()
@@ -86,8 +86,9 @@ end
 if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
-if not fs.exists('usr/etc/fstab') then
-  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/develop')
+if not fs.exists('usr/etc/fstab') or not fs.exists('usr/etc/fstab.ignore') then
+  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/master')
+  Util.writeFile('usr/etc/fstab.ignore', 'forced fstab overwrite')
 end
 if not fs.exists('usr/config/shell') then
   Util.writeTable('usr/config/shell', {
