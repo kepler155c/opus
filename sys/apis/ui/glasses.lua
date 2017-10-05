@@ -17,8 +17,8 @@ function Glasses:init(args)
   }
   defaults.width, defaults.height = term.getSize()
 
-  UI.setProperties(defaults, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(defaults, args)
+  UI:setProperties(self, defaults)
 
   self.bridge = Peripheral.get({
     type = 'openperipheral_bridge',

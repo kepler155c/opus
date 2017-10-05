@@ -2,6 +2,8 @@ local Util = require('util')
 
 local Terminal = { }
 
+local _sgsub = string.gsub
+
 function Terminal.scrollable(ct, size)
 
   local size = size or 25
@@ -108,7 +110,10 @@ function Terminal.toGrayscale(ct)
 
   local function translate(s)
     if s then
-      s = s:gsub("%d+", bcolors)
+      for k,v in pairs(bcolors) do
+        s = _sgsub(s, k, v)
+      end
+--      s = _sgsub(s, "%d+", bcolors) -- not working in cc 1.75 ???
     end
     return s
   end

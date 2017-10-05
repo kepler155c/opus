@@ -27,13 +27,17 @@ if not socket then
   error('Unable to connect to ' .. remoteId .. ' on port 5900')
 end
 
-local w, h = term.getSize()
-socket:write({
-  type = 'termInfo',
-  width = w,
-  height = h,
-  isColor = term.isColor(),
-})
+local function writeTermInfo()
+  local w, h = term.getSize()
+  socket:write({
+    type = 'termInfo',
+    width = w,
+    height = h,
+    isColor = term.isColor(),
+  })
+end
+
+writeTermInfo()
 
 local ct = Util.shallowCopy(term.current())
 
@@ -57,7 +61,7 @@ ct.clear()
 ct.setCursorPos(1, 1)
 
 local filter = Util.transpose({
-  'char', 'paste', 'key', 'key_up', 
+  'char', 'paste', 'key', 'key_up',
   'mouse_scroll', 'mouse_click', 'mouse_drag', 'mouse_up',
 })
 
@@ -78,6 +82,8 @@ while true do
       type = 'shellRemote',
       event = e,
     })
+  elseif event == 'term_resize' then
+    writeTermInfo()
   elseif event == 'terminate' then
     socket:close()
     ct.setBackgroundColor(colors.black)

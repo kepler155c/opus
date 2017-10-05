@@ -2,7 +2,7 @@ local Event  = require('event')
 local Socket = require('socket')
 local Util   = require('util')
 
-local function wrapTerm(socket, termInfo)
+local function vncHost(socket)
   local methods = { 'blit', 'clear', 'clearLine', 'setCursorPos', 'write',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
                     'setBackgroundColour', 'scroll', 'setCursorBlink', }
@@ -27,17 +27,6 @@ local function wrapTerm(socket, termInfo)
     end
   end
 
-  socket.term.getSize = function()
-    return termInfo.width, termInfo.height
-  end
-end
-
-local function vncHost(socket, termInfo)
-
-  wrapTerm(socket, termInfo)
-
-  os.queueEvent('term_resize')
-
   while true do
     local data = socket:read()
     if not data then
@@ -47,6 +36,11 @@ local function vncHost(socket, termInfo)
 
     if data.type == 'shellRemote' then
       os.queueEvent(unpack(data.event))
+    elseif data.type == 'termInfo' then
+      socket.term.getSize = function()
+        return data.width, data.height
+      end
+      os.queueEvent('term_resize')
     end
   end
 
@@ -65,13 +59,9 @@ Event.addRoutine(function()
 
     print('vnc: connection from ' .. socket.dhost)
 
-    local termInfo = socket:read(5)
-    if termInfo then
-      -- no new process - only 1 connection allowed
-      -- due to term size issues
-      vncHost(socket, termInfo) 
-    else
-      socket:close()
-    end
+    -- no new process - only 1 connection allowed
+    -- due to term size issues
+    vncHost(socket)
+    socket:close()
   end
 end)

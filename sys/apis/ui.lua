@@ -1,39 +1,11 @@
-local Ansi   = require('ansi')
+local Canvas = require('ui.canvas')
 local class  = require('class')
 local Event  = require('event')
-local Region = require('ui.region')
 local Tween  = require('ui.tween')
 local Util   = require('util')
 
-local mapColorToGray = {
-  [ colors.white     ] = colors.white,
-  [ colors.orange    ] = colors.lightGray,
-  [ colors.magenta   ] = colors.lightGray,
-  [ colors.lightBlue ] = colors.lightGray,
-  [ colors.yellow    ] = colors.lightGray,
-  [ colors.lime      ] = colors.lightGray,
-  [ colors.pink      ] = colors.lightGray,
-  [ colors.gray      ] = colors.gray,
-  [ colors.lightGray ] = colors.lightGray,
-  [ colors.cyan      ] = colors.lightGray,
-  [ colors.purple    ] = colors.gray,
-  [ colors.blue      ] = colors.gray,
-  [ colors.brown     ] = colors.gray,
-  [ colors.green     ] = colors.lightGray,
-  [ colors.red       ] = colors.gray,
-  [ colors.black     ] = colors.black,
-}
-
-local mapColorToPaint = { }
-for n = 1, 16 do
-  mapColorToPaint[2 ^ (n - 1)] = string.sub("0123456789abcdef", n, n)
-end
-
-local mapGrayToPaint = { }
-for n = 0, 15 do
-  local gs = mapColorToGray[2 ^ n]
-  mapGrayToPaint[2 ^ n] = mapColorToPaint[gs]
-end
+local _srep = string.rep
+local _ssub = string.sub
 
 local function safeValue(v)
   local t = type(v)
@@ -473,7 +445,7 @@ end
 function Manager:getDefaults(element, args)
   local defaults = Util.deepCopy(element.defaults)
   if args then
-    Manager.setProperties(defaults, args)
+    Manager:setProperties(defaults, args)
   end
   return defaults
 end
@@ -487,8 +459,7 @@ function Manager:exitPullEvents()
   Event.exitPullEvents()
 end
 
--- inconsistent
-function Manager.setProperties(obj, args)
+function Manager:setProperties(obj, args)
   if args then
     for k,v in pairs(args) do
       if k == 'accelerators' then
@@ -521,7 +492,7 @@ UI.Window.defaults = {
 }
 function UI.Window:init(args)
   local defaults = UI:getDefaults(UI.Window, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(self, defaults)
 
   if self.parent then
     self:setParent()
@@ -623,7 +594,7 @@ function UI.Window:resize()
 end
 
 function UI.Window:add(children)
-  UI.setProperties(self, children)
+  UI:setProperties(self, children)
   self:initChildren()
 end
 
@@ -686,15 +657,14 @@ function UI.Window:clear(bg)
 end
 
 function UI.Window:clearLine(y, bg)
-  local filler = string.rep(' ', self.width)
-  self:write(1, y, filler, bg)
+  self:write(1, y, _srep(' ', self.width), bg)
 end
 
 function UI.Window:clearArea(x, y, width, height, bg)
   if width > 0 then
-    local filler = string.rep(' ', width)
-    for i = 0, height-1 do
-      self:write(x, y+i, filler, bg)
+    local filler = _srep(' ', width)
+    for i = 0, height - 1 do
+      self:write(x, y + i, filler, bg)
     end
   end
 end
@@ -719,9 +689,9 @@ function UI.Window:centeredWrite(y, text, bg, fg)
     self:write(1, y, text, bg)
   else
     local space = math.floor((self.width-#text) / 2)
-    local filler = string.rep(' ', space + 1)
-    local str = filler:sub(1, space) .. text
-    str = str .. filler:sub(self.width - #str + 1)
+    local filler = _srep(' ', space + 1)
+    local str = _ssub(filler, 1, space) .. text
+    str = str .. _ssub(filler, self.width - #str + 1)
     self:write(1, y, str, bg, fg)
   end
 end
@@ -732,15 +702,15 @@ function UI.Window:print(text, bg, fg, indent)
   local function nextWord(line, cx)
     local result = { line:find("(%w+)", cx) }
     if #result > 1 and result[2] > cx then
-      return line:sub(cx, result[2] + 1)
+      return _ssub(line, cx, result[2] + 1)
     elseif #result > 0 and result[1] == cx then
       result = { line:find("(%w+)", result[2] + 1) }
       if #result > 0 then
-        return line:sub(cx, result[1] + 1)
+        return _ssub(line, cx, result[1] + 1)
       end
     end
     if cx <= #line then
-      return line:sub(cx, #line)
+      return _ssub(line, cx, #line)
     end
   end
 
@@ -753,9 +723,9 @@ function UI.Window:print(text, bg, fg, indent)
         break
       end
       if pos < s then
-        table.insert(t, f:sub(pos, s - 1))
+        table.insert(t, _ssub(f, pos, s - 1))
       end
-      local seq = f:sub(s)
+      local seq = _ssub(f, s)
       seq = seq:match("\027%[([%d;]+)m")
       local e = { }
       for color in string.gmatch(seq, "%d+") do
@@ -773,7 +743,7 @@ function UI.Window:print(text, bg, fg, indent)
       pos = s + #seq + 3
     end
     if pos < #f then
-      table.insert(t, f:sub(pos))
+      table.insert(t, _ssub(f, pos))
     end
     return t
   end
@@ -907,231 +877,6 @@ function UI.Window:eventHandler(event)
   return false
 end
 
---[[-- Blit data manipulation --]]--
-local Canvas = class()
-function Canvas:init(args)
-  self.x = 1
-  self.y = 1
-
-  Util.merge(self, args)
-
-  self.height = self.ey - self.y + 1
-  self.width = self.ex - self.x + 1
-
-  self.lines = { }
-  for i = 1, self.height do
-    self.lines[i] = { }
-  end
-end
-
-function Canvas:resize(w, h)
-  for i = self.height, h do
-    self.lines[i] = { }
-  end
-
-  while #self.lines > h do
-    table.remove(self.lines, #self.lines)
-  end
-
-  if w ~= self.width then
-    for i = 1, self.height do
-      self.lines[i] = { }
-    end
-  end
-
-  self.ex = self.x + w - 1
-  self.ey = self.y + h - 1
-
-  self.width = w
-  self.height = h
-end
-
-function Canvas:colorToPaintColor(c)
-  if self.isColor then
-    return mapColorToPaint[c]
-  end
-  return mapGrayToPaint[c]
-end
-
-function Canvas:copy()
-  local b = Canvas({ x = self.x, y = self.y, ex = self.ex, ey = self.ey })
-  for i = 1, self.ey - self.y + 1 do
-    b.lines[i].text = self.lines[i].text
-    b.lines[i].fg = self.lines[i].fg
-    b.lines[i].bg = self.lines[i].bg
-  end
-  return b
-end
-
-function Canvas:addLayer(layer, bg, fg)
-  local canvas = Canvas({
-    x = layer.x,
-    y = layer.y,
-    ex = layer.x + layer.width - 1,
-    ey = layer.y + layer.height - 1,
-    isColor = self.isColor,
-  })
-  canvas:clear(bg, fg)
-
-  canvas.parent = self
-  if not self.layers then
-    self.layers = { }
-  end
-  table.insert(self.layers, canvas)
-  return canvas
-end
-
-function Canvas:removeLayer()
-  for k, layer in pairs(self.parent.layers) do
-    if layer == self then
-      self:setVisible(false)
-      table.remove(self.parent.layers, k)
-      break
-    end
-  end
-end
-
-function Canvas:setVisible(visible)
-  self.visible = visible
-  if not visible then
-    self.parent:dirty()
-    -- set parent's lines to dirty for each line in self
-  end
-end
-
-function Canvas:write(x, y, text, bg, tc)
-
-  if y > 0 and y <= self.height and x <= self.width then
-
-    local width = #text
-
-    if x < 1 then
-      text = text:sub(2 - x)
-      width = width + x - 1
-      x = 1
-    end
-
-    if x + width - 1 > self.width then
-      text = text:sub(1, self.width - x + 1)
-      width = #text
-    end
-
-    if width > 0 then
-
-      local function replace(sstr, pos, rstr, width)
-        return sstr:sub(1, pos-1) .. rstr .. sstr:sub(pos+width)
-      end
-
-      local function fill(sstr, pos, rstr, width)
-        return sstr:sub(1, pos-1) .. string.rep(rstr, width) .. sstr:sub(pos+width)
-      end
-
-      local line = self.lines[y]
-      line.dirty = true
-      line.text = replace(line.text, x, text, width)
-      if bg then
-        line.bg = fill(line.bg, x, self:colorToPaintColor(bg), width)
-      end
-      if tc then
-        line.fg = fill(line.fg, x, self:colorToPaintColor(tc), width)
-      end
-    end
-  end
-end
-
-function Canvas:writeLine(y, text, fg, bg)
-  self.lines[y].dirty = true
-  self.lines[y].text = text
-  self.lines[y].fg = fg
-  self.lines[y].bg = bg
-end
-
-function Canvas:reset()
-  self.region = nil
-end
-
-function Canvas:clear(bg, fg)
-  local width = self.ex - self.x + 1
-  local text = string.rep(' ', width)
-  fg = string.rep(self:colorToPaintColor(fg), width)
-  bg = string.rep(self:colorToPaintColor(bg), width)
-  for i = 1, self.ey - self.y + 1 do
-    self:writeLine(i, text, fg, bg)
-  end
-end
-
-function Canvas:punch(rect)
-  if not self.regions then
-    self.regions = Region.new(self.x, self.y, self.ex, self.ey)
-  end
-  self.regions:subRect(rect.x, rect.y, rect.ex, rect.ey)
-end
-
-function Canvas:blitClipped(device)
-  for _,region in ipairs(self.regions.region) do
-    self:blit(device,
-      { x = region[1] - self.x + 1,
-        y = region[2] - self.y + 1,
-        ex = region[3]- self.x + 1, 
-        ey = region[4] - self.y + 1 },
-      { x = region[1], y = region[2] })
-  end
-end
-
-function Canvas:dirty()
-  for _, line in pairs(self.lines) do
-    line.dirty = true
-  end
-end
-
-function Canvas:clean()
-  for y, line in ipairs(self.lines) do
-    line.dirty = false
-  end
-end
-
-function Canvas:render(device, layers)
-  layers = layers or self.layers
-  if layers then
-    self.regions = Region.new(self.x, self.y, self.ex, self.ey)
-    local l = Util.shallowCopy(layers)
-    for _, canvas in ipairs(layers) do
-      table.remove(l, 1)
-      if canvas.visible then
-        self:punch(canvas)
-        canvas:render(device, l)
-      end
-    end
-    self:blitClipped(device)
-    self:reset()
-  else
-    self:blit(device)
-  end
-  self:clean()
-end
-
-function Canvas:blit(device, src, tgt)
-  src = src or { x = 1, y = 1, ex = self.ex - self.x + 1, ey = self.ey - self.y + 1 }
-  tgt = tgt or self
-
-  for i = 0, src.ey - src.y do
-    local line = self.lines[src.y + i]
-    if line and line.dirty then
-      local t, fg, bg = line.text, line.fg, line.bg
-      if src.x > 1 or src.ex < self.ex then
-        t  = t:sub(src.x, src.ex)
-        fg = fg:sub(src.x, src.ex)
-        bg = bg:sub(src.x, src.ex)
-      end
-      --if tgt.y + i > self.ey then -- wrong place to do clipping ??
-      --  break
-      --end
-      device.setCursorPos(tgt.x, tgt.y + i)
-      device.blit(t, fg, bg)
-    end
-  end
-end
-
 --[[-- TransitionSlideLeft --]]--
 UI.TransitionSlideLeft = class()
 UI.TransitionSlideLeft.defaults = {
@@ -1141,7 +886,7 @@ UI.TransitionSlideLeft.defaults = {
 }
 function UI.TransitionSlideLeft:init(args)
   local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(self, defaults)
 
   self.pos = { x = self.ex }
   self.tween = Tween.new(self.ticks, self.pos, { x = self.x }, self.easing)
@@ -1181,7 +926,7 @@ UI.TransitionSlideRight.defaults = {
 }
 function UI.TransitionSlideRight:init(args)
   local defaults = UI:getDefaults(UI.TransitionSlideRight, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(self, defaults)
 
   self.pos = { x = self.x }
   self.tween = Tween.new(self.ticks, self.pos, { x = self.ex }, self.easing)
@@ -1220,7 +965,7 @@ UI.TransitionExpandUp.defaults = {
 }
 function UI.TransitionExpandUp:init(args)
   local defaults = UI:getDefaults(UI.TransitionExpandUp, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(self, defaults)
   self.pos = { y = self.ey + 1 }
   self.tween = Tween.new(self.ticks, self.pos, { y = self.y }, self.easing)
 end
@@ -1240,7 +985,7 @@ UI.TransitionGrow.defaults = {
 }
 function UI.TransitionGrow:init(args)
   local defaults = UI:getDefaults(UI.TransitionGrow, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(self, defaults)
   self.tween = Tween.new(self.ticks,
     { x = self.width / 2 - 1, y = self.height / 2 - 1, w = 1, h = 1 },
     { x = 1, y = 1, w = self.width, h = self.height }, self.easing)
@@ -1268,7 +1013,7 @@ UI.Device.defaults = {
 function UI.Device:init(args)
   local defaults = UI:getDefaults(UI.Device)
   defaults.device = term.current()
-  UI.setProperties(defaults, args)
+  UI:setProperties(defaults, args)
 
   if defaults.deviceType then
     defaults.device = device[defaults.deviceType]
@@ -1413,11 +1158,11 @@ end
 function UI.StringBuffer:insert(s, width)
   local len = #tostring(s or '')
   if len > width then
-    s = s:sub(1, width)
+    s = _ssub(s, 1, width)
   end
   table.insert(self.buffer, s)
   if len < width then
-    table.insert(self.buffer, string.rep(' ', width - len))
+    table.insert(self.buffer, _srep(' ', width - len))
   end
 end
 
@@ -1434,7 +1179,7 @@ local SB = { }
 function SB:new(width)
   return setmetatable({
     width = width,
-    buf = string.rep(' ', width)
+    buf = _srep(' ', width)
   }, { __index = SB })
 end
 function SB:insert(x, str, width)
@@ -1446,12 +1191,12 @@ function SB:insert(x, str, width)
     width = self.width - x
   end
   if width > 0 then
-    self.buf = self.buf:sub(1, x - 1) .. str:sub(1, width) .. self.buf:sub(x + width)
+    self.buf = _ssub(self.buf, 1, x - 1) .. _ssub(str, 1, width) .. _ssub(self.buf, x + width)
   end
 end
 function SB:fill(x, ch, width)
   width = width or self.width - x + 1
-  self:insert(x, string.rep(ch, width))
+  self:insert(x, _srep(ch, width))
 end
 function SB:center(str)
   self:insert(math.max(1, math.ceil((self.width - #str + 1) / 2)), str)
@@ -1477,7 +1222,7 @@ UI.Page.defaults = {
 function UI.Page:init(args)
   local defaults = UI:getDefaults(UI.Page)
   defaults.parent = UI.defaultDevice
-  UI.setProperties(defaults, args)
+  UI:setProperties(defaults, args)
   UI.Window.init(self, defaults)
 
   if self.z then
@@ -2124,7 +1869,7 @@ UI.Menu.defaults = {
 function UI.Menu:init(args)
   local defaults = UI:getDefaults(UI.Menu)
   defaults.values = args['menuItems']
-  UI.setProperties(defaults, args)
+  UI:setProperties(defaults, args)
   UI.Grid.init(self, defaults)
   self.pageSize = #args.menuItems
 end
@@ -2321,7 +2066,7 @@ UI.MenuBar.defaults = {
 
 function UI.MenuBar:init(args)
   local defaults = UI:getDefaults(UI.MenuBar, args)
-  UI.setProperties(self, defaults)
+  UI:setProperties(self, defaults)
 
   if not self.children then
     self.children = { }
@@ -2335,13 +2080,10 @@ function UI.MenuBar:init(args)
       local buttonProperties = {
         x = x,
         width = #button.text + self.spacing,
---        backgroundColor = self.backgroundColor,
---        backgroundFocusColor = colors.gray,
---        textColor = self.textColor,
         centered = false,
       }
       x = x + buttonProperties.width
-      UI.setProperties(buttonProperties, button)
+      UI:setProperties(buttonProperties, button)
       if button.name then
         self[button.name] = UI.MenuItem(buttonProperties)
       else
@@ -2868,28 +2610,18 @@ function UI.ProgressBar:init(args)
 end
 
 function UI.ProgressBar:draw()
+  self:clear()
   local width = math.ceil(self.value / 100 * self.width)
-  if width > 0 then
-    self:write(1, 1, string.rep(' ', width), self.progressColor)
-  end
-  local x = width
-  width = self.width - width
-  if width > 0 then
-    self:write(x + 1,
-      1, string.rep(' ', width), self.backgroundColor)
-  end
-end
-
-function UI.ProgressBar:setProgress(progress)
-  self.value = progress
+  self:clearArea(1, 1, width, self.height, self.progressColor)
 end
 
 --[[-- VerticalMeter --]]--
 UI.VerticalMeter = class(UI.Window)
 UI.VerticalMeter.defaults = {
   UIElement = 'VerticalMeter',
+  backgroundColor = colors.gray,
   meterColor = colors.lime,
-  height = 1,
+  width = 1,
   value = 0,
 }
 function UI.VerticalMeter:init(args)
@@ -2899,19 +2631,8 @@ end
 
 function UI.VerticalMeter:draw()
   local height = self.height - math.ceil(self.value / 100 * self.height)
-  local filler = string.rep(' ', self.width)
-
-  for i = 1, height do
-    self:write(1, i, filler, self.backgroundColor)
-  end
-
-  for i = height+1, self.height do
-    self:write(1, i, filler, self.meterColor)
-  end
-end
-
-function UI.VerticalMeter:setPercent(percent)
-  self.value = percent
+  self:clear()
+  self:clearArea(1, height + 1, self.width, self.height, self.meterColor)
 end
 
 --[[-- Button --]]--
@@ -3281,7 +3002,7 @@ function UI.Text:draw()
   self:write(1, 1, Util.widthify(value, self.width), self.backgroundColor)
 end
 
---[[-- Text --]]--
+--[[-- TextArea --]]--
 UI.TextArea = class(UI.Window)
 UI.TextArea.defaults = {
   UIElement = 'TextArea',

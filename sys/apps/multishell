@@ -25,7 +25,8 @@ local Config = require('config')
 local Opus   = require('opus')
 local Util   = require('util')
 
--- Begin multishell
+local SESSION_FILE = 'usr/config/multishell.session'
+
 local parentTerm = term.current()
 local w,h = parentTerm.getSize()
 local tabs = {}
@@ -228,6 +229,7 @@ local function launchProcess(tab)
       selectTab(previousTab)
     end
     redrawMenu()
+    saveSession()
   end)
 
   tabs[tab.tabId] = tab
@@ -257,6 +259,19 @@ local function resizeWindows()
   for _,key in pairs(keys) do
     resumeTab(tabs[key], "term_resize")
   end
+end
+
+local function saveSession()
+  local t = { }
+  for _,process in pairs(tabs) do
+    if process.path and not process.isOverview and not process.hidden then
+      table.insert(t, {
+        path = process.path,
+        args = process.args,
+      })
+    end
+  end
+  --Util.writeTable(SESSION_FILE, t)
 end
 
 local control
@@ -383,6 +398,11 @@ function multishell.openTab(tab)
   else
     redrawMenu()
   end
+
+  if not tab.hidden then
+    saveSession()
+  end
+
   return tab.tabId
 end
 
@@ -454,6 +474,7 @@ end)
 
 local function startup()
   local hasError
+  local session = Util.readTable(SESSION_FILE)
 
   local overviewId = multishell.openTab({
     path = 'sys/apps/Overview.lua',
@@ -469,6 +490,12 @@ local function startup()
 
   if not Opus.autorun() then
     hasError = true
+  end
+
+  if session then
+    for _,v in pairs(session) do
+      multishell.openTab(v)
+    end
   end
 
   if hasError then

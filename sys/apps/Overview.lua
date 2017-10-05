@@ -177,7 +177,7 @@ function UI.Icon:init(args)
     width = 14,
     height = 4,
   }
-  UI.setProperties(defaults, args)
+  UI:setProperties(defaults, args)
   UI.Window.init(self, defaults)
 end
 
@@ -327,8 +327,8 @@ function page:refresh()
 end
 
 function page:resize()
-  self:refresh()
   UI.Page.resize(self)
+  self:refresh()
 end
 
 function page:eventHandler(event)
