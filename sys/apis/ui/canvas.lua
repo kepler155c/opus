@@ -2,50 +2,41 @@ local class  = require('class')
 local Region = require('ui.region')
 local Util   = require('util')
 
-local _srep = string.rep
-local _ssub = string.sub
-
-local mapColorToGray = {
-  [ colors.white     ] = colors.white,
-  [ colors.orange    ] = colors.lightGray,
-  [ colors.magenta   ] = colors.lightGray,
-  [ colors.lightBlue ] = colors.lightGray,
-  [ colors.yellow    ] = colors.lightGray,
-  [ colors.lime      ] = colors.lightGray,
-  [ colors.pink      ] = colors.lightGray,
-  [ colors.gray      ] = colors.gray,
-  [ colors.lightGray ] = colors.lightGray,
-  [ colors.cyan      ] = colors.lightGray,
-  [ colors.purple    ] = colors.gray,
-  [ colors.blue      ] = colors.gray,
-  [ colors.brown     ] = colors.gray,
-  [ colors.green     ] = colors.lightGray,
-  [ colors.red       ] = colors.gray,
-  [ colors.black     ] = colors.black,
-}
-
-local mapColorToPaint = { }
-for n = 1, 16 do
-  mapColorToPaint[2 ^ (n - 1)] = _ssub("0123456789abcdef", n, n)
-end
-
-local mapGrayToPaint = { }
-for n = 0, 15 do
-  local gs = mapColorToGray[2 ^ n]
-  mapGrayToPaint[2 ^ n] = mapColorToPaint[gs]
-end
+local _rep = string.rep
+local _sub = string.sub
+local _gsub = string.gsub
 
 local Canvas = class()
-function Canvas:init(args)
 
+Canvas.colorPalette = { }
+Canvas.darkPalette = { }
+Canvas.grayscalePalette = { }
+
+for n = 1, 16 do
+  Canvas.colorPalette[2 ^ (n - 1)]     = _sub("0123456789abcdef", n, n)
+  Canvas.grayscalePalette[2 ^ (n - 1)] = _sub("088888878877787f", n, n)
+  Canvas.darkPalette[2 ^ (n - 1)]      = _sub("8777777f77fff77f", n, n)
+end
+
+function Canvas:init(args)
   self.x = 1
   self.y = 1
+  self.bg = colors.black
+  self.fg = colors.white
   self.layers = { }
 
   Util.merge(self, args)
 
-  self.height = self.ey - self.y + 1
-  self.width = self.ex - self.x + 1
+  self.ex = self.x + self.width - 1
+  self.ey = self.y + self.height - 1
+
+  if not self.palette then
+    if self.isColor then
+      self.palette = Canvas.colorPalette
+    else
+      self.palette = Canvas.grayscalePalette
+    end
+  end
 
   self.lines = { }
   for i = 1, self.height do
@@ -64,29 +55,25 @@ function Canvas:resize(w, h)
 
   if w ~= self.width then
     for i = 1, self.height do
-      self.lines[i] = { }
+      self.lines[i] = { dirty = true }
     end
   end
 
   self.ex = self.x + w - 1
   self.ey = self.y + h - 1
-
   self.width = w
   self.height = h
-
-  self:dirty()
-end
-
-function Canvas:colorToPaintColor(c)
-  if self.isColor then
-    return mapColorToPaint[c]
-  end
-  return mapGrayToPaint[c]
 end
 
 function Canvas:copy()
-  local b = Canvas({ x = self.x, y = self.y, ex = self.ex, ey = self.ey })
-  for i = 1, self.ey - self.y + 1 do
+  local b = Canvas({
+    x       = self.x,
+    y       = self.y,
+    width   = self.width,
+    height  = self.height,
+    isColor = self.isColor,
+  })
+  for i = 1, self.height do
     b.lines[i].text = self.lines[i].text
     b.lines[i].fg = self.lines[i].fg
     b.lines[i].bg = self.lines[i].bg
@@ -96,10 +83,10 @@ end
 
 function Canvas:addLayer(layer, bg, fg)
   local canvas = Canvas({
-    x = layer.x,
-    y = layer.y,
-    ex = layer.x + layer.width - 1,
-    ey = layer.y + layer.height - 1,
+    x       = layer.x,
+    y       = layer.y,
+    width   = layer.width,
+    height  = layer.height,
     isColor = self.isColor,
   })
   canvas:clear(bg, fg)
@@ -129,10 +116,10 @@ end
 
 function Canvas:write(x, y, text, bg, fg)
   if bg then
-    bg = _srep(self:colorToPaintColor(bg), #text)
+    bg = _rep(self.palette[bg], #text)
   end
   if fg then
-    fg = _srep(self:colorToPaintColor(fg), #text)
+    fg = _rep(self.palette[fg], #text)
   end
   self:writeBlit(x, y, text, bg, fg)
 end
@@ -144,24 +131,24 @@ function Canvas:writeBlit(x, y, text, bg, fg)
 
     -- fix ffs
     if x < 1 then
-      text = _ssub(text, 2 - x)
+      text = _sub(text, 2 - x)
       if bg then
-        bg = _ssub(bg, 2 - x)
+        bg = _sub(bg, 2 - x)
       end
       if bg then
-        fg = _ssub(fg, 2 - x)
+        fg = _sub(fg, 2 - x)
       end
       width = width + x - 1
       x = 1
     end
 
     if x + width - 1 > self.width then
-      text = _ssub(text, 1, self.width - x + 1)
+      text = _sub(text, 1, self.width - x + 1)
       if bg then
-        bg = _ssub(bg, 1, self.width - x + 1)
+        bg = _sub(bg, 1, self.width - x + 1)
       end
       if bg then
-        fg = _ssub(fg, 1, self.width - x + 1)
+        fg = _sub(fg, 1, self.width - x + 1)
       end
       width = #text
     end
@@ -172,11 +159,11 @@ function Canvas:writeBlit(x, y, text, bg, fg)
         if pos == 1 and width == self.width then
           return rstr
         elseif pos == 1 then
-          return rstr .. _ssub(sstr, pos+width)
+          return rstr .. _sub(sstr, pos+width)
         elseif pos + width > self.width then
-          return _ssub(sstr, 1, pos-1) .. rstr
+          return _sub(sstr, 1, pos-1) .. rstr
         end
-        return _ssub(sstr, 1, pos-1) .. rstr .. _ssub(sstr, pos+width)
+        return _sub(sstr, 1, pos-1) .. rstr .. _sub(sstr, pos+width)
       end
  
       local line = self.lines[y]
@@ -204,11 +191,10 @@ function Canvas:reset()
 end
 
 function Canvas:clear(bg, fg)
-  local width = self.ex - self.x + 1
-  local text = _srep(' ', width)
-  fg = _srep(self:colorToPaintColor(fg), width)
-  bg = _srep(self:colorToPaintColor(bg), width)
-  for i = 1, self.ey - self.y + 1 do
+  local text = _rep(' ', self.width)
+  fg = _rep(self.palette[fg or self.fg], self.width)
+  bg = _rep(self.palette[bg or self.bg], self.width)
+  for i = 1, self.height do
     self:writeLine(i, text, fg, bg)
   end
 end
@@ -293,9 +279,9 @@ function Canvas:blit(device, src, tgt)
     if line and line.dirty then
       local t, fg, bg = line.text, line.fg, line.bg
       if src.x > 1 or src.ex < self.ex then
-        t  = _ssub(t, src.x, src.ex)
-        fg = _ssub(fg, src.x, src.ex)
-        bg = _ssub(bg, src.x, src.ex)
+        t  = _sub(t, src.x, src.ex)
+        fg = _sub(fg, src.x, src.ex)
+        bg = _sub(bg, src.x, src.ex)
       end
       --if tgt.y + i > self.ey then -- wrong place to do clipping ??
       --  break
@@ -306,15 +292,31 @@ function Canvas:blit(device, src, tgt)
   end
 end
 
+function Canvas:applyPalette(palette)
+
+  local lookup = { }
+  for n = 1, 16 do
+    lookup[self.palette[2 ^ (n - 1)]] = palette[2 ^ (n - 1)]
+  end
+
+  for _, l in pairs(self.lines) do
+    l.fg = _gsub(l.fg, '%w', lookup)
+    l.bg = _gsub(l.bg, '%w', lookup)
+    l.dirty = true
+  end
+
+  self.palette = palette
+end
+
 function Canvas.convertWindow(win, parent, x, y)
 
   local w, h = win.getSize()
 
   win.canvas = Canvas({
-    x  = x,
-    y  = y,
-    ex = x + w - 1,
-    ey = y + h - 1,
+    x       = x,
+    y       = y,
+    width   = w,
+    height  = h,
     isColor = win.isColor(),
   })
 
@@ -326,7 +328,7 @@ function Canvas.convertWindow(win, parent, x, y)
     local x, y = win.getCursorPos()
     win.canvas:write(1,
       y,
-      _srep(' ', win.canvas.width),
+      _rep(' ', win.canvas.width),
       win.getBackgroundColor(),
       win.getTextColor())
   end

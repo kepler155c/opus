@@ -4,8 +4,8 @@ local Event  = require('event')
 local Tween  = require('ui.tween')
 local Util   = require('util')
 
-local _srep = string.rep
-local _ssub = string.sub
+local _rep = string.rep
+local _sub = string.sub
 
 local function safeValue(v)
   local t = type(v)
@@ -652,17 +652,23 @@ function UI.Window:setTextScale(textScale)
   self.parent:setTextScale(textScale)
 end
 
-function UI.Window:clear(bg)
-  self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
+function UI.Window:clear(bg, ...)
+  debug(bg)
+  debug({...})
+  if self.canvas then
+    self.canvas:clear(bg or self.backgroundColor)
+  else
+    self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
+  end
 end
 
 function UI.Window:clearLine(y, bg)
-  self:write(1, y, _srep(' ', self.width), bg)
+  self:write(1, y, _rep(' ', self.width), bg)
 end
 
 function UI.Window:clearArea(x, y, width, height, bg)
   if width > 0 then
-    local filler = _srep(' ', width)
+    local filler = _rep(' ', width)
     for i = 0, height - 1 do
       self:write(x, y + i, filler, bg)
     end
@@ -689,9 +695,9 @@ function UI.Window:centeredWrite(y, text, bg, fg)
     self:write(1, y, text, bg)
   else
     local space = math.floor((self.width-#text) / 2)
-    local filler = _srep(' ', space + 1)
-    local str = _ssub(filler, 1, space) .. text
-    str = str .. _ssub(filler, self.width - #str + 1)
+    local filler = _rep(' ', space + 1)
+    local str = _sub(filler, 1, space) .. text
+    str = str .. _sub(filler, self.width - #str + 1)
     self:write(1, y, str, bg, fg)
   end
 end
@@ -702,15 +708,15 @@ function UI.Window:print(text, bg, fg, indent)
   local function nextWord(line, cx)
     local result = { line:find("(%w+)", cx) }
     if #result > 1 and result[2] > cx then
-      return _ssub(line, cx, result[2] + 1)
+      return _sub(line, cx, result[2] + 1)
     elseif #result > 0 and result[1] == cx then
       result = { line:find("(%w+)", result[2] + 1) }
       if #result > 0 then
-        return _ssub(line, cx, result[1] + 1)
+        return _sub(line, cx, result[1] + 1)
       end
     end
     if cx <= #line then
-      return _ssub(line, cx, #line)
+      return _sub(line, cx, #line)
     end
   end
 
@@ -723,9 +729,9 @@ function UI.Window:print(text, bg, fg, indent)
         break
       end
       if pos < s then
-        table.insert(t, _ssub(f, pos, s - 1))
+        table.insert(t, _sub(f, pos, s - 1))
       end
-      local seq = _ssub(f, s)
+      local seq = _sub(f, s)
       seq = seq:match("\027%[([%d;]+)m")
       local e = { }
       for color in string.gmatch(seq, "%d+") do
@@ -743,7 +749,7 @@ function UI.Window:print(text, bg, fg, indent)
       pos = s + #seq + 3
     end
     if pos < #f then
-      table.insert(t, _ssub(f, pos))
+      table.insert(t, _sub(f, pos))
     end
     return t
   end
@@ -1031,7 +1037,7 @@ function UI.Device:init(args)
   self.isColor = self.device.isColor()
 
   self.canvas = Canvas({
-    x = 1, y = 1, ex = self.width, ey = self.height,
+    x = 1, y = 1, width = self.width, height = self.height,
     isColor = self.isColor,
   })
   self.canvas:clear(self.backgroundColor, self.textColor)
@@ -1158,11 +1164,11 @@ end
 function UI.StringBuffer:insert(s, width)
   local len = #tostring(s or '')
   if len > width then
-    s = _ssub(s, 1, width)
+    s = _sub(s, 1, width)
   end
   table.insert(self.buffer, s)
   if len < width then
-    table.insert(self.buffer, _srep(' ', width - len))
+    table.insert(self.buffer, _rep(' ', width - len))
   end
 end
 
@@ -1179,7 +1185,7 @@ local SB = { }
 function SB:new(width)
   return setmetatable({
     width = width,
-    buf = _srep(' ', width)
+    buf = _rep(' ', width)
   }, { __index = SB })
 end
 function SB:insert(x, str, width)
@@ -1191,12 +1197,12 @@ function SB:insert(x, str, width)
     width = self.width - x
   end
   if width > 0 then
-    self.buf = _ssub(self.buf, 1, x - 1) .. _ssub(str, 1, width) .. _ssub(self.buf, x + width)
+    self.buf = _sub(self.buf, 1, x - 1) .. _sub(str, 1, width) .. _sub(self.buf, x + width)
   end
 end
 function SB:fill(x, ch, width)
   width = width or self.width - x + 1
-  self:insert(x, _srep(ch, width))
+  self:insert(x, _rep(ch, width))
 end
 function SB:center(str)
   self:insert(math.max(1, math.ceil((self.width - #str + 1) / 2)), str)
@@ -2015,8 +2021,8 @@ UI.TitleBar = class(UI.Window)
 UI.TitleBar.defaults = {
   UIElement = 'TitleBar',
   height = 1,
-  textColor = colors.lightGray,
-  backgroundColor = colors.gray,
+  textColor = colors.white,
+  backgroundColor = colors.cyan,
   title = '',
   frameChar = '-',
   closeInd = '*',
@@ -2646,7 +2652,7 @@ UI.Button.defaults = {
   textColor = colors.white,
   centered = true,
   height = 1,
-  focusIndicator = '>',
+  focusIndicator = ' ',
   event = 'button_press',
   accelerators = {
     space = 'button_activate',
@@ -2675,9 +2681,9 @@ function UI.Button:draw()
     fg = self.textFocusColor
     ind = self.focusIndicator
   end
-  self:clear(bg)
   local text = ind .. self.text .. ' '
   if self.centered then
+    self:clear(bg)
     self:centeredWrite(1 + math.floor(self.height / 2), text, bg, fg)
   else
     self:write(1, 1, Util.widthify(text, self.width), bg, fg)
@@ -3172,7 +3178,14 @@ function UI.Dialog:setParent()
   self.y = math.floor((self.parent.height - self.height) / 2) + 1
 end
 
+function UI.Dialog:disable()
+  self.previousPage.canvas.palette = self.oldPalette
+  UI.Page.disable(self)
+end
+
 function UI.Dialog:enable(...)
+  self.oldPalette = self.previousPage.canvas.palette
+  self.previousPage.canvas:applyPalette(Canvas.darkPalette)
   self:addTransition('grow')
   UI.Page.enable(self, ...)
 end

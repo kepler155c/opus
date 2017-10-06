@@ -494,7 +494,7 @@ local function startup()
 
   if session then
     for _,v in pairs(session) do
-      multishell.openTab(v)
+      --multishell.openTab(v)
     end
   end
 
@@ -505,7 +505,7 @@ local function startup()
 end
 
 -- Begin
-parentTerm.clear()
+--parentTerm.clear()
 
 multishell.openTab({
   focused = true,

@@ -110,10 +110,7 @@ function Terminal.toGrayscale(ct)
 
   local function translate(s)
     if s then
-      for k,v in pairs(bcolors) do
-        s = _sgsub(s, k, v)
-      end
---      s = _sgsub(s, "%d+", bcolors) -- not working in cc 1.75 ???
+      s = _sgsub(s, "%w", bcolors)
     end
     return s
   end

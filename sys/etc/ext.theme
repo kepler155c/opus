@@ -6,7 +6,7 @@
     downArrowChar = '\31',
   },
   Button = {
-    focusIndicator = '\183',
+    --focusIndicator = '\183',
   },
   Grid = {
     focusIndicator = '\183',

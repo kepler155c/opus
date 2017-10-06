@@ -1,18 +1,17 @@
 -- Loads the Opus environment regardless if the file system is local or not
 
 local w, h = term.getSize()
-local str = 'Loading Opus...'
 term.setTextColor(colors.white)
 if term.isColor() then
-  term.setBackgroundColor(colors.cyan)
+  term.setBackgroundColor(colors.black)
   term.clear()
   local opus = {
-    '9999900',
-    '999907000',
-    '9900770b00 4444',
-    '99077777444444444',
-    '907777744444444444',
-    '90000777444444444',
+    'fffff00',
+    'ffff07000',
+    'ff00770b00 4444',
+    'ff077777444444444',
+    'f07777744444444444',
+    'f0000777444444444',
     '070000111744444',
     '777770000',
     '7777000000',
@@ -25,8 +24,8 @@ if term.isColor() then
   end
 end
 
-term.setCursorPos((w - #str) / 2, h)
-term.write(str)
+term.setCursorPos((w - 18) / 2, h)
+term.write('Loading Opus...')
 term.setCursorPos(w, h)
 
 local GIT_REPO = 'kepler155c/opus/develop'
