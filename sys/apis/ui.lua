@@ -101,7 +101,7 @@ function Manager:init(args)
     elseif self.currentPage then
       if not self.currentPage.parent.device.side then
         local event = self:pointToChild(self.target, x, y)
-        if event.element.focus then
+        if event.element.focus and not event.element.inactive then
           self.currentPage:setFocus(event.element)
           self.currentPage:sync()
         end
@@ -282,7 +282,7 @@ function Manager:pointToChild(parent, x, y)
   y = y + parent.offy - parent.y + 1
   if parent.children then
     for _,child in pairs(parent.children) do
-      if child.enabled and 
+      if child.enabled and not child.inactive and 
          x >= child.x and x < child.x + child.width and
          y >= child.y and y < child.y + child.height then
         local c = self:pointToChild(child, x, y)
@@ -653,8 +653,6 @@ function UI.Window:setTextScale(textScale)
 end
 
 function UI.Window:clear(bg, ...)
-  debug(bg)
-  debug({...})
   if self.canvas then
     self.canvas:clear(bg or self.backgroundColor)
   else
@@ -808,7 +806,7 @@ function UI.Window:getFocusables()
 
   local function getFocusable(parent, x, y)
     for _,child in Util.spairs(parent.children, focusSort) do
-      if child.enabled and child.focus then
+      if child.enabled and child.focus and not child.inactive then
         table.insert(focusable, child)
       end
       if child.children then
@@ -851,6 +849,22 @@ function UI.Window:scrollIntoView()
     parent.offy = self.y + self.height - parent.height - 1
     parent:draw()
   end
+end
+
+function UI.Window:getCanvas()
+  local el = self
+  repeat
+    if el.canvas then
+      return el.canvas
+    end
+    el = el.parent
+  until not el
+end
+
+function UI.Window:addLayer(bg, fg)
+  local canvas = self:getCanvas()
+
+  return canvas:addLayer(self, bg, fg)
 end
 
 function UI.Window:addTransition(effect, args)
@@ -2058,6 +2072,88 @@ function UI.TitleBar:eventHandler(event)
   end
 end
 
+--[[-- Button --]]--
+UI.Button = class(UI.Window)
+UI.Button.defaults = {
+  UIElement = 'Button',
+  text = 'button',
+  backgroundColor = colors.gray,
+  backgroundFocusColor = colors.lightGray,
+  textFocusColor = colors.white,
+  textInactiveColor = colors.gray,
+  textColor = colors.white,
+  centered = true,
+  height = 1,
+  focusIndicator = ' ',
+  event = 'button_press',
+  accelerators = {
+    space = 'button_activate',
+    enter = 'button_activate',
+    mouse_click = 'button_activate',
+  }
+}
+function UI.Button:init(args)
+  local defaults = UI:getDefaults(UI.Button, args)
+  UI.Window.init(self, defaults)
+end
+
+function UI.Button:setParent()
+  if not self.width and not self.ex then
+    self.width = #self.text + 2
+  end
+  UI.Window.setParent(self)
+end
+
+function UI.Button:draw()
+  local fg = self.textColor
+  local bg = self.backgroundColor
+  local ind = ' '
+  if self.focused then
+    bg = self.backgroundFocusColor
+    fg = self.textFocusColor
+    ind = self.focusIndicator
+  elseif self.inactive then
+    fg = self.textInactiveColor
+  end
+  local text = ind .. self.text .. ' '
+  if self.centered then
+    self:clear(bg)
+    self:centeredWrite(1 + math.floor(self.height / 2), text, bg, fg)
+  else
+    self:write(1, 1, Util.widthify(text, self.width), bg, fg)
+  end
+end
+
+function UI.Button:focus()
+  if self.focused then
+    self:scrollIntoView()
+  end
+  self:draw()
+end
+
+function UI.Button:eventHandler(event)
+  if event.type == 'button_activate' then
+    self:emit({ type = self.event, button = self })
+    return true
+  end
+  return false
+end
+
+--[[-- MenuItem --]]--
+UI.MenuItem = class(UI.Button)
+UI.MenuItem.defaults = {
+  UIElement = 'MenuItem',
+  textColor = colors.black,
+  backgroundColor = colors.lightGray,
+  textFocusColor = colors.white,
+  backgroundFocusColor = colors.lightGray,
+}
+
+function UI.MenuItem:init(args)
+  local defaults = UI:getDefaults(UI.MenuItem, args)
+  UI.Button.init(self, defaults)
+end
+
 --[[-- MenuBar --]]--
 UI.MenuBar = class(UI.Window)
 UI.MenuBar.defaults = {
@@ -2068,7 +2164,9 @@ UI.MenuBar.defaults = {
   textColor = colors.black,
   spacing = 2,
   showBackButton = false,
+  buttonClass = 'MenuItem',
 }
+UI.MenuBar.spacer = { spacer = true, text = 'spacer', inactive = true }
 
 function UI.MenuBar:init(args)
   local defaults = UI:getDefaults(UI.MenuBar, args)
@@ -2090,10 +2188,17 @@ function UI.MenuBar:init(args)
       }
       x = x + buttonProperties.width
       UI:setProperties(buttonProperties, button)
+
+      local parent = self
+      if button.dropdown then
+        buttonProperties.dropmenu = UI.DropMenu { buttons = button.dropdown }
+        table.insert(self.children, buttonProperties.dropmenu)
+      end
+
       if button.name then
-        self[button.name] = UI.MenuItem(buttonProperties)
+        self[button.name] = UI[self.buttonClass](buttonProperties)
       else
-        table.insert(self.children, UI.MenuItem(buttonProperties))
+        table.insert(self.children, UI[self.buttonClass](buttonProperties))
       end
     end
   end
@@ -2110,30 +2215,53 @@ function UI.MenuBar:init(args)
   UI.Window.init(self, defaults)
 end
 
+function UI.MenuBar:getActive(menuItem)
+  return not menuItem.inactive
+end
+
 function UI.MenuBar:eventHandler(event)
-  if event.type == 'dropdown' then
-    -- better, but still a bad implementation
-    -- this at least will allow overrides
-    -- on the button and menubar
-    if event.button and event.button.dropdown then
-      local dropdown = self.parent[event.button.dropdown]
-      if dropdown then
-        if dropdown.enabled then
-          dropdown:hide(event.button)
-        else
-          dropdown:show(event.button)
-        end
-        return true
+  if event.type == 'button_press' and event.button.dropmenu then
+    if event.button.dropmenu.enabled then
+      event.button.dropmenu:hide()
+      return true
+    else
+      local x, y = getPosition(event.button)
+      if x + event.button.dropmenu.width > self.width then
+        x = self.width - event.button.dropmenu.width + 1
       end
+      for _,c in pairs(event.button.dropmenu.children) do
+        if not c.spacer then
+          c.inactive = not self:getActive(c)
+        end
+      end
+      event.button.dropmenu:show(x, y + 1)
     end
+    return true
   end
+end
+
+--[[-- DropMenuItem --]]--
+UI.DropMenuItem = class(UI.Button)
+UI.DropMenuItem.defaults = {
+  UIElement = 'DropMenuItem',
+  textColor = colors.black,
+  backgroundColor = colors.white,
+  textFocusColor = colors.black,
+  textInactiveColor = colors.lightGray,
+  backgroundFocusColor = colors.lightGray,
+}
+
+function UI.DropMenuItem:init(args)
+  local defaults = UI:getDefaults(UI.DropMenuItem, args)
+  UI.Button.init(self, defaults)
 end
 
 --[[-- DropMenu --]]--
 UI.DropMenu = class(UI.MenuBar)
 UI.DropMenu.defaults = {
   UIElement = 'DropMenu',
-  backgroundColor = colors.lightGray,
+  backgroundColor = colors.white,
+  buttonClass = 'DropMenuItem',
 }
 function UI.DropMenu:init(args)
   local defaults = UI:getDefaults(UI.DropMenu, args)
@@ -2153,36 +2281,41 @@ function UI.DropMenu:setParent()
   end
   for _,child in ipairs(self.children) do
     child.width = maxWidth + 2
+    if child.spacer then
+      child.text = string.rep('-', child.width - 2)
+    end
   end
 
-  self.height = #self.children
+  self.height = #self.children + 1
   self.width = maxWidth + 2
   self.ow = self.width
+
+  self.canvas = self:addLayer()
 end
 
 function UI.DropMenu:enable()
   self.enabled = false
 end
 
-function UI.DropMenu:show(button) -- the x, y should be passed instead of button
-  self.button = button
-  self.x, self.y = getPosition(button)
-  self.y = self.y + 1
-  if self.x + self.width > self.parent.width then
-    self.x = self.parent.width - self.width + 1
-  end
+function UI.DropMenu:show(x, y)
+
+  self.x, self.y = x, y
+  self.canvas:move(x, y)
+  self.canvas:setVisible(true)
+
   self.enabled = true
   for _,child in ipairs(self.children) do
     child:enable()
   end
-  self:setFocus(self.children[1])
+
+  self:focusFirst()
   self:draw()
   UI:capture(self)
 end
 
 function UI.DropMenu:hide()
   self:disable()
-  self.parent:draw()
+  self.canvas:setVisible(false)
   UI:release(self)
 end
 
@@ -2639,85 +2772,6 @@ function UI.VerticalMeter:draw()
   local height = self.height - math.ceil(self.value / 100 * self.height)
   self:clear()
   self:clearArea(1, height + 1, self.width, self.height, self.meterColor)
-end
-
---[[-- Button --]]--
-UI.Button = class(UI.Window)
-UI.Button.defaults = {
-  UIElement = 'Button',
-  text = 'button',
-  backgroundColor = colors.gray,
-  backgroundFocusColor = colors.lightGray,
-  textFocusColor = colors.white,
-  textColor = colors.white,
-  centered = true,
-  height = 1,
-  focusIndicator = ' ',
-  event = 'button_press',
-  accelerators = {
-    space = 'button_activate',
-    enter = 'button_activate',
-    mouse_click = 'button_activate',
-  }
-}
-function UI.Button:init(args)
-  local defaults = UI:getDefaults(UI.Button, args)
-  UI.Window.init(self, defaults)
-end
-
-function UI.Button:setParent()
-  if not self.width and not self.ex then
-    self.width = #self.text + 2
-  end
-  UI.Window.setParent(self)
-end
-
-function UI.Button:draw()
-  local fg = self.textColor
-  local bg = self.backgroundColor
-  local ind = ' '
-  if self.focused then
-    bg = self.backgroundFocusColor
-    fg = self.textFocusColor
-    ind = self.focusIndicator
-  end
-  local text = ind .. self.text .. ' '
-  if self.centered then
-    self:clear(bg)
-    self:centeredWrite(1 + math.floor(self.height / 2), text, bg, fg)
-  else
-    self:write(1, 1, Util.widthify(text, self.width), bg, fg)
-  end
-end
-
-function UI.Button:focus()
-  if self.focused then
-    self:scrollIntoView()
-  end
-  self:draw()
-end
-
-function UI.Button:eventHandler(event)
-  if event.type == 'button_activate' then
-    self:emit({ type = self.event, button = self })
-    return true
-  end
-  return false
-end
-
---[[-- MenuItem --]]--
-UI.MenuItem = class(UI.Button)
-UI.MenuItem.defaults = {
-  UIElement = 'MenuItem',
-  textColor = colors.black,
-  backgroundColor = colors.lightGray,
-  textFocusColor = colors.white,
-  backgroundFocusColor = colors.lightGray,
-}
-
-function UI.MenuItem:init(args)
-  local defaults = UI:getDefaults(UI.MenuItem, args)
-  UI.Button.init(self, defaults)
 end
 
 --[[-- TextEntry --]]--

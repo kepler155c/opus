@@ -32,42 +32,30 @@ end
 local Browser = UI.Page {
   menuBar = UI.MenuBar {
     buttons = {
-      { text = '^-',   event = 'updir'                           },
-      { text = 'File', event = 'dropdown', dropdown = 'fileMenu' },
-      { text = 'Edit', event = 'dropdown', dropdown = 'editMenu' },
-      { text = 'View', event = 'dropdown', dropdown = 'viewMenu' },
+      { text = '^-',   event = 'updir' },
+      { text = 'File', dropdown = {
+          { text = 'Run',             event = 'run'    },
+          { text = 'Edit       e',    event = 'edit'   },
+          { text = 'Shell      s',    event = 'shell'  },
+          UI.MenuBar.spacer,
+          { text = 'Quit       q',    event = 'quit'   },
+      } },
+      { text = 'Edit', dropdown = {
+          { text = 'Cut          ^x', event = 'cut'    },
+          { text = 'Copy         ^c', event = 'copy'   },
+          { text = 'Paste        ^v', event = 'paste'  },
+          UI.MenuBar.spacer,
+          { text = 'Mark          m', event = 'mark'   },
+          { text = 'Unmark all    u', event = 'unmark' },
+          UI.MenuBar.spacer,
+          { text = 'Delete      del', event = 'delete' },
+      } },
+      { text = 'View', dropdown = {
+          { text = 'Refresh     r',   event = 'refresh'       },
+          { text = 'Hidden     ^h',   event = 'toggle_hidden' },
+          { text = 'Dir Size   ^s',   event = 'toggle_dirSize' },
+      } },
     },
-  },
-  fileMenu = UI.DropMenu {
-    buttons = {
-      { text = 'Run',             event = 'run'    },
-      { text = 'Edit       e',    event = 'edit'   },
-      { text = 'Shell      s',    event = 'shell'  },
-      UI.Text { value = ' ------------ '           },
-      { text = 'Quit       q',    event = 'quit'   },
-      UI.Text { },
-    }
-  },
-  editMenu = UI.DropMenu {
-    buttons = {
-      { text = 'Cut          ^x', event = 'cut'    },
-      { text = 'Copy         ^c', event = 'copy'   },
-      { text = 'Paste        ^v', event = 'paste'  },
-      UI.Text { value = ' --------------- '        },
-      { text = 'Mark          m', event = 'mark'   },
-      { text = 'Unmark all    u', event = 'unmark' },
-      UI.Text { value = ' --------------- '        },
-      { text = 'Delete      del', event = 'delete' },
-      UI.Text { },
-    }
-  },
-  viewMenu = UI.DropMenu {
-    buttons = {
-      { text = 'Refresh     r',   event = 'refresh'       },
-      { text = 'Hidden     ^h',   event = 'toggle_hidden' },
-      { text = 'Dir Size   ^s',   event = 'toggle_dirSize' },
-      UI.Text { },
-    }
   },
   grid = UI.ScrollingGrid {
     columns = { 
@@ -105,6 +93,16 @@ local Browser = UI.Page {
 function Browser:enable()
   UI.Page.enable(self)
   self:setFocus(self.grid)
+end
+
+function Browser.menuBar:getActive(menuItem)
+  local file = Browser.grid:getSelected()
+  if file then
+    if menuItem.event == 'edit' or menuItem.event == 'run' then
+      return not file.isDir
+    end
+  end
+  return true
 end
 
 function Browser.grid:sortCompare(a, b)

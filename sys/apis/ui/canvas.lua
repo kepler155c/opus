@@ -44,6 +44,12 @@ function Canvas:init(args)
   end
 end
 
+function Canvas:move(x, y)
+  self.x, self.y = x, y
+  self.ex = self.x + self.width - 1
+  self.ey = self.y + self.height - 1
+end
+
 function Canvas:resize(w, h)
   for i = self.height, h do
     self.lines[i] = { }
