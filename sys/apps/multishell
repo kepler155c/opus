@@ -476,6 +476,10 @@ local function startup()
   local hasError
   local session = Util.readTable(SESSION_FILE)
 
+  if not Opus.loadServices() then
+    hasError = true
+  end
+
   local overviewId = multishell.openTab({
     path = 'sys/apps/Overview.lua',
     focused = true,
@@ -483,10 +487,6 @@ local function startup()
     isOverview = true,
   })
   overviewTab = tabs[overviewId]
-
-  if not Opus.loadServices() then
-    hasError = true
-  end
 
   if not Opus.autorun() then
     hasError = true

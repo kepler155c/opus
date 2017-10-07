@@ -239,7 +239,7 @@
     icon = "\0301\031f \0309 \030c \030b \030e \030c \0306 \
 \030 \031f       \
 \030 \031f   \0300   \0310 ",
-    run = "https://pastebin.com/raw/LTRYaSKt",
+    run = "https://gist.github.com/LDDestroier/c7528d95bc0103545c2a/raw",
   },
   [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
     title = "Micropaint",

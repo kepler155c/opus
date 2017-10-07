@@ -270,7 +270,7 @@ function page.container:setCategory(categoryName)
   local col, row = gutter, 2
   local count = #self.children
 
-  local r = math.random(1, 4)
+  local r = math.random(1, 5)
   -- reposition all children
   for k,child in ipairs(self.children) do
     if r == 1 then
@@ -285,6 +285,13 @@ function page.container:setCategory(categoryName)
     elseif r == 4 then
       child.x = self.width - col
       child.y = row
+    elseif r == 5 then
+      child.x = col
+      child.y = row
+      if k == #self.children then
+        child.x = self.width
+        child.y = self.height
+      end
     end
     child.tween = Tween.new(6, child, { x = col, y = row }, 'linear')
 
@@ -298,19 +305,20 @@ function page.container:setCategory(categoryName)
   end
 
   self:initChildren()
-
-  local transition = { i = 1, parent = self, children = self.children }
-  function transition:update(device)
-    self.parent:clear()
-    for _,child in ipairs(self.children) do
-      child.tween:update(1)
-      child.x = math.floor(child.x)
-      child.y = math.floor(child.y)
-      child:draw()
+  local function transition(args)
+    local i = 1
+    return function(device)
+      self:clear()
+      for _,child in pairs(self.children) do
+        child.tween:update(1)
+        child.x = math.floor(child.x)
+        child.y = math.floor(child.y)
+        child:draw()
+      end
+      args.canvas:blit(device, args, args)
+      i = i + 1
+      return i < 7
     end
-    self.canvas:blit(device, self, self)
-    self.i = self.i + 1
-    return self.i < 7
   end
   self:addTransition(transition)
 end

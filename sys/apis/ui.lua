@@ -1,8 +1,8 @@
-local Canvas = require('ui.canvas')
-local class  = require('class')
-local Event  = require('event')
-local Tween  = require('ui.tween')
-local Util   = require('util')
+local Canvas     = require('ui.canvas')
+local class      = require('class')
+local Event      = require('event')
+local Transition = require('ui.transition')
+local Util       = require('util')
 
 local _rep = string.rep
 local _sub = string.sub
@@ -34,16 +34,15 @@ end
 
 --[[-- Top Level Manager --]]--
 local Manager = class()
-function Manager:init(args)
+function Manager:init()
   local control = false
   local shift = false
   local mouseDragged = false
-  local pages = { }
   local running = false
 
   -- single thread all input events
   local function singleThread(event, fn)
-    Event.on(event, function(...)
+    Event.on(event, function(_, ...)
       if not running then
         running = true
         fn(...)
@@ -52,7 +51,7 @@ function Manager:init(args)
     end)
   end
 
-  singleThread('term_resize', function(h, side)
+  singleThread('term_resize', function(side)
     if self.currentPage then
       -- the parent doesn't have any children set...
       -- that's why we have to resize both the parent and the current page
@@ -67,7 +66,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('mouse_scroll', function(h, direction, x, y)
+  singleThread('mouse_scroll', function(direction, x, y)
     if self.target then
       local event = self:pointToChild(self.target, x, y)
       local directions = {
@@ -83,7 +82,7 @@ function Manager:init(args)
   end)
 
   -- this should be moved to the device !
-  singleThread('monitor_touch', function(h, side, x, y)
+  singleThread('monitor_touch', function(side, x, y)
     if self.currentPage then
       if self.currentPage.parent.device.side == side then
         self:click(1, x, y)
@@ -91,12 +90,15 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('mouse_click', function(h, button, x, y)
+  singleThread('mouse_click', function(button, x, y)
 
     mouseDragged = false
     if button == 1 and shift and control then -- debug hack
       local event = self:pointToChild(self.target, x, y)
-      multishell.openTab({ path = 'sys/apps/Lua.lua', args = { event.element }, focused = true })
+      multishell.openTab({
+        path = 'sys/apps/Lua.lua',
+        args = { event.element, self:dump(self.currentPage) },
+        focused = true })
 
     elseif self.currentPage then
       if not self.currentPage.parent.device.side then
@@ -109,7 +111,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('mouse_up', function(h, button, x, y)
+  singleThread('mouse_up', function(button, x, y)
 
     if self.currentPage and not mouseDragged then
       if not self.currentPage.parent.device.side then
@@ -118,7 +120,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('mouse_drag', function(h, button, x, y)
+  singleThread('mouse_drag', function(button, x, y)
 
     mouseDragged = true
     if self.target then
@@ -132,7 +134,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('paste', function(h, text)
+  singleThread('paste', function(text)
     if clipboard.isInternal() then
       text = clipboard.getData()
     end
@@ -142,7 +144,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('char', function(h, ch)
+  singleThread('char', function(ch)
     control = false
     if self.currentPage then
       self:inputEvent(self.currentPage.focused, { type = 'key', key = ch })
@@ -150,7 +152,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('key_up', function(h, code)
+  singleThread('key_up', function(code)
     if code == keys.leftCtrl or code == keys.rightCtrl then
       control = false
     elseif code == keys.leftShift or code == keys.rightShift then
@@ -158,7 +160,7 @@ function Manager:init(args)
     end
   end)
 
-  singleThread('key', function(h, code)
+  singleThread('key', function(code)
     local ch = keys.getName(code)
     if not ch then
       return
@@ -262,7 +264,7 @@ end
 function Manager:inputEvent(parent, event)
 
   while parent do
-    local acc =  parent.accelerators[event.key]
+    local acc = parent.accelerators[event.key]
     if acc then
       if parent:emit({ type = acc, element = parent }) then
         return true
@@ -282,7 +284,7 @@ function Manager:pointToChild(parent, x, y)
   y = y + parent.offy - parent.y + 1
   if parent.children then
     for _,child in pairs(parent.children) do
-      if child.enabled and not child.inactive and 
+      if child.enabled and not child.inactive and
          x >= child.x and x < child.x + child.width and
          y >= child.y and y < child.y + child.height then
         local c = self:pointToChild(child, x, y)
@@ -475,6 +477,31 @@ function Manager:setProperties(obj, args)
   end
 end
 
+function Manager:dump(el)
+  if el then
+    local function clean(el)
+      local o = el
+      el = Util.shallowCopy(el)
+      el.parent = nil
+      if el.children then
+        local children = { }
+        for k,c in pairs(el.children) do
+          children[k] = clean(c)
+        end
+        el.children = children
+      end
+      for k,v in pairs(o) do
+        if type(v) == 'table' and v.UIElement then
+          el[k] = nil
+        end
+      end
+
+      return el
+    end
+    return clean(el)
+  end
+end
+
 local UI = Manager()
 
 --[[-- Basic drawable area --]]--
@@ -652,9 +679,9 @@ function UI.Window:setTextScale(textScale)
   self.parent:setTextScale(textScale)
 end
 
-function UI.Window:clear(bg, ...)
+function UI.Window:clear(bg, fg)
   if self.canvas then
-    self.canvas:clear(bg or self.backgroundColor)
+    self.canvas:clear(bg or self.backgroundColor, fg or self.textColor)
   else
     self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
   end
@@ -755,7 +782,7 @@ function UI.Window:print(text, bg, fg, indent)
   local lines = Util.split(text)
   for k,line in pairs(lines) do
     local fragments = pieces(line, bg, fg)
-    for l, fragment in ipairs(fragments) do
+    for _, fragment in ipairs(fragments) do
       local lx = 1
       if type(fragment) == 'table' then -- ansi sequence
         fg = fragment.fg
@@ -897,130 +924,6 @@ function UI.Window:eventHandler(event)
   return false
 end
 
---[[-- TransitionSlideLeft --]]--
-UI.TransitionSlideLeft = class()
-UI.TransitionSlideLeft.defaults = {
-  UIElement = 'TransitionSlideLeft',
-  ticks = 6,
-  easing = 'outQuint',
-}
-function UI.TransitionSlideLeft:init(args)
-  local defaults = UI:getDefaults(UI.TransitionSlideLeft, args)
-  UI:setProperties(self, defaults)
-
-  self.pos = { x = self.ex }
-  self.tween = Tween.new(self.ticks, self.pos, { x = self.x }, self.easing)
-  self.lastx = 0
-  self.lastScreen = self.canvas:copy()
-end
-
-function UI.TransitionSlideLeft:update(device)
-  self.tween:update(1)
-  local x = math.floor(self.pos.x)
-  if x ~= self.lastx then
-    self.lastx = x
-    self.lastScreen:dirty()
-    self.lastScreen:blit(device, {
-      x = self.ex - x + self.x,
-      y = self.y,
-      ex = self.ex,
-      ey = self.ey },
-      { x = self.x, y = self.y })
-
-    self.canvas:blit(device, {
-      x = self.x,
-      y = self.y,
-      ex = self.ex - x + self.x,
-      ey = self.ey },
-      { x = x, y = self.y })
-  end
-  return self.pos.x ~= self.x
-end
-
---[[-- TransitionSlideRight --]]--
-UI.TransitionSlideRight = class()
-UI.TransitionSlideRight.defaults = {
-  UIElement = 'TransitionSlideRight',
-  ticks = 6,
-  easing = 'outQuint',
-}
-function UI.TransitionSlideRight:init(args)
-  local defaults = UI:getDefaults(UI.TransitionSlideRight, args)
-  UI:setProperties(self, defaults)
-
-  self.pos = { x = self.x }
-  self.tween = Tween.new(self.ticks, self.pos, { x = self.ex }, self.easing)
-  self.lastx = 0
-  self.lastScreen = self.canvas:copy()
-end
-
-function UI.TransitionSlideRight:update(device)
-  self.tween:update(1)
-  local x = math.floor(self.pos.x)
-  if x ~= self.lastx then
-    self.lastx = x
-    self.lastScreen:dirty()
-    self.lastScreen:blit(device, {
-      x = self.x,
-      y = self.y,
-      ex = self.ex - x + self.x,
-      ey = self.ey },
-      { x = x, y = self.y })
-    self.canvas:blit(device, {
-      x = self.ex - x + self.x,
-      y = self.y,
-      ex = self.ex,
-      ey = self.ey },
-      { x = self.x, y = self.y })
-  end
-  return self.pos.x ~= self.ex
-end
-
---[[-- TransitionExpandUp --]]--
-UI.TransitionExpandUp = class()
-UI.TransitionExpandUp.defaults = {
-  UIElement = 'TransitionExpandUp',
-  ticks = 3,
-  easing = 'linear',
-}
-function UI.TransitionExpandUp:init(args)
-  local defaults = UI:getDefaults(UI.TransitionExpandUp, args)
-  UI:setProperties(self, defaults)
-  self.pos = { y = self.ey + 1 }
-  self.tween = Tween.new(self.ticks, self.pos, { y = self.y }, self.easing)
-end
-
-function UI.TransitionExpandUp:update(device)
-  self.tween:update(1)
-  self.canvas:blit(device, nil, { x = self.x, y = math.floor(self.pos.y) })
-  return self.pos.y ~= self.y
-end
-
---[[-- TransitionGrow --]]--
-UI.TransitionGrow = class()
-UI.TransitionGrow.defaults = {
-  UIElement = 'TransitionGrow',
-  ticks = 3,
-  easing = 'linear',
-}
-function UI.TransitionGrow:init(args)
-  local defaults = UI:getDefaults(UI.TransitionGrow, args)
-  UI:setProperties(self, defaults)
-  self.tween = Tween.new(self.ticks,
-    { x = self.width / 2 - 1, y = self.height / 2 - 1, w = 1, h = 1 },
-    { x = 1, y = 1, w = self.width, h = self.height }, self.easing)
-end
-
-function UI.TransitionGrow:update(device)
-  local finished = self.tween:update(1)
-  local subj = self.tween.subject
-  local rect = { x = math.floor(subj.x), y = math.floor(subj.y) }
-  rect.ex = math.floor(rect.x + subj.w - 1)
-  rect.ey = math.floor(rect.y + subj.h - 1)
-  self.canvas:blit(device, rect, { x = self.x + rect.x - 1, y = self.y + rect.y - 1})
-  return not finished
-end
-
 --[[-- Terminal for computer / advanced computer / monitor --]]--
 UI.Device = class(UI.Window)
 UI.Device.defaults = {
@@ -1040,7 +943,7 @@ function UI.Device:init(args)
   end
 
   if not defaults.device.setTextScale then
-    defaults.device.setTextScale = function(...) end
+    defaults.device.setTextScale = function() end
   end
 
   defaults.device.setTextScale(defaults.textScale)
@@ -1091,7 +994,6 @@ function UI.Device:reset()
   self.device.setCursorPos(1, 1)
 end
 
--- refactor into canvas...
 function UI.Device:addTransition(effect, args)
   if not self.transitions then
     self.transitions = { }
@@ -1103,28 +1005,19 @@ function UI.Device:addTransition(effect, args)
   args.canvas = args.canvas or self.canvas
 
   if type(effect) == 'string' then
-    local transitions = {
-      slideLeft  = UI.TransitionSlideLeft,
-      slideRight = UI.TransitionSlideRight,
-      expandUp   = UI.TransitionExpandUp,
-      grow       = UI.TransitionGrow,
-    }
-    local c = transitions[effect]
-    if not c then
-      error('Invalid transition: ' .. effect)
+    effect = Transition[effect]
+    if not effect then
+      error('Invalid transition')
     end
-    effect = c(args)
-  else
-    Util.merge(effect, args)
   end
 
-  table.insert(self.transitions, effect)
+  table.insert(self.transitions, { update = effect(args), args = args })
 end
 
 function UI.Device:runTransitions(transitions, canvas)
 
   for _,t in ipairs(transitions) do
-    canvas:punch(t)               -- punch out the effect areas
+    canvas:punch(t.args)               -- punch out the effect areas
   end
   canvas:blitClipped(self.device) -- and blit the remainder
   canvas:reset()
@@ -1132,7 +1025,7 @@ function UI.Device:runTransitions(transitions, canvas)
   while true do
     for _,k in ipairs(Util.keys(transitions)) do
       local transition = transitions[k]
-      if not transition:update(self.device) then
+      if not transition.update(self.device) then
         transitions[k] = nil
       end
     end
@@ -1353,7 +1246,6 @@ UI.Grid.defaults = {
   index = 1,
   inverseSort = false,
   disableHeader = false,
-  selectable = true,
   textColor = colors.white,
   textSelectedColor = colors.white,
   backgroundColor = colors.black,
@@ -1447,7 +1339,7 @@ function UI.Grid:adjustWidth()
     end
 
   else
-    for k,c in ipairs(t) do
+    for _,c in ipairs(t) do
       c.cw = #(c.heading or '')
       w = w - c.cw
     end
@@ -1591,8 +1483,8 @@ function UI.Grid:drawHeadings()
 end
 
 function UI.Grid:sortCompare(a, b)
-  local a = safeValue(a[self.sortColumn])
-  local b = safeValue(b[self.sortColumn])
+  a = safeValue(a[self.sortColumn])
+  b = safeValue(b[self.sortColumn])
   if type(a) == type(b) then
     return a < b
   end
@@ -1619,7 +1511,7 @@ function UI.Grid:drawRows()
     sb:clear()
 
     local ind = ' '
-    if self.focused and index == self.index and self.selectable then
+    if self.focused and index == self.index and not self.inactive then
       ind = self.focusIndicator
     end
 
@@ -1628,7 +1520,7 @@ function UI.Grid:drawRows()
       ind = ' '
     end
 
-    local selected = index == self.index and self.selectable
+    local selected = index == self.index and not self.inactive
 
     self:write(1, y, sb:get(),
       self:getRowBackgroundColor(row, selected),
@@ -1662,7 +1554,7 @@ function UI.Grid:getRowBackgroundColor(row, selected)
   return self.backgroundColor
 end
 
-function UI.Grid:getIndex(index)
+function UI.Grid:getIndex()
   return self.index
 end
 
@@ -1868,7 +1760,7 @@ function UI.ScrollingGrid:eventHandler(event)
           self:setIndex(self.scrollOffset - 1)
         elseif event.y == self.height then
           self:setIndex(self.scrollOffset + self.pageSize)
-        else
+          -- else
           -- ... percentage ...
         end
         return true
@@ -1999,7 +1891,7 @@ function UI.ViewportWindow:eventHandler(event)
   end
   return true
 end
-  
+
 --[[-- ScrollingText --]]--
 UI.ScrollingText = class(UI.Window)
 UI.ScrollingText.defaults = {
@@ -2177,7 +2069,7 @@ function UI.MenuBar:init(args)
   end
 
   local x = 1
-  for k,button in pairs(self.buttons) do
+  for _,button in pairs(self.buttons) do
     if button.UIElement then
       table.insert(self.children, button)
     else
@@ -2189,16 +2081,16 @@ function UI.MenuBar:init(args)
       x = x + buttonProperties.width
       UI:setProperties(buttonProperties, button)
 
-      local parent = self
-      if button.dropdown then
-        buttonProperties.dropmenu = UI.DropMenu { buttons = button.dropdown }
-        table.insert(self.children, buttonProperties.dropmenu)
+      button = UI[self.buttonClass](buttonProperties)
+      if button.name then
+        self[button.name] = button
+      else
+        table.insert(self.children, button)
       end
 
-      if button.name then
-        self[button.name] = UI[self.buttonClass](buttonProperties)
-      else
-        table.insert(self.children, UI[self.buttonClass](buttonProperties))
+      if button.dropdown then
+        button.dropmenu = UI.DropMenu { buttons = button.dropdown }
+        --table.insert(self.children, buttonProperties.dropmenu)
       end
     end
   end
@@ -2320,18 +2212,17 @@ function UI.DropMenu:hide()
 end
 
 function UI.DropMenu:eventHandler(event)
-  if event.type == 'focus_lost' then
+  if event.type == 'focus_lost' and self.enabled then
     for _,child in ipairs(self.children) do
       if child == event.focused then
         return
       end
     end
     self:hide()
-  elseif event.type == 'mouse_out' then
+    --self.parent:focusFirst()
+  elseif event.type == 'mouse_out' and self.enabled then
     self:hide()
-    if self.button then
-      self:setFocus(self.button)
-    end
+    self:setFocus(self.parent)
   else
     return UI.MenuBar.eventHandler(self, event)
   end
@@ -2381,7 +2272,7 @@ function UI.Tabs:init(args)
   local defaults = UI:getDefaults(UI.Tabs, args)
 
   local buttons = { }
-  for k,child in pairs(defaults) do
+  for _,child in pairs(defaults) do
     if type(child) == 'table' and child.UIElement then
       table.insert(buttons, {
         text = child.tabTitle or '', event = 'tab_select',
@@ -3007,7 +2898,7 @@ end
 function UI.Chooser:eventHandler(event)
   if event.type == 'key' then
     if event.key == 'right' or event.key == 'space' then
-      local choice,k = Util.find(self.choices, 'value', self.value)
+      local _,k = Util.find(self.choices, 'value', self.value)
       if k and k < #self.choices then
         self.value = self.choices[k+1].value
       else
@@ -3017,7 +2908,7 @@ function UI.Chooser:eventHandler(event)
       self:draw()
       return true
     elseif event.key == 'left' then
-      local choice,k = Util.find(self.choices, 'value', self.value)
+      local _,k = Util.find(self.choices, 'value', self.value)
       if k and k > 1 then
         self.value = self.choices[k-1].value
       else
@@ -3079,7 +2970,6 @@ function UI.TextArea:setText(text)
 end
 
 function UI.TextArea:draw()
-  local value = self.value or ''
   self:clear()
   self:setCursorPos(1, 1)
   self:print(self.value)
@@ -3110,7 +3000,7 @@ end
 function UI.Form:setValues(values)
   self:reset()
   self.values = values
-  for k,child in pairs(self.children) do
+  for _,child in pairs(self.children) do
     if child.formKey then
       -- this should be child:setValue(self.values[child.formKey])
       -- so chooser can set default choice if null
@@ -3133,7 +3023,7 @@ function UI.Form:createForm()
       end
     end
   end
- 
+
   local y = self.margin
   for _, child in pairs(self) do
     if type(child) == 'table' and child.UIElement then

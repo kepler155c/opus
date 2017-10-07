@@ -92,7 +92,7 @@ local systemPage = UI.Page {
           { name = 'Computer ID', value = tostring(os.getComputerID())       },
           { name = 'Day',         value = tostring(os.day())                 },
         },
-        selectable = false,
+        inactive = true,
         columns = {
           { key = 'name',  width = 12 },
           { key = 'value' },
