@@ -1,9 +1,13 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Event    = require('event')
 local Socket   = require('socket')
 local Terminal = require('terminal')
 local Util     = require('util')
+
+local colors     = _G.colors
+local multishell = _ENV.multishell
+local term       = _G.term
 
 local remoteId
 local args = { ... }
@@ -11,7 +15,7 @@ if #args == 1 then
   remoteId = tonumber(args[1])
 else
   print('Enter host ID')
-  remoteId = tonumber(read())
+  remoteId = tonumber(_G.read())
 end
 
 if not remoteId then
@@ -73,7 +77,7 @@ while true do
     print()
     print('Connection lost')
     print('Press enter to exit')
-    read()
+    _G.read()
     break
   end
 

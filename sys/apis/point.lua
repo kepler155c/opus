@@ -37,7 +37,7 @@ end
 -- turtle distance (manhattan)
 function Point.turtleDistance(a, b)
   if a.y and b.y then
-    return math.abs(a.x - b.x) + 
+    return math.abs(a.x - b.x) +
            math.abs(a.y - b.y) +
            math.abs(a.z - b.z)
   else
@@ -116,7 +116,7 @@ function Point.calculateMoves(pta, ptb, distance)
       heading = ptb.heading
     end
   end
-  
+
   return moves, heading
 end
 
@@ -149,7 +149,7 @@ end
 function Point.adjacentPoints(pt)
   local pts = { }
 
-  for _, hi in pairs(turtle.getHeadings()) do
+  for _, hi in pairs(_G.turtle.getHeadings()) do
     table.insert(pts, { x = pt.x + hi.xd, y = pt.y + hi.yd, z = pt.z + hi.zd })
   end
 

@@ -1,4 +1,4 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local class  = require('class')
 local Config = require('config')
@@ -10,19 +10,13 @@ local Tween  = require('ui.tween')
 local UI     = require('ui')
 local Util   = require('util')
 
-local REGISTRY_DIR = 'usr/.registry'
-local TEMPLATE = [[
-local env = { }
-for k,v in pairs(getfenv(1)) do
-  env[k] = v 
-end
-setmetatable(env, { __index = _G })
+local fs         = _G.fs
+local multishell = _ENV.multishell
+local pocket     = _G.pocket
+local term       = _G.term
+local turtle     = _G.turtle
 
-local s, m = os.run(env, 'sys/apps/appRun.lua',  %s, ...)
-if not s then
-  error(m)
-end
-]]
+local REGISTRY_DIR = 'usr/.registry'
 
 multishell.setTitle(multishell.getCurrent(), 'Overview')
 UI:configure('Overview', ...)
@@ -93,13 +87,14 @@ end
 
 local buttons = { }
 local categories = { }
-table.insert(buttons, { text = 'Recent', event = 'category' })
 for _,f in pairs(applications) do
   if not categories[f.category] then
     categories[f.category] = true
     table.insert(buttons, { text = f.category, event = 'category' })
   end
 end
+table.sort(buttons, function(a, b) return a.text < b.text end)
+table.insert(buttons, 1, { text = 'Recent', event = 'category' })
 table.insert(buttons, { text = '+', event = 'new' })
 
 local function parseIcon(iconText)
@@ -159,16 +154,10 @@ local page = UI.Page {
     f = 'files',
     s = 'shell',
     l = 'lua',
-    [ 'control-l' ] = 'refresh',
     [ 'control-n' ] = 'new',
     delete = 'delete',
   },
 }
-
-function page:draw()
-  self.tabBar:draw()
-  self.container:draw()
-end
 
 UI.Icon = class(UI.Window)
 function UI.Icon:init(args)
@@ -194,7 +183,7 @@ function UI.Icon:eventHandler(event)
   return UI.Window.eventHandler(self, event)
 end
 
-function page.container:setCategory(categoryName)
+function page.container:setCategory(categoryName, animate)
 
   -- reset the viewport window
   self.children = { }
@@ -223,7 +212,7 @@ function page.container:setCategory(categoryName)
     end
 
   else
-    filtered = filter(applications, function(a) 
+    filtered = filter(applications, function(a)
       return a.category == categoryName -- and fs.exists(a.run)
     end)
     table.sort(filtered, function(a, b) return a.title < b.title end)
@@ -295,6 +284,11 @@ function page.container:setCategory(categoryName)
     end
     child.tween = Tween.new(6, child, { x = col, y = row }, 'linear')
 
+    if not animate then
+      child.x = col
+      child.y = row
+    end
+
     if k < count then
       col = col + child.width
       if col + self.children[k + 1].width + gutter - 2 > self.width then
@@ -305,32 +299,30 @@ function page.container:setCategory(categoryName)
   end
 
   self:initChildren()
-  local function transition(args)
-    local i = 1
-    return function(device)
-      self:clear()
-      for _,child in pairs(self.children) do
-        child.tween:update(1)
-        child.x = math.floor(child.x)
-        child.y = math.floor(child.y)
-        child:draw()
+  if animate then                      -- need to fix transitions under layers
+    local function transition(args)
+      local i = 1
+      return function(device)
+        self:clear()
+        for _,child in pairs(self.children) do
+          child.tween:update(1)
+          child.x = math.floor(child.x)
+          child.y = math.floor(child.y)
+          child:draw()
+        end
+        args.canvas:blit(device, args, args)
+        i = i + 1
+        return i < 7
       end
-      args.canvas:blit(device, args, args)
-      i = i + 1
-      return i < 7
     end
+    self:addTransition(transition)
   end
-  self:addTransition(transition)
-end
-
-function page.container:draw()
-  UI.Viewport.draw(self)
 end
 
 function page:refresh()
   local pos = self.container.offy
   self:focusFirst(self)
-  self.container:setCategory(config.currentCategory)    
+  self.container:setCategory(config.currentCategory)
   self.container:setScrollPosition(pos)
 end
 
@@ -343,9 +335,8 @@ function page:eventHandler(event)
 
   if event.type == 'category' then
     self.tabBar:selectTab(event.button.text)
-    self.container:setCategory(event.button.text)
+    self.container:setCategory(event.button.text, true)
     self.container:draw()
-    self:sync()
 
     config.currentCategory = event.button.text
     Config.update('Overview', config)
@@ -392,14 +383,7 @@ function page:eventHandler(event)
       event.focused.parent:scrollIntoView()
     end
 
-  elseif event.type == 'tab_change' then
-    if event.current > event.last then
-      --self.container:setTransition(UI.effect.slideLeft)
-    else
-      --self.container:setTransition(UI.effect.slideRight)
-    end
-
-  elseif event.type == 'refresh' then
+  elseif event.type == 'refresh' then -- remove this after fixing notification
     loadApplications()
     self:refresh()
     self:draw()
@@ -458,7 +442,7 @@ local editor = UI.Dialog {
       required = true,
     },
     loadIcon = UI.Button {
-      x = 11, y = 6, 
+      x = 11, y = 6,
       text = 'Icon', event = 'loadIcon', help = 'Select icon'
     },
     image = UI.NftImage {
@@ -569,5 +553,4 @@ page.tabBar:selectTab(config.currentCategory or 'Apps')
 page.container:setCategory(config.currentCategory or 'Apps')
 UI:setPage(page)
 
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

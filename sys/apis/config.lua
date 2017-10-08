@@ -1,5 +1,7 @@
 local Util = require('util')
 
+local fs = _G.fs
+
 local Config = { }
 
 Config.load = function(fname, data)

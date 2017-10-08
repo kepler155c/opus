@@ -1,3 +1,9 @@
+local colors = _G.colors
+local fs     = _G.fs
+local os     = _G.os
+--local shell  = _ENV.shell
+local term   = _G.term
+
 local Opus = { }
 
 local function runDir(directory, open)
@@ -27,7 +33,7 @@ local function runDir(directory, open)
       term.setTextColor(colors.white)
       term.write(fs.combine(directory, file))
       if err then
-        printError(err)
+        _G.printError(err)
       end
       success = false
     end

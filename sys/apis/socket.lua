@@ -3,6 +3,10 @@ local Logger   = require('logger')
 local Security = require('security')
 local Util     = require('util')
 
+local device    = _G.device
+local os        = _G.os
+local transport = _G.transport
+
 local socketClass = { }
 
 function socketClass:read(timeout)
@@ -165,7 +169,7 @@ function Socket.server(port)
   Logger.log('socket', 'Waiting for connections on port ' .. port)
 
   while true do
-    local e, _, sport, dport, msg = os.pullEvent('modem_message')
+    local _, _, sport, dport, msg = os.pullEvent('modem_message')
 
     if sport == port and
        msg and

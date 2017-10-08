@@ -1,5 +1,9 @@
 local GPS = { }
 
+local device = _G.device
+local gps    = _G.gps
+local turtle = _G.turtle
+
 function GPS.locate(timeout, debug)
   local pt = { }
   timeout = timeout or 10
@@ -14,7 +18,6 @@ function GPS.isAvailable()
 end
 
 function GPS.getPoint(timeout, debug)
- 
   local pt = GPS.locate(timeout, debug)
   if not pt then
     return
@@ -24,7 +27,7 @@ function GPS.getPoint(timeout, debug)
   pt.y = math.floor(pt.y)
   pt.z = math.floor(pt.z)
 
-  if pocket then
+  if _G.pocket then
     pt.y = pt.y - 1
   end
 
@@ -47,7 +50,7 @@ function GPS.getHeading(timeout)
   while not turtle.forward() do
     turtle.turnRight()
     if turtle.getHeading() == heading then
-      printError('GPS.getPoint: Unable to move forward')
+      _G.printError('GPS.getPoint: Unable to move forward')
       return
     end
   end
@@ -79,13 +82,13 @@ function GPS.getPointAndHeading(timeout)
 end
 
 -- from stock gps API
-local function trilaterate( A, B, C ) 
+local function trilaterate(A, B, C)
   local a2b = B.position - A.position
   local a2c = C.position - A.position
 
   if math.abs( a2b:normalize():dot( a2c:normalize() ) ) > 0.999 then
-    return nil 
-  end 
+    return
+  end
 
   local d = a2b:length()
   local ex = a2b:normalize( )
@@ -100,22 +103,22 @@ local function trilaterate( A, B, C )
 
   local x = (r1*r1 - r2*r2 + d*d) / (2*d)
   local y = (r1*r1 - r3*r3 - x*x + (x-i)*(x-i) + j*j) / (2*j)
- 
+
   local result = A.position + (ex * x) + (ey * y)
 
-  local zSquared = r1*r1 - x*x - y*y 
+  local zSquared = r1*r1 - x*x - y*y
   if zSquared > 0 then
     local z = math.sqrt( zSquared )
     local result1 = result + (ez * z)
     local result2 = result - (ez * z)
-    
+
     local rounded1, rounded2 = result1:round(), result2:round()
     if rounded1.x ~= rounded2.x or rounded1.y ~= rounded2.y or rounded1.z ~= rounded2.z then
       return rounded1, rounded2
     else
       return rounded1
-    end 
-  end 
+    end
+  end
   return result:round()
 end
 
@@ -129,7 +132,7 @@ local function narrow( p1, p2, fix )
     return p1:round()
   else
     return p2:round()
-  end 
+  end
 end
 -- end stock gps api
 

@@ -1,6 +1,9 @@
 local UI   = require('ui')
 local Util = require('util')
 
+local colors = _G.colors
+local fs     = _G.fs
+
 return function(args)
 
   local columns = {
@@ -86,7 +89,7 @@ return function(args)
     return row
   end
 
-  function selectFile.grid:getRowTextColor(file, selected)
+  function selectFile.grid:getRowTextColor(file)
     if file.isDir then
       return colors.cyan
     end

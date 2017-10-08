@@ -189,7 +189,7 @@ function json.parseObject(str)
 
   local val = {}
   while str:sub(1, 1) ~= "}" do
-    local k, v = nil, nil
+    local k, v
     k, v, str = json.parseMember(str)
     val[k] = v
     str = removeWhite(str)

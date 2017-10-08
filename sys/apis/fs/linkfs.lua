@@ -1,6 +1,8 @@
+local fs = _G.fs
+
 local linkfs = { }
 
-local methods = { 'exists', 'getFreeSpace', 'getSize', 
+local methods = { 'exists', 'getFreeSpace', 'getSize',
   'isDir', 'isReadOnly', 'list', 'listEx', 'makeDir', 'open', 'getDrive' }
 
 for _,m in pairs(methods) do
@@ -10,7 +12,7 @@ for _,m in pairs(methods) do
   end
 end
 
-function linkfs.mount(dir, source)
+function linkfs.mount(_, source)
   if not source then
     error('Source is required')
   end
@@ -23,7 +25,7 @@ function linkfs.mount(dir, source)
   end
   return {
     source = source
-  }  
+  }
 end
 
 function linkfs.copy(node, s, t)

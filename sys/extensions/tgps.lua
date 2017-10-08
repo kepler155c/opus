@@ -1,8 +1,10 @@
+local turtle = _G.turtle
+
 if not turtle or turtle.enableGPS then
   return
 end
 
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local GPS    = require('gps')
 local Config = require('config')

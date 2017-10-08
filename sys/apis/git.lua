@@ -6,9 +6,9 @@ local FILE_URL = 'https://raw.githubusercontent.com/%s/%s/%s/%s'
 
 local git = { }
 
-function git.list(repo)
+function git.list(repository)
 
-  local t = Util.split(repo, '(.-)/')
+  local t = Util.split(repository, '(.-)/')
 
   local user = t[1]
   local repo = t[2]
@@ -33,7 +33,7 @@ function git.list(repo)
 
   local list = { }
 
-  for k,v in pairs(data.tree) do
+  for _,v in pairs(data.tree) do
     if v.type == "blob" then
       v.path = v.path:gsub("%s","%%20")
       list[v.path] = {

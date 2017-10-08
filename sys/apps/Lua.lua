@@ -1,15 +1,18 @@
-requireInjector = requireInjector or load(http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
-requireInjector(getfenv(1))
+local injector = _G.requireInjector or load(http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
+injector()
 
-local Event   = require('event')
-local History = require('history')
-local UI      = require('ui')
-local Util    = require('util')
+local Event      = require('event')
+local History    = require('history')
+local Peripheral = require('peripheral')
+local UI         = require('ui')
+local Util       = require('util')
 
-local sandboxEnv = setmetatable(Util.shallowCopy(getfenv(1)), { __index = _G })
+local multishell = _ENV.multishell
+
+local sandboxEnv = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
 sandboxEnv.exit = function() Event.exitPullEvents() end
 sandboxEnv._echo = function( ... ) return ... end
-requireInjector(sandboxEnv)
+injector(sandboxEnv)
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
 UI:configure('Lua', ...)
@@ -112,12 +115,12 @@ function page:eventHandler(event)
 
   if event.type == 'global' then
     self:setPrompt('', true)
-    self:executeStatement('getfenv(0)')
+    self:executeStatement('_G')
     command = nil
 
   elseif event.type == 'local' then
     self:setPrompt('', true)
-    self:executeStatement('getfenv(1)')
+    self:executeStatement('_ENV')
     command = nil
 
   elseif event.type == 'autocomplete' then
@@ -129,11 +132,7 @@ function page:eventHandler(event)
 
   elseif event.type == 'device' then
     if not _G.device then
-      sandboxEnv.device = { }
-      for _,side in pairs(peripheral.getNames()) do
-        local key = string.format('%s:%s', peripheral.getType(side), side)
-        sandboxEnv.device[ key ] = peripheral.wrap(side)
-      end
+      sandboxEnv.device = Peripheral.getList()
     end
     self:setPrompt('device', true)
     self:executeStatement('device')
@@ -187,8 +186,7 @@ function page:setResult(result)
   local t = { }
 
   local function safeValue(v)
-    local t = type(v)
-    if t == 'string' or t == 'number' then
+    if type(v) == 'string' or type(v) == 'number' then
       return v
     end
     return tostring(v)
@@ -205,7 +203,7 @@ function page:setResult(result)
       if type(v) == 'table' then
         if Util.size(v) == 0 then
           entry.value = 'table: (empty)'
-        else 
+        else
           entry.value = 'table'
         end
       end
@@ -243,7 +241,7 @@ function page.grid:eventHandler(event)
       if type(entry.rawName) == 'number' then
         return command .. '[' .. entry.name .. ']'
       end
-      if entry.name:match("%W") or 
+      if entry.name:match("%W") or
          entry.name:sub(1, 1):match("%d") then
         return command .. "['" .. tostring(entry.name) .. "']"
       end

@@ -1,9 +1,11 @@
 local synchronized = require('sync')
 local Util         = require('util')
 
+local fs = _G.fs
+
 local urlfs = { }
 
-function urlfs.mount(dir, url)
+function urlfs.mount(_, url)
   if not url then
     error('URL is required')
   end
@@ -12,7 +14,7 @@ function urlfs.mount(dir, url)
   }
 end
 
-function urlfs.delete(node, dir)
+function urlfs.delete(_, dir)
   fs.unmount(dir)
 end
 

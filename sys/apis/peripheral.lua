@@ -1,16 +1,14 @@
 local Util = require('util')
 
-local Peripheral = { }
+local Peripheral = Util.shallowCopy(_G.peripheral)
 
-local function getDeviceList()
-
+function Peripheral.getList()
   if _G.device then
     return _G.device
   end
 
   local deviceList = { }
-
-  for _,side in pairs(peripheral.getNames()) do
+  for _,side in pairs(Peripheral.getNames()) do
     Peripheral.addDevice(deviceList, side)
   end
 
@@ -19,14 +17,14 @@ end
 
 function Peripheral.addDevice(deviceList, side)
   local name = side
-  local ptype = peripheral.getType(side)
+  local ptype = Peripheral.getType(side)
 
   if not ptype then
     return
   end
 
   if ptype == 'modem' then
-    if peripheral.call(name, 'isWireless') then
+    if Peripheral.call(name, 'isWireless') then
       ptype = 'wireless_modem'
     else
       ptype = 'wired_modem'
@@ -52,10 +50,10 @@ function Peripheral.addDevice(deviceList, side)
     name = uniqueName
   end
 
-  local s, m pcall(function() deviceList[name] = peripheral.wrap(side) end)
+  local s, m = pcall(function() deviceList[name] = Peripheral.wrap(side) end)
   if not s and m then
-    printError('wrap failed')
-    printError(m)
+    _G.printError('wrap failed')
+    _G.printError(m)
   end
 
   if deviceList[name] then
@@ -70,15 +68,15 @@ function Peripheral.addDevice(deviceList, side)
 end
 
 function Peripheral.getBySide(side)
-  return Util.find(getDeviceList(), 'side', side)
+  return Util.find(Peripheral.getList(), 'side', side)
 end
 
 function Peripheral.getByType(typeName)
-  return Util.find(getDeviceList(), 'type', typeName)
+  return Util.find(Peripheral.getList(), 'type', typeName)
 end
 
 function Peripheral.getByMethod(method)
-  for _,p in pairs(getDeviceList()) do
+  for _,p in pairs(Peripheral.getList()) do
     if p[method] then
       return p
     end
@@ -91,8 +89,6 @@ function Peripheral.get(args)
   if type(args) == 'string' then
     args = { type = args }
   end
-
-  args = args or { type = pType }
 
   if args.type then
     local p = Peripheral.getByType(args.type)

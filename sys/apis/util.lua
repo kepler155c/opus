@@ -162,7 +162,7 @@ end
 
 function Util.findAll(t, name, value)
   local rt = { }
-  for k,v in pairs(t) do
+  for _,v in pairs(t) do
     if v[name] == value then
       table.insert(rt, v)
     end
@@ -253,7 +253,7 @@ function Util.spairs(t, order)
   local keys = Util.keys(t)
 
   -- if order function given, sort by it by passing the table and keys a, b,
-  -- otherwise just sort the keys 
+  -- otherwise just sort the keys
   if order then
     table.sort(keys, function(a,b) return order(t[a], t[b]) end)
   else
@@ -317,7 +317,7 @@ function Util.writeLines(fname, lines)
   local file = fs.open(fname, 'w')
   if file then
     for _,line in ipairs(lines) do
-      line = file.writeLine(line)
+      file.writeLine(line)
     end
     file.close()
     return true
@@ -458,12 +458,12 @@ end
 function Util.trim(s)
   return s:find'^%s*$' and '' or s:match'^%s*(.*%S)'
 end
- 
+
 -- trim whitespace from left end of string
 function Util.triml(s)
   return s:match'^%s*(.*)'
 end
- 
+
 -- trim whitespace from right end of string
 function Util.trimr(s)
   return s:find'^%s*$' and '' or s:match'^(.*%S)'
@@ -548,7 +548,7 @@ end
 
 function Util.showOptions(options)
   print('Arguments: ')
-  for k, v in pairs(options) do
+  for _, v in pairs(options) do
     print(string.format('-%s  %s', v.arg, v.desc))
   end
 end
@@ -561,7 +561,6 @@ function Util.getOptions(options, args, ignoreInvalid)
     end
   end
   local rawOptions = getopt(args, argLetters)
-  local argCount = 0
 
   for k,ro in pairs(rawOptions) do
     local found = false

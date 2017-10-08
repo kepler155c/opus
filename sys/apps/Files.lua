@@ -1,11 +1,15 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Config = require('config')
 local Event  = require('event')
 local UI     = require('ui')
 local Util   = require('util')
 
-local colors = _G.colors
+local colors     = _G.colors
+local fs         = _G.fs
+local multishell = _ENV.multishell
+local os         = _G.os
+local shell      = _ENV.shell
 
 multishell.setTitle(multishell.getCurrent(), 'Files')
 UI:configure('Files', ...)
@@ -158,7 +162,7 @@ function Browser:setStatus(status, ...)
 end
 
 function Browser:unmarkAll()
-  for k,m in pairs(marked) do
+  for _,m in pairs(marked) do
     m.marked = false
   end
   Util.clear(marked)
@@ -198,7 +202,6 @@ function Browser:updateDirectory(dir)
     dir.size = #files
     for _, file in pairs(files) do
       file.fullName = fs.combine(dir.name, file.name)
-      file.directory = directory
       file.flags = ''
       if not file.isDir then
         dir.totalSize = dir.totalSize + file.size
@@ -232,7 +235,7 @@ function Browser:setDir(dirName, noStatus)
   if self.dir then
     self.dir.index = self.grid:getIndex()
   end
-  DIR = fs.combine('', dirName)
+  local DIR = fs.combine('', dirName)
   shell.setDir(DIR)
   local s, dir = self:getDirectory(DIR)
   if s then

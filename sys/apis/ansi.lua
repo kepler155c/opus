@@ -1,5 +1,5 @@
 local Ansi = setmetatable({ }, {
-  __call = function(self, ...)
+  __call = function(_, ...)
     local str = '\027['
     for k,v in ipairs({ ...}) do
       if k == 1 then

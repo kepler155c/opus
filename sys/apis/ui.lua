@@ -1320,7 +1320,7 @@ end
 function UI.Grid:adjustWidth()
 
   local t = { }        -- cols without width
-  local w = self.width - #self.columns - 1 - self.marginRight -- width remaing
+  local w = self.width - #self.columns - 1 - self.marginRight -- width remaining
 
   for _,c in pairs(self.columns) do
     if c.width then

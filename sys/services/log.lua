@@ -1,14 +1,17 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Terminal = require('terminal')
 local Util     = require('util')
+
+local multishell = _ENV.multishell
+local os         = _G.os
+local term       = _G.term
 
 multishell.setTitle(multishell.getCurrent(), 'Debug')
 
 term.redirect(Terminal.scrollable(term.current(), 50))
 
 local tabId = multishell.getCurrent()
-local tab = multishell.getTab(tabId)
 local terminal = term.current()
 local previousId
 

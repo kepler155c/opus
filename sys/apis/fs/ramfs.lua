@@ -1,8 +1,10 @@
 local Util   = require('util')
 
+local fs = _G.fs
+
 local ramfs = { }
 
-function ramfs.mount(dir, nodeType)
+function ramfs.mount(_, nodeType)
   if nodeType == 'directory' then
     return {
       nodes = { },
@@ -34,7 +36,7 @@ function ramfs.isReadOnly()
   return false
 end
 
-function ramfs.makeDir(node, dir)
+function ramfs.makeDir(_, dir)
   fs.mount(dir, 'ramfs', 'directory')
 end
 
@@ -46,10 +48,10 @@ function ramfs.getDrive()
   return 'ram'
 end
 
-function ramfs.list(node, dir, full)
+function ramfs.list(node, dir)
   if node.nodes and node.mountPoint == dir then
     local files = { }
-    for k,v in pairs(node.nodes) do
+    for k in pairs(node.nodes) do
       table.insert(files, k)
     end
     return files

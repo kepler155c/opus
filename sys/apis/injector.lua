@@ -2,6 +2,10 @@ local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/develop
 local PASTEBIN_URL  = 'http://pastebin.com/raw'
 local GIT_URL       = 'https://raw.githubusercontent.com'
 
+local fs   = _G.fs
+local http = _G.http
+local os   = _G.os
+
 -- fix broken http get
 local syncLocks = { }
 
@@ -44,7 +48,7 @@ end
 
 local function requireWrapper(env)
 
-  local function standardSearcher(modname, env, shell)
+  local function standardSearcher(modname)
     if package.loaded[modname] then
       return function()
         return package.loaded[modname]
@@ -52,18 +56,18 @@ local function requireWrapper(env)
     end
   end
 
-  local function shellSearcher(modname, env, shell)
+  local function shellSearcher(modname)
     local fname = modname:gsub('%.', '/') .. '.lua'
 
-    if shell and type(shell.dir) == 'function' then
-      local path = shell.resolve(fname)
+    if env.shell and type(env.shell.dir) == 'function' then
+      local path = env.shell.resolve(fname)
       if fs.exists(path) and not fs.isDir(path) then
         return loadfile(path, env)
       end
     end
   end
 
-  local function pathSearcher(modname, env, shell)
+  local function pathSearcher(modname)
     local fname = modname:gsub('%.', '/') .. '.lua'
 
     for dir in string.gmatch(package.path, "[^:]+") do
@@ -75,7 +79,7 @@ local function requireWrapper(env)
   end
 
   -- require('BniCQPVf')
-  local function pastebinSearcher(modname, env, shell)
+  local function pastebinSearcher(modname)
     if #modname == 8 and not modname:match('%W') then
       local url = PASTEBIN_URL .. '/' .. modname
       local c = loadUrl(url)
@@ -86,7 +90,7 @@ local function requireWrapper(env)
   end
 
   -- require('kepler155c.opus.master.sys.apis.util')
-  local function gitSearcher(modname, env, shell)
+  local function gitSearcher(modname)
     local fname = modname:gsub('%.', '/') .. '.lua'
     local _, count = fname:gsub("/", "")
     if count >= 3 then
@@ -98,7 +102,7 @@ local function requireWrapper(env)
     end
   end
 
-  local function urlSearcher(modname, env, shell)
+  local function urlSearcher(modname)
     local fname = modname:gsub('%.', '/') .. '.lua'
 
     if fname:sub(1, 1) ~= '/' then
@@ -113,7 +117,7 @@ local function requireWrapper(env)
   end
 
   -- place package and require function into env
-  package = {
+  env.package = {
     path = LUA_PATH or 'sys/apis',
     upath = LUA_UPATH or DEFAULT_UPATH,
     config = '/\n:\n?\n!\n-',
@@ -134,14 +138,14 @@ local function requireWrapper(env)
     }
   }
 
-  function require(modname)
+  function env.require(modname)
 
     for _,searcher in ipairs(package.loaders) do
-      local fn, msg = searcher(modname, env, shell)
+      local fn, msg = searcher(modname)
       if fn then
-        local module, msg = fn(modname, env)
+        local module, msg2 = fn(modname, env)
         if not module then
-          error(msg or (modname .. ' module returned nil'), 2)
+          error(msg2 or (modname .. ' module returned nil'), 2)
         end
         package.loaded[modname] = module
         return module
@@ -153,10 +157,11 @@ local function requireWrapper(env)
     error('Unable to find module ' .. modname)
   end
 
-  return require -- backwards compatible
+  return env.require -- backwards compatible
 end
 
 return function(env)
+  env = env or getfenv(2)
   setfenv(requireWrapper, env)
   return requireWrapper(env)
 end

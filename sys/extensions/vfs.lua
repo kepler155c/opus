@@ -2,8 +2,10 @@ if fs.native then
   return
 end
 
-requireInjector(getfenv(1))
+_G.requireInjector()
 local Util = require('util')
+
+local fs = _G.fs
 
 fs.native = Util.shallowCopy(fs)
 
@@ -18,7 +20,7 @@ for k,fn in pairs(fs) do
   end
 end
 
-function nativefs.list(node, dir, full)
+function nativefs.list(node, dir)
 
   local files
   if fs.native.isDir(dir) then

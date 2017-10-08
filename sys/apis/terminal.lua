@@ -1,14 +1,15 @@
 local Util = require('util')
 
-local Terminal = { }
+local colors = _G.colors
+local term   = _G.term
+local _gsub  = string.gsub
 
-local _sgsub = string.gsub
+local Terminal = { }
 
 function Terminal.scrollable(ct, size)
 
-  local size = size or 25
   local w, h = ct.getSize()
-  local win = window.create(ct, 1, 1, w, h + size, true)
+  local win = _G.window.create(ct, 1, 1, w, h + size, true)
   local oldWin = Util.shallowCopy(win)
   local scrollPos = 0
 
@@ -87,7 +88,7 @@ function Terminal.toGrayscale(ct)
   local methods = { 'setBackgroundColor', 'setBackgroundColour',
                     'setTextColor', 'setTextColour' }
   for _,v in pairs(methods) do
-  	local fn = ct[v]
+    local fn = ct[v]
     ct[v] = function(c)
       fn(scolors[c])
     end
@@ -110,7 +111,7 @@ function Terminal.toGrayscale(ct)
 
   local function translate(s)
     if s then
-      s = _sgsub(s, "%w", bcolors)
+      s = _gsub(s, "%w", bcolors)
     end
     return s
   end
@@ -136,9 +137,9 @@ end
 function Terminal.copy(it, ot)
   ot = ot or { }
   for k,v in pairs(it) do
-  	if type(v) == 'function' then
-  	  ot[k] = v
-  	end
+    if type(v) == 'function' then
+      ot[k] = v
+    end
   end
   return ot
 end
@@ -162,7 +163,7 @@ function Terminal.readPassword(prompt)
   local fn = term.current().write
   term.current().write = function() end
   local s
-  pcall(function() s = read(prompt) end)
+  pcall(function() s = _G.read(prompt) end)
   term.current().write = fn
 
   if s == '' then

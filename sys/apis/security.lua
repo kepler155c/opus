@@ -28,7 +28,7 @@ function Security.getPublicKey()
   local function modexp(base, exponent, modulo)
     local remainder = base
 
-    for i = 1, exponent-1 do
+    for _ = 1, exponent-1 do
       remainder = remainder * remainder
       if remainder >= modulo then
         remainder = remainder % modulo

@@ -1,5 +1,7 @@
 local syncLocks = { }
 
+local os = _G.os
+
 return function(obj, fn)
   local key = tostring(obj)
   if syncLocks[key] then

@@ -33,7 +33,7 @@ local BASE     = 'https://raw.githubusercontent.com/' .. GIT_REPO
 
 local function makeEnv()
   local env = setmetatable({ }, { __index = _G })
-  for k,v in pairs(getfenv(1)) do
+  for k,v in pairs(_ENV) do
     env[k] = v 
   end
   return env
@@ -53,7 +53,7 @@ local function runUrl(file, ...)
 
   local h = http.get(url)
   if h then
-    local fn, m = load(h.readAll(), url, nil, makeEnv())
+    local fn = load(h.readAll(), url, nil, makeEnv())
     h.close()
     if fn then
       return fn(...)

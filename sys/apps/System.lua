@@ -1,9 +1,13 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Config = require('config')
-local Event  = require('event')
 local UI     = require('ui')
 local Util   = require('util')
+
+local fs         = _G.fs
+local multishell = _ENV.multishell
+local os         = _G.os
+local shell      = _ENV.shell
 
 multishell.setTitle(multishell.getCurrent(), 'System')
 UI:configure('System', ...)
@@ -30,7 +34,6 @@ local systemPage = UI.Page {
       },
       grid = UI.Grid {
         y = 4,
-        values = paths,
         disableHeader = true,
         columns = { { key = 'value' } },
         autospace = true,
@@ -40,7 +43,7 @@ local systemPage = UI.Page {
     aliasTab = UI.Window {
       tabTitle = 'Aliases',
       alias = UI.TextEntry {
-        x = 2, y = 2, ex = -2, 
+        x = 2, y = 2, ex = -2,
         limit = 32,
         shadowText = 'Alias',
       },
@@ -54,7 +57,6 @@ local systemPage = UI.Page {
       },
       grid = UI.Grid {
         y = 5,
-        values = aliases,
         autospace = true,
         sortColumn = 'alias',
         columns = {
@@ -87,7 +89,7 @@ local systemPage = UI.Page {
           { name = '',  value = ''                  },
           { name = 'CC version',  value = Util.getVersion()                  },
           { name = 'Lua version', value = _VERSION                           },
-          { name = 'MC version',  value = _MC_VERSION or 'unknown'           },
+          { name = 'MC version',  value = _G._MC_VERSION or 'unknown'        },
           { name = 'Disk free',   value = Util.toBytes(fs.getFreeSpace('/')) },
           { name = 'Computer ID', value = tostring(os.getComputerID())       },
           { name = 'Day',         value = tostring(os.day())                 },
@@ -129,7 +131,6 @@ end
 
 function systemPage.tabs.aliasTab.grid:draw()
   self.values = { }
-  local aliases = { }
   for k,v in pairs(env.aliases) do
     table.insert(self.values, { alias = k, path = v })
   end
@@ -170,7 +171,7 @@ end
 function systemPage:eventHandler(event)
 
   if event.type == 'quit' then
-    Event.exitPullEvents()
+    UI:exitPullEvents()
   elseif event.type == 'tab_activate' then
     event.activated:focusFirst()
   else
@@ -180,5 +181,4 @@ function systemPage:eventHandler(event)
 end
 
 UI:setPage(systemPage)
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

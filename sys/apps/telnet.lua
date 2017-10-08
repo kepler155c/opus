@@ -1,9 +1,13 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Event    = require('event')
 local Socket   = require('socket')
 local Terminal = require('terminal')
 local Util     = require('util')
+
+local os   = _G.os
+local read = _G.read
+local term = _G.term
 
 local remoteId
 local args = { ... }

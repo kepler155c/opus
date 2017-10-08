@@ -1,4 +1,4 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local UI    = require('ui')
 local Util  = require('util')

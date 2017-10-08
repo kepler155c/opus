@@ -1,4 +1,4 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Security = require('security')
 local SHA1     = require('sha1')

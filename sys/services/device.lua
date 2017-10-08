@@ -1,8 +1,14 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Event      = require('event')
 local Peripheral = require('peripheral')
 local Util       = require('util')
+
+local colors     = _G.colors
+local device     = _G.device
+local multishell = _ENV.multishell
+local os         = _G.os
+local term       = _G.term
 
 multishell.setTitle(multishell.getCurrent(), 'Devices')
 
@@ -14,7 +20,7 @@ if not term.isColor() then
   detachColor = colors.lightGray
 end
 
-Event.on('peripheral', function(event, side)
+Event.on('peripheral', function(_, side)
   if side then
     local dev = Peripheral.addDevice(device, side)
     if dev then
@@ -25,7 +31,7 @@ Event.on('peripheral', function(event, side)
   end
 end)
 
-Event.on('peripheral_detach', function(event, side)
+Event.on('peripheral_detach', function(_, side)
   if side then
     local dev = Util.find(device, 'side', side)
     if dev then

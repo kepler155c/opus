@@ -1,10 +1,12 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Crypto   = require('crypto')
 local Security = require('security')
 local SHA1     = require('sha1')
 local Socket   = require('socket')
 local Terminal = require('terminal')
+
+local os = _G.os
 
 local remoteId
 local args = { ... }
@@ -13,7 +15,7 @@ if #args == 1 then
   remoteId = tonumber(args[1])
 else
   print('Enter host ID')
-  remoteId = tonumber(read())
+  remoteId = tonumber(_G.read())
 end
 
 if not remoteId then
@@ -34,9 +36,8 @@ if not socket then
 end
 
 local publicKey = Security.getPublicKey()
-local password = SHA1.sha1(password)
 
-socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, password))
+socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, SHA1.sha1(password)))
 
 local data = socket:read(2)
 socket:close()

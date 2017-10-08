@@ -1,9 +1,15 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Event  = require('event')
 local Socket = require('socket')
 local UI     = require('ui')
 local Util   = require('util')
+
+local colors     = _G.colors
+local device     = _G.device
+local multishell = _ENV.multishell
+local network    = _G.network
+local shell      = _ENV.shell
 
 multishell.setTitle(multishell.getCurrent(), 'Network')
 UI:configure('Network', ...)
@@ -124,14 +130,14 @@ Event.onInterval(1, function()
   page:sync()
 end)
 
-Event.on('device_attach', function(h, deviceName)
+Event.on('device_attach', function(_, deviceName)
   if deviceName == 'wireless_modem' then
     page.notification:success('Modem connected')
     page:sync()
   end
 end)
 
-Event.on('device_detach', function(h, deviceName)
+Event.on('device_detach', function(_, deviceName)
   if deviceName == 'wireless_modem' then
     page.notification:error('Wireless modem not attached')
     page:sync()

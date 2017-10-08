@@ -1,3 +1,5 @@
+local os = _G.os
+
 local Event = {
   uid       = 1,       -- unique id for handlers
   routines  = { },     -- coroutines
@@ -123,13 +125,13 @@ function Event.waitForEvent(event, timeout)
     local e = { os.pullEvent() }
     if e[1] == event then
       return table.unpack(e)
-    end 
+    end
   until e[1] == 'timer' and e[2] == timerId
 end
 
 function Event.addRoutine(fn)
   local r = {
-    co  = coroutine.create(fn), 
+    co  = coroutine.create(fn),
     uid = nextUID()
   }
   setmetatable(r, { __index = Routine })

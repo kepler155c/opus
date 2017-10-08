@@ -1,19 +1,21 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Grid       = require ("jumper.grid")
 local Pathfinder = require ("jumper.pathfinder")
 local Point      = require('point')
 local Util       = require('util')
 
+local turtle = _G.turtle
+
 local WALKABLE = 0
 
 local function createMap(dim)
 	local map = { }
-	for z = 1, dim.ez do
+	for _ = 1, dim.ez do
 		local row = {}
-		for x = 1, dim.ex do
+		for _ = 1, dim.ex do
 			local col = { }
-			for y = 1, dim.ey do
+			for _ = 1, dim.ey do
 				table.insert(col, WALKABLE)
 			end
 			table.insert(row, col)
@@ -80,10 +82,10 @@ local function mapDimensions(dest, blocks, boundingBox)
 
 	return {
 		ex = ex - sx + 1,
-		ez = ez - sz + 1, 
-		ey = ey - sy + 1, 
-		ox = -sx + 1, 
-		oz = -sz + 1, 
+		ez = ez - sz + 1,
+		ey = ey - sy + 1,
+		ox = -sx + 1,
+		oz = -sz + 1,
 		oy = -sy + 1
 	}
 end
@@ -149,7 +151,7 @@ local function selectDestination(pts, box, map, dim)
 			map[pt.z + dim.oz][pt.x + dim.ox][pt.y + dim.oy] == 1 then
 	    Util.removeByValue(pts, pt)
 	  else
-	  	return pt
+		return pt
 	  end
 	end
 end
@@ -169,7 +171,7 @@ local function pathTo(dest, options)
 	end
 
 	-- Creates a pathfinder object
-	local myFinder = Pathfinder(grid, 'ASTAR', walkable)
+	local myFinder = Pathfinder(grid, 'ASTAR', WALKABLE)
 
 	myFinder:setMode('ORTHOGONAL')
 	myFinder:setHeuristic(heuristic)
@@ -208,12 +210,14 @@ local function pathTo(dest, options)
 		local endPt = pointToMap(dim, dest)
 
 		-- Calculates the path, and its length
-		local path = myFinder:getPath(startPt.x, startPt.y, startPt.z, turtle.point.heading, endPt.x, endPt.y, endPt.z, dest.heading)
+		local path = myFinder:getPath(
+			startPt.x, startPt.y, startPt.z, turtle.point.heading,
+			endPt.x, endPt.y, endPt.z, dest.heading)
 
 		if not path then
 	    Util.removeByValue(dests, dest)
 		else
-			for node, count in path:nodes() do
+			for node in path:nodes() do
 				local pt = nodeToPoint(dim, node)
 
 				if turtle.abort then
@@ -223,10 +227,10 @@ local function pathTo(dest, options)
 				-- use single turn method so the turtle doesn't turn around
 				-- when encountering obstacles -- IS THIS RIGHT ??
 				if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y, node.heading) then
-			  	table.insert(blocks, pt)
-			  	--if device.turtlesensorenvironment then
-			  	--	addSensorBlocks(blocks, device.turtlesensorenvironment.sonicScan())
-			  	--end
+					table.insert(blocks, pt)
+					--if device.turtlesensorenvironment then
+					--	addSensorBlocks(blocks, device.turtlesensorenvironment.sonicScan())
+					--end
 					break
 				end
 			end

@@ -1,8 +1,12 @@
+local os         = _G.os
+local peripheral = _G.peripheral
+local turtle     = _G.turtle
+
 if not turtle or turtle.getPoint then
   return
 end
 
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Point        = require('point')
 local synchronized = require('sync')
@@ -379,7 +383,7 @@ end
 -- combine with setHeading
 function turtle.setNamedHeading(headingName)
   local headingInfo = namedHeadings[headingName]
-  if headingInfo then 
+  if headingInfo then
     return turtle.setHeading(headingInfo.heading)
   end
   return false, 'Invalid heading'
@@ -482,11 +486,11 @@ function turtle.moveTowardsX(dx)
 
   local direction = dx - turtle.point.x
   local move
-  
+
   if direction == 0 then
     return true
   end
-  
+
   if direction > 0 and turtle.point.heading == 0 or
      direction < 0 and turtle.point.heading == 2 then
     move = turtle.forward
@@ -510,7 +514,7 @@ function turtle.moveTowardsZ(dz)
   if direction == 0 then
     return true
   end
-  
+
   if direction > 0 and turtle.point.heading == 1 or
      direction < 0 and turtle.point.heading == 3 then
     move = turtle.forward
@@ -591,13 +595,13 @@ local function gotoEx(dx, dz, dy)
 
   -- determine the heading to ensure the least amount of turns
   -- first check is 1 turn needed - remaining require 2 turns
-  if turtle.point.heading == 0 and turtle.point.x <= dx or 
-     turtle.point.heading == 2 and turtle.point.x >= dx or 
-     turtle.point.heading == 1 and turtle.point.z <= dz or 
-     turtle.point.heading == 3 and turtle.point.z >= dz then 
+  if turtle.point.heading == 0 and turtle.point.x <= dx or
+     turtle.point.heading == 2 and turtle.point.x >= dx or
+     turtle.point.heading == 1 and turtle.point.z <= dz or
+     turtle.point.heading == 3 and turtle.point.z >= dz then
     -- maintain current heading
     -- nop
-  elseif dz > turtle.point.z and turtle.point.heading == 0 or 
+  elseif dz > turtle.point.z and turtle.point.heading == 0 or
          dz < turtle.point.z and turtle.point.heading == 2 or
          dx < turtle.point.x and turtle.point.heading == 1 or
          dx > turtle.point.x and turtle.point.heading == 3 then
@@ -719,7 +723,7 @@ function turtle.gotoY(dy)
       return false
     end
   end
-  
+
   while turtle.point.y < dy do
     if not turtle.up() then
       return false
@@ -969,10 +973,10 @@ function turtle.faceAgainst(pt, options) -- 4 sided
   for i = 0, 3 do
     local hi = turtle.getHeadingInfo(i)
 
-    table.insert(options.dest, { 
-      x = pt.x + hi.xd, 
-      z = pt.z + hi.zd, 
-      y = pt.y + hi.yd, 
+    table.insert(options.dest, {
+      x = pt.x + hi.xd,
+      z = pt.z + hi.zd,
+      y = pt.y + hi.yd,
       heading = (hi.heading + 2) % 4,
     })
   end
@@ -998,8 +1002,8 @@ function turtle.moveAgainst(pt, options) -- 6 sided
     end
 
     table.insert(options.dest, {
-      x = pt.x + hi.xd, 
-      z = pt.z + hi.zd, 
+      x = pt.x + hi.xd,
+      z = pt.z + hi.zd,
       y = pt.y + hi.yd,
       direction = direction,
       heading = heading,
@@ -1058,25 +1062,25 @@ local actionsAt = {
 }
 
 local function _actionAt(action, pt, ...)
-  local pt = turtle.moveAgainst(pt)
+  pt = turtle.moveAgainst(pt)
   if pt then
     return action[pt.direction](...)
   end
 end
 
-function _actionDownAt(action, pt, ...)
+local function _actionDownAt(action, pt, ...)
   if turtle.pathfind(Point.above(pt)) then
     return action.down(...)
   end
 end
 
-function _actionForwardAt(action, pt, ...)
+local function _actionForwardAt(action, pt, ...)
   if turtle.faceAgainst(pt) then
     return action.forward(...)
   end
 end
 
-function _actionUpAt(action, pt, ...)
+local function _actionUpAt(action, pt, ...)
   if turtle.pathfind(Point.below(pt)) then
     return action.up(...)
   end

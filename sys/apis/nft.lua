@@ -21,7 +21,6 @@ function NFT.parse(imageText)
   }
 
   local num = 1
-  local index = 1
   for _,sLine in ipairs(Util.split(imageText)) do
     table.insert(image.fg, { })
     table.insert(image.bg, { })
@@ -47,7 +46,7 @@ function NFT.parse(imageText)
         fgNext = false
       else
         if nextChar ~= " " and currFG == nil then
-          currFG = colours.white
+          currFG = _G.colors.white
         end
         image.bg[num][writeIndex] = currBG
         image.fg[num][writeIndex] = currFG

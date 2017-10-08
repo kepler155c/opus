@@ -1,6 +1,6 @@
 if device.wireless_modem then
 
-  requireInjector(getfenv(1))
+  _G.requireInjector()
   local Config = require('config')
 
   local config = { }

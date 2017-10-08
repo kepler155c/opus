@@ -1,5 +1,7 @@
 local git = require('git')
 
+local fs = _G.fs
+
 local gitfs = { }
 
 function gitfs.mount(dir, repo)

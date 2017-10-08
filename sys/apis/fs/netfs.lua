@@ -1,11 +1,13 @@
-local Socket = require('socket')
+local Socket       = require('socket')
 local synchronized = require('sync')
+
+local fs = _G.fs
 
 local netfs = { }
 
 local function remoteCommand(node, msg)
 
-  for i = 1, 2 do
+  for _ = 1, 2 do
     if not node.socket then
       node.socket = Socket.connect(node.id, 139)
     end
@@ -49,7 +51,7 @@ for _,m in pairs(methods) do
   end
 end
 
-function netfs.mount(dir, id, directory)
+function netfs.mount(_, id, directory)
   if not id or not tonumber(id) then
     error('ramfs syntax: computerId [directory]')
   end

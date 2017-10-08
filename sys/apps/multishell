@@ -1,31 +1,22 @@
--- Default label
-if not os.getComputerLabel() then
-  local id = os.getComputerID()
-  if turtle then
-    os.setComputerLabel('turtle_' .. id)
-  elseif pocket then
-    os.setComputerLabel('pocket_' .. id)
-  elseif commands then
-    os.setComputerLabel('command_' .. id)
-  else
-    os.setComputerLabel('computer_' .. id)
-  end
-end
-
-multishell.term = term.current()
-
 local defaultEnv = { }
-for k,v in pairs(getfenv(1)) do
-  defaultEnv[k] = v 
+for k,v in pairs(_ENV) do
+  defaultEnv[k] = v
 end
 
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Config = require('config')
 local Opus   = require('opus')
 local Util   = require('util')
 
-local SESSION_FILE = 'usr/config/multishell.session'
+local colors     = _G.colors
+local fs         = _G.fs
+local keys       = _G.keys
+local multishell = _ENV.multishell
+local os         = _G.os
+local printError = _G.printError
+local term       = _G.term
+local window     = _G.window
 
 local parentTerm = term.current()
 local w,h = parentTerm.getSize()
@@ -36,6 +27,22 @@ local overviewTab
 local runningTab
 local tabsDirty = false
 local closeInd = '*'
+
+multishell.term = term.current()
+
+-- Default label
+if not os.getComputerLabel() then
+  local id = os.getComputerID()
+  if _G.turtle then
+    os.setComputerLabel('turtle_' .. id)
+  elseif _G.pocket then
+    os.setComputerLabel('pocket_' .. id)
+  elseif _G.commands then
+    os.setComputerLabel('command_' .. id)
+  else
+    os.setComputerLabel('computer_' .. id)
+  end
+end
 
 if Util.getVersion() >= 1.79 then
   closeInd = '\215'
@@ -59,7 +66,6 @@ local config = {
     focusBackgroundColor = colors.gray,
   },
 }
-
 Config.load('multishell', config)
 
 local _colors = config.standard
@@ -229,7 +235,6 @@ local function launchProcess(tab)
       selectTab(previousTab)
     end
     redrawMenu()
-    saveSession()
   end)
 
   tabs[tab.tabId] = tab
@@ -243,8 +248,7 @@ local function resizeWindows()
   local windowY = 2
   local windowHeight = h-1
 
-  local keys = Util.keys(tabs)
-  for _,key in pairs(keys) do
+  for _,key in pairs(Util.keys(tabs)) do
     local tab = tabs[key]
     local x,y = tab.window.getCursorPos()
     if y > windowHeight then
@@ -255,23 +259,9 @@ local function resizeWindows()
   end
 
   -- Pass term_resize to all processes
-  local keys = Util.keys(tabs)
-  for _,key in pairs(keys) do
+  for _,key in pairs(Util.keys(tabs)) do
     resumeTab(tabs[key], "term_resize")
   end
-end
-
-local function saveSession()
-  local t = { }
-  for _,process in pairs(tabs) do
-    if process.path and not process.isOverview and not process.hidden then
-      table.insert(t, {
-        path = process.path,
-        args = process.args,
-      })
-    end
-  end
-  --Util.writeTable(SESSION_FILE, t)
 end
 
 local control
@@ -348,7 +338,6 @@ function multishell.terminate(tabId)
   local tab = tabs[tabId]
   if tab and not tab.isOverview then
     if coroutine.status(tab.co) ~= 'dead' then
-      --os.queueEvent('multishell', 'terminate', tab)
       resumeTab(tab, "terminate")
     else
       tabs[tabId] = nil
@@ -399,10 +388,6 @@ function multishell.openTab(tab)
     redrawMenu()
   end
 
-  if not tab.hidden then
-    saveSession()
-  end
-
   return tab.tabId
 end
 
@@ -423,16 +408,16 @@ function multishell.unhideTab(tabId)
 end
 
 function multishell.getCount()
-  local count
-  for _,tab in pairs(tabs) do
-    count = count + 1
-  end
-  return count
+  return Util.size(tabs)
 end
 
 -- control-o - overview
 multishell.addHotkey(24, function()
   multishell.setFocus(overviewTab.tabId)
+end)
+
+multishell.addHotkey(20, function()
+  clipboard.useInternal(not clipboard.isInternal())
 end)
 
 -- control-backspace
@@ -474,7 +459,6 @@ end)
 
 local function startup()
   local hasError
-  local session = Util.readTable(SESSION_FILE)
 
   if not Opus.loadServices() then
     hasError = true
@@ -492,12 +476,6 @@ local function startup()
     hasError = true
   end
 
-  if session then
-    for _,v in pairs(session) do
-      --multishell.openTab(v)
-    end
-  end
-
   if hasError then
     print()
     error('An autorun program has errored')
@@ -513,10 +491,6 @@ multishell.openTab({
   env = defaultEnv,
   title = 'Autorun',
 })
-
-if not overviewTab or coroutine.status(overviewTab.co) == 'dead' then
-  --error('Overview aborted')
-end
 
 if not currentTab then
   multishell.setFocus(overviewTab.tabId)
@@ -562,13 +536,12 @@ while true do
 
     -- Keyboard event - Passthrough to current process
     resumeTab(currentTab, sEvent, tEventData)
-  
+
   elseif sEvent == "mouse_click" then
     local button, x, y = tEventData[1], tEventData[2], tEventData[3]
     lastClicked = nil
     if y == 1 then
       -- Switch process
-      local w, h = parentTerm.getSize()
       if x == 1 then
         multishell.setFocus(overviewTab.tabId)
       elseif x == w then
@@ -616,8 +589,7 @@ while true do
   else
     -- Other event
     -- Passthrough to all processes
-    local keys = Util.keys(tabs)
-    for _,key in pairs(keys) do
+    for _,key in pairs(Util.keys(tabs)) do
       resumeTab(tabs[key], sEvent, tEventData)
     end
   end
