@@ -1,14 +1,19 @@
 requireInjector(getfenv(1))
 
-local Event = require('event')
 local UI    = require('ui')
+local Util  = require('util')
+
+local colors = _G.colors
+local help   = _G.help
 
 multishell.setTitle(multishell.getCurrent(), 'Help')
 UI:configure('Help', ...)
 
-local files = { }
-for _,f in pairs(help.topics()) do
-  table.insert(files, { name = f })
+local topics = { }
+for _,topic in pairs(help.topics()) do
+  if help.lookup(topic) then
+    table.insert(topics, { name = topic })
+  end
 end
 
 local page = UI.Page {
@@ -22,9 +27,9 @@ local page = UI.Page {
   },
   grid = UI.ScrollingGrid {
     y = 4,
-    values = files,
+    values = topics,
     columns = {
-      { heading = 'Name', key = 'name' },
+      { heading = 'Topic', key = 'name' },
     },
     sortColumn = 'name',
   },
@@ -34,36 +39,56 @@ local page = UI.Page {
   },
 }
 
-local function showHelp(name)
-  UI.term:reset()
-  shell.run('help ' .. name)
-  print('Press enter to return')
-  repeat
-    os.pullEvent('key')
-    local _, k = os.pullEvent('key_up')
-  until k == keys.enter
+local topicPage = UI.Page {
+  backgroundColor = colors.black,
+  titleBar = UI.TitleBar {
+    title = 'text',
+    previousPage = true,
+  },
+  helpText = UI.TextArea {
+    backgroundColor = colors.black,
+    x = 2, ex = -1, y = 3, ey = -2,
+  },
+  accelerators = {
+    q = 'back',
+    backspace = 'back',
+  },
+}
+
+function topicPage.helpText:focus()
+  -- let the help text get focused so we consume key strokes
+end
+
+function topicPage:eventHandler(event)
+  if event.type == 'back' then
+    UI:setPreviousPage()
+  end
+  return UI.Page.eventHandler(self, event)
 end
 
 function page:eventHandler(event)
 
   if event.type == 'quit' then
-    Event.exitPullEvents()
+    UI:exitPullEvents()
 
   elseif event.type == 'grid_select' then
     if self.grid:getSelected() then
-      showHelp(self.grid:getSelected().name)
-      self:setFocus(self.filter)
-      self:draw()
+      local name = self.grid:getSelected().name
+      local f = help.lookup(name)
+
+      topicPage.titleBar.title = name
+      topicPage.helpText:setText(Util.readFile(f))
+
+      UI:setPage(topicPage)
     end
 
   elseif event.type == 'text_change' then
-    local text = event.text
-    if #text == 0 then
-      self.grid.values = files
+    if #event.text == 0 then
+      self.grid.values = topics
     else
       self.grid.values = { }
-      for _,f in pairs(files) do
-        if string.find(f.name, text) then
+      for _,f in pairs(topics) do
+        if string.find(f.name, event.text) then
           table.insert(self.grid.values, f)
         end
       end
@@ -72,7 +97,7 @@ function page:eventHandler(event)
     self.grid:setIndex(1)
     self.grid:draw()
   else
-    UI.Page.eventHandler(self, event)
+    return UI.Page.eventHandler(self, event)
   end
 end
 

@@ -1,5 +1,5 @@
 {
-  ScrollingGrid = {
+  ScrollBar = {
     lineChar = '|',
     sliderChar = '\127',
     upArrowChar = '\30',

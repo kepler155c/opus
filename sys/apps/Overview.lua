@@ -148,7 +148,7 @@ local page = UI.Page {
   tabBar = UI.VerticalTabBar {
     buttons = buttons,
   },
-  container = UI.ViewportWindow {
+  container = UI.Viewport {
     x = cx,
     y = cy,
   },
@@ -324,7 +324,7 @@ function page.container:setCategory(categoryName)
 end
 
 function page.container:draw()
-  UI.ViewportWindow.draw(self)
+  UI.Viewport.draw(self)
 end
 
 function page:refresh()

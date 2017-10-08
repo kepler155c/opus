@@ -36,7 +36,7 @@ return function(base)
   c.is_a =
     function(self, klass)
       local m = getmetatable(self)
-      while m do 
+      while m do
         if m == klass then return true end
         m = m._base
       end

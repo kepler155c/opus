@@ -426,7 +426,7 @@ function Util.split(str, pattern)
   pattern = pattern or "(.-)\n"
   local t = {}
   local function helper(line) table.insert(t, line) return "" end
-  helper((str:gsub(pattern, helper))) 
+  helper((str:gsub(pattern, helper)))
   return t
 end
 

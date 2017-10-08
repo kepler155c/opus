@@ -5,6 +5,7 @@ local Util   = require('util')
 local _rep = string.rep
 local _sub = string.sub
 local _gsub = string.gsub
+local colors = _G.colors
 
 local Canvas = class()
 
@@ -171,7 +172,7 @@ function Canvas:writeBlit(x, y, text, bg, fg)
         end
         return _sub(sstr, 1, pos-1) .. rstr .. _sub(sstr, pos+width)
       end
- 
+
       local line = self.lines[y]
       line.dirty = true
       line.text = replace(line.text, x, text, width)
@@ -217,7 +218,7 @@ function Canvas:blitClipped(device)
     self:blit(device,
       { x = region[1] - self.x + 1,
         y = region[2] - self.y + 1,
-        ex = region[3]- self.x + 1, 
+        ex = region[3]- self.x + 1,
         ey = region[4] - self.y + 1 },
       { x = region[1], y = region[2] })
   end
@@ -251,7 +252,7 @@ function Canvas:dirty()
 end
 
 function Canvas:clean()
-  for y, line in pairs(self.lines) do
+  for _, line in pairs(self.lines) do
     line.dirty = false
   end
 end
@@ -314,13 +315,13 @@ function Canvas:applyPalette(palette)
   self.palette = palette
 end
 
-function Canvas.convertWindow(win, parent, x, y)
+function Canvas.convertWindow(win, parent, wx, wy)
 
   local w, h = win.getSize()
 
   win.canvas = Canvas({
-    x       = x,
-    y       = y,
+    x       = wx,
+    y       = wy,
     width   = w,
     height  = h,
     isColor = win.isColor(),
@@ -331,7 +332,7 @@ function Canvas.convertWindow(win, parent, x, y)
   end
 
   function win.clearLine()
-    local x, y = win.getCursorPos()
+    local _, y = win.getCursorPos()
     win.canvas:write(1,
       y,
       _rep(' ', win.canvas.width),

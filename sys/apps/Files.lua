@@ -5,6 +5,8 @@ local Event  = require('event')
 local UI     = require('ui')
 local Util   = require('util')
 
+local colors = _G.colors
+
 multishell.setTitle(multishell.getCurrent(), 'Files')
 UI:configure('Files', ...)
 
@@ -20,7 +22,7 @@ local marked = { }
 local directories = { }
 local cutMode = false
 
-function formatSize(size)
+local function formatSize(size)
   if size >= 1000000 then
     return string.format('%dM', math.floor(size/1000000, 2))
   elseif size >= 1000 then
@@ -58,16 +60,16 @@ local Browser = UI.Page {
     },
   },
   grid = UI.ScrollingGrid {
-    columns = { 
+    columns = {
       { heading = 'Name', key = 'name'             },
       {                   key = 'flags', width = 2 },
-      { heading = 'Size', key = 'fsize', width = 6 },
+      { heading = 'Size', key = 'fsize', width = 5 },
     },
     sortColumn = 'name',
     y = 2, ey = -2,
   },
   statusBar = UI.StatusBar {
-    columns = { 
+    columns = {
       { key = 'status'               },
       { key = 'totalSize', width = 6 },
     },
@@ -84,6 +86,7 @@ local Browser = UI.Page {
     d               = 'delete',
     delete          = 'delete',
     [ 'control-h' ] = 'toggle_hidden',
+    [ 'control-s' ] = 'toggle_dirSize',
     [ 'control-x' ] = 'cut',
     [ 'control-c' ] = 'copy',
     paste           = 'paste',
@@ -117,7 +120,7 @@ function Browser.grid:sortCompare(a, b)
   return a.isDir
 end
 
-function Browser.grid:getRowTextColor(file, selected)
+function Browser.grid:getRowTextColor(file)
   if file.marked then
     return colors.green
   end
@@ -128,13 +131,6 @@ function Browser.grid:getRowTextColor(file, selected)
     return colors.pink
   end
   return colors.white
-end
-
-function Browser.grid:getRowBackgroundColorX(file, selected)
-  if selected then
-    return colors.gray
-  end
-  return self.backgroundColor
 end
 
 function Browser.grid:eventHandler(event)
@@ -169,7 +165,6 @@ function Browser:unmarkAll()
 end
 
 function Browser:getDirectory(directory)
-  
   local s, dir = pcall(function()
 
     local dir = directories[directory]
@@ -350,7 +345,7 @@ function Browser:eventHandler(event)
       self.statusBar:sync()
       local _, ch = os.pullEvent('char')
       if ch == 'y' or ch == 'Y' then
-        for k,m in pairs(marked) do
+        for _,m in pairs(marked) do
           pcall(function()
             fs.delete(m.fullName)
           end)
@@ -377,7 +372,7 @@ function Browser:eventHandler(event)
     end
 
   elseif event.type == 'paste' then
-    for k,m in pairs(copied) do
+    for _,m in pairs(copied) do
       local s, m = pcall(function()
         if cutMode then
           fs.move(m.fullName, fs.combine(self.dir.name, m.name))

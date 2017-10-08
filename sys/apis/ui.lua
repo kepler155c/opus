@@ -4,8 +4,10 @@ local Event      = require('event')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
-local _rep = string.rep
-local _sub = string.sub
+local _rep   = string.rep
+local _sub   = string.sub
+local colors = _G.colors
+local keys   = _G.keys
 
 local function safeValue(v)
   local t = type(v)
@@ -147,7 +149,8 @@ function Manager:init()
   singleThread('char', function(ch)
     control = false
     if self.currentPage then
-      self:inputEvent(self.currentPage.focused, { type = 'key', key = ch })
+      local target = self.currentPage.focused or self.currentPage
+      self:inputEvent(target, { type = 'key', key = ch })
       self.currentPage:sync()
     end
   end)
@@ -180,8 +183,9 @@ function Manager:init()
     -- as char events
     if ch and #ch > 1 and (code < 2 or code > 11) then
       if self.currentPage then
-        self:inputEvent(self.currentPage.focused,
-          { type = 'key', key = ch, element = self.currentPage.focused })
+        local target = self.currentPage.focused or self.currentPage
+        self:inputEvent(target,
+          { type = 'key', key = ch, element = target })
         self.currentPage:sync()
       end
     end
@@ -264,10 +268,12 @@ end
 function Manager:inputEvent(parent, event)
 
   while parent do
-    local acc = parent.accelerators[event.key]
-    if acc then
-      if parent:emit({ type = acc, element = parent }) then
-        return true
+    if parent.accelerators then
+      local acc = parent.accelerators[event.key]
+      if acc then
+        if parent:emit({ type = acc, element = parent }) then
+          return true
+        end
       end
     end
     if parent.eventHandler then
@@ -515,7 +521,7 @@ UI.Window.defaults = {
   offy = 0,
   cursorX = 1,
   cursorY = 1,
-  accelerators = { },
+  -- accelerators = { },
 }
 function UI.Window:init(args)
   local defaults = UI:getDefaults(UI.Window, args)
@@ -727,8 +733,10 @@ function UI.Window:centeredWrite(y, text, bg, fg)
   end
 end
 
-function UI.Window:print(text, bg, fg, indent)
-  indent = indent or 1
+function UI.Window:print(text, bg, fg)
+  local marginLeft = self.marginLeft or 0
+  local marginRight = self.marginRight or 0
+  local width = self.width - marginLeft - marginRight
 
   local function nextWord(line, cx)
     local result = { line:find("(%w+)", cx) }
@@ -749,7 +757,7 @@ function UI.Window:print(text, bg, fg, indent)
     local pos = 1
     local t = { }
     while true do
-      local s = f:find('\027', pos)
+      local s = string.find(f, '\027', pos, true)
       if not s then
         break
       end
@@ -773,7 +781,7 @@ function UI.Window:print(text, bg, fg, indent)
       table.insert(t, e)
       pos = s + #seq + 3
     end
-    if pos < #f then
+    if pos <= #f then
       table.insert(t, _sub(f, pos))
     end
     return t
@@ -794,8 +802,8 @@ function UI.Window:print(text, bg, fg, indent)
             break
           end
           local w = word
-          if self.cursorX + #word > self.width then
-            self.cursorX = indent
+          if self.cursorX + #word > width then
+            self.cursorX = marginLeft + 1
             self.cursorY = self.cursorY + 1
             w = word:gsub(' ', '')
           end
@@ -806,7 +814,7 @@ function UI.Window:print(text, bg, fg, indent)
       end
     end
     if lines[k + 1] then
-      self.cursorX = indent
+      self.cursorX = marginLeft + 1
       self.cursorY = self.cursorY + 1
     end
   end
@@ -1246,6 +1254,7 @@ UI.Grid.defaults = {
   index = 1,
   inverseSort = false,
   disableHeader = false,
+  marginRight = 0,
   textColor = colors.white,
   textSelectedColor = colors.white,
   backgroundColor = colors.black,
@@ -1311,7 +1320,7 @@ end
 function UI.Grid:adjustWidth()
 
   local t = { }        -- cols without width
-  local w = self.width - #self.columns - 1 -- width remaing
+  local w = self.width - #self.columns - 1 - self.marginRight -- width remaing
 
   for _,c in pairs(self.columns) do
     if c.width then
@@ -1668,107 +1677,57 @@ end
 UI.ScrollingGrid = class(UI.Grid)
 UI.ScrollingGrid.defaults = {
   UIElement = 'ScrollingGrid',
-  scrollOffset = 1,
-  lineChar = '|',
-  sliderChar = '#',
-  upArrowChar = '^',
-  downArrowChar = 'v',
-  scrollbarColor = colors.lightGray,
+  scrollOffset = 0,
+  marginRight = 1,
 }
 function UI.ScrollingGrid:init(args)
   UI.Grid.init(self, UI:getDefaults(UI.ScrollingGrid, args))
+  self.scrollBar = UI.ScrollBar()
 end
 
 function UI.ScrollingGrid:drawRows()
   UI.Grid.drawRows(self)
-  self:drawScrollbar()
+  self.scrollBar:draw()
 end
 
-function UI.ScrollingGrid:drawScrollbar()
-  local ts = Util.size(self.values)
-  if ts > self.pageSize then
-    local maxScroll = ts - self.pageSize
-    local percent = (self.scrollOffset - 1) / maxScroll
-    local sliderSize = self.pageSize / ts * (self.pageSize - 2)
-    local row = 2
-
-    if self.disableHeader then
-      row = 1
-    end
-
-    local x = self.width
-    for i = 1, self.pageSize - 2 do
-      self:write(x, row + i, self.lineChar, nil, self.scrollbarColor)
-    end
-
-    local y = Util.round((self.pageSize - 2 - sliderSize) * percent)
-    for i = 1, Util.round(sliderSize) do
-      self:write(x, row + y + i, self.sliderChar, nil, self.scrollbarColor)
-    end
-
-    local color = self.scrollbarColor
-    if self.scrollOffset > 1 then
-      color = colors.white
-    end
-    self:write(x, 2, self.upArrowChar, nil, color)
-
-    color = self.scrollbarColor
-    if self.scrollOffset + self.pageSize - 1 < Util.size(self.values) then
-      color = colors.white
-    end
-    self:write(x, self.pageSize + 1, self.downArrowChar, nil, color)
+function UI.ScrollingGrid:getViewArea()
+  local y = 1
+  if not self.disableHeader then
+    y = 2
   end
+  return {
+    static      = true,                    -- the container doesn't scroll
+    y           = y,                       -- scrollbar Y
+    height      = self.pageSize,           -- viewable height
+    totalHeight = Util.size(self.values),  -- total height
+    offsetY     = self.scrollOffset,       -- scroll offset
+  }
 end
 
 function UI.ScrollingGrid:getStartRow()
   local ts = Util.size(self.values)
   if ts < self.pageSize then
-    self.scrollOffset = 1
+    self.scrollOffset = 0
   end
-  return self.scrollOffset
+  return self.scrollOffset + 1
 end
 
 function UI.ScrollingGrid:setIndex(index)
-  if index < self.scrollOffset then
-    self.scrollOffset = index
-  elseif index - (self.scrollOffset - 1) > self.pageSize then
-    self.scrollOffset = index - self.pageSize + 1
+  if index < self.scrollOffset + 1 then
+    self.scrollOffset = index - 1
+  elseif index - self.scrollOffset > self.pageSize then
+    self.scrollOffset = index - self.pageSize
   end
 
-  if self.scrollOffset < 1 then
-    self.scrollOffset = 1
+  if self.scrollOffset < 0 then
+    self.scrollOffset = 0
   else
     local ts = Util.size(self.values)
-    if self.pageSize + self.scrollOffset > ts then
-      self.scrollOffset = math.max(1, ts - self.pageSize + 1)
+    if self.pageSize + self.scrollOffset + 1 > ts then
+      self.scrollOffset = math.max(0, ts - self.pageSize)
     end
   end
   UI.Grid.setIndex(self, index)
-end
-
-function UI.ScrollingGrid:eventHandler(event)
-
-  if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
-    if event.x == self.width then
-      local ts = Util.size(self.values)
-      if ts > self.pageSize then
-        local row = 2
-        if self.disableHeader then
-          row = 1
-        end
-        if event.y == row then
-          self:setIndex(self.scrollOffset - 1)
-        elseif event.y == self.height then
-          self:setIndex(self.scrollOffset + self.pageSize)
-          -- else
-          -- ... percentage ...
-        end
-        return true
-      end
-    end
-  end
-
-  return UI.Grid.eventHandler(self, event)
 end
 
 --[[-- Menu --]]--
@@ -1832,10 +1791,10 @@ function UI.Menu:eventHandler(event)
   return UI.Grid.eventHandler(self, event)
 end
 
---[[-- ViewportWindow --]]--
-UI.ViewportWindow = class(UI.Window)
-UI.ViewportWindow.defaults = {
-  UIElement = 'ViewportWindow',
+--[[-- Viewport --]]--
+UI.Viewport = class(UI.Window)
+UI.Viewport.defaults = {
+  UIElement = 'Viewport',
   backgroundColor = colors.cyan,
   accelerators = {
     down            = 'scroll_down',
@@ -1848,18 +1807,20 @@ UI.ViewportWindow.defaults = {
     [ 'control-f' ] = 'scroll_pageDown',
   },
 }
-function UI.ViewportWindow:init(args)
-  local defaults = UI:getDefaults(UI.ViewportWindow, args)
+function UI.Viewport:init(args)
+  local defaults = UI:getDefaults(UI.Viewport, args)
   UI.Window.init(self, defaults)
 end
 
-function UI.ViewportWindow:setScrollPosition(offset)
+function UI.Viewport:setScrollPosition(offset)
   local oldOffset = self.offy
   self.offy = math.max(offset, 0)
   local max = self.ymax or self.height
   if self.children then
     for _, child in ipairs(self.children) do
-      max = math.max(child.y + child.height - 1, max)
+      if child ~= self.scrollBar then                         -- hack !
+        max = math.max(child.y + child.height - 1, max)
+      end
     end
   end
   self.offy = math.min(self.offy, math.max(max, self.height) - self.height)
@@ -1868,11 +1829,20 @@ function UI.ViewportWindow:setScrollPosition(offset)
   end
 end
 
-function UI.ViewportWindow:reset()
+function UI.Viewport:reset()
   self.offy = 0
 end
 
-function UI.ViewportWindow:eventHandler(event)
+function UI.Viewport:getViewArea()
+  return {
+    y           = (self.offy or 0) + 1,
+    height      = self.height,
+    totalHeight = self.ymax,
+    offsetY     = self.offy or 0,
+  }
+end
+
+function UI.Viewport:eventHandler(event)
 
   if event.type == 'scroll_down' then
     self:setScrollPosition(self.offy + 1)
@@ -2042,8 +2012,7 @@ UI.MenuItem.defaults = {
 }
 
 function UI.MenuItem:init(args)
-  local defaults = UI:getDefaults(UI.MenuItem, args)
-  UI.Button.init(self, defaults)
+  UI.Button.init(self, UI:getDefaults(UI.MenuItem, args))
 end
 
 --[[-- MenuBar --]]--
@@ -2144,8 +2113,7 @@ UI.DropMenuItem.defaults = {
 }
 
 function UI.DropMenuItem:init(args)
-  local defaults = UI:getDefaults(UI.DropMenuItem, args)
-  UI.Button.init(self, defaults)
+  UI.Button.init(self, UI:getDefaults(UI.DropMenuItem, args))
 end
 
 --[[-- DropMenu --]]--
@@ -2466,9 +2434,9 @@ UI.Throttle.defaults = {
   ctr = 0,
   image = {
     '  //)    (O )~@ &~&-( ?Q        ',
-    '  //)    (O )- @  \-( ?)  &&    ',
-    '  //)    (O ), @  \-(?)     &&  ',
-    '  //)    (O ). @  \-d )      (@ '
+    '  //)    (O )- @  \\-( ?)  &&    ',
+    '  //)    (O ), @  \\-(?)     &&  ',
+    '  //)    (O ). @  \\-d )      (@ '
   }
 }
 
@@ -2949,22 +2917,100 @@ function UI.Text:setParent()
 end
 
 function UI.Text:draw()
-  local value = self.value or ''
-  self:write(1, 1, Util.widthify(value, self.width), self.backgroundColor)
+  self:write(1, 1, Util.widthify(self.value or '', self.width), self.backgroundColor)
+end
+
+--[[-- ScrollBar --]]--
+UI.ScrollBar = class(UI.Window)
+UI.ScrollBar.defaults = {
+  UIElement = 'ScrollBar',
+  lineChar = '|',
+  sliderChar = '#',
+  upArrowChar = '^',
+  downArrowChar = 'v',
+  scrollbarColor = colors.lightGray,
+  value = '',
+  width = 1,
+  x = -1,
+  ey = -1,
+}
+function UI.ScrollBar:init(args)
+  UI.Window.init(self, UI:getDefaults(UI.ScrollBar, args))
+end
+
+function UI.ScrollBar:draw()
+  local parent = self.parent
+  local view = parent:getViewArea()
+
+  if view.totalHeight > view.height then
+    local maxScroll = view.totalHeight - view.height
+    local percent = view.offsetY / maxScroll
+    local sliderSize = math.max(1, Util.round(view.height / view.totalHeight * (view.height - 2)))
+    local x = self.width
+
+    local row = view.y
+    if not view.static then  -- does the container scroll ?
+      self.y = row           -- if so, move the scrollbar onscreen
+      row = 1
+    end
+
+    for i = 1, view.height - 2 do
+      self:write(x, row + i, self.lineChar, nil, self.scrollbarColor)
+    end
+
+    local y = Util.round((view.height - 2 - sliderSize) * percent)
+    for i = 1, sliderSize do
+      self:write(x, row + y + i, self.sliderChar, nil, self.scrollbarColor)
+    end
+
+    local color = self.scrollbarColor
+    if view.offsetY > 0 then
+      color = colors.white
+    end
+    self:write(x, row, self.upArrowChar, nil, color)
+
+    color = self.scrollbarColor
+    if view.offsetY + view.height < view.totalHeight then
+      color = colors.white
+    end
+    self:write(x, row + view.height - 1, self.downArrowChar, nil, color)
+  end
+end
+
+function UI.ScrollBar:eventHandler(event)
+
+  if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
+    if event.x == 1 then
+      local view = self.parent:getViewArea()
+      if view.totalHeight > view.height then
+        if event.y == view.y then
+          self:emit({ type = 'scroll_up'})
+        elseif event.y == self.height then
+          self:emit({ type = 'scroll_down'})
+          -- else
+          -- ... percentage ...
+        end
+      end
+      return true
+    end
+  end
 end
 
 --[[-- TextArea --]]--
-UI.TextArea = class(UI.Window)
+UI.TextArea = class(UI.Viewport)
 UI.TextArea.defaults = {
   UIElement = 'TextArea',
+  marginRight = 2,
   value = '',
 }
 function UI.TextArea:init(args)
-  local defaults = UI:getDefaults(UI.TextArea, args)
-  UI.Window.init(self, defaults)
+  UI.Viewport.init(self, UI:getDefaults(UI.TextArea, args))
+  self.scrollBar = UI.ScrollBar()
 end
 
 function UI.TextArea:setText(text)
+  self.offy = 0
+  self.ymax = nil
   self.value = text
   self:draw()
 end
@@ -2973,6 +3019,13 @@ function UI.TextArea:draw()
   self:clear()
   self:setCursorPos(1, 1)
   self:print(self.value)
+  self.ymax = self.cursorY + 1
+
+  for _,child in pairs(self.children) do
+    if child.enabled then
+      child:draw()
+    end
+  end
 end
 
 --[[-- Form --]]--
