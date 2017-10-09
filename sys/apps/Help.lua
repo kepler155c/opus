@@ -3,8 +3,9 @@ _G.requireInjector()
 local UI    = require('ui')
 local Util  = require('util')
 
-local colors = _G.colors
-local help   = _G.help
+local colors     = _G.colors
+local help       = _G.help
+local multishell = _ENV.multishell
 
 multishell.setTitle(multishell.getCurrent(), 'Help')
 UI:configure('Help', ...)
@@ -54,10 +55,6 @@ local topicPage = UI.Page {
     backspace = 'back',
   },
 }
-
-function topicPage.helpText:focus()
-  -- let the help text get focused so we consume key strokes
-end
 
 function topicPage:eventHandler(event)
   if event.type == 'back' then

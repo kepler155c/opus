@@ -13,6 +13,14 @@ local shell      = _ENV.shell
 multishell.setTitle(multishell.getCurrent(), 'System')
 UI:configure('System', ...)
 
+local mcVersion = _G._MC_VERSION or 'unknown'
+if _G._HOST then
+  local version = _G._HOST:match('%S+ %S+ %((%S.+)%)')
+  if version then
+    mcVersion = version:match('Minecraft (%S+)') or version
+  end
+end
+
 local env = {
   path = shell.path(),
   aliases = shell.aliases(),
@@ -89,7 +97,7 @@ local systemPage = UI.Page {
           { name = '',  value = ''                  },
           { name = 'CC version',  value = Util.getVersion()                  },
           { name = 'Lua version', value = _VERSION                           },
-          { name = 'MC version',  value = _G._MC_VERSION or 'unknown'        },
+          { name = 'MC version',  value = mcVersion                          },
           { name = 'Disk free',   value = Util.toBytes(fs.getFreeSpace('/')) },
           { name = 'Computer ID', value = tostring(os.getComputerID())       },
           { name = 'Day',         value = tostring(os.day())                 },
@@ -123,7 +131,7 @@ if settings then
       grid = UI.Grid {
         y = 1,
         values = values,
-        --autospace = true,
+        autospace = true,
         sortColumn = 'name',
         columns = {
           { heading = 'Setting',   key = 'name' },

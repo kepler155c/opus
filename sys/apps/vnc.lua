@@ -25,10 +25,10 @@ end
 multishell.setTitle(multishell.getCurrent(), 'VNC-' .. remoteId)
 
 print('connecting...')
-local socket = Socket.connect(remoteId, 5900)
+local socket, msg = Socket.connect(remoteId, 5900)
 
 if not socket then
-  error('Unable to connect to ' .. remoteId .. ' on port 5900')
+  error(msg)
 end
 
 local function writeTermInfo()

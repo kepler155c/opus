@@ -5,13 +5,13 @@ local Util     = require('util')
 
 local device    = _G.device
 local os        = _G.os
-local transport = _G.transport
+--local transport = _G.transport
 
 local socketClass = { }
 
 function socketClass:read(timeout)
 
-  local data, distance = transport.read(self)
+  local data, distance = _G.transport.read(self)
   if data then
     return data, distance
   end
@@ -27,7 +27,7 @@ function socketClass:read(timeout)
     local e, id = os.pullEvent()
 
     if e == 'transport_' .. self.sport then
-      data, distance = transport.read(self)
+      data, distance = _G.transport.read(self)
       if data then
         os.cancelTimer(timerId)
         return data, distance
@@ -44,7 +44,7 @@ end
 
 function socketClass:write(data)
   if self.connected then
-    transport.write(self, {
+    _G.transport.write(self, {
       type = 'DATA',
       seq = self.wseq,
       data = data,
@@ -55,7 +55,7 @@ end
 
 function socketClass:ping()
   if self.connected then
-    transport.write(self, {
+    _G.transport.write(self, {
       type = 'PING',
       seq = self.wseq,
     })
@@ -72,7 +72,7 @@ function socketClass:close()
     self.connected = false
   end
   device.wireless_modem.close(self.sport)
-  transport.close(self)
+  _G.transport.close(self)
 end
 
 local Socket = { }
@@ -126,23 +126,29 @@ function Socket.connect(host, port)
     local e, id, sport, dport, msg = os.pullEvent()
     if e == 'modem_message' and
        sport == socket.sport and
-       msg.dhost == socket.shost and
-       msg.type == 'CONN' then
-
-      socket.dport = dport
-      socket.connected = true
-      Logger.log('socket', 'connection established to %d %d->%d',
-                            host, socket.sport, socket.dport)
+       msg.dhost == socket.shost then
 
       os.cancelTimer(timerId)
 
-      transport.open(socket)
+      if msg.type == 'CONN' then
 
-      return socket
+        socket.dport = dport
+        socket.connected = true
+        Logger.log('socket', 'connection established to %d %d->%d',
+                              host, socket.sport, socket.dport)
+
+        _G.transport.open(socket)
+
+        return socket
+      elseif msg.type == 'REJE' then
+        return false, 'Password not set on target or not trusted'
+      end
     end
   until e == 'timer' and id == timerId
 
   socket:close()
+
+  return false, 'Connection timed out'
 end
 
 local function trusted(msg, port)
@@ -176,13 +182,14 @@ function Socket.server(port)
        msg.dhost == os.getComputerID() and
        msg.type == 'OPEN' then
 
+      local socket = newSocket(msg.shost == os.getComputerID())
+      socket.dport = dport
+      socket.dhost = msg.shost
+      socket.wseq = msg.wseq
+      socket.rseq = msg.rseq
+
       if trusted(msg, port) then
-        local socket = newSocket(msg.shost == os.getComputerID())
-        socket.dport = dport
-        socket.dhost = msg.shost
         socket.connected = true
-        socket.wseq = msg.wseq
-        socket.rseq = msg.rseq
         socket.transmit(socket.dport, socket.sport, {
           type = 'CONN',
           dhost = socket.dhost,
@@ -190,9 +197,16 @@ function Socket.server(port)
         })
         Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
-        transport.open(socket)
+        _G.transport.open(socket)
         return socket
       end
+
+      socket.transmit(socket.dport, socket.sport, {
+        type = 'REJE',
+        dhost = socket.dhost,
+        shost = socket.shost,
+      })
+      socket:close()
     end
   end
 end

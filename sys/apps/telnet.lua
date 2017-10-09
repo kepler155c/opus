@@ -23,10 +23,10 @@ if not remoteId then
 end
 
 print('connecting...')
-local socket = Socket.connect(remoteId, 23)
+local socket, msg = Socket.connect(remoteId, 23)
 
 if not socket then
-  error('Unable to connect to ' .. remoteId .. ' on port 23')
+  error(msg)
 end
 
 local ct = Util.shallowCopy(term.current())

@@ -2045,7 +2045,7 @@ function UI.MenuBar:init(args)
   end
 
   self:addButtons(self.buttons)
-  if self.showBackButton then
+  if self.showBackButton then  -- need to remove
     table.insert(self.children, UI.MenuItem({
       x = UI.term.width - 2,
       width = 3,
@@ -2086,7 +2086,9 @@ function UI.MenuBar:addButtons(buttons)
       end
     end
   end
-  self:initChildren()
+  if self.parent then
+    self:initChildren()
+  end
 end
 
 function UI.MenuBar:getActive(menuItem)
@@ -2127,6 +2129,13 @@ UI.DropMenuItem.defaults = {
 
 function UI.DropMenuItem:init(args)
   UI.Button.init(self, UI:getDefaults(UI.DropMenuItem, args))
+end
+
+function UI.DropMenuItem:eventHandler(event)
+  if event.type == 'button_activate' then
+    self.parent:hide()
+  end
+  return UI.Button.eventHandler(self, event)
 end
 
 --[[-- DropMenu --]]--
@@ -3026,6 +3035,10 @@ function UI.TextArea:setText(text)
   self.ymax = nil
   self.value = text
   self:draw()
+end
+
+function UI.TextArea:focus()
+  -- allow keyboard scrolling
 end
 
 function UI.TextArea:draw()
