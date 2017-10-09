@@ -1,5 +1,4 @@
-local synchronized = require('sync')
-local Util         = require('util')
+local Util = require('util')
 
 local fs = _G.fs
 
@@ -51,9 +50,7 @@ function urlfs.open(node, fn, fl)
 
   local c = node.cache
   if not c then
-    synchronized(node.url, function()
-      c = Util.download(node.url)
-    end)
+    c = Util.httpGet(node.url)
     if c then
       node.cache = c
       node.size = #c

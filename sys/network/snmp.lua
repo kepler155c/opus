@@ -111,7 +111,6 @@ device.wireless_modem.open(999)
 print('discovery: listening on port 999')
 
 Event.on('modem_message', function(e, s, sport, id, info, distance)
-debug(info)
   if sport == 999 and tonumber(id) and type(info) == 'table' then
     if not network[id] then
       network[id] = { }
@@ -151,7 +150,6 @@ end
 
 -- every 10 seconds, send out this computer's info
 Event.onInterval(10, function()
-debug('timer')
   sendInfo()
   for _,c in pairs(_G.network) do
     local elapsed = os.clock()-c.timestamp

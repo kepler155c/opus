@@ -6,41 +6,53 @@ local fs   = _G.fs
 local http = _G.http
 local os   = _G.os
 
--- fix broken http get
-local syncLocks = { }
+if not http._patched then
+  -- fix broken http get
+  local syncLocks = { }
 
-local function sync(obj, fn)
-  local key = tostring(obj)
-  if syncLocks[key] then
-    local cos = tostring(coroutine.running())
-    table.insert(syncLocks[key], cos)
-    repeat
-      local _, co = os.pullEvent('sync_lock')
-    until co == cos
-  else
-    syncLocks[key] = { }
+  local function sync(obj, fn)
+    local key = tostring(obj)
+    if syncLocks[key] then
+      local cos = tostring(coroutine.running())
+      table.insert(syncLocks[key], cos)
+      repeat
+        local _, co = os.pullEvent('sync_lock')
+      until co == cos
+    else
+      syncLocks[key] = { }
+    end
+    local s, m = pcall(fn)
+    local co = table.remove(syncLocks[key], 1)
+    if co then
+      os.queueEvent('sync_lock', co)
+    else
+      syncLocks[key] = nil
+    end
+    if not s then
+      error(m)
+    end
   end
-  local s, m = pcall(fn)
-  local co = table.remove(syncLocks[key], 1)
-  if co then
-    os.queueEvent('sync_lock', co)
-  else
-    syncLocks[key] = nil
-  end
-  if not s then
-    error(m)
+
+  -- todo -- completely replace http.get with function that
+  -- checks for success on permanent redirects (minecraft 1.75 bug)
+
+  http._patched = http.get
+  function http.get(url, headers)
+    local s, m
+    sync(url, function()
+      s, m = http._patched(url, headers)
+    end)
+    return s, m
   end
 end
 
 local function loadUrl(url)
   local c
-  sync(url, function()
-    local h = http.get(url)
-    if h then
-      c = h.readAll()
-      h.close()
-    end
-  end)
+  local h = http.get(url)
+  if h then
+    c = h.readAll()
+    h.close()
+  end
   if c and #c > 0 then
     return c
   end

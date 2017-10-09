@@ -1,5 +1,11 @@
 local Util = { }
 
+local fs        = _G.fs
+local http      = _G.http
+local os        = _G.os
+local term      = _G.term
+local textutils = _G.textutils
+
 function Util.tryTimed(timeout, f, ...)
   local c = os.clock()
   repeat
@@ -12,7 +18,7 @@ end
 
 function Util.tryTimes(attempts, f, ...)
   local result
-  for i = 1, attempts do
+  for _ = 1, attempts do
     result = { f(...) }
     if result[1] then
       return unpack(result)
@@ -72,11 +78,11 @@ end
 function Util.getVersion()
   local version
 
-  if _CC_VERSION then
-    version = tonumber(_CC_VERSION:gmatch('[%d]+%.?[%d][%d]', '%1')())
+  if _G._CC_VERSION then
+    version = tonumber(_G._CC_VERSION:gmatch('[%d]+%.?[%d][%d]', '%1')())
   end
-  if not version and _HOST then
-    version = tonumber(_HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
+  if not version and _G._HOST then
+    version = tonumber(_G._HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
   end
 
   return version or 1.7
@@ -351,13 +357,18 @@ function Util.loadTable(fname)
 end
 
 --[[ loading and running functions ]] --
-function Util.download(url, filename)
-  local h = http.get(url)
-  if not h then
-    error('Failed to download ' .. url)
+function Util.httpGet(url, headers)
+  local h, msg = http.get(url, headers)
+  if h then
+    local contents = h.readAll()
+    h.close()
+    return contents
   end
-  local contents = h.readAll()
-  h.close()
+  return h, msg
+end
+
+function Util.download(url, filename)
+  local contents = Util.httpGet(url)
   if not contents then
     error('Failed to download ' .. url)
   end
@@ -418,8 +429,8 @@ function Util.toBytes(n)
   return tostring(n)
 end
 
-function Util.insertString(os, is, pos)
-  return os:sub(1, pos - 1) .. is .. os:sub(pos)
+function Util.insertString(str, istr, pos)
+  return str:sub(1, pos - 1) .. istr .. str:sub(pos)
 end
 
 function Util.split(str, pattern)
