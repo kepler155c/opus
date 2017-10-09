@@ -7,6 +7,7 @@ local Util   = require('util')
 local fs         = _G.fs
 local multishell = _ENV.multishell
 local os         = _G.os
+local settings   = _G.settings
 local shell      = _ENV.shell
 
 multishell.setTitle(multishell.getCurrent(), 'System')
@@ -57,7 +58,6 @@ local systemPage = UI.Page {
       },
       grid = UI.Grid {
         y = 5,
-        autospace = true,
         sortColumn = 'alias',
         columns = {
           { heading = 'Alias',   key = 'alias' },
@@ -107,6 +107,43 @@ local systemPage = UI.Page {
     q = 'quit',
   },
 }
+
+if settings then
+  local values = { }
+  for _,v in pairs(settings.getNames()) do
+    table.insert(values, {
+      name = v,
+      value = not not settings.get(v),
+    })
+  end
+
+  systemPage.tabs:add({
+    systemTab = UI.Window {
+      tabTitle = 'Settings',
+      grid = UI.Grid {
+        y = 1,
+        values = values,
+        --autospace = true,
+        sortColumn = 'name',
+        columns = {
+          { heading = 'Setting',   key = 'name' },
+          { heading = 'Value', key = 'value'  },
+        },
+        accelerators = {
+        },
+      },
+    }
+  })
+  function systemPage.tabs.systemTab:eventHandler(event)
+    if event.type == 'grid_select' then
+      event.selected.value = not event.selected.value
+      settings.set(event.selected.name, event.selected.value)
+      settings.save('.settings')
+      self.grid:draw()
+      return true
+    end
+  end
+end
 
 function systemPage.tabs.pathTab.grid:draw()
   self.values = { }

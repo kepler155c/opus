@@ -21,15 +21,12 @@ if not http._patched then
     else
       syncLocks[key] = { }
     end
-    local s, m = pcall(fn)
+    fn()
     local co = table.remove(syncLocks[key], 1)
     if co then
       os.queueEvent('sync_lock', co)
     else
       syncLocks[key] = nil
-    end
-    if not s then
-      error(m)
     end
   end
 

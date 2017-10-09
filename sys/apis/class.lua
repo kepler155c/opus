@@ -1,6 +1,8 @@
 -- From http://lua-users.org/wiki/SimpleLuaClasses
 -- (with some modifications)
 
+local uid = 1
+
 -- class.lua
 -- Compatible with Lua 5.1 (not 5.0).
 return function(base)
@@ -19,7 +21,8 @@ return function(base)
   -- expose a constructor which can be called by <classname>(<args>)
   setmetatable(c, {
     __call = function(class_tbl, ...)
-      local obj = {}
+      local obj = { __uid = uid }
+      uid = uid + 1
       setmetatable(obj,c)
       if class_tbl.init then
         class_tbl.init(obj, ...)

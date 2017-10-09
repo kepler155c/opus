@@ -9,6 +9,13 @@ local _sub   = string.sub
 local colors = _G.colors
 local keys   = _G.keys
 
+--[[
+  Using the shorthand window definition, elements are created from
+  the bottom up. Once reaching the top, setParent is called top down.
+
+  On :init(), elements do not know the parent or can calculate sizing.
+]]
+
 local function safeValue(v)
   local t = type(v)
   if t == 'string' or t == 'number' then
@@ -526,7 +533,6 @@ UI.Window.defaults = {
 function UI.Window:init(args)
   local defaults = UI:getDefaults(UI.Window, args)
   UI:setProperties(self, defaults)
-
   if self.parent then
     self:setParent()
   end
@@ -2024,6 +2030,7 @@ UI.MenuBar.defaults = {
   backgroundColor = colors.lightGray,
   textColor = colors.black,
   spacing = 2,
+  lastx = 1,
   showBackButton = false,
   buttonClass = 'MenuItem',
 }
@@ -2031,23 +2038,40 @@ UI.MenuBar.spacer = { spacer = true, text = 'spacer', inactive = true }
 
 function UI.MenuBar:init(args)
   local defaults = UI:getDefaults(UI.MenuBar, args)
-  UI:setProperties(self, defaults)
+  UI.Window.init(self, defaults)
 
   if not self.children then
     self.children = { }
   end
 
-  local x = 1
-  for _,button in pairs(self.buttons) do
+  self:addButtons(self.buttons)
+  if self.showBackButton then
+    table.insert(self.children, UI.MenuItem({
+      x = UI.term.width - 2,
+      width = 3,
+      backgroundColor = self.backgroundColor,
+      textColor = self.textColor,
+      text = '^-',
+      event = 'back',
+    }))
+  end
+end
+
+function UI.MenuBar:addButtons(buttons)
+  if not self.children then
+    self.children = { }
+  end
+
+  for _,button in pairs(buttons) do
     if button.UIElement then
       table.insert(self.children, button)
     else
       local buttonProperties = {
-        x = x,
+        x = self.lastx,
         width = #button.text + self.spacing,
         centered = false,
       }
-      x = x + buttonProperties.width
+      self.lastx = self.lastx + buttonProperties.width
       UI:setProperties(buttonProperties, button)
 
       button = UI[self.buttonClass](buttonProperties)
@@ -2059,21 +2083,10 @@ function UI.MenuBar:init(args)
 
       if button.dropdown then
         button.dropmenu = UI.DropMenu { buttons = button.dropdown }
-        --table.insert(self.children, buttonProperties.dropmenu)
       end
     end
   end
-  if self.showBackButton then
-    table.insert(self.children, UI.MenuItem({
-      x = UI.term.width - 2,
-      width = 3,
-      backgroundColor = self.backgroundColor,
-      textColor = self.textColor,
-      text = '^-',
-      event = 'back',
-    }))
-  end
-  UI.Window.init(self, defaults)
+  self:initChildren()
 end
 
 function UI.MenuBar:getActive(menuItem)
@@ -2238,42 +2251,44 @@ UI.Tabs.defaults = {
 }
 function UI.Tabs:init(args)
   local defaults = UI:getDefaults(UI.Tabs, args)
+  UI.Window.init(self, defaults)
+
+  self:add(self)
+end
+
+function UI.Tabs:add(children)
 
   local buttons = { }
-  for _,child in pairs(defaults) do
+  for _,child in pairs(children) do
     if type(child) == 'table' and child.UIElement then
+      child.y = 2
       table.insert(buttons, {
-        text = child.tabTitle or '', event = 'tab_select',
+        text = child.tabTitle or '',
+        event = 'tab_select',
+        tabUid = child.__uid,
       })
     end
   end
 
-  self.tabBar = UI.TabBar({
-    buttons = buttons,
-  })
+  if not self.tabBar then
+    self.tabBar = UI.TabBar({
+      buttons = buttons,
+    })
+  else
+    self.tabBar:addButtons(buttons)
+  end
 
-  UI.Window.init(self, defaults)
-end
-
-function UI.Tabs:setParent()
-  UI.Window.setParent(self)
-
-  for _,child in pairs(self.children) do
-    if child ~= self.tabBar then
-      child.oy = 2
-      --child.height = self.height - 1
-      child:resize()
-    end
+  if self.parent then
+    return UI.Window.add(self, children)
   end
 end
 
 function UI.Tabs:enable()
   self.enabled = true
-  for _,child in ipairs(self.children) do
-    if child.tabTitle == self.tabBar.buttons[1].text then
-      self:activateTab(child)
-      break
-    end
+
+  local _, menuItem = Util.first(self.tabBar.children, function(a, b) return a.x < b.x end)
+  if menuItem then
+    self:activateTab(Util.find(self.children, '__uid', menuItem.tabUid))
   end
   self.tabBar:enable()
 end
@@ -2292,11 +2307,9 @@ end
 
 function UI.Tabs:eventHandler(event)
   if event.type == 'tab_select' then
-    for _,child in ipairs(self.children) do
-      if child.tabTitle == event.button.text then
-        self:activateTab(child)
-        break
-      end
+    local child = Util.find(self.children, '__uid', event.button.tabUid)
+    if child then
+      self:activateTab(child)
     end
   elseif event.type == 'tab_change' then
     for _,tab in ipairs(self.children) do
