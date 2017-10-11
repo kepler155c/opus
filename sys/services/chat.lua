@@ -46,8 +46,8 @@ if device.wireless_modem then
 		function()
 			os.sleep(3)
 			local tabId = multishell.openTab({
-				fn   = chatClient,
-				title  = 'Chatroom',
+				fn     = chatClient,
+				title  = 'Chat',
 				hidden = true,
 			})
 			tab = multishell.getTab(tabId)

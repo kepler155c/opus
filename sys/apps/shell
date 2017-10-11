@@ -1,16 +1,20 @@
-local parentShell = shell
+local parentShell = _ENV.shell
 
-shell = { }
-multishell = multishell or { }
+_ENV.shell = { }
+_ENV.multishell = _ENV.multishell or { }
+
+local fs         = _G.fs
+local shell      = _ENV.shell
+local multishell = _ENV.multishell
 
 local sandboxEnv = setmetatable({ }, { __index = _G })
-for k,v in pairs(getfenv(1)) do
-  sandboxEnv[k] = v 
+for k,v in pairs(_ENV) do
+  sandboxEnv[k] = v
 end
 sandboxEnv.shell = shell
 sandboxEnv.multishell = multishell
 
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Util = require('util')
 
@@ -40,42 +44,59 @@ local function parseCommandLine( ... )
   return table.remove(tWords, 1), tWords
 end
 
--- Install shell API
-function shell.run(...)
-
+local function run(env, ...)
   local path, args = parseCommandLine(...)
-  local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
 
+  if not path then
+    error('No such program')
+  end
+
+  local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
   if not isUrl then
     path = shell.resolveProgram(path)
+    if not path then
+      error('No such program')
+    end
   end
 
-  if path then
+  local fn, err
+
+  if isUrl then
+    fn, err = Util.loadUrl(path, env)
+  else
+    fn, err = loadfile(path, env)
+  end
+
+  if not fn then
+    error(err)
+  end
+
+  local oldTitle
+
+  if multishell and multishell.getTitle then
+    oldTitle = multishell.getTitle(multishell.getCurrent())
+    multishell.setTitle(multishell.getCurrent(), fs.getName(path))
+  end
+
+  if isUrl then
+    tProgramStack[#tProgramStack + 1] = path:match("^https?://([^/:]+:?[0-9]*/?.*)$")
+  else
     tProgramStack[#tProgramStack + 1] = path
-    local oldTitle
-
-    if multishell and multishell.getTitle then
-      oldTitle = multishell.getTitle(multishell.getCurrent())
-      multishell.setTitle(multishell.getCurrent(), fs.getName(path))
-    end
-
-    local result, err
-
-    local env = Util.shallowCopy(sandboxEnv)
-    if isUrl then
-      result, err = Util.runUrl(env, path, unpack(args))
-    else
-      result, err = Util.run(env, path, unpack(args))
-    end
-    tProgramStack[#tProgramStack] = nil
-
-    if multishell and multishell.getTitle then
-      multishell.setTitle(multishell.getCurrent(), oldTitle or 'shell')
-    end
-
-    return result, err
   end
-  return false, 'No such program'
+  local r = { fn(table.unpack(args)) }
+
+  tProgramStack[#tProgramStack] = nil
+
+  if multishell and multishell.getTitle then
+    multishell.setTitle(multishell.getCurrent(), oldTitle or 'shell')
+  end
+
+  return table.unpack(r)
+end
+
+-- Install shell API
+function shell.run(...)
+  return pcall(run, setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G }), ...)
 end
 
 function shell.exit()
@@ -119,7 +140,7 @@ function shell.resolveProgram( _sCommand )
     end
     return nil
   end
-  
+
   -- Otherwise, look on the path variable
   for sPath in string.gmatch(PATH or '', "[^:]+") do
     sPath = fs.combine(sPath, _sCommand )
@@ -130,20 +151,19 @@ function shell.resolveProgram( _sCommand )
       return sPath .. '.lua'
     end
   end
-  
   -- Not found
   return nil
 end
 
 function shell.programs( _bIncludeHidden )
   local tItems = {}
-  
+
   -- Add programs from the path
   for sPath in string.gmatch(PATH, "[^:]+") do
     sPath = shell.resolve(sPath)
     if fs.isDir( sPath ) then
       local tList = fs.list( sPath )
-      for n,sFile in pairs( tList ) do
+      for _,sFile in pairs( tList ) do
         if not fs.isDir( fs.combine( sPath, sFile ) ) and
           (_bIncludeHidden or string.sub( sFile, 1, 1 ) ~= ".") then
           tItems[ sFile ] = true
@@ -154,7 +174,7 @@ function shell.programs( _bIncludeHidden )
 
   -- Sort and return
   local tItemList = {}
-  for sItem, b in pairs( tItems ) do
+  for sItem in pairs( tItems ) do
     table.insert( tItemList, sItem )
   end
   table.sort( tItemList )
@@ -229,39 +249,17 @@ end
 
 local tArgs = { ... }
 if #tArgs > 0 then
-
-  local path, args = parseCommandLine(...)
-
-  if not path then
-    error('No such program')
-  end
-
-  local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
-  if not isUrl then
-    path = shell.resolveProgram(path)
-    if not path then
-      error('No such program')
-    end
-  end
-
-  local fn, err
-
-  if isUrl then
-    fn, err = Util.loadUrl(path, getfenv(1))
-  else
-    fn, err = loadfile(path, getfenv(1))
-  end
-
-  if not fn then
-    error(err)
-  end
-
-  tProgramStack[#tProgramStack + 1] = path
-  return fn(table.unpack(args))
+  return run(_ENV, ...)
 end
 
 local Config  = require('config')
 local History = require('history')
+
+local colors    = _G.colors
+local keys      = _G.keys
+local os        = _G.os
+local term      = _G.term
+local textutils = _G.textutils
 
 local config = {
   standard = {
@@ -285,7 +283,7 @@ local config = {
   displayDirectory = true,
 }
 
---Config.load('shell', config)
+Config.load('shellprompt', config)
 
 local _colors = config.standard
 if term.isColor() then
@@ -384,6 +382,7 @@ local function autocomplete(line, suggestions)
   end
 
   local results = { }
+  local files = { }
 
   if #words == 0 then
     files = autocompleteFile(results, words)
@@ -398,7 +397,6 @@ local function autocomplete(line, suggestions)
   end
 
   local match = words[#words] or ''
-  local files = { }
   for f in pairs(results) do
     if f:sub(1, #match) == match then
       table.insert(files, f)
@@ -406,7 +404,7 @@ local function autocomplete(line, suggestions)
   end
 
   if #files == 1 then
-    words[#words] = files[1] 
+    words[#words] = files[1]
     return table.concat(words, ' ')
   elseif #files > 1 and suggestions then
     print()
@@ -438,12 +436,12 @@ local function autocomplete(line, suggestions)
     if #tDirs > 0 and #tDirs < #tFiles then
       local w = term.getSize()
       local nMaxLen = w / 8
-      for n, sItem in pairs(files) do
+      for _,sItem in pairs(files) do
         nMaxLen = math.max(string.len(sItem) + 1, nMaxLen)
       end
       local nCols = math.floor(w / nMaxLen)
       if #tDirs < nCols then
-        for i = #tDirs + 1, nCols do
+        for _ = #tDirs + 1, nCols do
           table.insert(tDirs, '')
         end
       end
@@ -457,7 +455,7 @@ local function autocomplete(line, suggestions)
 
     term.setTextColour(_colors.promptTextColor)
     term.setBackgroundColor(_colors.promptBackgroundColor)
-    write("$ " )
+    term.write("$ " )
 
     term.setTextColour(_colors.commandTextColor)
     term.setBackgroundColor(colors.black)
@@ -507,7 +505,7 @@ local function shellRead(history)
       nScroll = (sx + nPos) - w
     end
 
-    local cx,cy = term.getCursorPos()
+    local _,cy = term.getCursorPos()
     term.setCursorPos( sx, cy )
     if sReplace then
       term.write( string.rep( sReplace, math.max( string.len(sLine) - nScroll, 0 ) ) )
@@ -518,7 +516,7 @@ local function shellRead(history)
   end
 
   while true do
-    local sEvent, param, param2 = os.pullEventRaw()
+    local sEvent, param = os.pullEventRaw()
 
     if sEvent == "char" then
       sLine = string.sub( sLine, 1, nPos ) .. param .. string.sub( sLine, nPos + 1 )
@@ -581,7 +579,7 @@ local function shellRead(history)
         if nPos > 0 then
           redraw(" ")
           sLine = string.sub( sLine, 1, nPos - 1 ) .. string.sub( sLine, nPos + 1 )
-          nPos = nPos - 1                    
+          nPos = nPos - 1
           redraw()
         end
       elseif param == keys.home then
@@ -605,7 +603,7 @@ local function shellRead(history)
     end
   end
 
-  local cx, cy = term.getCursorPos()
+  local _, cy = term.getCursorPos()
   term.setCursorPos( w + 1, cy )
   print()
   term.setCursorBlink( false )
@@ -622,7 +620,7 @@ while not bExit do
   end
   term.setTextColour(_colors.promptTextColor)
   term.setBackgroundColor(_colors.promptBackgroundColor)
-  write("$ " )
+  term.write("$ " )
   term.setTextColour(_colors.commandTextColor)
   term.setBackgroundColor(colors.black)
   local sLine = shellRead(history)
@@ -635,9 +633,9 @@ while not bExit do
   end
   term.setTextColour(_colors.textColor)
   if #sLine > 0 then
-    local result, err = shell.run( sLine )
+    local result, err = shell.run(sLine)
     if not result and err then
-      printError(err)
+      _G.printError(err)
     end
   end
 end

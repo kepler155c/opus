@@ -9,6 +9,7 @@ local colors     = _G.colors
 local device     = _G.device
 local multishell = _ENV.multishell
 local network    = _G.network
+local os         = _G.os
 local shell      = _ENV.shell
 
 multishell.setTitle(multishell.getCurrent(), 'Network')
@@ -112,7 +113,7 @@ function page:eventHandler(event)
     elseif event.type == 'chat' then
       multishell.openTab({
         path    = 'sys/apps/shell',
-        args    = { 'chat join opusChat-' .. t.id .. ' guest'},
+        args    = { 'chat join opusChat-' .. t.id .. ' guest-' .. os.getComputerID() },
         title   = 'Chatroom',
         focused = true,
       })

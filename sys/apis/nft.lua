@@ -21,7 +21,12 @@ function NFT.parse(imageText)
   }
 
   local num = 1
-  for _,sLine in ipairs(Util.split(imageText)) do
+  local lines = Util.split(imageText)
+  while #lines[#lines] == 0 do
+    table.remove(lines, #lines)
+  end
+
+  for _,sLine in ipairs(lines) do
     table.insert(image.fg, { })
     table.insert(image.bg, { })
     table.insert(image.text, { })

@@ -380,15 +380,11 @@ function Util.download(url, filename)
 end
 
 function Util.loadUrl(url, env)  -- loadfile equivalent
-  local s, m = pcall(function()
-    local c = Util.download(url)
-    return load(c, url, nil, env)
-  end)
-
-  if s then
-    return m
+  local c, msg = Util.httpGet(url)
+  if not c then
+    return c, msg
   end
-  return s, m
+  return load(c, url, nil, env)
 end
 
 function Util.runUrl(env, url, ...)   -- os.run equivalent

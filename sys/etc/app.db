@@ -88,6 +88,16 @@
     run = "simpleMiner.lua",
     requires = 'turtle',
   },
+  [ "131260cbfbb0c821f8eae5e7c3c296c7aa4d50b9" ] = {
+    title = "Music",
+    category = "Apps",
+    icon = "\030 \031f === \
+\030 \031f |  |\
+\030 \031fo| o|\
+",
+    run = "usr/apps/music.lua",
+    requires = 'turtle',
+  },
   c47ae15370cfe1ed2781eedc1dc2547d12d9e972 = {
     title = "Help",
     category = "Apps",
