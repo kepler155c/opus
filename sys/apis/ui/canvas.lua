@@ -22,8 +22,6 @@ end
 function Canvas:init(args)
   self.x = 1
   self.y = 1
-  self.bg = colors.black
-  self.fg = colors.white
   self.layers = { }
 
   Util.merge(self, args)
@@ -88,7 +86,7 @@ function Canvas:copy()
   return b
 end
 
-function Canvas:addLayer(layer, bg, fg)
+function Canvas:addLayer(layer)
   local canvas = Canvas({
     x       = layer.x,
     y       = layer.y,
@@ -96,8 +94,6 @@ function Canvas:addLayer(layer, bg, fg)
     height  = layer.height,
     isColor = self.isColor,
   })
-  canvas:clear(bg, fg)
-
   canvas.parent = self
   table.insert(self.layers, canvas)
   return canvas
@@ -199,8 +195,8 @@ end
 
 function Canvas:clear(bg, fg)
   local text = _rep(' ', self.width)
-  fg = _rep(self.palette[fg or self.fg], self.width)
-  bg = _rep(self.palette[bg or self.bg], self.width)
+  fg = _rep(self.palette[fg or colors.white], self.width)
+  bg = _rep(self.palette[bg or colors.black], self.width)
   for i = 1, self.height do
     self:writeLine(i, text, fg, bg)
   end

@@ -4,10 +4,16 @@ local Event      = require('event')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
-local _rep   = string.rep
-local _sub   = string.sub
-local colors = _G.colors
-local keys   = _G.keys
+local _rep       = string.rep
+local _sub       = string.sub
+local clipboard  = _G.clipboard
+local colors     = _G.colors
+local device     = _G.device
+local fs         = _G.fs
+local keys       = _G.keys
+local multishell = _ENV.multishell
+local os         = _G.os
+local term       = _G.term
 
 --[[
   Using the shorthand window definition, elements are created from
@@ -33,12 +39,6 @@ local function getPosition(element)
     element = element.parent
   until not element
   return x, y
-end
-
-local function assertElement(el, msg)
-  if not el or not type(el) == 'table' or not el.UIElement then
-    error(msg, 3)
-  end
 end
 
 --[[-- Top Level Manager --]]--
@@ -232,11 +232,10 @@ function Manager:configure(appName, ...)
     if not dev then
       error('Invalid display device')
     end
-    local device = self.Device({
+    self:setDefaultDevice(self.Device({
       device = dev,
       textScale = defaults.device.textScale,
-    })
-    self:setDefaultDevice(device)
+    }))
   end
 
   if defaults.theme then
@@ -273,7 +272,6 @@ function Manager:emitEvent(event)
 end
 
 function Manager:inputEvent(parent, event)
-
   while parent do
     if parent.accelerators then
       local acc = parent.accelerators[event.key]
@@ -376,9 +374,9 @@ function Manager:click(button, x, y)
   end
 end
 
-function Manager:setDefaultDevice(device)
-  self.defaultDevice = device
-  self.term = device
+function Manager:setDefaultDevice(dev)
+  self.defaultDevice = dev
+  self.term = dev
 end
 
 function Manager:addPage(name, page)
@@ -490,8 +488,8 @@ function Manager:setProperties(obj, args)
   end
 end
 
-function Manager:dump(el)
-  if el then
+function Manager:dump(inEl)
+  if inEl then
     local function clean(el)
       local o = el
       el = Util.shallowCopy(el)
@@ -511,7 +509,7 @@ function Manager:dump(el)
 
       return el
     end
-    return clean(el)
+    return clean(inEl)
   end
 end
 
@@ -519,6 +517,7 @@ local UI = Manager()
 
 --[[-- Basic drawable area --]]--
 UI.Window = class()
+UI.Window.uid = 1
 UI.Window.defaults = {
   UIElement = 'Window',
   x = 1,
@@ -528,12 +527,46 @@ UI.Window.defaults = {
   offy = 0,
   cursorX = 1,
   cursorY = 1,
-  -- accelerators = { },
 }
 function UI.Window:init(args)
-  local defaults = UI:getDefaults(UI.Window, args)
+  -- merge defaults for all subclasses
+  local defaults = args
+  local m = self
+  repeat
+    defaults = UI:getDefaults(m, defaults)
+    m = m._base
+  until not m
   UI:setProperties(self, defaults)
+
+  -- each element has a unique ID
+  self.uid = UI.Window.uid
+  UI.Window.uid = UI.Window.uid + 1
+
+  -- at this time, the object has all the properties set
+
+  -- postInit is a special constructor. the element does not need to implement
+  -- the method. But we need to guarantee that each subclass which has this
+  -- method is called.
+  m = self
+  local lpi
+  repeat
+    if m.postInit and m.postInit ~= lpi then
+--debug('calling ' .. m.defaults.UIElement)
+--debug(rawget(m, 'postInit'))
+      m.postInit(self)
+      lpi = m.postInit
+--    else
+--debug('skipping ' .. m.defaults.UIElement)
+--debug(rawget(m, 'postInit'))
+    end
+    m = m._base
+  until not m
+end
+
+function UI.Window:postInit()
   if self.parent then
+    -- this will cascade down the whole tree of elements starting at the
+    -- top level window (which has a device as a parent)
     self:setParent()
   end
 end
@@ -749,7 +782,7 @@ function UI.Window:print(text, bg, fg)
     if #result > 1 and result[2] > cx then
       return _sub(line, cx, result[2] + 1)
     elseif #result > 0 and result[1] == cx then
-      result = { line:find("(%w+)", result[2] + 1) }
+      result = { line:find("(%w+)", result[2]) }
       if #result > 0 then
         return _sub(line, cx, result[1] + 1)
       end
@@ -811,10 +844,10 @@ function UI.Window:print(text, bg, fg)
           if self.cursorX + #word > width then
             self.cursorX = marginLeft + 1
             self.cursorY = self.cursorY + 1
-            w = word:gsub(' ', '')
+            w = word:gsub('^ ', '')
           end
           self:write(self.cursorX, self.cursorY, w, bg, fg)
-          self.cursorX = self.cursorX + #word
+          self.cursorX = self.cursorX + #w
           lx = lx + #word
         end
       end
@@ -829,7 +862,6 @@ function UI.Window:print(text, bg, fg)
 end
 
 function UI.Window:setFocus(focus)
-  assertElement(focus, 'UI.Window:setFocus: Invalid element passed')
   if self.parent then
     self.parent:setFocus(focus)
   end
@@ -864,7 +896,6 @@ function UI.Window:getFocusables()
 end
 
 function UI.Window:focusFirst()
-
   local focusables = self:getFocusables()
   local focused = focusables[1]
   if focused then
@@ -904,7 +935,6 @@ end
 
 function UI.Window:addLayer(bg, fg)
   local canvas = self:getCanvas()
-
   return canvas:addLayer(self, bg, fg)
 end
 
@@ -947,23 +977,19 @@ UI.Device.defaults = {
   textScale = 1,
   effectsEnabled = true,
 }
-function UI.Device:init(args)
-  local defaults = UI:getDefaults(UI.Device)
-  defaults.device = term.current()
-  UI:setProperties(defaults, args)
+function UI.Device:postInit()
+  self.device = self.device or term.current()
 
-  if defaults.deviceType then
-    defaults.device = device[defaults.deviceType]
+  if self.deviceType then
+    self.device = device[self.deviceType]
   end
 
-  if not defaults.device.setTextScale then
-    defaults.device.setTextScale = function() end
+  if not self.device.setTextScale then
+    self.device.setTextScale = function() end
   end
 
-  defaults.device.setTextScale(defaults.textScale)
-  defaults.width, defaults.height = defaults.device.getSize()
-
-  UI.Window.init(self, defaults)
+  self.device.setTextScale(self.textScale)
+  self.width, self.height = self.device.getSize()
 
   self.isColor = self.device.isColor()
 
@@ -979,7 +1005,6 @@ function UI.Device:resize()
   self.lines = { }
   self.canvas:resize(self.width, self.height)
   self.canvas:clear(self.backgroundColor, self.textColor)
-  --UI.Window.resize(self)
 end
 
 function UI.Device:setCursorPos(x, y)
@@ -1029,7 +1054,6 @@ function UI.Device:addTransition(effect, args)
 end
 
 function UI.Device:runTransitions(transitions, canvas)
-
   for _,t in ipairs(transitions) do
     canvas:punch(t.args)               -- punch out the effect areas
   end
@@ -1051,7 +1075,6 @@ function UI.Device:runTransitions(transitions, canvas)
 end
 
 function UI.Device:sync()
-
   local transitions
   if self.transitions and self.effectsEnabled then
     transitions = self.transitions
@@ -1146,14 +1169,14 @@ UI.Page.defaults = {
   backgroundColor = colors.cyan,
   textColor = colors.white,
 }
-function UI.Page:init(args)
-  local defaults = UI:getDefaults(UI.Page)
-  defaults.parent = UI.defaultDevice
-  UI:setProperties(defaults, args)
-  UI.Window.init(self, defaults)
+function UI.Page:postInit()
+  self.parent = self.parent or UI.defaultDevice
+end
 
+function UI.Page:setParent()
+  UI.Window.setParent(self)
   if self.z then
-    self.canvas = self.parent.canvas:addLayer(self, self.backgroundColor, self.textColor)
+    self.canvas = self:addLayer(self.backgroundColor, self.textColor)
   else
     self.canvas = self.parent.canvas
   end
@@ -1179,7 +1202,6 @@ function UI.Page:getFocused()
 end
 
 function UI.Page:focusPrevious()
-
   local function getPreviousFocus(focused)
     local focusables = self:getFocusables()
     for k, v in ipairs(focusables) do
@@ -1199,7 +1221,6 @@ function UI.Page:focusPrevious()
 end
 
 function UI.Page:focusNext()
-
   local function getNextFocus(focused)
     local focusables = self:getFocusables()
     for k, v in ipairs(focusables) do
@@ -1219,8 +1240,6 @@ function UI.Page:focusNext()
 end
 
 function UI.Page:setFocus(child)
-  assertElement(child, 'UI.Page:setFocus: Invalid element passed')
-
   if not child.focus then
     return
   end
@@ -1287,9 +1306,8 @@ UI.Grid.defaults = {
     [ 'control-f' ] = 'scroll_pageDown',
   },
 }
-function UI.Grid:init(args)
-  local defaults = UI:getDefaults(UI.Grid, args)
-  UI.Window.init(self, defaults)
+function UI.Grid:setParent()
+  UI.Window.setParent(self)
 
   for _,c in pairs(self.columns) do
     c.cw = c.width
@@ -1297,10 +1315,7 @@ function UI.Grid:init(args)
       c.heading = ''
     end
   end
-end
 
-function UI.Grid:setParent()
-  UI.Window.setParent(self)
   self:update()
 
   if not self.pageSize then
@@ -1324,7 +1339,6 @@ function UI.Grid:resize()
 end
 
 function UI.Grid:adjustWidth()
-
   local t = { }        -- cols without width
   local w = self.width - #self.columns - 1 - self.marginRight -- width remaining
 
@@ -1449,7 +1463,6 @@ end
 -- Something about the displayed table has changed
 -- resort the table
 function UI.Grid:update()
-
   local function sort(a, b)
     if not a[self.sortColumn] then
       return false
@@ -1618,7 +1631,6 @@ function UI.Grid:setPage(pageNo)
 end
 
 function UI.Grid:eventHandler(event)
-
   if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
     if not self.disableHeader then
       if event.y == 1 then
@@ -1686,8 +1698,7 @@ UI.ScrollingGrid.defaults = {
   scrollOffset = 0,
   marginRight = 1,
 }
-function UI.ScrollingGrid:init(args)
-  UI.Grid.init(self, UI:getDefaults(UI.ScrollingGrid, args))
+function UI.ScrollingGrid:postInit()
   self.scrollBar = UI.ScrollBar()
 end
 
@@ -1743,12 +1754,9 @@ UI.Menu.defaults = {
   disableHeader = true,
   columns = { { heading = 'Prompt', key = 'prompt', width = 20 } },
 }
-function UI.Menu:init(args)
-  local defaults = UI:getDefaults(UI.Menu)
-  defaults.values = args['menuItems']
-  UI:setProperties(defaults, args)
-  UI.Grid.init(self, defaults)
-  self.pageSize = #args.menuItems
+function UI.Menu:postInit()
+  self.values = self.menuItems
+  self.pageSize = #self.menuItems
 end
 
 function UI.Menu:setParent()
@@ -1813,11 +1821,6 @@ UI.Viewport.defaults = {
     [ 'control-f' ] = 'scroll_pageDown',
   },
 }
-function UI.Viewport:init(args)
-  local defaults = UI:getDefaults(UI.Viewport, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Viewport:setScrollPosition(offset)
   local oldOffset = self.offy
   self.offy = math.max(offset, 0)
@@ -1849,7 +1852,6 @@ function UI.Viewport:getViewArea()
 end
 
 function UI.Viewport:eventHandler(event)
-
   if event.type == 'scroll_down' then
     self:setScrollPosition(self.offy + 1)
   elseif event.type == 'scroll_up' then
@@ -1868,36 +1870,6 @@ function UI.Viewport:eventHandler(event)
   return true
 end
 
---[[-- ScrollingText --]]--
-UI.ScrollingText = class(UI.Window)
-UI.ScrollingText.defaults = {
-  UIElement = 'ScrollingText',
-  backgroundColor = colors.black,
-  buffer = { },
-}
-function UI.ScrollingText:init(args)
-  local defaults = UI:getDefaults(UI.ScrollingText, args)
-  UI.Window.init(self, defaults)
-end
-
-function UI.ScrollingText:appendLine(text)
-  if #self.buffer+1 >= self.height then
-    table.remove(self.buffer, 1)
-  end
-  table.insert(self.buffer, text)
-end
-
-function UI.ScrollingText:clear()
-  self.buffer = { }
-  UI.Window.clear(self)
-end
-
-function UI.ScrollingText:draw()
-  for k,text in ipairs(self.buffer) do
-    self:write(1, k, Util.widthify(text, self.width), self.backgroundColor)
-  end
-end
-
 --[[-- TitleBar --]]--
 UI.TitleBar = class(UI.Window)
 UI.TitleBar.defaults = {
@@ -1909,11 +1881,6 @@ UI.TitleBar.defaults = {
   frameChar = '-',
   closeInd = '*',
 }
-function UI.TitleBar:init(args)
-  local defaults = UI:getDefaults(UI.TitleBar, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.TitleBar:draw()
   local sb = SB:new(self.width)
   sb:fill(2, self.frameChar, sb.width - 3)
@@ -1960,11 +1927,6 @@ UI.Button.defaults = {
     mouse_click = 'button_activate',
   }
 }
-function UI.Button:init(args)
-  local defaults = UI:getDefaults(UI.Button, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Button:setParent()
   if not self.width and not self.ex then
     self.width = #self.text + 2
@@ -2017,10 +1979,6 @@ UI.MenuItem.defaults = {
   backgroundFocusColor = colors.lightGray,
 }
 
-function UI.MenuItem:init(args)
-  UI.Button.init(self, UI:getDefaults(UI.MenuItem, args))
-end
-
 --[[-- MenuBar --]]--
 UI.MenuBar = class(UI.Window)
 UI.MenuBar.defaults = {
@@ -2036,25 +1994,8 @@ UI.MenuBar.defaults = {
 }
 UI.MenuBar.spacer = { spacer = true, text = 'spacer', inactive = true }
 
-function UI.MenuBar:init(args)
-  local defaults = UI:getDefaults(UI.MenuBar, args)
-  UI.Window.init(self, defaults)
-
-  if not self.children then
-    self.children = { }
-  end
-
+function UI.MenuBar:postInit()
   self:addButtons(self.buttons)
-  if self.showBackButton then  -- need to remove
-    table.insert(self.children, UI.MenuItem({
-      x = UI.term.width - 2,
-      width = 3,
-      backgroundColor = self.backgroundColor,
-      textColor = self.textColor,
-      text = '^-',
-      event = 'back',
-    }))
-  end
 end
 
 function UI.MenuBar:addButtons(buttons)
@@ -2126,11 +2067,6 @@ UI.DropMenuItem.defaults = {
   textInactiveColor = colors.lightGray,
   backgroundFocusColor = colors.lightGray,
 }
-
-function UI.DropMenuItem:init(args)
-  UI.Button.init(self, UI:getDefaults(UI.DropMenuItem, args))
-end
-
 function UI.DropMenuItem:eventHandler(event)
   if event.type == 'button_activate' then
     self.parent:hide()
@@ -2145,11 +2081,6 @@ UI.DropMenu.defaults = {
   backgroundColor = colors.white,
   buttonClass = 'DropMenuItem',
 }
-function UI.DropMenu:init(args)
-  local defaults = UI:getDefaults(UI.DropMenu, args)
-  UI.MenuBar.init(self, defaults)
-end
-
 function UI.DropMenu:setParent()
   UI.MenuBar.setParent(self)
 
@@ -2180,7 +2111,6 @@ function UI.DropMenu:enable()
 end
 
 function UI.DropMenu:show(x, y)
-
   self.x, self.y = x, y
   self.canvas:move(x, y)
   self.canvas:setVisible(true)
@@ -2226,14 +2156,10 @@ UI.TabBar.defaults = {
   selectedBackgroundColor = colors.cyan,
   focusBackgroundColor = colors.green,
 }
-function UI.TabBar:init(args)
-  local defaults = UI:getDefaults(UI.TabBar, args)
-  UI.MenuBar.init(self, defaults)
-end
-
 function UI.TabBar:selectTab(text)
   local selected, lastSelected
-  for k,child in pairs(self.children) do
+
+  for k,child in pairs(self:getFocusables()) do
     if child.selected then
       lastSelected = k
     end
@@ -2258,23 +2184,19 @@ UI.Tabs = class(UI.Window)
 UI.Tabs.defaults = {
   UIElement = 'Tabs',
 }
-function UI.Tabs:init(args)
-  local defaults = UI:getDefaults(UI.Tabs, args)
-  UI.Window.init(self, defaults)
-
+function UI.Tabs:postInit()
   self:add(self)
 end
 
 function UI.Tabs:add(children)
-
   local buttons = { }
   for _,child in pairs(children) do
-    if type(child) == 'table' and child.UIElement then
+    if type(child) == 'table' and child.UIElement and child.tabTitle then
       child.y = 2
       table.insert(buttons, {
-        text = child.tabTitle or '',
+        text = child.tabTitle,
         event = 'tab_select',
-        tabUid = child.__uid,
+        tabUid = child.uid,
       })
     end
   end
@@ -2294,32 +2216,35 @@ end
 
 function UI.Tabs:enable()
   self.enabled = true
-
-  local _, menuItem = Util.first(self.tabBar.children, function(a, b) return a.x < b.x end)
-  if menuItem then
-    self:activateTab(Util.find(self.children, '__uid', menuItem.tabUid))
-  end
   self.tabBar:enable()
+
+  -- focus first tab
+  local menuItem = self.tabBar:getFocusables()[1]
+  if menuItem then
+    self:activateTab(menuItem.tabUid)
+  end
 end
 
-function UI.Tabs:activateTab(tab)
-  for _,child in ipairs(self.children) do
-    if child ~= self.tabBar then
-      child:disable()
+function UI.Tabs:activateTab(uid)
+  local tab = Util.find(self.children, 'uid', uid)
+  if tab then
+    for _,child in pairs(self.children) do
+      if child.uid ~= uid and child.tabTitle then
+        child:disable()
+      end
+    end
+    if not tab.enabled then
+      self.tabBar:selectTab(tab.tabTitle)
+      tab:enable()
+      tab:draw()
+      self:emit({ type = 'tab_activate', activated = tab, element = self })
     end
   end
-  self.tabBar:selectTab(tab.tabTitle)
-  tab:enable()
-  tab:draw()
-  self:emit({ type = 'tab_activate', activated = tab, element = self })
 end
 
 function UI.Tabs:eventHandler(event)
   if event.type == 'tab_select' then
-    local child = Util.find(self.children, '__uid', event.button.tabUid)
-    if child then
-      self:activateTab(child)
-    end
+    self:activateTab(event.button.tabUid)
   elseif event.type == 'tab_change' then
     for _,tab in ipairs(self.children) do
       if tab ~= self.tabBar then
@@ -2340,11 +2265,6 @@ UI.WindowScroller.defaults = {
   UIElement = 'WindowScroller',
   children = { },
 }
-function UI.WindowScroller:init(args)
-  local defaults = UI:getDefaults(UI.WindowScroller, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.WindowScroller:enable()
   self.enabled = true
   if #self.children > 0 then
@@ -2385,11 +2305,6 @@ UI.Notification.defaults = {
   backgroundColor = colors.gray,
   height = 3,
 }
-function UI.Notification:init(args)
-  local defaults = UI:getDefaults(UI.Notification, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Notification:draw()
 end
 
@@ -2430,8 +2345,7 @@ function UI.Notification:display(value, timeout)
     self.canvas:removeLayer()
   end
 
-  -- need to get the current canvas - not ui.term.canvas
-  self.canvas = UI.term.canvas:addLayer(self, self.backgroundColor, self.textColor or colors.white)
+  self.canvas = self:addLayer(self.backgroundColor, self.textColor)
   self:addTransition('expandUp', { ticks = self.height })
   self.canvas:setVisible(true)
   self:clear()
@@ -2461,12 +2375,6 @@ UI.Throttle.defaults = {
     '  //)    (O ). @  \\-d )      (@ '
   }
 }
-
-function UI.Throttle:init(args)
-  local defaults = UI:getDefaults(UI.Throttle, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Throttle:setParent()
   self.x = math.ceil((self.parent.width - self.width) / 2)
   self.y = math.ceil((self.parent.height - self.height) / 2)
@@ -2495,7 +2403,7 @@ function UI.Throttle:update()
     self.c = os.clock()
     self.enabled = true
     if not self.canvas then
-      self.canvas = UI.term.canvas:addLayer(self, self.backgroundColor, colors.cyan)
+      self.canvas = self:addLayer(self.backgroundColor, colors.cyan)
       self.canvas:setVisible(true)
       self:clear(colors.cyan)
     end
@@ -2520,11 +2428,6 @@ UI.StatusBar.defaults = {
   height = 1,
   ey = -1,
 }
-function UI.StatusBar:init(args)
-  local defaults = UI:getDefaults(UI.StatusBar, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.StatusBar:adjustWidth()
   -- Can only have 1 adjustable width
   if self.columns then
@@ -2624,11 +2527,6 @@ UI.ProgressBar.defaults = {
   height = 1,
   value = 0,
 }
-function UI.ProgressBar:init(args)
-  local defaults = UI:getDefaults(UI.ProgressBar, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.ProgressBar:draw()
   self:clear()
   local width = math.ceil(self.value / 100 * self.width)
@@ -2644,11 +2542,6 @@ UI.VerticalMeter.defaults = {
   width = 1,
   value = 0,
 }
-function UI.VerticalMeter:init(args)
-  local defaults = UI:getDefaults(UI.VerticalMeter, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.VerticalMeter:draw()
   local height = self.height - math.ceil(self.value / 100 * self.height)
   self:clear()
@@ -2672,9 +2565,7 @@ UI.TextEntry.defaults = {
     [ 'control-c' ] = 'copy',
   }
 }
-function UI.TextEntry:init(args)
-  local defaults = UI:getDefaults(UI.TextEntry, args)
-  UI.Window.init(self, defaults)
+function UI.TextEntry:postInit()
   self.value = tostring(self.value)
 end
 
@@ -2720,6 +2611,9 @@ function UI.TextEntry:draw()
   if #text > 0 then
     if self.scroll and self.scroll > 0 then
       text = text:sub(1 + self.scroll)
+    end
+    if self.mask then
+      text = _rep('*', #text)
     end
   else
     tc = colors.gray
@@ -2844,15 +2738,9 @@ UI.Chooser.defaults = {
   UIElement = 'Chooser',
   choices = { },
   nochoice = 'Select',
-  --backgroundColor = colors.lightGray,
   backgroundFocusColor = colors.lightGray,
   height = 1,
 }
-function UI.Chooser:init(args)
-  local defaults = UI:getDefaults(UI.Chooser, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Chooser:setParent()
   if not self.width and not self.ex then
     self.width = 1
@@ -2926,11 +2814,6 @@ UI.Text.defaults = {
   value = '',
   height = 1,
 }
-function UI.Text:init(args)
-  local defaults = UI:getDefaults(UI.Text, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Text:setParent()
   if not self.width and not self.ex then
     self.width = #tostring(self.value)
@@ -2956,10 +2839,6 @@ UI.ScrollBar.defaults = {
   x = -1,
   ey = -1,
 }
-function UI.ScrollBar:init(args)
-  UI.Window.init(self, UI:getDefaults(UI.ScrollBar, args))
-end
-
 function UI.ScrollBar:draw()
   local parent = self.parent
   local view = parent:getViewArea()
@@ -3000,7 +2879,6 @@ function UI.ScrollBar:draw()
 end
 
 function UI.ScrollBar:eventHandler(event)
-
   if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
     if event.x == 1 then
       local view = self.parent:getViewArea()
@@ -3025,8 +2903,7 @@ UI.TextArea.defaults = {
   marginRight = 2,
   value = '',
 }
-function UI.TextArea:init(args)
-  UI.Viewport.init(self, UI:getDefaults(UI.TextArea, args))
+function UI.TextArea:postInit()
   self.scrollBar = UI.ScrollBar()
 end
 
@@ -3062,9 +2939,7 @@ UI.Form.defaults = {
   margin = 2,
   event = 'form_complete',
 }
-function UI.Form:init(args)
-  local defaults = UI:getDefaults(UI.Form, args)
-  UI.Window.init(self, defaults)
+function UI.Form:postInit()
   self:createForm()
 end
 
@@ -3185,20 +3060,17 @@ UI.Dialog.defaults = {
   textColor = colors.black,
   backgroundColor = colors.white,
 }
-function UI.Dialog:init(args)
-  local defaults = UI:getDefaults(UI.Dialog, args)
-
-  if not defaults.width then
-    defaults.width = UI.term.width-11
-  end
-  defaults.titleBar = UI.TitleBar({ previousPage = true, title = defaults.title })
-  UI.Page.init(self, defaults)
+function UI.Dialog:postInit()
+  self.titleBar = UI.TitleBar({ previousPage = true, title = self.title })
 end
 
 function UI.Dialog:setParent()
-  UI.Window.setParent(self)
+  if not self.width then
+    self.width = self.parent.width - 11
+  end
   self.x = math.floor((self.parent.width - self.width) / 2) + 1
   self.y = math.floor((self.parent.height - self.height) / 2) + 1
+  UI.Page.setParent(self)
 end
 
 function UI.Dialog:disable()
@@ -3226,11 +3098,6 @@ UI.Image.defaults = {
   UIElement = 'Image',
   event = 'button_press',
 }
-function UI.Image:init(args)
-  local defaults = UI:getDefaults(UI.Image, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.Image:setParent()
   if self.image then
     self.height = #self.image
@@ -3270,11 +3137,6 @@ UI.NftImage.defaults = {
   UIElement = 'NftImage',
   event = 'button_press',
 }
-function UI.NftImage:init(args)
-  local defaults = UI:getDefaults(UI.NftImage, args)
-  UI.Window.init(self, defaults)
-end
-
 function UI.NftImage:setParent()
   if self.image then
     self.height = self.image.height
@@ -3286,7 +3148,6 @@ function UI.NftImage:setParent()
 end
 
 function UI.NftImage:draw()
---  self:clear()
   if self.image then
     for y = 1, self.image.height do
       for x = 1, #self.image.text[y] do

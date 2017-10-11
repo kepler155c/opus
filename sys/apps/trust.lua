@@ -29,10 +29,10 @@ if not password then
 end
 
 print('connecting...')
-local socket = Socket.connect(remoteId, 19)
+local socket, msg = Socket.connect(remoteId, 19)
 
 if not socket then
-  error('Unable to connect to ' .. remoteId .. ' on port 19')
+  error(msg)
 end
 
 local publicKey = Security.getPublicKey()

@@ -118,12 +118,12 @@ local function parseIcon(iconText)
 end
 
 UI.VerticalTabBar = class(UI.TabBar)
-function UI.VerticalTabBar:init(args)
-  UI.TabBar.init(self, args)
+function UI.VerticalTabBar:setParent()
   self.x = 1
   self.width = 8
   self.height = nil
   self.ey = -1
+  UI.TabBar.setParent(self)
   for k,c in pairs(self.children) do
     c.x = 1
     c.y = k + 1
@@ -160,16 +160,11 @@ local page = UI.Page {
 }
 
 UI.Icon = class(UI.Window)
-function UI.Icon:init(args)
-  local defaults = {
-    UIElement = 'Icon',
-    width = 14,
-    height = 4,
-  }
-  UI:setProperties(defaults, args)
-  UI.Window.init(self, defaults)
-end
-
+UI.Icon.defaults = {
+  UIElement = 'Icon',
+  width = 14,
+  height = 4,
+}
 function UI.Icon:eventHandler(event)
   if event.type == 'mouse_click' then
     self:setFocus(self.button)
@@ -498,7 +493,6 @@ function editor:eventHandler(event)
       width = self.width,
       height = self.height,
     })
-    --fileui:setTransition(UI.effect.explode)
     UI:setPage(fileui, fs.getDir(self.iconFile), function(fileName)
       if fileName then
         self.iconFile = fileName

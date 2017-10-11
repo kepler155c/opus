@@ -34,6 +34,7 @@ local page = UI.Page {
         UI.MenuBar.spacer,
         { text = 'Reboot      r', event = 'reboot' },
       } },
+      { text = 'Chat', event = 'chat' },
       { text = 'Trust', dropdown = {
         { text = 'Establish', event = 'trust'   },
         { text = 'Remove',    event = 'untrust' },
@@ -81,7 +82,7 @@ end
 function page:eventHandler(event)
   local t = self.grid:getSelected()
   if t then
-    if event.type == 'telnet' or event.type == 'grid_select' then
+    if event.type == 'telnet' then
       multishell.openTab({
         path = 'sys/apps/telnet.lua',
         focused = true,
@@ -108,6 +109,13 @@ function page:eventHandler(event)
       trustList[t.id] = nil
       Util.writeTable('usr/.known_hosts', trustList)
 
+    elseif event.type == 'chat' then
+      multishell.openTab({
+        path    = 'sys/apps/shell',
+        args    = { 'chat join opusChat-' .. t.id .. ' guest'},
+        title   = 'Chatroom',
+        focused = true,
+      })
     elseif event.type == 'reboot' then
       sendCommand(t.id, 'reboot')
 

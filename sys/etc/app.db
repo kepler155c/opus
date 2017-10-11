@@ -222,7 +222,7 @@
   [ "d8c298dd41e4a4ec20e8307901797b64688b3b77" ] = {
     title = "GPS Deploy",
     category = "Apps",
-    run = "http://pastebin.com/raw/qLthLak5",
+    run = "http://pastebin.com/raw/VXAyXqBv",
     requires = "turtle",
   },
   [ "53a5d150062b1e03206b9e15854b81060e3c7552" ] = {

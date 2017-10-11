@@ -395,6 +395,13 @@ function multishell.hideTab(tabId)
   local tab = tabs[tabId]
   if tab then
     tab.hidden = true
+    if currentTab.tabId == tabId then
+      if tabs[currentTab.previousTabId] then
+        multishell.setFocus(currentTab.previousTabId)
+      else
+        multishell.setFocus(overviewTab.tabId)
+      end
+    end
     redrawMenu()
   end
 end

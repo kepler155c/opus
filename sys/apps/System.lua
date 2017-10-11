@@ -1,8 +1,10 @@
 _G.requireInjector()
 
-local Config = require('config')
-local UI     = require('ui')
-local Util   = require('util')
+local Config   = require('config')
+local Security = require('security')
+local SHA1     = require('sha1')
+local UI       = require('ui')
+local Util     = require('util')
 
 local fs         = _G.fs
 local multishell = _ENV.multishell
@@ -24,7 +26,7 @@ end
 local env = {
   path = shell.path(),
   aliases = shell.aliases(),
-  lua_path = LUA_PATH,
+  lua_path = _ENV.LUA_PATH,
 }
 Config.load('shell', env)
 
@@ -75,6 +77,36 @@ local systemPage = UI.Page {
           delete = 'delete_alias',
         },
       },
+    },
+
+    passwordTab = UI.Window {
+      tabTitle = 'Password',
+      oldPass = UI.TextEntry {
+        x = 2, y = 2, ex = -2,
+        limit = 32,
+        mask = true,
+        shadowText = 'old password',
+        inactive = not Security.getPassword(),
+      },
+      newPass = UI.TextEntry {
+        y = 3, x = 2, ex = -2,
+        limit = 32,
+        mask = true,
+        shadowText = 'new password',
+        accelerators = {
+          enter = 'new_password',
+        },
+      },
+      button = UI.Button {
+        x = 2, y = 5,
+        text = 'Update',
+        event = 'update_password',
+      },
+      info = UI.TextArea {
+        x = 2, ex = -2,
+        y = 7,
+        value = 'Add a password to enable other computers to connect to this one.',
+      }
     },
 
     infoTab = UI.Window {
@@ -201,6 +233,22 @@ function systemPage.tabs.aliasTab:eventHandler(event)
     self:setFocus(self.alias)
     Config.update('shell', env)
     systemPage.notification:success('reboot to take effect')
+    return true
+  end
+end
+
+function systemPage.tabs.passwordTab:eventHandler(event)
+  if event.type == 'update_password' then
+    if #self.newPass.value == 0 then
+      systemPage.notification:error('Invalid password')
+    elseif Security.getPassword() and not Security.verifyPassword(SHA1.sha1(self.oldPass.value)) then
+      systemPage.notification:error('Passwords do not match')
+    else
+      Security.updatePassword(SHA1.sha1(self.newPass.value))
+      self.oldPass.inactive = false
+      systemPage.notification:success('Password updated')
+    end
+
     return true
   end
 end

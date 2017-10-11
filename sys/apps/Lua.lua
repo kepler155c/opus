@@ -204,7 +204,7 @@ function page:setResult(result)
         if Util.size(v) == 0 then
           entry.value = 'table: (empty)'
         else
-          entry.value = 'table'
+          entry.value = tostring(v)
         end
       end
       table.insert(t, entry)
