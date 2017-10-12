@@ -79,13 +79,34 @@ function Util.getVersion()
   local version
 
   if _G._CC_VERSION then
-    version = tonumber(_G._CC_VERSION:gmatch('[%d]+%.?[%d][%d]', '%1')())
+    version = tonumber(_G._CC_VERSION:match('[%d]+%.?[%d][%d]'))
   end
   if not version and _G._HOST then
-    version = tonumber(_G._HOST:gmatch('[%d]+%.?[%d][%d]', '%1')())
+    version = tonumber(_G._HOST:match('[%d]+%.?[%d][%d]'))
   end
 
   return version or 1.7
+end
+
+function Util.getMinecraftVersion()
+  local mcVersion = _G._MC_VERSION or 'unknown'
+  if _G._HOST then
+    local version = _G._HOST:match('%S+ %S+ %((%S.+)%)')
+    if version then
+      mcVersion = version:match('Minecraft (%S+)') or version
+    end
+  end
+  return mcVersion
+end
+
+function Util.checkMinecraftVersion(minVersion)
+  local version = Util.getMinecraftVersion()
+  local function convert(v)
+    local m1, m2, m3 = v:match('(%d)%.(%d)%.?(%d?)')
+    return tonumber(m1) * 10000 + tonumber(m2) * 100 + (tonumber(m3) or 0)
+  end
+
+  return convert(version) >= convert(tostring(minVersion))
 end
 
 -- http://lua-users.org/wiki/SimpleRound

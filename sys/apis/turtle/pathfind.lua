@@ -226,7 +226,7 @@ local function pathTo(dest, options)
 
 				-- use single turn method so the turtle doesn't turn around
 				-- when encountering obstacles -- IS THIS RIGHT ??
-				if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y, node.heading) then
+				if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y) then
 					table.insert(blocks, pt)
 					--if device.turtlesensorenvironment then
 					--	addSensorBlocks(blocks, device.turtlesensorenvironment.sonicScan())

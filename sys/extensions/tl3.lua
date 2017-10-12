@@ -695,6 +695,9 @@ function turtle.goto(dx, dz, dy, dh)
   return true
 end
 
+-- avoid lint errors
+turtle._goto = turtle.goto
+
 function turtle.gotoX(dx)
   turtle.headTowardsX(dx)
 

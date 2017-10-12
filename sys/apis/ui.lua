@@ -453,21 +453,12 @@ end
 function Manager:getDefaults(element, args)
   local defaults = Util.deepCopy(element.defaults)
   if args then
-    Manager:setProperties(defaults, args)
+    Manager:mergeProperties(defaults, args)
   end
   return defaults
 end
 
-function Manager:pullEvents(...)
-  Event.pullEvents(...)
-  self.term:reset()
-end
-
-function Manager:exitPullEvents()
-  Event.exitPullEvents()
-end
-
-function Manager:setProperties(obj, args)
+function Manager:mergeProperties(obj, args)
   if args then
     for k,v in pairs(args) do
       if k == 'accelerators' then
@@ -481,6 +472,15 @@ function Manager:setProperties(obj, args)
       end
     end
   end
+end
+
+function Manager:pullEvents(...)
+  Event.pullEvents(...)
+  self.term:reset()
+end
+
+function Manager:exitPullEvents()
+  Event.exitPullEvents()
 end
 
 function Manager:dump(inEl)
@@ -526,12 +526,12 @@ UI.Window.defaults = {
 function UI.Window:init(args)
   -- merge defaults for all subclasses
   local defaults = args
-  local m = self
+  local m = getmetatable(self)  -- get the class for this instance
   repeat
     defaults = UI:getDefaults(m, defaults)
     m = m._base
   until not m
-  UI:setProperties(self, defaults)
+  UI:mergeProperties(self, defaults)
 
   -- each element has a unique ID
   self.uid = UI.Window.uid
@@ -546,13 +546,8 @@ function UI.Window:init(args)
   local lpi
   repeat
     if m.postInit and m.postInit ~= lpi then
---debug('calling ' .. m.defaults.UIElement)
---debug(rawget(m, 'postInit'))
       m.postInit(self)
       lpi = m.postInit
---    else
---debug('skipping ' .. m.defaults.UIElement)
---debug(rawget(m, 'postInit'))
     end
     m = m._base
   until not m
@@ -661,7 +656,7 @@ function UI.Window:resize()
 end
 
 function UI.Window:add(children)
-  UI:setProperties(self, children)
+  UI:mergeProperties(self, children)
   self:initChildren()
 end
 
@@ -2007,7 +2002,7 @@ function UI.MenuBar:addButtons(buttons)
         centered = false,
       }
       self.lastx = self.lastx + buttonProperties.width
-      UI:setProperties(buttonProperties, button)
+      UI:mergeProperties(buttonProperties, button)
 
       button = UI[self.buttonClass](buttonProperties)
       if button.name then
@@ -3158,7 +3153,7 @@ function UI.NftImage:setImage(image)
 end
 
 UI:loadTheme('usr/config/ui.theme')
-if Util.getVersion() >= 1.79 then
+if Util.getVersion() >= 1.76 then
   UI:loadTheme('sys/etc/ext.theme')
 end
 
