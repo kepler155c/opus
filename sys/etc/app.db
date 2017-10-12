@@ -243,6 +243,14 @@
 \030f\03131\0308\031f  \030f\03131\031e3",
     run = "https://pastebin.com/raw/nsKrHTbN",
   },
+  [ "a2accffe95b2c8be30e8a05e0c6ab7e8f5966f43" ] = {
+    title = "Strafe",
+    category = "Games",
+    icon = "\030f\031f \03131\0308\031f  \030f\031d2\
+\030f\031f \031d2\03131\0308\031f \030f\03131\
+\030f\03131\0308\031f  \030f\03131\031e3",
+    run = "https://pastebin.com/raw/bj3qj1Pj",
+  },
   [ "48d6857f6b2869d031f463b13aa34df47e18c548" ] = {
     title = "Breakout",
     category = "Games",

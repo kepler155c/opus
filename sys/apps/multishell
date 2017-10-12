@@ -134,7 +134,7 @@ local function draw()
   end
 end
 
-local function selectTab( tab )
+local function selectTab(tab)
   if not tab then
     for _,ftab in pairs(tabs) do
       if not ftab.hidden then
@@ -231,6 +231,9 @@ local function launchProcess(tab)
       local previousTab
       if tab.previousTabId then
         previousTab = tabs[tab.previousTabId]
+        if previousTab and previousTab.hidden then
+          previousTab = nil
+        end
       end
       selectTab(previousTab)
     end
@@ -396,11 +399,7 @@ function multishell.hideTab(tabId)
   if tab then
     tab.hidden = true
     if currentTab.tabId == tabId then
-      if tabs[currentTab.previousTabId] then
-        multishell.setFocus(currentTab.previousTabId)
-      else
-        multishell.setFocus(overviewTab.tabId)
-      end
+      selectTab(tabs[currentTab.previousTabId])
     end
     redrawMenu()
   end
@@ -423,8 +422,9 @@ multishell.addHotkey(24, function()
   multishell.setFocus(overviewTab.tabId)
 end)
 
+-- control-t - toggle clipboard mode
 multishell.addHotkey(20, function()
-  clipboard.useInternal(not clipboard.isInternal())
+  _G.clipboard.useInternal(not _G.clipboard.isInternal())
 end)
 
 -- control-backspace
@@ -534,9 +534,15 @@ while true do
       draw()
     end
 
+  elseif sEvent == "paste" then
+    if _G.clipboard.isInternal() then
+      resumeTab(currentTab, sEvent, { _G.clipboard.getText() or '' })
+    else
+      resumeTab(currentTab, sEvent, tEventData)
+    end
+
   elseif sEvent == "char" or
          sEvent == "key" or
-         sEvent == "paste" or
          sEvent == "terminate" then
 
     processKeyEvent(sEvent, tEventData[1])

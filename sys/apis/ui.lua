@@ -144,13 +144,8 @@ function Manager:init()
   end)
 
   singleThread('paste', function(text)
-    if clipboard.isInternal() then
-      text = clipboard.getData()
-    end
-    if text and type(text) == 'string' then
-      self:emitEvent({ type = 'paste', text = text })
-      self.currentPage:sync()
-    end
+    self:emitEvent({ type = 'paste', text = text })
+    self.currentPage:sync()
   end)
 
   singleThread('char', function(ch)
@@ -1683,7 +1678,6 @@ function UI.Grid:eventHandler(event)
   elseif event.type == 'copy' then
     if self.selected then
       clipboard.setData(Util.tostring(self.selected))
-      clipboard.useInternal(true)
     end
   else
     return false

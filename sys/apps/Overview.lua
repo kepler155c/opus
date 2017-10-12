@@ -127,6 +127,7 @@ function UI.VerticalTabBar:setParent()
   for k,c in pairs(self.children) do
     c.x = 1
     c.y = k + 1
+    c.ox, c.oy = c.x, c.y
     c.width = 8
   end
 end
