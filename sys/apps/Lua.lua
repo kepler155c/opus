@@ -7,7 +7,9 @@ local Peripheral = require('peripheral')
 local UI         = require('ui')
 local Util       = require('util')
 
+local clipboard  = _G.clipboard
 local multishell = _ENV.multishell
+local textutils  = _G.textutils
 
 local sandboxEnv = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
 sandboxEnv.exit = function() Event.exitPullEvents() end
@@ -37,7 +39,7 @@ local page = UI.Page {
       up                  = 'history_back',
       down                = 'history_forward',
       mouse_rightclick    = 'clear_prompt',
---      [ 'control-space' ] = 'autocomplete',
+      [ 'control-space' ] = 'autocomplete',
     },
   },
   grid = UI.ScrollingGrid {
@@ -84,10 +86,7 @@ local function autocomplete(env, oLine, x)
   if #sLine > 0 then
     local results = textutils.complete(sLine, env)
 
-    if #results == 0 then
---      setError('No completions available')
-
-    elseif #results == 1 then
+    if #results == 1 then
       return Util.insertString(oLine, results[1], x + 1)
 
     elseif #results > 1 then
@@ -103,8 +102,6 @@ local function autocomplete(env, oLine, x)
       end
       if #prefix > 0 then
         return Util.insertString(oLine, prefix, x + 1)
-      else
---        setStatus('Too many results')
       end
     end
   end
@@ -258,7 +255,7 @@ function page.grid:eventHandler(event)
     page:setPrompt(commandAppend(), true)
     page:executeStatement(commandAppend())
   elseif event.type == 'copy' then
-    if entry then
+    if entry and clipboard then
       clipboard.setData(entry.rawValue)
     end
   else

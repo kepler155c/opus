@@ -20,13 +20,13 @@ local Util = require('util')
 
 local DIR = (parentShell and parentShell.dir()) or ""
 local PATH = (parentShell and parentShell.path()) or ".:/rom/programs"
-local ALIASES = (parentShell and parentShell.aliases()) or {}
+local tAliases = (parentShell and parentShell.aliases()) or {}
 local tCompletionInfo = (parentShell and parentShell.getCompletionInfo()) or {}
 
 local bExit = false
 local tProgramStack = {}
 
-local function parseCommandLine( ... )
+local function tokenise( ... )
   local sLine = table.concat( { ... }, " " )
   local tWords = {}
   local bQuoted = false
@@ -41,40 +41,36 @@ local function parseCommandLine( ... )
     bQuoted = not bQuoted
   end
 
-  return table.remove(tWords, 1), tWords
+  return tWords
 end
 
-local function run(env, ...)
-  local path, args = parseCommandLine(...)
+local function run(env, command, ...)
+  if not command then
+    error('No such program')
+  end
+
+  local isUrl = not not command:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
+  local path, runFn
+
+  if isUrl then
+    path = command
+    runFn = Util.loadUrl
+  else
+    path = shell.resolveProgram(command)
+    runFn = loadfile
+  end
 
   if not path then
     error('No such program')
   end
 
-  local isUrl = not not path:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
-  if not isUrl then
-    path = shell.resolveProgram(path)
-    if not path then
-      error('No such program')
-    end
-  end
-
-  local fn, err
-
-  if isUrl then
-    fn, err = Util.loadUrl(path, env)
-  else
-    fn, err = loadfile(path, env)
-  end
+  local fn, err = runFn(path, env)
 
   if not fn then
     error(err)
   end
 
-  local oldTitle
-
-  if multishell and multishell.getTitle then
-    oldTitle = multishell.getTitle(multishell.getCurrent())
+  if multishell and multishell.setTitle then
     multishell.setTitle(multishell.getCurrent(), fs.getName(path))
   end
 
@@ -83,20 +79,30 @@ local function run(env, ...)
   else
     tProgramStack[#tProgramStack + 1] = path
   end
-  local r = { fn(table.unpack(args)) }
+
+  local r = { fn(table.unpack(tokenise(...))) }
 
   tProgramStack[#tProgramStack] = nil
-
-  if multishell and multishell.getTitle then
-    multishell.setTitle(multishell.getCurrent(), oldTitle or 'shell')
-  end
 
   return table.unpack(r)
 end
 
 -- Install shell API
 function shell.run(...)
-  return pcall(run, setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G }), ...)
+  local oldTitle
+
+  if multishell and multishell.getTitle then
+    oldTitle = multishell.getTitle(multishell.getCurrent())
+  end
+
+  local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
+  local r = { pcall(run, env, ...) }
+
+  if multishell and multishell.setTitle then
+    multishell.setTitle(multishell.getCurrent(), oldTitle or 'shell')
+  end
+
+  return table.unpack(r)
 end
 
 function shell.exit()
@@ -119,8 +125,8 @@ end
 
 function shell.resolveProgram( _sCommand )
 
-  if ALIASES[ _sCommand ] ~= nil then
-    _sCommand = ALIASES[ _sCommand ]
+  if tAliases[_sCommand] ~= nil then
+    _sCommand = tAliases[_sCommand]
   end
 
   local path = shell.resolve(_sCommand)
@@ -181,8 +187,89 @@ function shell.programs( _bIncludeHidden )
   return tItemList
 end
 
-function shell.complete(sLine) end
-function shell.completeProgram(sProgram) end
+local function completeProgram( sLine )
+  if #sLine > 0 and string.sub( sLine, 1, 1 ) == "/" then
+    -- Add programs from the root
+    return fs.complete( sLine, "", true, false )
+  else
+    local tResults = {}
+    local tSeen = {}
+
+    -- Add aliases
+    for sAlias in pairs( tAliases ) do
+      if #sAlias > #sLine and string.sub( sAlias, 1, #sLine ) == sLine then
+        local sResult = string.sub( sAlias, #sLine + 1 )
+        if not tSeen[ sResult ] then
+          table.insert( tResults, sResult )
+          tSeen[ sResult ] = true
+        end
+      end
+    end
+
+    -- Add programs from the path
+    local tPrograms = shell.programs()
+    for n=1,#tPrograms do
+      local sProgram = tPrograms[n]
+      if #sProgram > #sLine and string.sub( sProgram, 1, #sLine ) == sLine then
+        local sResult = string.sub( sProgram, #sLine + 1 )
+        if not tSeen[ sResult ] then
+          table.insert( tResults, sResult )
+          tSeen[ sResult ] = true
+        end
+      end
+    end
+
+    -- Sort and return
+    table.sort( tResults )
+    return tResults
+  end
+end
+
+local function completeProgramArgument( sProgram, nArgument, sPart, tPreviousParts )
+  local tInfo = tCompletionInfo[ sProgram ]
+  if tInfo then
+    return tInfo.fnComplete( shell, nArgument, sPart, tPreviousParts )
+  end
+  return nil
+end
+
+function shell.complete(sLine)
+  if #sLine > 0 then
+    local tWords = tokenise( sLine )
+    local nIndex = #tWords
+    if string.sub( sLine, #sLine, #sLine ) == " " then
+      nIndex = nIndex + 1
+    end
+    if nIndex == 1 then
+      local sBit = tWords[1] or ""
+      local sPath = shell.resolveProgram( sBit )
+      if tCompletionInfo[ sPath ] then
+        return { " " }
+      else
+        local tResults = completeProgram( sBit )
+        for n=1,#tResults do
+          local sResult = tResults[n]
+          local cPath = shell.resolveProgram( sBit .. sResult )
+          if tCompletionInfo[ cPath ] then
+            tResults[n] = sResult .. " "
+          end
+        end
+        return tResults
+      end
+
+    elseif nIndex > 1 then
+      local sPath = shell.resolveProgram( tWords[1] )
+      local sPart = tWords[nIndex] or ""
+      local tPreviousParts = tWords
+      tPreviousParts[nIndex] = nil
+      return completeProgramArgument( sPath , nIndex - 1, sPart, tPreviousParts )
+    end
+  end
+end
+
+function shell.completeProgram( sProgram )
+  return completeProgram( sProgram )
+end
 
 function shell.setCompletionFunction(sProgram, fnComplete)
   tCompletionInfo[sProgram] = { fnComplete = fnComplete }
@@ -197,29 +284,28 @@ function shell.getRunningProgram()
 end
 
 function shell.setAlias( _sCommand, _sProgram )
-  ALIASES[ _sCommand ] = _sProgram
+  tAliases[_sCommand] = _sProgram
 end
 
 function shell.clearAlias( _sCommand )
-  ALIASES[ _sCommand ] = nil
+  tAliases[_sCommand] = nil
 end
 
 function shell.aliases()
   local tCopy = {}
-  for sAlias, sCommand in pairs(ALIASES) do
+  for sAlias, sCommand in pairs(tAliases) do
     tCopy[sAlias] = sCommand
   end
   return tCopy
 end
 
-function shell.newTab(tabInfo, ...)
-  local path, args = parseCommandLine(...)
+function shell.newTab(tabInfo, path, ...)
   path = shell.resolveProgram(path)
 
   if path then
     tabInfo.path = path
     tabInfo.env = sandboxEnv
-    tabInfo.args = Util.shallowCopy(args)
+    tabInfo.args = tokenise(...)
     tabInfo.title = fs.getName(path)
 
     if path ~= 'sys/apps/shell' then
@@ -290,89 +376,30 @@ if term.isColor() then
   _colors = config.color
 end
 
-local function autocompleteFile(results, words)
-
-  local function getBaseDir(path)
-    if #path > 1 then
-      if path:sub(-1) ~= '/' then
-        path = fs.getDir(path)
-      end
-    end
-    if path:sub(1, 1) == '/' then
-      path = fs.combine(path, '')
-    else
-      path = fs.combine(shell.dir(), path)
-    end
-    while not fs.isDir(path) do
-      path = fs.getDir(path)
-    end
-    return path
-  end
-
-  local function getRawPath(path)
-    local baseDir = ''
-    if path:sub(1, 1) ~= '/' then
-      baseDir = shell.dir()
-    end
-    if #path > 1 then
-      if path:sub(-1) ~= '/' then
-        path = fs.getDir(path)
-      end
-    end
-    if fs.isDir(fs.combine(baseDir, path)) then
-      return path
-    end
-    return fs.getDir(path)
-  end
-
-  local match = words[#words] or ''
-  local startDir = getBaseDir(match)
-  local rawPath = getRawPath(match)
-
-  if fs.isDir(startDir) then
-    local files = fs.list(startDir)
-    for _,f in pairs(files) do
-      local path = fs.combine(rawPath, f)
-      if fs.isDir(fs.combine(startDir, f)) then
-        results[path .. '/'] = 'directory'
-      else
-        results[path .. ' '] = 'program'
-      end
-    end
-  end
-end
-
-local function autocompleteProgram(results, words)
-  if #words == 1 then
-    local files = shell.programs(true)
-    for _,f in ipairs(files) do
-      results[f .. ' '] = 'program'
-    end
-    for f in pairs(ALIASES) do
-      results[f .. ' '] = 'program'
-    end
-  end
-end
-
-local function autocompleteArgument(results, program, words)
+local function autocompleteArgument(program, words)
   local word = ''
   if #words > 1 then
     word = words[#words]
   end
 
   local tInfo = tCompletionInfo[program]
-  local args = tInfo.fnComplete(shell, #words - 1, word, words)
-  if args then
-    Util.filterInplace(args, function(f)
-      return not Util.key(args, f .. '/')
-    end)
-    for _,arg in ipairs(args) do
-      results[word .. arg] = 'argument'
-    end
-  end
+  return tInfo.fnComplete(shell, #words - 1, word, words)
 end
 
-local function autocomplete(line, suggestions)
+local function autocompleteAnything(line, words)
+  local results = shell.complete(line)
+
+  if results and #results == 0 and #words == 1 then
+    results = nil
+  end
+  if not results then
+    results = fs.complete(words[#words] or '', shell.dir(), true, false)
+  end
+
+  return results
+end
+
+local function autocomplete(line)
   local words = { }
   for word in line:gmatch("%S+") do
     table.insert(words, word)
@@ -380,39 +407,68 @@ local function autocomplete(line, suggestions)
   if line:match(' $') then
     table.insert(words, '')
   end
-
-  local results = { }
-  local files = { }
-
   if #words == 0 then
-    files = autocompleteFile(results, words)
+    words = { '' }
+  end
+
+  local results
+
+  local program = shell.resolveProgram(words[1])
+  if tCompletionInfo[program] then
+    results = autocompleteArgument(program, words) or { }
   else
-    local program = shell.resolveProgram(words[1])
-    if tCompletionInfo[program] then
-      autocompleteArgument(results, program, words)
-    else
-      autocompleteProgram(results, words)
-      autocompleteFile(results, words)
-    end
+    results = autocompleteAnything(line, words) or { }
   end
 
-  local match = words[#words] or ''
-  for f in pairs(results) do
-    if f:sub(1, #match) == match then
-      table.insert(files, f)
-    end
+  Util.filterInplace(results, function(f)
+    return not Util.key(results, f .. '/')
+  end)
+  local w = words[#words] or ''
+  for k,arg in pairs(results) do
+    results[k] = w .. arg
   end
 
-  if #files == 1 then
-    words[#words] = files[1]
+  if #results == 1 then
+    words[#words] = results[1]
     return table.concat(words, ' ')
-  elseif #files > 1 and suggestions then
+  elseif #results > 1 then
+
+    local function someComplete()
+      -- ugly (complete as much as possible)
+      local word = words[#words] or ''
+      local i = #word + 1
+      while true do
+        local ch
+        for _,f in ipairs(results) do
+          if #f < i then
+            words[#words] = string.sub(f, 1, i - 1)
+            return table.concat(words, ' ')
+          end
+          if not ch then
+            ch = string.sub(f, i, i)
+          elseif string.sub(f, i, i) ~= ch then
+            if i == #word + 1 then
+              return
+            end
+            words[#words] = string.sub(f, 1, i - 1)
+            return table.concat(words, ' ')
+          end
+        end
+        i = i + 1
+      end
+    end
+
+    local t = someComplete()
+    if t then
+      return t
+    end
+
     print()
 
     local word = words[#words] or ''
     local prefix = word:match("(.*/)") or ''
     if #prefix > 0 then
-      for _,f in ipairs(files) do
+      for _,f in ipairs(results) do
         if f:match("^" .. prefix) ~= prefix then
           prefix = ''
           break
@@ -421,8 +477,8 @@ local function autocomplete(line, suggestions)
     end
 
     local tDirs, tFiles = { }, { }
-    for _,f in ipairs(files) do
-      if results[f] == 'directory' then
+    for _,f in ipairs(results) do
+      if fs.isDir(shell.resolve(f)) then
         f = f:gsub(prefix, '', 1)
         table.insert(tDirs, f)
       else
@@ -434,9 +490,9 @@ local function autocomplete(line, suggestions)
     table.sort(tFiles)
 
     if #tDirs > 0 and #tDirs < #tFiles then
-      local w = term.getSize()
-      local nMaxLen = w / 8
-      for _,sItem in pairs(files) do
+      local tw = term.getSize()
+      local nMaxLen = tw / 8
+      for _,sItem in pairs(results) do
         nMaxLen = math.max(string.len(sItem) + 1, nMaxLen)
       end
       local nCols = math.floor(w / nMaxLen)
@@ -460,30 +516,6 @@ local function autocomplete(line, suggestions)
     term.setTextColour(_colors.commandTextColor)
     term.setBackgroundColor(colors.black)
     return line
-  elseif #files > 1 then
-
-    -- ugly (complete as much as possible)
-    local word = words[#words] or ''
-    local i = #word + 1
-    while true do
-      local ch
-      for _,f in ipairs(files) do
-        if #f < i then
-          words[#words] = string.sub(f, 1, i - 1)
-          return table.concat(words, ' ')
-        end
-        if not ch then
-          ch = string.sub(f, i, i)
-        elseif string.sub(f, i, i) ~= ch then
-          if i == #word + 1 then
-            return
-          end
-          words[#words] = string.sub(f, 1, i - 1)
-          return table.concat(words, ' ')
-        end
-      end
-      i = i + 1
-    end
   end
 end
 
@@ -492,7 +524,6 @@ local function shellRead(history)
 
   local sLine = ""
   local nPos = 0
-  local lastPattern
 
   local w = term.getSize()
   local sx = term.getCursorPos()
@@ -540,10 +571,7 @@ local function shellRead(history)
         break
       elseif param == keys.tab then
         if nPos == #sLine then
-          local showSuggestions = lastPattern == sLine
-          lastPattern = sLine
-
-          local cline = autocomplete(sLine, showSuggestions)
+          local cline = autocomplete(sLine)
           if cline then
             sLine = cline
             nPos = #sLine
@@ -633,7 +661,8 @@ while not bExit do
   end
   term.setTextColour(_colors.textColor)
   if #sLine > 0 then
-    local result, err = shell.run(sLine)
+    local args = tokenise(sLine)
+    local result, err = shell.run(table.remove(args, 1), table.unpack(args))
     if not result and err then
       _G.printError(err)
     end

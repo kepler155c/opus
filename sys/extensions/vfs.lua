@@ -45,7 +45,7 @@ function nativefs.list(node, dir)
   end
 
   if not files then
-    error('Not a directory')
+    error('Not a directory', 2)
   end
 
   return files
