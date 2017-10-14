@@ -6,7 +6,6 @@ local Util       = require('util')
 
 local _rep       = string.rep
 local _sub       = string.sub
-local clipboard  = _G.clipboard
 local colors     = _G.colors
 local device     = _G.device
 local fs         = _G.fs
@@ -1672,7 +1671,7 @@ function UI.Grid:eventHandler(event)
     end
   elseif event.type == 'copy' then
     if self.selected then
-      clipboard.setData(Util.tostring(self.selected))
+      os.queueEvent('clipboard_copy', Util.tostring(self.selected))
     end
   else
     return false
@@ -2689,7 +2688,7 @@ function UI.TextEntry:eventHandler(event)
     return true
 
   elseif event.type == 'copy' then
-    clipboard.setData(self.value)
+    os.queueEvent('clipboard_copy', self.value)
 
   elseif event.type == 'paste' then
     local input = tostring(self.value)

@@ -7,13 +7,14 @@ local Peripheral = require('peripheral')
 local UI         = require('ui')
 local Util       = require('util')
 
-local clipboard  = _G.clipboard
+local colors     = _G.colors
 local multishell = _ENV.multishell
+local os         = _G.os
 local textutils  = _G.textutils
 
 local sandboxEnv = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
 sandboxEnv.exit = function() Event.exitPullEvents() end
-sandboxEnv._echo = function( ... ) return ... end
+sandboxEnv._echo = function( ... ) return { ... } end
 injector(sandboxEnv)
 
 multishell.setTitle(multishell.getCurrent(), 'Lua')
@@ -21,6 +22,7 @@ UI:configure('Lua', ...)
 
 local command = ''
 local history = History.load('usr/.lua_history', 25)
+local extChars = Util.getVersion() > 1.76
 
 local page = UI.Page {
   menuBar = UI.MenuBar {
@@ -42,6 +44,10 @@ local page = UI.Page {
       [ 'control-space' ] = 'autocomplete',
     },
   },
+  indicator = UI.Text {
+    backgroundColor = colors.black,
+    y = 2, x = -1, width = 1,
+  },
   grid = UI.ScrollingGrid {
     y = 3,
     columns = {
@@ -53,6 +59,17 @@ local page = UI.Page {
   },
   notification = UI.Notification(),
 }
+
+function page.indicator:showResult(s)
+  local values = {
+    [ true  ] = { c = colors.green, i = (extChars and '\003') or '+' },
+    [ false ] = { c = colors.red,   i = 'x' }
+  }
+
+  self.textColor = values[s].c
+  self.value = values[s].i
+  self:draw()
+end
 
 function page:setPrompt(value, focus)
   self.prompt:setValue(value)
@@ -76,7 +93,6 @@ function page:enable()
 end
 
 local function autocomplete(env, oLine, x)
-
   local sLine = oLine:sub(1, x)
   local nStartPos = sLine:find("[a-zA-Z0-9_%.]+$")
   if nStartPos then
@@ -109,7 +125,6 @@ local function autocomplete(env, oLine, x)
 end
 
 function page:eventHandler(event)
-
   if event.type == 'global' then
     self:setPrompt('', true)
     self:executeStatement('_G')
@@ -220,7 +235,6 @@ function page:setResult(result)
 end
 
 function page.grid:eventHandler(event)
-
   local entry = self:getSelected()
 
   local function commandAppend()
@@ -255,8 +269,8 @@ function page.grid:eventHandler(event)
     page:setPrompt(commandAppend(), true)
     page:executeStatement(commandAppend())
   elseif event.type == 'copy' then
-    if entry and clipboard then
-      clipboard.setData(entry.rawValue)
+    if entry then
+      os.queueEvent('clipboard_copy', entry.rawValue)
     end
   else
     return UI.ScrollingGrid.eventHandler(self, event)
@@ -265,10 +279,16 @@ function page.grid:eventHandler(event)
 end
 
 function page:rawExecute(s)
-  local fn, m = load('return _echo(' ..s.. ');', 'lua', nil, sandboxEnv)
+  local fn, m
+
+  fn = load('return (' ..s.. ')', 'lua', nil, sandboxEnv)
+
   if fn then
-    m = { pcall(fn) }
-    fn = table.remove(m, 1)
+    fn = load('return {' ..s.. '}', 'lua', nil, sandboxEnv)
+  end
+
+  if fn then
+    fn, m = pcall(fn)
     if #m == 1 then
       m = m[1]
     end
@@ -284,7 +304,6 @@ function page:rawExecute(s)
 end
 
 function page:executeStatement(statement)
-
   command = statement
 
   local s, m = self:rawExecute(command)
@@ -298,6 +317,7 @@ function page:executeStatement(statement)
       self.notification:error(m, 5)
     end
   end
+  self.indicator:showResult(not not s)
 end
 
 local args = { ... }

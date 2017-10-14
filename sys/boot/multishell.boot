@@ -1,4 +1,9 @@
 -- Loads the Opus environment regardless if the file system is local or not
+local colors = _G.colors
+local fs     = _G.fs
+local http   = _G.http
+local shell  = _ENV.shell
+local term   = _G.term
 
 local w, h = term.getSize()
 term.setTextColor(colors.white)
@@ -34,7 +39,7 @@ local BASE     = 'https://raw.githubusercontent.com/' .. GIT_REPO
 local function makeEnv()
   local env = setmetatable({ }, { __index = _G })
   for k,v in pairs(_ENV) do
-    env[k] = v 
+    env[k] = v
   end
   return env
 end
@@ -51,10 +56,10 @@ end
 local function runUrl(file, ...)
   local url = BASE .. '/' .. file
 
-  local h = http.get(url)
-  if h then
-    local fn = load(h.readAll(), url, nil, makeEnv())
-    h.close()
+  local u = http.get(url)
+  if u then
+    local fn = load(u.readAll(), url, nil, makeEnv())
+    u.close()
     if fn then
       return fn(...)
     end
@@ -108,7 +113,7 @@ if config.aliases then
   end
 end
 shell.setPath(config.path)
-LUA_PATH = config.lua_path
+_ENV.LUA_PATH = config.lua_path
 
 -- extensions
 local dir = 'sys/extensions'

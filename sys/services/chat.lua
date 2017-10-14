@@ -2,7 +2,7 @@ local device     = _G.device
 local multishell = _ENV.multishell
 local os         = _G.os
 
-if device.wireless_modem then
+if device.wireless_modem and false then
 
 	multishell.setTitle(multishell.getCurrent(), 'Chat')
 

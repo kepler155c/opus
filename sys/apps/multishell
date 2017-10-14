@@ -27,6 +27,8 @@ local overviewTab
 local runningTab
 local tabsDirty = false
 local closeInd = '*'
+local redrawTimer
+local hooks = { }
 
 multishell.term = term.current()
 
@@ -417,14 +419,36 @@ function multishell.getCount()
   return Util.size(tabs)
 end
 
+function multishell.showMessage(text)
+  parentTerm.setCursorPos(3, 1)
+  parentTerm.setTextColor(_colors.textColor)
+  parentTerm.setBackgroundColor(_colors.backgroundColor)
+  if #text + 3 < w then
+    text = text .. string.rep(' ', w - #text - 3)
+  end
+  parentTerm.write(text)
+  redrawTimer = os.startTimer(2)
+  if currentTab then
+    currentTab.window.restoreCursor()
+  end
+end
+
+function multishell.hook(event, fn)
+  if type(event) == table then
+    for _,v in pairs(event) do
+      multishell.hook(v, fn)
+    end
+  else
+    if not hooks[event] then
+      hooks[event] = { }
+    end
+    table.insert(hooks[event], 1, fn)
+  end
+end
+
 -- control-o - overview
 multishell.addHotkey(24, function()
   multishell.setFocus(overviewTab.tabId)
-end)
-
--- control-t - toggle clipboard mode
-multishell.addHotkey(20, function()
-  _G.clipboard.useInternal(not _G.clipboard.isInternal())
 end)
 
 -- control-backspace
@@ -512,9 +536,21 @@ while true do
   -- Get the event
   local tEventData = { os.pullEventRaw() }
   local sEvent = table.remove(tEventData, 1)
+  local passthrough = true
 
   if sEvent == 'key_up' then
     processKeyEvent(sEvent, tEventData[1])
+  end
+
+  if sEvent == 'timer' and tEventData[1] == redrawTimer then
+    redrawMenu()
+  end
+
+  local hk = hooks[sEvent]
+  if hk then
+    for _,fn in pairs(hk) do
+      fn(sEvent, tEventData)
+    end
   end
 
   if sEvent == "term_resize" then
@@ -535,11 +571,7 @@ while true do
     end
 
   elseif sEvent == "paste" then
-    if _G.clipboard.isInternal() then
-      resumeTab(currentTab, sEvent, { _G.clipboard.getText() or '' })
-    else
-      resumeTab(currentTab, sEvent, tEventData)
-    end
+    resumeTab(currentTab, sEvent, tEventData)
 
   elseif sEvent == "char" or
          sEvent == "key" or
@@ -599,7 +631,7 @@ while true do
       end
     end
 
-  else
+  elseif passthrough then
     -- Other event
     -- Passthrough to all processes
     for _,key in pairs(Util.keys(tabs)) do

@@ -44,28 +44,21 @@ local function tokenise( ... )
   return tWords
 end
 
-local function run(env, command, ...)
-  if not command then
-    error('No such program')
-  end
+local function run(env, ...)
+  local args = tokenise(...)
+  local command = table.remove(args, 1) or error('No such program')
+  local isUrl = not not command:match("^(https?:)")
 
-  local isUrl = not not command:match("^(https?:)//(([^/:]+):?([0-9]*))(/?.*)$")
-  local path, runFn
-
+  local path, loadFn
   if isUrl then
     path = command
-    runFn = Util.loadUrl
+    loadFn = Util.loadUrl
   else
-    path = shell.resolveProgram(command)
-    runFn = loadfile
+    path = shell.resolveProgram(command) or error('No such program')
+    loadFn = loadfile
   end
 
-  if not path then
-    error('No such program')
-  end
-
-  local fn, err = runFn(path, env)
-
+  local fn, err = loadFn(path, env)
   if not fn then
     error(err)
   end
@@ -80,7 +73,7 @@ local function run(env, command, ...)
     tProgramStack[#tProgramStack + 1] = path
   end
 
-  local r = { fn(table.unpack(tokenise(...))) }
+  local r = { fn(table.unpack(args)) }
 
   tProgramStack[#tProgramStack] = nil
 
@@ -124,7 +117,6 @@ function shell.resolve( _sPath )
 end
 
 function shell.resolveProgram( _sCommand )
-
   if tAliases[_sCommand] ~= nil then
     _sCommand = tAliases[_sCommand]
   end
@@ -299,13 +291,15 @@ function shell.aliases()
   return tCopy
 end
 
-function shell.newTab(tabInfo, path, ...)
+function shell.newTab(tabInfo, ...)
+  local args = tokenise(...)
+  local path = table.remove(args, 1)
   path = shell.resolveProgram(path)
 
   if path then
     tabInfo.path = path
     tabInfo.env = sandboxEnv
-    tabInfo.args = tokenise(...)
+    tabInfo.args = args
     tabInfo.title = fs.getName(path)
 
     if path ~= 'sys/apps/shell' then
@@ -661,8 +655,7 @@ while not bExit do
   end
   term.setTextColour(_colors.textColor)
   if #sLine > 0 then
-    local args = tokenise(sLine)
-    local result, err = shell.run(table.remove(args, 1), table.unpack(args))
+    local result, err = shell.run(sLine)
     if not result and err then
       _G.printError(err)
     end

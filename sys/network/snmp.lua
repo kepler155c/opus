@@ -3,6 +3,12 @@ local GPS    = require('gps')
 local Socket = require('socket')
 local Util   = require('util')
 
+local device     = _G.device
+local multishell = _ENV.multishell
+local network    = _G.network
+local os         = _G.os
+local turtle     = _G.turtle
+
 -- move this into gps api
 local gpsRequested
 local gpsLastPoint
@@ -17,7 +23,7 @@ local function snmpConnection(socket)
     end
 
     if msg.type == 'reboot' then
-      os.reboot()  
+      os.reboot()
 
     elseif msg.type == 'shutdown' then
       os.shutdown()
@@ -26,20 +32,19 @@ local function snmpConnection(socket)
       socket:write('pong')
 
     elseif msg.type == 'script' then
-      local fn, msg = loadstring(msg.args, 'script')
+      local fn, err = loadstring(msg.args, 'script')
       if fn then
         multishell.openTab({
           fn = fn,
-          env = getfenv(1),
           title = 'script',
         })
       else
-        printError(msg)
+        _G.printError(err)
       end
 
     elseif msg.type == 'scriptEx' then
       local s, m = pcall(function()
-        local env = setmetatable(Util.shallowCopy(getfenv(1)), { __index = _G })
+        local env = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
         local fn, m = load(msg.args, 'script', nil, env)
         if not fn then
           error(m)
@@ -110,7 +115,7 @@ end)
 device.wireless_modem.open(999)
 print('discovery: listening on port 999')
 
-Event.on('modem_message', function(e, s, sport, id, info, distance)
+Event.on('modem_message', function(_, _, sport, id, info, distance)
   if sport == 999 and tonumber(id) and type(info) == 'table' then
     if not network[id] then
       network[id] = { }
