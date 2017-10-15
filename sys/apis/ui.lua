@@ -1,6 +1,7 @@
 local Canvas     = require('ui.canvas')
 local class      = require('class')
 local Event      = require('event')
+local Input      = require('input')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
@@ -43,9 +44,6 @@ end
 --[[-- Top Level Manager --]]--
 local Manager = class()
 function Manager:init()
-  local control = false
-  local shift = false
-  local mouseDragged = false
   local running = false
 
   -- single thread all input events
@@ -55,9 +53,15 @@ function Manager:init()
         running = true
         fn(...)
         running = false
+      else
+        Input:translate(event, ...)
       end
     end)
   end
+
+  Event.on('multishell_focus', function()
+    Input:reset()
+  end)
 
   singleThread('term_resize', function(side)
     if self.currentPage then
@@ -99,16 +103,9 @@ function Manager:init()
   end)
 
   singleThread('mouse_click', function(button, x, y)
+    Input:translate('mouse_click', button, x, y)
 
-    mouseDragged = false
-    if button == 1 and shift and control then -- debug hack
-      local event = self:pointToChild(self.target, x, y)
-      multishell.openTab({
-        path = 'sys/apps/Lua.lua',
-        args = { event.element, self:dump(self.currentPage) },
-        focused = true })
-
-    elseif self.currentPage then
+    if self.currentPage then
       if not self.currentPage.parent.device.side then
         local event = self:pointToChild(self.target, x, y)
         if event.element.focus and not event.element.inactive then
@@ -120,75 +117,64 @@ function Manager:init()
   end)
 
   singleThread('mouse_up', function(button, x, y)
+    local ch = Input:translate('mouse_up', button, x, y)
 
-    if self.currentPage and not mouseDragged then
+    if ch == 'control-shift-mouse_click' then -- hack
+      local event = self:pointToChild(self.target, x, y)
+      multishell.openTab({
+        path = 'sys/apps/Lua.lua',
+        args = { event.element, self:dump(self.currentPage) },
+        focused = true })
+
+    elseif ch and self.currentPage then
       if not self.currentPage.parent.device.side then
-        self:click(button, x, y)
+        self:click(ch, button, x, y)
       end
     end
   end)
 
   singleThread('mouse_drag', function(button, x, y)
-
-    mouseDragged = true
-    if self.target then
+    local ch = Input:translate('mouse_drag', button, x, y)
+    if ch and self.target then
       local event = self:pointToChild(self.target, x, y)
 
       -- revisit - should send out scroll_up and scroll_down events
       -- let the element convert them to up / down
       self:inputEvent(event.element,
-        { type = 'mouse_drag', button = button, x = event.x, y = event.y })
+        { type = ch, button = button, x = event.x, y = event.y })
       self.currentPage:sync()
     end
   end)
 
   singleThread('paste', function(text)
+    Input:translate('paste')
     self:emitEvent({ type = 'paste', text = text })
     self.currentPage:sync()
   end)
 
   singleThread('char', function(ch)
-    control = false
-    if self.currentPage then
+    Input:translate('char', ch)
+  end)
+
+  singleThread('key_up', function(code)
+    local ch = Input:translate('key_up', code)
+
+    if ch and self.currentPage then
       local target = self.currentPage.focused or self.currentPage
-      self:inputEvent(target, { type = 'key', key = ch })
+      self:inputEvent(target,
+        { type = 'key', key = ch, element = target })
       self.currentPage:sync()
     end
   end)
 
-  singleThread('key_up', function(code)
-    if code == keys.leftCtrl or code == keys.rightCtrl then
-      control = false
-    elseif code == keys.leftShift or code == keys.rightShift then
-      shift = false
-    end
-  end)
+  singleThread('key', function(code, held)
+    local ch = Input:translate('key', code, held)
 
-  singleThread('key', function(code)
-    local ch = keys.getName(code)
-    if not ch then
-      return
-    end
-
-    if code == keys.leftCtrl or code == keys.rightCtrl then
-      control = true
-    elseif code == keys.leftShift or code == keys.rightShift  then
-      shift = true
-    elseif control then
-      ch = 'control-' .. ch
-    elseif shift and ch == 'tab' then
-      ch = 'shiftTab'
-    end
-
-    -- filter out a through z and numbers as they will be get picked up
-    -- as char events
-    if ch and #ch > 1 and (code < 2 or code > 11) then
-      if self.currentPage then
-        local target = self.currentPage.focused or self.currentPage
-        self:inputEvent(target,
-          { type = 'key', key = ch, element = target })
-        self.currentPage:sync()
-      end
+    if ch and self.currentPage then
+      local target = self.currentPage.focused or self.currentPage
+      self:inputEvent(target,
+        { type = 'key', key = ch, element = target })
+      self.currentPage:sync()
     end
   end)
 end
@@ -306,7 +292,7 @@ function Manager:pointToChild(parent, x, y)
   }
 end
 
-function Manager:click(button, x, y)
+function Manager:click(code, button, x, y)
   if self.target then
 
     local target = self.target
@@ -322,38 +308,23 @@ function Manager:click(button, x, y)
 
     local clickEvent = self:pointToChild(target, x, y)
 
-    if button == 1 then
-      local c = os.clock()
-
-      --if self.doubleClickTimer then
-      --  debug(c - self.doubleClickTimer)
-      --end
-
-      if self.doubleClickTimer and (c - self.doubleClickTimer < 1.9) and
-         self.doubleClickX == x and self.doubleClickY == y and
-         self.doubleClickElement == clickEvent.element then
-        button = 3
-        self.doubleClickTimer = nil
-      else
-        self.doubleClickTimer = c
-        self.doubleClickX = x
-        self.doubleClickY = y
-        self.doubleClickElement = clickEvent.element
+    if code == 'mouse_doubleclick' then
+      if self.doubleClickElement ~= clickEvent.element then
+        return
       end
     else
-      self.doubleClickTimer = nil
+      self.doubleClickElement = clickEvent.element
     end
 
-    local events = { 'mouse_click', 'mouse_rightclick', 'mouse_doubleclick' }
-
     clickEvent.button = button
-    clickEvent.type = events[button]
-    clickEvent.key = events[button]
+    clickEvent.type = code
+    clickEvent.key = code
 
     if clickEvent.element.focus then
       self.currentPage:setFocus(clickEvent.element)
     end
     if not self:inputEvent(clickEvent.element, clickEvent) then
+      --[[
       if button == 3 then
         -- if the double-click was not captured
         -- send through a single-click
@@ -362,6 +333,7 @@ function Manager:click(button, x, y)
         clickEvent.key = events[1]
         self:inputEvent(clickEvent.element, clickEvent)
       end
+      ]]
     end
 
     self.currentPage:sync()
@@ -1152,7 +1124,7 @@ UI.Page.defaults = {
     down = 'focus_next',
     enter = 'focus_next',
     tab = 'focus_next',
-    shiftTab = 'focus_prev',
+    ['shift-tab' ] = 'focus_prev',
     up = 'focus_prev',
   },
   backgroundColor = colors.cyan,
