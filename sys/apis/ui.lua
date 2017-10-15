@@ -1671,7 +1671,7 @@ function UI.Grid:eventHandler(event)
     end
   elseif event.type == 'copy' then
     if self.selected then
-      os.queueEvent('clipboard_copy', Util.tostring(self.selected))
+      os.queueEvent('clipboard_copy', self.selected)
     end
   else
     return false

@@ -1,7 +1,7 @@
 local colors = _G.colors
 local fs     = _G.fs
 local os     = _G.os
---local shell  = _ENV.shell
+local shell  = _ENV.shell
 local term   = _G.term
 
 local Opus = { }

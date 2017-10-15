@@ -268,6 +268,7 @@ function page.grid:eventHandler(event)
   elseif event.type == 'grid_select' then
     page:setPrompt(commandAppend(), true)
     page:executeStatement(commandAppend())
+
   elseif event.type == 'copy' then
     if entry then
       os.queueEvent('clipboard_copy', entry.rawValue)

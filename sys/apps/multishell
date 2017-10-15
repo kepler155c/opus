@@ -20,7 +20,7 @@ local window     = _G.window
 
 local parentTerm = term.current()
 local w,h = parentTerm.getSize()
-local tabs = {}
+local tabs = { }
 local currentTab
 local _tabId = 0
 local overviewTab
@@ -29,6 +29,9 @@ local tabsDirty = false
 local closeInd = '*'
 local redrawTimer
 local hooks = { }
+local control
+local hotkeys = { }
+local downState = { }
 
 multishell.term = term.current()
 
@@ -77,62 +80,8 @@ end
 
 local function redrawMenu()
   if not tabsDirty then
-    os.queueEvent('multishell', 'draw')
+    os.queueEvent('multishell_redraw')
     tabsDirty = true
-  end
-end
-
--- Draw menu
-local function draw()
-  tabsDirty = false
-
-  parentTerm.setBackgroundColor( _colors.tabBarBackgroundColor )
-  if currentTab and currentTab.isOverview then
-     parentTerm.setTextColor( _colors.focusTextColor )
-  else
-    parentTerm.setTextColor( _colors.tabBarTextColor )
-  end
-  parentTerm.setCursorPos( 1, 1 )
-  parentTerm.clearLine()
-  parentTerm.write('+')
-
-  local tabX = 2
-  local function compareTab(a, b)
-    return a.tabId < b.tabId
-  end
-  for _,tab in Util.spairs(tabs, compareTab) do
-
-    if tab.hidden and tab ~= currentTab or tab.isOverview then
-      tab.sx = nil
-      tab.ex = nil
-    else
-      tab.sx = tabX + 1
-      tab.ex = tabX + #tab.title
-      tabX = tabX + #tab.title + 1
-    end
-  end
-  for _,tab in Util.spairs(tabs) do
-    if tab.sx then
-      if tab == currentTab then
-        parentTerm.setTextColor(_colors.focusTextColor)
-        parentTerm.setBackgroundColor(_colors.focusBackgroundColor)
-      else
-        parentTerm.setTextColor(_colors.textColor)
-        parentTerm.setBackgroundColor(_colors.backgroundColor)
-      end
-      parentTerm.setCursorPos(tab.sx, 1)
-      parentTerm.write(tab.title)
-    end
-  end
-  if currentTab and not currentTab.isOverview then
-    parentTerm.setTextColor(_colors.focusTextColor)
-    parentTerm.setBackgroundColor(_colors.backgroundColor)
-    parentTerm.setCursorPos( w, 1 )
-    parentTerm.write(closeInd)
-  end
-
-  if currentTab then
-    currentTab.window.restoreCursor()
   end
 end
 
@@ -222,7 +171,7 @@ local function launchProcess(tab)
         local e, code = os.pullEventRaw('key')
         if e == 'terminate' or e == 'key' and code == keys.enter then
           if tab.isOverview then
-            os.queueEvent('multishell', 'terminate')
+           -- os.queueEvent('multishell', 'terminate')
           end
           break
         end
@@ -247,49 +196,6 @@ local function launchProcess(tab)
   resumeTab(tab)
 
   return tab
-end
-
-local function resizeWindows()
-  local windowY = 2
-  local windowHeight = h-1
-
-  for _,key in pairs(Util.keys(tabs)) do
-    local tab = tabs[key]
-    local x,y = tab.window.getCursorPos()
-    if y > windowHeight then
-      tab.window.scroll( y - windowHeight )
-      tab.window.setCursorPos( x, windowHeight )
-    end
-    tab.window.reposition( 1, windowY, w, windowHeight )
-  end
-
-  -- Pass term_resize to all processes
-  for _,key in pairs(Util.keys(tabs)) do
-    resumeTab(tabs[key], "term_resize")
-  end
-end
-
-local control
-local hotkeys = { }
-
-local function processKeyEvent(event, code)
-  if event == 'key_up' then
-    if code == keys.leftCtrl or code == keys.rightCtrl then
-      control = false
-    end
-  elseif event == 'char' then
-    control = false
-  elseif event == 'key' then
-    if code == keys.leftCtrl or code == keys.rightCtrl then
-      control = true
-    elseif control then
-      local hotkey = hotkeys[code]
-      control = false
-      if hotkey then
-        hotkey()
-      end
-    end
-  end
 end
 
 function multishell.addHotkey(code, fn)
@@ -340,10 +246,8 @@ function multishell.getTab(tabId)
 end
 
 function multishell.terminate(tabId)
-  local tab = tabs[tabId]
-  if tab and not tab.isOverview then
-    if coroutine.status(tab.co) ~= 'dead' then
-      resumeTab(tab, "terminate")
+  os.queueEvent('multishell_terminate', tabId)
+--[[
     else
       tabs[tabId] = nil
       if tab == currentTab then
@@ -356,6 +260,7 @@ function multishell.terminate(tabId)
       redrawMenu()
     end
   end
+]]
 end
 
 function multishell.getTabs()
@@ -434,7 +339,7 @@ function multishell.showMessage(text)
 end
 
 function multishell.hook(event, fn)
-  if type(event) == table then
+  if type(event) == 'table' then
     for _,v in pairs(event) do
       multishell.hook(v, fn)
     end
@@ -446,46 +351,190 @@ function multishell.hook(event, fn)
   end
 end
 
--- control-o - overview
-multishell.addHotkey(24, function()
-  multishell.setFocus(overviewTab.tabId)
-end)
-
--- control-backspace
-multishell.addHotkey(14, function()
-  local tabId = multishell.getFocus()
+multishell.hook('multishell_terminate', function(_, eventData)
+  local tabId = eventData[1] or -1
   local tab = tabs[tabId]
-  if not tab.isOverview then
-    os.queueEvent('multishell', 'terminateTab', tabId)
-    tab = Util.shallowCopy(tab)
-    tab.isDead = false
-    tab.focused = true
-    multishell.openTab(tab)
+
+  if tab and not tab.isOverview then
+    if coroutine.status(tab.co) ~= 'dead' then
+      resumeTab(tab, "terminate")
+    end
   end
+  return true
 end)
 
--- control-tab - next tab
-multishell.addHotkey(15, function()
+multishell.hook('multishell_redraw', function()
+  tabsDirty = false
+
+  parentTerm.setBackgroundColor( _colors.tabBarBackgroundColor )
+  if currentTab and currentTab.isOverview then
+     parentTerm.setTextColor( _colors.focusTextColor )
+  else
+    parentTerm.setTextColor( _colors.tabBarTextColor )
+  end
+  parentTerm.setCursorPos( 1, 1 )
+  parentTerm.clearLine()
+  parentTerm.write('+')
+
+  local tabX = 2
   local function compareTab(a, b)
     return a.tabId < b.tabId
   end
-  local visibleTabs = { }
   for _,tab in Util.spairs(tabs, compareTab) do
-    if not tab.hidden then
-      table.insert(visibleTabs, tab)
+
+    if tab.hidden and tab ~= currentTab or tab.isOverview then
+      tab.sx = nil
+      tab.ex = nil
+    else
+      tab.sx = tabX + 1
+      tab.ex = tabX + #tab.title
+      tabX = tabX + #tab.title + 1
     end
   end
-  for k,tab in ipairs(visibleTabs) do
-    if tab.tabId == currentTab.tabId then
-      if k < #visibleTabs then
-        multishell.setFocus(visibleTabs[k + 1].tabId)
-        return
+  for _,tab in Util.spairs(tabs) do
+    if tab.sx then
+      if tab == currentTab then
+        parentTerm.setTextColor(_colors.focusTextColor)
+        parentTerm.setBackgroundColor(_colors.focusBackgroundColor)
+      else
+        parentTerm.setTextColor(_colors.textColor)
+        parentTerm.setBackgroundColor(_colors.backgroundColor)
+      end
+      parentTerm.setCursorPos(tab.sx, 1)
+      parentTerm.write(tab.title)
+    end
+  end
+  if currentTab and not currentTab.isOverview then
+    parentTerm.setTextColor(_colors.focusTextColor)
+    parentTerm.setBackgroundColor(_colors.backgroundColor)
+    parentTerm.setCursorPos( w, 1 )
+    parentTerm.write(closeInd)
+  end
+
+  if currentTab then
+    currentTab.window.restoreCursor()
+  end
+
+  return true
+end)
+
+multishell.hook('term_resize', function(_, eventData)
+  if not eventData[1] then                            --- TEST
+    w,h = parentTerm.getSize()
+
+    local windowY = 2
+    local windowHeight = h-1
+
+    for _,key in pairs(Util.keys(tabs)) do
+      local tab = tabs[key]
+      local x,y = tab.window.getCursorPos()
+      if y > windowHeight then
+        tab.window.scroll( y - windowHeight )
+        tab.window.setCursorPos( x, windowHeight )
+      end
+      tab.window.reposition( 1, windowY, w, windowHeight )
+    end
+
+    redrawMenu()
+  end
+end)
+
+-- downstate should be stored in the tab
+
+multishell.hook('key_up', function(_, eventData)
+  local code = eventData[1]
+
+  if code == keys.leftCtrl or code == keys.rightCtrl then
+    control = false
+  end
+  if downState[code] ~= currentTab then
+    downState[code] = nil
+    return true
+  end
+  downState[code] = nil
+end)
+
+multishell.hook('char', function()
+  control = false -- is this right ??
+end)
+
+multishell.hook('key', function(_, eventData)
+  local code = eventData[1]
+  local firstPress = not eventData[2]
+
+  if firstPress then
+    downState[code] = currentTab
+    if code == keys.leftCtrl or code == keys.rightCtrl then
+      control = true
+    elseif control then
+      local hotkey = hotkeys[code]
+      --control = false
+      if hotkey then
+        hotkey()
       end
     end
+  else
+    --key was pressed initially in a previous window
+    if downState[code] ~= currentTab then
+      return true
+    end
   end
-  if #visibleTabs > 0 then
-    multishell.setFocus(visibleTabs[1].tabId)
+end)
+
+multishell.hook({ 'mouse_click' }, function(_, eventData)
+  local x, y = eventData[2], eventData[3]
+  if y == 1 then
+    if x == 1 then
+      multishell.setFocus(overviewTab.tabId)
+    elseif x == w then
+      if currentTab then
+        multishell.terminate(currentTab.tabId)
+      end
+    else
+      for _,tab in pairs(tabs) do
+        if not tab.hidden and tab.sx then
+          if x >= tab.sx and x <= tab.ex then
+            multishell.setFocus(tab.tabId)
+            break
+          end
+        end
+      end
+    end
+    downState.mouse = nil
+    return true
   end
+  downState.mouse = currentTab
+  eventData[3] = eventData[3] - 1
+end)
+
+multishell.hook({ 'mouse_up', 'mouse_drag' }, function(event, eventData)
+  if downState.mouse ~= currentTab then
+    -- don't send mouse up as the mouse click event was on another window
+    if event == 'mouse_up' then
+      downState.mouse = nil
+    end
+
+    return true -- stop propagation
+  end
+  eventData[3] = eventData[3] - 1
+end)
+
+multishell.hook({ 'mouse_scroll' }, function(_, eventData)
+  local dir, y = eventData[1], eventData[3]
+
+  if y == 1 then
+    return true
+  end
+
+  if currentTab.terminal.scrollUp then
+    if dir == -1 then
+      currentTab.terminal.scrollUp()
+    else
+      currentTab.terminal.scrollDown()
+    end
+  end
+
+  eventData[3] = y - 1
 end)
 
 local function startup()
@@ -513,9 +562,6 @@ local function startup()
   end
 end
 
--- Begin
---parentTerm.clear()
-
 multishell.openTab({
   focused = true,
   fn = startup,
@@ -527,115 +573,42 @@ if not currentTab then
   multishell.setFocus(overviewTab.tabId)
 end
 
-draw()
+redrawMenu()
 
-local lastClicked
+local currentTabEvents = Util.transpose {
+  'char', 'key', 'key_up',
+  'mouse_click', 'mouse_drag', 'mouse_scroll', 'mouse_up',
+  'paste', 'terminate',
+}
 
 while true do
-
-  -- Get the event
   local tEventData = { os.pullEventRaw() }
   local sEvent = table.remove(tEventData, 1)
-  local passthrough = true
-
-  if sEvent == 'key_up' then
-    processKeyEvent(sEvent, tEventData[1])
-  end
+  local stopPropagation
 
   if sEvent == 'timer' and tEventData[1] == redrawTimer then
     redrawMenu()
   end
 
-  local hk = hooks[sEvent]
-  if hk then
-    for _,fn in pairs(hk) do
-      fn(sEvent, tEventData)
+  local eventHooks = hooks[sEvent]
+  if eventHooks then
+    for _,fn in pairs(eventHooks) do
+      stopPropagation = fn(sEvent, tEventData)
+      if stopPropagation then
+        break
+      end
     end
   end
 
-  if sEvent == "term_resize" then
-    -- Resize event
-    w,h = parentTerm.getSize()
-    resizeWindows()
-    redrawMenu()
+  if not stopPropagation then
+    if currentTabEvents[sEvent] then
+      resumeTab(currentTab, sEvent, tEventData)
 
-  elseif sEvent == 'multishell' then
-    local action = tEventData[1]
-
-    if action == 'terminate' then
-      break
-    elseif action == 'terminateTab' then
-      multishell.terminate(tEventData[2])
-    elseif action == 'draw' then
-      draw()
-    end
-
-  elseif sEvent == "paste" then
-    resumeTab(currentTab, sEvent, tEventData)
-
-  elseif sEvent == "char" or
-         sEvent == "key" or
-         sEvent == "terminate" then
-
-    processKeyEvent(sEvent, tEventData[1])
-
-    -- Keyboard event - Passthrough to current process
-    resumeTab(currentTab, sEvent, tEventData)
-
-  elseif sEvent == "mouse_click" then
-    local button, x, y = tEventData[1], tEventData[2], tEventData[3]
-    lastClicked = nil
-    if y == 1 then
-      -- Switch process
-      if x == 1 then
-        multishell.setFocus(overviewTab.tabId)
-      elseif x == w then
-        if currentTab then
-          multishell.terminate(currentTab.tabId)
-        end
-      else
-        for _,tab in pairs(tabs) do
-          if not tab.hidden and tab.sx then
-            if x >= tab.sx and x <= tab.ex then
-              multishell.setFocus(tab.tabId)
-              break
-            end
-          end
-        end
+    else
+      -- Passthrough to all processes
+      for _,key in pairs(Util.keys(tabs)) do
+        resumeTab(tabs[key], sEvent, tEventData)
       end
-    elseif currentTab then
-      -- Passthrough to current process
-      lastClicked = currentTab
-      resumeTab(currentTab, sEvent, { button, x, y-1 })
-    end
-
-  elseif sEvent == "mouse_up" then
-    if currentTab and lastClicked == currentTab then
-      local button, x, y = tEventData[1], tEventData[2], tEventData[3]
-      resumeTab(currentTab, sEvent, { button, x, y-1 })
-    end
-
-  elseif sEvent == "mouse_drag" or sEvent == "mouse_scroll" then
-    -- Other mouse event
-    local p1, x, y = tEventData[1], tEventData[2], tEventData[3]
-    if currentTab and (y ~= 1) then
-      if currentTab.terminal.scrollUp then
-        if p1 == -1 then
-          currentTab.terminal.scrollUp()
-        else
-          currentTab.terminal.scrollDown()
-        end
-      else
-        -- Passthrough to current process
-        resumeTab(currentTab, sEvent, { p1, x, y-1 })
-      end
-    end
-
-  elseif passthrough then
-    -- Other event
-    -- Passthrough to all processes
-    for _,key in pairs(Util.keys(tabs)) do
-      resumeTab(tabs[key], sEvent, tEventData)
     end
   end
 end
