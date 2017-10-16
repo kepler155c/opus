@@ -329,30 +329,6 @@ function multishell.getCount()
   return Util.size(tabs)
 end
 
-function multishell.showMessage(text)
-  parentTerm.setCursorPos(3, 1)
-  parentTerm.setTextColor(_colors.textColor)
-  parentTerm.setBackgroundColor(_colors.backgroundColor)
-  if #text + 3 < w then
-    text = text .. string.rep(' ', w - #text - 3)
-  end
-  parentTerm.write(text)
-  if currentTab then
-    currentTab.window.restoreCursor()
-  end
-  local redrawTimer = os.startTimer(2)
-
-  local redraw
-  function redraw(event, eventData)
-    if eventData[1] == redrawTimer then
-      redrawMenu()
-      multishell.unhook(event, redraw)
-      return true
-    end
-  end
-  multishell.hook('timer', redraw)
-end
-
 function multishell.hook(event, fn)
   if type(event) == 'table' then
     for _,v in pairs(event) do
