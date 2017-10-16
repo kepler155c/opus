@@ -84,7 +84,7 @@ function input:translate(event, code, p1, p2)
     self.ch = 'paste'
     self.pressed[keys.leftCtrl] = nil
     self.pressed[keys.rightCtrl] = nil
-    self.fired = input:toCode(0)
+    self.fired = input:toCode(0, self.ch)
     return self.fired
 
   elseif event == 'mouse_click' then
