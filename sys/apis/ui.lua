@@ -367,7 +367,7 @@ function Manager:setPage(pageOrName, ...)
   local page = pageOrName
 
   if type(pageOrName) == 'string' then
-    page = self.pages[pageOrName]
+    page = self.pages[pageOrName] or error('Invalid page: ' .. pageOrName)
   end
 
   if page == self.currentPage then
@@ -1556,7 +1556,7 @@ function UI.Grid:setIndex(index)
     self:drawRows()
     self.selected = selected
     if selected then
-      self:emit({ type = 'grid_focus_row', selected = selected })
+      self:emit({ type = 'grid_focus_row', selected = selected, element = self })
     end
   end
 end
@@ -1639,7 +1639,7 @@ function UI.Grid:eventHandler(event)
     self:setIndex(self.index + self.pageSize)
   elseif event.type == 'key_enter' then
     if self.selected then
-      self:emit({ type = 'grid_select', selected = self.selected })
+      self:emit({ type = 'grid_select', selected = self.selected, element = self })
     end
   elseif event.type == 'copy' then
     if self.selected then
@@ -2228,7 +2228,13 @@ UI.WindowScroller.defaults = {
 function UI.WindowScroller:enable()
   self.enabled = true
   if #self.children > 0 then
-    self.children[1]:enable()
+    for k,child in ipairs(self.children) do
+      if k == 1 then
+        child:enable()
+      else
+        child:disable()
+      end
+    end
   end
 end
 
