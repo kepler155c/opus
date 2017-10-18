@@ -90,11 +90,11 @@ local categories = { }
 for _,f in pairs(applications) do
   if not categories[f.category] then
     categories[f.category] = true
-    table.insert(buttons, { text = f.category, event = 'category' })
+    table.insert(buttons, { text = f.category })
   end
 end
 table.sort(buttons, function(a, b) return a.text < b.text end)
-table.insert(buttons, 1, { text = 'Recent', event = 'category' })
+table.insert(buttons, 1, { text = 'Recent' })
 table.insert(buttons, { text = '+', event = 'new' })
 
 local function parseIcon(iconText)
@@ -329,8 +329,7 @@ end
 
 function page:eventHandler(event)
 
-  if event.type == 'category' then
-    self.tabBar:selectTab(event.button.text)
+  if event.type == 'tab_select' then
     self.container:setCategory(event.button.text, true)
     self.container:draw()
 

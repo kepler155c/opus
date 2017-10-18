@@ -179,6 +179,14 @@ function Util.transpose(t)
   return tt
 end
 
+function Util.contains(t, value)
+  for k,v in pairs(t) do
+    if v == value then
+      return k
+    end
+  end
+end
+
 function Util.find(t, name, value)
   for k,v in pairs(t) do
     if v[name] == value then

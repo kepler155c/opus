@@ -97,6 +97,7 @@ local systemPage = UI.Page {
       info = UI.TextArea {
         x = 2, ex = -2,
         y = 7,
+        inactive = true,
         value = 'Add a password to enable other computers to connect to this one.',
       }
     },
@@ -150,7 +151,7 @@ if settings then
   end
 
   systemPage.tabs:add({
-    systemTab = UI.Window {
+    settingsTab = UI.Window {
       tabTitle = 'Settings',
       grid = UI.Grid {
         y = 1,
@@ -166,7 +167,7 @@ if settings then
       },
     }
   })
-  function systemPage.tabs.systemTab:eventHandler(event)
+  function systemPage.tabs.settingsTab:eventHandler(event)
     if event.type == 'grid_select' then
       event.selected.value = not event.selected.value
       settings.set(event.selected.name, event.selected.value)
@@ -187,7 +188,6 @@ function systemPage.tabs.pathTab.grid:draw()
 end
 
 function systemPage.tabs.pathTab:eventHandler(event)
-
   if event.type == 'update_path' then
     env.path = self.entry.value
     self.grid:setIndex(self.grid:getIndex())
@@ -208,7 +208,6 @@ function systemPage.tabs.aliasTab.grid:draw()
 end
 
 function systemPage.tabs.aliasTab:eventHandler(event)
-
   if event.type == 'delete_alias' then
     env.aliases[self.grid:getSelected().alias] = nil
     self.grid:setIndex(self.grid:getIndex())
@@ -254,7 +253,6 @@ function systemPage.tabs.infoTab:eventHandler(event)
 end
 
 function systemPage:eventHandler(event)
-
   if event.type == 'quit' then
     UI:exitPullEvents()
   elseif event.type == 'tab_activate' then

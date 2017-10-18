@@ -864,6 +864,18 @@ function UI.Window:focusFirst()
   end
 end
 
+function UI.Window:refocus()
+  local el = self
+  while el do
+    local focusables = el:getFocusables()
+    if focusables[1] then
+      self:setFocus(focusables[1])
+      break
+    end
+    el = el.parent
+  end
+end
+
 function UI.Window:scrollIntoView()
   local parent = self.parent
 
@@ -922,6 +934,12 @@ function UI.Window:emit(event)
       end
     end
     parent = parent.parent
+  end
+end
+
+function UI.Window:find(uid)
+  if self.children then
+    return Util.find(self.children, 'uid', uid)
   end
 end
 
@@ -1165,13 +1183,12 @@ end
 function UI.Page:focusPrevious()
   local function getPreviousFocus(focused)
     local focusables = self:getFocusables()
-    for k, v in ipairs(focusables) do
-      if v == focused then
-        if k > 1 then
-          return focusables[k - 1]
-        end
-        return focusables[#focusables]
+    local k = Util.contains(focusables, focused)
+    if k then
+      if k > 1 then
+        return focusables[k - 1]
       end
+      return focusables[#focusables]
     end
   end
 
@@ -1184,13 +1201,12 @@ end
 function UI.Page:focusNext()
   local function getNextFocus(focused)
     local focusables = self:getFocusables()
-    for k, v in ipairs(focusables) do
-      if v == focused then
-        if k < #focusables then
-          return focusables[k + 1]
-        end
-        return focusables[1]
+    local k = Util.contains(focusables, focused)
+    if k then
+      if k < #focusables then
+        return focusables[k + 1]
       end
+      return focusables[1]
     end
   end
 
@@ -1230,7 +1246,6 @@ function UI.Page:eventHandler(event)
       return true
     end
   end
-  return false
 end
 
 --[[-- Grid --]]--
@@ -2076,7 +2091,7 @@ function UI.DropMenu:show(x, y)
   self.canvas:setVisible(true)
 
   self.enabled = true
-  for _,child in ipairs(self.children) do
+  for _,child in pairs(self.children) do
     child:enable()
   end
 
@@ -2093,50 +2108,76 @@ end
 
 function UI.DropMenu:eventHandler(event)
   if event.type == 'focus_lost' and self.enabled then
-    for _,child in ipairs(self.children) do
-      if child == event.focused then
-        return
-      end
+    if not Util.contains(self.children, event.focused) then
+      self:hide()
     end
-    self:hide()
-    --self.parent:focusFirst()
   elseif event.type == 'mouse_out' and self.enabled then
     self:hide()
-    self:setFocus(self.parent)
+    self:refocus()
   else
     return UI.MenuBar.eventHandler(self, event)
   end
   return true
 end
 
+--[[-- TabBarMenuItem --]]--
+UI.TabBarMenuItem = class(UI.Button)
+UI.TabBarMenuItem.defaults = {
+  UIElement = 'TabBarMenuItem',
+  event = 'tab_select',
+  textColor = colors.black,
+  selectedBackgroundColor = colors.cyan,
+  unselectedBackgroundColor = colors.lightGray,
+  backgroundColor = colors.lightGray,
+}
+function UI.TabBarMenuItem:draw()
+  if self.selected then
+    self.backgroundColor = self.selectedBackgroundColor
+    self.backgroundFocusColor = self.selectedBackgroundColor
+  else
+    self.backgroundColor = self.unselectedBackgroundColor
+    self.backgroundFocusColor = self.unselectedBackgroundColor
+  end
+  UI.Button.draw(self)
+end
+
 --[[-- TabBar --]]--
 UI.TabBar = class(UI.MenuBar)
 UI.TabBar.defaults = {
   UIElement = 'TabBar',
+  buttonClass = 'TabBarMenuItem',
   selectedBackgroundColor = colors.cyan,
-  focusBackgroundColor = colors.green,
 }
-function UI.TabBar:selectTab(text)
-  local selected, lastSelected
+function UI.TabBar:enable()
+  UI.MenuBar.enable(self)
+  if not Util.find(self.children, 'selected', true) then
+    local menuItem = self:getFocusables()[1]
+    if menuItem then
+      menuItem.selected = true
+    end
+  end
+end
 
-  for k,child in pairs(self:getFocusables()) do
-    if child.selected then
-      lastSelected = k
+function UI.TabBar:eventHandler(event)
+  if event.type == 'tab_select' then
+    local selected, si = Util.find(self:getFocusables(), 'uid', event.button.uid)
+    local previous, pi = Util.find(self:getFocusables(), 'selected', true)
+
+    if si ~= pi then
+      selected.selected = true
+      previous.selected = false
+      self:emit({ type = 'tab_change', current = si, last = pi, tab = selected })
     end
-    child.selected = child.text == text
-    if child.selected then
-      selected = k
-      child.backgroundColor = self.selectedBackgroundColor
-      child.backgroundFocusColor = self.selectedBackgroundColor
-    else
-      child.backgroundColor = self.backgroundColor
-      child.backgroundFocusColor = self.backgroundColor
-    end
+    UI.MenuBar.draw(self)
   end
-  if selected and lastSelected and selected ~= lastSelected then
-    self:emit({ type = 'tab_change', current = selected, last = lastSelected })
+  return UI.MenuBar.eventHandler(self, event)
+end
+
+function UI.TabBar:selectTab(text)
+  local menuItem = Util.find(self.children, 'text', text)
+  if menuItem then
+    menuItem.selected = true
   end
-  UI.MenuBar.draw(self)
 end
 
 --[[-- Tabs --]]--
@@ -2178,88 +2219,128 @@ function UI.Tabs:enable()
   self.enabled = true
   self.tabBar:enable()
 
-  -- focus first tab
-  local menuItem = self.tabBar:getFocusables()[1]
-  if menuItem then
-    self:activateTab(menuItem.tabUid)
-  end
-end
+  local menuItem = Util.find(self.tabBar.children, 'selected', true)
 
-function UI.Tabs:activateTab(uid)
-  local tab = Util.find(self.children, 'uid', uid)
-  if tab then
-    for _,child in pairs(self.children) do
-      if child.uid ~= uid and child.tabTitle then
-        child:disable()
-      end
-    end
-    if not tab.enabled then
-      self.tabBar:selectTab(tab.tabTitle)
-      tab:enable()
-      tab:draw()
-      self:emit({ type = 'tab_activate', activated = tab, element = self })
+  for _,child in pairs(self.children) do
+    if child.uid == menuItem.tabUid then
+      child:enable()
+      self:emit({ type = 'tab_activate', activated = child })
+    elseif child.tabTitle then
+      child:disable()
     end
   end
 end
 
 function UI.Tabs:eventHandler(event)
-  if event.type == 'tab_select' then
-    self:activateTab(event.button.tabUid)
-  elseif event.type == 'tab_change' then
-    for _,tab in ipairs(self.children) do
-      if tab ~= self.tabBar then
-        if event.current > event.last then
-          tab:addTransition('slideLeft')
-        else
-          tab:addTransition('slideRight')
-        end
-        break
-      end
+  if event.type == 'tab_change' then
+    local tab = self:find(event.tab.tabUid)
+    if event.current > event.last then
+      tab:addTransition('slideLeft')
+    else
+      tab:addTransition('slideRight')
     end
-  end
-end
 
---[[-- WindowScroller --]]--
-UI.WindowScroller = class(UI.Window)
-UI.WindowScroller.defaults = {
-  UIElement = 'WindowScroller',
-  children = { },
-}
-function UI.WindowScroller:enable()
-  self.enabled = true
-  if #self.children > 0 then
-    for k,child in ipairs(self.children) do
-      if k == 1 then
+    for _,child in pairs(self.children) do
+      if child.uid == event.tab.tabUid then
         child:enable()
-      else
+      elseif child.tabTitle then
         child:disable()
       end
     end
+    self:emit({ type = 'tab_activate', activated = tab })
+    tab:draw()
   end
 end
 
-function UI.WindowScroller:nextChild()
-  for i = 1, #self.children do
-    if self.children[i].enabled then
-      if i < #self.children then
-        self:addTransition('slideLeft')
-        self.children[i]:disable()
-        self.children[i + 1]:enable()
-      end
-      break
+--[[-- Wizard --]]--
+UI.Wizard = class(UI.Window)
+UI.Wizard.defaults = {
+  UIElement = 'Wizard',
+  pages = { },
+}
+function UI.Wizard:postInit()
+  self.cancelButton = UI.Button {
+    x = 2, y = -1,
+    text = 'Cancel',
+    event = 'cancel',
+  }
+  self.previousButton = UI.Button {
+    x = -18, y = -1,
+    text = '< Back',
+    event = 'previousView',
+  }
+  self.nextButton = UI.Button {
+    x = -9, y = -1,
+    text = 'Next >',
+    event = 'nextView',
+  }
+
+  Util.merge(self, self.pages)
+  for _, child in pairs(self.pages) do
+    child.ey = -2
+  end
+end
+
+function UI.Wizard:enable()
+  self.enabled = true
+  for _,child in ipairs(self.children) do
+    if not child.index then
+      child:enable()
+    elseif child.index == 1 then
+      child:enable()
+    else
+      child:disable()
     end
   end
+  self:emit({ type = 'enable_view', view = Util.find(self.pages, 'index', 1) })
 end
 
-function UI.WindowScroller:prevChild()
-  for i = 1, #self.children do
-    if self.children[i].enabled then
-      if i - 1 > 0 then
-        self:addTransition('slideRight')
-        self.children[i]:disable()
-        self.children[i - 1]:enable()
-      end
-      break
+function UI.Wizard:nextView()
+  local currentView = Util.find(self.pages, 'enabled', true)
+  local nextView = Util.find(self.pages, 'index', currentView.index + 1)
+
+  if nextView then
+    self:addTransition('slideLeft')
+    currentView:disable()
+    nextView:enable()
+    self:emit({ type = 'enable_view', view = nextView })
+  end
+end
+
+function UI.Wizard:prevView()
+  local currentView = Util.find(self.pages, 'enabled', true)
+  local nextView = Util.find(self.pages, 'index', currentView.index - 1)
+
+  if nextView then
+    self:addTransition('slideRight')
+    currentView:disable()
+    nextView:enable()
+    self:emit({ type = 'enable_view', view = nextView })
+  end
+end
+
+function UI.Wizard:eventHandler(event)
+  if event.type == 'nextView' then
+    self:nextView()
+    self:draw()
+
+  elseif event.type == 'previousView' then
+    self:prevView()
+    self:draw()
+
+  elseif event.type == 'enable_view' then
+    if Util.find(self.pages, 'index', event.view.index - 1) then
+      self.previousButton:enable()
+    else
+      self.previousButton:disable()
+    end
+
+    if Util.find(self.pages, 'index', event.view.index + 1) then
+      self.nextButton.text = 'Next >'
+      self.nextButton.event = 'nextView'
+    else
+      self.nextButton.text = 'Accept'
+      self.nextButton.event = 'accept'
     end
   end
 end
@@ -2454,19 +2535,14 @@ function UI.StatusBar:timedStatus(status, timeout)
 end
 
 function UI.StatusBar:getColumnWidth(name)
-  for _,c in pairs(self.columns) do
-    if c.key == name then
-      return c.cw
-    end
-  end
+  local c = Util.find(self.columns, 'key', name)
+  return c and c.cw
 end
 
 function UI.StatusBar:setColumnWidth(name, width)
-  for _,c in pairs(self.columns) do
-    if c.key == name then
-      c.cw = width
-      break
-    end
+  local c = Util.find(self.columns, 'key', name)
+  if c then
+    c.cw = width
   end
 end
 
@@ -2561,8 +2637,6 @@ function UI.TextEntry:updateScroll()
   elseif self.pos < self.scroll then
     self.scroll = self.pos
   end
-
-  --debug('p:%d s:%d w:%d l:%d', self.pos, self.scroll, self.width, self.limit)
 end
 
 function UI.TextEntry:draw()
@@ -2886,7 +2960,8 @@ end
 
 function UI.TextArea:draw()
   self:clear()
-  self:setCursorPos(1, 1)
+--  self:setCursorPos(1, 1)
+  self.cursorX, self.cursorY = 1, 1
   self:print(self.value)
   self.ymax = self.cursorY + 1
 
