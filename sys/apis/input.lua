@@ -13,8 +13,14 @@ local input = {
   pressed = { },
 }
 
-function input:toCode(ch, code)
+function input:modifierPressed()
+  return self.pressed[keys.leftCtrl] or
+         self.pressed[keys.rightCtrl] or
+         self.pressed[keys.leftAlt] or
+         self.pressed[keys.rightAlt]
+end
 
+function input:toCode(ch, code)
   local result = { }
 
   if self.pressed[keys.leftCtrl] or self.pressed[keys.rightCtrl] then
@@ -32,7 +38,7 @@ function input:toCode(ch, code)
       table.insert(result, ch:upper())
     else
       table.insert(result, 'shift')
-      table.insert(result, keys.getName(code) or ch)
+      table.insert(result, ch)
     end
   elseif not code or not modifiers[code] then
     table.insert(result, ch)
@@ -54,24 +60,32 @@ function input:translate(event, code, p1, p2)
   if event == 'key' then
     if p1 then -- key is held down
       if not modifiers[code] then
-        self.fired = input:toCode(keys.getName(code), code)
-        return self.fired
+        self.fired = true
+        return input:toCode(keys.getName(code), code)
       end
     else
-      self.fired = nil
       self.pressed[code] = true
+      if self:modifierPressed() and not modifiers[code] or code == 57 then
+        self.fired = true
+        return input:toCode(keys.getName(code), code)
+      else
+        self.fired = false
+      end
     end
 
   elseif event == 'char' then
-    self.fired = true
-    return input:toCode(code)
+    if not self:modifierPressed() then
+      self.fired = true
+      return input:toCode(code)
+    end
 
   elseif event == 'key_up' then
     if not self.fired then
       if self.pressed[code] then
-        self.fired = input:toCode(keys.getName(code), code)
+        self.fired = true
+        local ch = input:toCode(keys.getName(code), code)
         self.pressed[code] = nil
-        return self.fired
+        return ch
       end
     end
     self.pressed[code] = nil
@@ -80,7 +94,7 @@ function input:translate(event, code, p1, p2)
     self.pressed[keys.leftCtrl] = nil
     self.pressed[keys.rightCtrl] = nil
     self.fired = true
-    return input:toCode('paste')
+    return input:toCode('paste', 255)
 
   elseif event == 'mouse_click' then
     local buttons = { 'mouse_click', 'mouse_rightclick' }
@@ -89,7 +103,8 @@ function input:translate(event, code, p1, p2)
 
   elseif event == 'mouse_drag' then
     self.mfired = true
-    return input:toCode('mouse_drag')
+    self.fired = true
+    return input:toCode('mouse_drag', 255)
 
   elseif event == 'mouse_up' then
     if not self.mfired then
@@ -105,10 +120,10 @@ function input:translate(event, code, p1, p2)
         self.x = p1
         self.y = p2
       end
-      self.mfired = input:toCode(self.mch)
+      self.mfired = input:toCode(self.mch, 255)
     else
       self.mch = 'mouse_up'
-      self.mfired = input:toCode(self.mch)
+      self.mfired = input:toCode(self.mch, 255)
     end
     self.fired = true
     return self.mfired
@@ -119,7 +134,7 @@ function input:translate(event, code, p1, p2)
       [  1 ] = 'scrollDown'
     }
     self.fired = true
-    return input:toCode(directions[code])
+    return input:toCode(directions[code], 255)
   end
 end
 
@@ -127,7 +142,7 @@ function input:test()
   while true do
     local ch = self:translate(os.pullEvent())
     if ch then
-      print('GOT: ' .. ch)
+      print('GOT: ' .. tostring(ch))
     end
   end
 end
