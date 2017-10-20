@@ -36,9 +36,14 @@ term.setCursorPos(w, h)
 local GIT_REPO = 'kepler155c/opus/develop'
 local BASE     = 'https://raw.githubusercontent.com/' .. GIT_REPO
 
+local sandboxEnv = setmetatable({ }, { __index = _G })
+for k,v in pairs(_ENV) do
+  sandboxEnv[k] = v
+end
+
 local function makeEnv()
   local env = setmetatable({ }, { __index = _G })
-  for k,v in pairs(_ENV) do
+  for k,v in pairs(sandboxEnv) do
     env[k] = v
   end
   return env
@@ -113,7 +118,7 @@ if config.aliases then
   end
 end
 shell.setPath(config.path)
-_ENV.LUA_PATH = config.lua_path
+sandboxEnv.LUA_PATH = config.lua_path
 
 -- extensions
 local dir = 'sys/extensions'

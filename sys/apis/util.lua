@@ -141,7 +141,7 @@ function Util.key(t, value)
 end
 
 function Util.keys(t)
-  local keys = {}
+  local keys = { }
   for k in pairs(t) do
     keys[#keys+1] = k
   end
@@ -280,6 +280,19 @@ end
 function Util.each(list, func)
   for index, value in pairs(list) do
     func(value, index, list)
+  end
+end
+
+function Util.rpairs(t)
+  local tkeys = Util.keys(t)
+  local i = #tkeys
+  return function()
+    local key = tkeys[i]
+    local k,v = key, t[key]
+    i = i - 1
+    if v then
+      return k, v
+    end
   end
 end
 

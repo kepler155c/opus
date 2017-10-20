@@ -133,7 +133,7 @@ local methods = { 'delete', 'getFreeSpace', 'exists', 'isDir', 'getSize',
 
 for _,m in pairs(methods) do
   fs[m] = function(dir, ...)
-    dir = fs.combine(dir, '')
+    dir = fs.combine(dir or '', '')
     local node = getNode(dir)
     return node.fs[m](node, dir, ...)
   end

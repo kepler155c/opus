@@ -1,6 +1,6 @@
-local defaultEnv = { }
+local sandboxEnv = { }
 for k,v in pairs(_ENV) do
-  defaultEnv[k] = v
+  sandboxEnv[k] = v
 end
 
 _G.requireInjector()
@@ -127,7 +127,7 @@ local function selectTab(tab)
     if coroutine.status(currentTab.co) == 'suspended' then
       -- the process that opens a new tab won't get the lose focus event
       -- os.queueEvent('multishell_notifyfocus', currentTab.tabId)
-      resumeTab(currentTab, 'multishell_losefocus')
+      --resumeTab(currentTab, 'multishell_losefocus')
     end
     if tab and not currentTab.hidden then
       tab.previousTabId = currentTab.tabId
@@ -151,7 +151,7 @@ local function launchProcess(tab)
   tab.timestamp = os.clock()
   tab.window = window.create(parentTerm, 1, 2, w, h - 1, false)
   tab.terminal = tab.window
-  tab.env = Util.shallowCopy(tab.env or defaultEnv)
+  tab.env = Util.shallowCopy(tab.env or sandboxEnv)
 
   tab.co = coroutine.create(function()
 
@@ -229,7 +229,9 @@ end
 function multishell.setTitle(tabId, title)
   local tab = tabs[tabId]
   if tab then
-    tab.title = title or ''
+    if not tab.isOverview then
+      tab.title = title or ''
+    end
     redrawMenu()
   end
 end

@@ -64,7 +64,6 @@ function topicPage:eventHandler(event)
 end
 
 function page:eventHandler(event)
-
   if event.type == 'quit' then
     UI:exitPullEvents()
 

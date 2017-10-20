@@ -312,7 +312,6 @@ function Canvas:applyPalette(palette)
 end
 
 function Canvas.convertWindow(win, parent, wx, wy)
-
   local w, h = win.getSize()
 
   win.canvas = Canvas({
@@ -355,7 +354,7 @@ function Canvas.convertWindow(win, parent, wx, wy)
   end
 
   function win.scroll()
-    error('CWin:scroll: not implemented')
+    error('scroll: not implemented')
   end
 
   function win.reposition(x, y, width, height)

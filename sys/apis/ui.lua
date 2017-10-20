@@ -10,8 +10,6 @@ local _sub       = string.sub
 local colors     = _G.colors
 local device     = _G.device
 local fs         = _G.fs
-local keys       = _G.keys
-local multishell = _ENV.multishell
 local os         = _G.os
 local term       = _G.term
 
@@ -121,7 +119,7 @@ function Manager:init()
 
     if ch == 'control-shift-mouse_click' then -- hack
       local event = self:pointToChild(self.target, x, y)
-      multishell.openTab({
+      _ENV.multishell.openTab({
         path = 'sys/apps/Lua.lua',
         args = { event.element, self:dump(self.currentPage) },
         focused = true })
@@ -152,12 +150,8 @@ function Manager:init()
     self.currentPage:sync()
   end)
 
-  singleThread('char', function(ch)
-    Input:translate('char', ch)
-  end)
-
-  singleThread('key_up', function(code)
-    local ch = Input:translate('key_up', code)
+  local function keyFunction(event, code, held)
+    local ch = Input:translate(event, code, held)
 
     if ch and self.currentPage then
       local target = self.currentPage.focused or self.currentPage
@@ -165,18 +159,11 @@ function Manager:init()
         { type = 'key', key = ch, element = target })
       self.currentPage:sync()
     end
-  end)
+  end
 
-  singleThread('key', function(code, held)
-    local ch = Input:translate('key', code, held)
-
-    if ch and self.currentPage then
-      local target = self.currentPage.focused or self.currentPage
-      self:inputEvent(target,
-        { type = 'key', key = ch, element = target })
-      self.currentPage:sync()
-    end
-  end)
+  singleThread('char', function(code, held) keyFunction('char', code, held) end)
+  singleThread('key_up', function(code, held) keyFunction('key_up', code, held) end)
+  singleThread('key', function(code, held) keyFunction('key', code, held) end)
 end
 
 function Manager:configure(appName, ...)
@@ -1156,6 +1143,7 @@ function UI.Page:setParent()
   UI.Window.setParent(self)
   if self.z then
     self.canvas = self:addLayer(self.backgroundColor, self.textColor)
+    self.canvas:clear(self.backgroundColor, self.textColor)
   else
     self.canvas = self.parent.canvas
   end
@@ -2281,6 +2269,19 @@ function UI.Wizard:postInit()
   end
 end
 
+function UI.Wizard:add(pages)
+  Util.merge(self.pages, pages)
+  Util.merge(self, pages)
+
+  for _, child in pairs(self.pages) do
+    child.ey = child.ey or -2
+  end
+
+  if self.parent then
+    self:initChildren()
+  end
+end
+
 function UI.Wizard:enable()
   self.enabled = true
   for _,child in ipairs(self.children) do
@@ -2300,10 +2301,10 @@ function UI.Wizard:nextView()
   local nextView = Util.find(self.pages, 'index', currentView.index + 1)
 
   if nextView then
+    self:emit({ type = 'enable_view', view = nextView })
     self:addTransition('slideLeft')
     currentView:disable()
     nextView:enable()
-    self:emit({ type = 'enable_view', view = nextView })
   end
 end
 
@@ -2312,10 +2313,10 @@ function UI.Wizard:prevView()
   local nextView = Util.find(self.pages, 'index', currentView.index - 1)
 
   if nextView then
+    self:emit({ type = 'enable_view', view = nextView })
     self:addTransition('slideRight')
     currentView:disable()
     nextView:enable()
-    self:emit({ type = 'enable_view', view = nextView })
   end
 end
 
@@ -2323,10 +2324,12 @@ function UI.Wizard:eventHandler(event)
   if event.type == 'nextView' then
     self:nextView()
     self:draw()
+    return true
 
   elseif event.type == 'previousView' then
     self:prevView()
     self:draw()
+    return true
 
   elseif event.type == 'enable_view' then
     if Util.find(self.pages, 'index', event.view.index - 1) then
