@@ -27,7 +27,7 @@ function Point.subtract(a, b)
 end
 
 -- Euclidian distance
-function Point.pythagoreanDistance(a, b)
+function Point.distance(a, b)
   return math.sqrt(
            math.pow(a.x - b.x, 2) +
            math.pow(a.y - b.y, 2) +
@@ -57,28 +57,28 @@ function Point.calculateTurns(ih, oh)
 end
 
 function Point.calculateHeading(pta, ptb)
-
   local heading
+  local xd, zd = pta.x - ptb.x, pta.z - ptb.z
 
-  if (pta.heading % 2) == 0 and pta.z ~= ptb.z then
-    if ptb.z > pta.z then
+  if (pta.heading % 2) == 0 and zd ~= 0 then
+    if zd < 0 then
       heading = 1
     else
       heading = 3
     end
-  elseif (pta.heading % 2) == 1 and pta.x ~= ptb.x then
-    if ptb.x > pta.x then
+  elseif (pta.heading % 2) == 1 and xd ~= 0 then
+    if xd < 0 then
       heading = 0
     else
       heading = 2
     end
-  elseif pta.heading == 0 and pta.x > ptb.x then
+  elseif pta.heading == 0 and xd > 0 then
     heading = 2
-  elseif pta.heading == 2 and pta.x < ptb.x then
+  elseif pta.heading == 2 and xd < 0 then
     heading = 0
-  elseif pta.heading == 1 and pta.z > ptb.z then
+  elseif pta.heading == 1 and zd > 0 then
     heading = 3
-  elseif pta.heading == 3 and pta.z < ptb.z then
+  elseif pta.heading == 3 and zd < 0 then
     heading = 1
   end
 
@@ -134,7 +134,6 @@ function Point.closest(reference, pts)
 end
 
 function Point.eachClosest(spt, ipts, fn)
-
   local pts = Util.shallowCopy(ipts)
   while #pts > 0 do
     local pt = Point.closest(spt, pts)
@@ -174,6 +173,20 @@ function Point.inBox(pt, box)
          pt.x <= box.ex and
          pt.y <= box.ey and
          pt.z <= box.ez
+end
+
+function Point.rotate(pt, facing)
+  local x, z = pt.x, pt.z
+  if facing == 1 then
+    pt.x = z
+    pt.z = -x
+  elseif facing == 2 then
+    pt.x = -x
+    pt.z = -z
+  elseif facing == 3 then
+    pt.x = -z
+    pt.z = x
+  end
 end
 
 return Point
