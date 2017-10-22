@@ -316,28 +316,14 @@ local function getNodeByParts(parts)
 end
 
 function fs.unmount(path)
-
   local parts = splitpath(path)
   local targetName = table.remove(parts, #parts)
 
   local node = getNodeByParts(parts)
 
-  if not node or not node.nodes[targetName] then
-    error('Invalid node')
-  end
-
-  node.nodes[targetName] = nil
---[[
-  -- remove the shadow directories
-  while #parts > 0 do
-    targetName = table.remove(parts, #parts)
-    node = getNodeByParts(parts)
-    if not Util.empty(node.nodes[targetName].nodes) then
-      break
-    end
+  if node and node.nodes[targetName] then
     node.nodes[targetName] = nil
   end
---]]
 end
 
 function fs.registerType(name, fs)

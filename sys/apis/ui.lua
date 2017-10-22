@@ -135,11 +135,8 @@ function Manager:init()
     local ch = Input:translate('mouse_drag', button, x, y)
     if ch and self.target then
       local event = self:pointToChild(self.target, x, y)
-
-      -- revisit - should send out scroll_up and scroll_down events
-      -- let the element convert them to up / down
-      self:inputEvent(event.element,
-        { type = ch, button = button, x = event.x, y = event.y })
+      event.type = ch
+      self:inputEvent(event.element, event)
       self.currentPage:sync()
     end
   end)
@@ -3026,14 +3023,15 @@ function UI.Form:createForm()
   for _, child in pairs(self) do
     if type(child) == 'table' and child.UIElement then
       if child.formKey then
+        child.value = self.values[child.formKey] or ''
+      end
+      if child.formLabel then
         child.x = self.labelWidth + self.margin - 1
         child.y = y
         if not child.width and not child.ex then
           child.ex = -self.margin
         end
-        child.value = self.values[child.formKey] or ''
-      end
-      if child.formLabel then
+
         table.insert(self.children, UI.Text {
           x = self.margin,
           y = y,
@@ -3062,7 +3060,7 @@ end
 
 function UI.Form:validateField(field)
   if field.required then
-    if not field.value or #field.value == 0 then
+    if not field.value or #tostring(field.value) == 0 then
       return false, 'Field is required'
     end
   end
