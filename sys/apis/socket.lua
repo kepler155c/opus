@@ -5,7 +5,6 @@ local Util     = require('util')
 
 local device    = _G.device
 local os        = _G.os
---local transport = _G.transport
 
 local socketClass = { }
 
@@ -109,7 +108,7 @@ end
 function Socket.connect(host, port)
 
   local socket = newSocket(host == os.getComputerID())
-  socket.dhost = host
+  socket.dhost = tonumber(host)
   Logger.log('socket', 'connecting to ' .. port)
 
   socket.transmit(port, socket.sport, {

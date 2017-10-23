@@ -121,7 +121,7 @@ function Manager:init()
       local event = self:pointToChild(self.target, x, y)
       _ENV.multishell.openTab({
         path = 'sys/apps/Lua.lua',
-        args = { event.element, self:dump(self.currentPage) },
+        args = { event.element },
         focused = true })
 
     elseif ch and self.currentPage then
@@ -436,31 +436,6 @@ end
 
 function Manager:exitPullEvents()
   Event.exitPullEvents()
-end
-
-function Manager:dump(inEl)
-  if inEl then
-    local function clean(el)
-      local o = el
-      el = Util.shallowCopy(el)
-      el.parent = nil
-      if el.children then
-        local children = { }
-        for k,c in pairs(el.children) do
-          children[k] = clean(c)
-        end
-        el.children = children
-      end
-      for k,v in pairs(o) do
-        if type(v) == 'table' and v.UIElement then
-          el[k] = nil
-        end
-      end
-
-      return el
-    end
-    return clean(inEl)
-  end
 end
 
 local UI = Manager()

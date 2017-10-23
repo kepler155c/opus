@@ -1,17 +1,25 @@
-requireInjector(getfenv(1))
+_G.requireInjector()
 
 local Util = require('util')
 
+local device     = _G.device
+local fs         = _G.fs
+local multishell = _ENV.multishell
+local os         = _G.os
+local printError = _G.printError
+
+local network = { }
+_G.network = network
+
 multishell.setTitle(multishell.getCurrent(), 'Net Daemon')
 
-_G.network = { }
-
 local function netUp()
-  requireInjector(getfenv(1))
-  local Event = require('event')
+  _G.requireInjector()
 
+  local Event = require('event')
+_G._e2 = _ENV
   for _,file in pairs(fs.list('sys/network')) do
-    local fn, msg = Util.run(getfenv(1), 'sys/network/' .. file)
+    local fn, msg = Util.run(_ENV, 'sys/network/' .. file)
     if not fn then
       printError(msg)
     end
@@ -40,8 +48,10 @@ print('Net daemon started')
 local function startNetwork()
   print('Starting network services')
 
+_G._e1 = _ENV
+
   local success, msg = Util.runFunction(
-    Util.shallowCopy(getfenv(1)), netUp)
+    Util.shallowCopy(_ENV), netUp)
 
   if not success and msg then
     printError(msg)
@@ -56,7 +66,7 @@ else
 end
 
 while true do
-  local e, deviceName = os.pullEvent('device_attach')
+  local _, deviceName = os.pullEvent('device_attach')
   if deviceName == 'wireless_modem' then
     startNetwork()
   end

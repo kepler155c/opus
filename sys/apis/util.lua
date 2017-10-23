@@ -262,7 +262,9 @@ end
 function Util.size(list)
   if type(list) == 'table' then
     local length = 0
-    table.foreach(list, function() length = length + 1 end)
+    for _ in pairs(list) do
+      length = length + 1
+    end
     return length
   end
   return 0
@@ -433,8 +435,7 @@ function Util.runUrl(env, url, ...)   -- os.run equivalent
   setmetatable(env, { __index = _G })
   local fn, m = Util.loadUrl(url, env)
   if fn then
-    local args = { ... }
-    return pcall(function() return fn(table.unpack(args)) end)
+    return pcall(fn, ...)
   end
   return fn, m
 end
@@ -443,8 +444,7 @@ function Util.run(env, path, ...)
   setmetatable(env, { __index = _G })
   local fn, m = loadfile(path, env)
   if fn then
-    local args = { ... }
-    return pcall(function() return fn(table.unpack(args)) end)
+    return pcall(fn, ...)
   end
   return fn, m
 end
@@ -452,9 +452,7 @@ end
 function Util.runFunction(env, fn, ...)
   setfenv(fn, env)
   setmetatable(env, { __index = _G })
-
-  local args = { ... }
-  return pcall(function() return fn(table.unpack(args)) end)
+  return pcall(fn, ...)
 end
 
 --[[ String functions ]] --

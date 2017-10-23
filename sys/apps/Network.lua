@@ -35,7 +35,7 @@ local page = UI.Page {
         UI.MenuBar.spacer,
         { text = 'Reboot      r', event = 'reboot' },
       } },
-      { text = 'Chat', event = 'chat' },
+      --{ text = 'Chat', event = 'chat' },
       { text = 'Trust', dropdown = {
         { text = 'Establish', event = 'trust'   },
         { text = 'Remove',    event = 'untrust' },
@@ -61,7 +61,6 @@ local page = UI.Page {
 }
 
 local function sendCommand(host, command)
-
   if not device.wireless_modem then
     page.notification:error('Wireless modem not present')
     return
