@@ -6,14 +6,18 @@
   * background read buffering
 ]]--
 
+local multishell = _ENV.multishell
+local os = _G.os
+
 multishell.setTitle(multishell.getCurrent(), 'Net transport')
 
 local computerId = os.getComputerID()
 
-_G.transport = {
+local transport = {
   timers  = { },
   sockets = { },
 }
+_G.transport = transport
 
 function transport.open(socket)
   transport.sockets[socket.sport] = socket

@@ -53,6 +53,7 @@ function turtle.resetState()
   state.moveCallback = noop
   Pathing.reset()
 
+turtle.abort = false
   return true
 end
 
@@ -60,7 +61,7 @@ function turtle.reset()
   turtle.point.x = 0
   turtle.point.y = 0
   turtle.point.z = 0
-  turtle.point.heading = 0
+  turtle.point.heading = 0 -- should be facing
   turtle.point.gps = false
   turtle.abort = false -- should be part of state
   --turtle.status = 'idle' -- should be part of state
@@ -961,10 +962,10 @@ function turtle.run(fn, ...)
 end
 
 function turtle.abortAction()
-  if turtle.status ~= 'idle' then
+  --if turtle.status ~= 'idle' then
     turtle.abort = true
     os.queueEvent('turtle_abort')
-  end
+  --end
 end
 
 -- [[ Pathing ]] --

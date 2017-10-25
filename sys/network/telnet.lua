@@ -2,9 +2,12 @@ local Event  = require('event')
 local Socket = require('socket')
 local Util   = require('util')
 
-local function telnetHost(socket)
+local multishell = _ENV.multishell
+local os         = _G.os
+local term       = _G.term
 
-  requireInjector(getfenv(1))
+local function telnetHost(socket)
+  _G.requireInjector()
 
   local Event = require('event')
 
@@ -14,7 +17,7 @@ local function telnetHost(socket)
 
   local termInfo = socket:read(5)
   if not termInfo then
-    printtError('read failed')
+    _G.printtError('read failed')
     return
   end
 
@@ -45,7 +48,7 @@ local function telnetHost(socket)
   end
 
   local shellThread = Event.addRoutine(function()
-    os.run(getfenv(1), 'sys/apps/shell')
+    os.run(_ENV, 'sys/apps/shell')
     Event.exitPullEvents()
   end)
 
@@ -67,7 +70,6 @@ local function telnetHost(socket)
 end
 
 Event.addRoutine(function()
-
   print('telnet: listening on port 23')
   while true do
     local socket = Socket.server(23)
@@ -77,7 +79,6 @@ Event.addRoutine(function()
     multishell.openTab({
       fn = telnetHost,
       args = { socket },
-      env = getfenv(1),
       title = 'Telnet Client',
       hidden = true,
     })

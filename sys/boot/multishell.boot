@@ -95,9 +95,8 @@ end
 if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
-if not fs.exists('usr/etc/fstab') or not fs.exists('usr/etc/fstab.ignore') then
+if not fs.exists('usr/etc/fstab') then
   Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/develop')
-  Util.writeFile('usr/etc/fstab.ignore', 'forced fstab overwrite')
 end
 if not fs.exists('usr/config/shell') then
   Util.writeTable('usr/config/shell', {

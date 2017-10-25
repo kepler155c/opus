@@ -148,7 +148,15 @@ end
 function Point.adjacentPoints(pt)
   local pts = { }
 
-  for _, hi in pairs(_G.turtle.getHeadings()) do
+local headings = {
+  [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
+  [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
+  [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
+  [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
+  [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
+  [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  }
+}
+  for _, hi in pairs(headings) do
     table.insert(pts, { x = pt.x + hi.xd, y = pt.y + hi.yd, z = pt.z + hi.zd })
   end
 
