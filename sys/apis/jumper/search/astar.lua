@@ -5,16 +5,14 @@
 if (...) then
 
 	-- Internalization
-	local ipairs = ipairs
 	local huge = math.huge
 
 	-- Dependancies
 	local _PATH = (...):match('(.+)%.search.astar$')
-	local Heuristics = require (_PATH .. '.core.heuristics')
 	local Heap = require (_PATH.. '.core.bheap')
 
 	-- Updates G-cost
-	local function computeCost(node, neighbour, finder, clearance, heuristic)
+	local function computeCost(node, neighbour, heuristic)
 		local mCost, heading = heuristic(neighbour, node) -- Heuristics.EUCLIDIAN(neighbour, node)
 
 		if node._g + mCost < neighbour._g then
@@ -25,31 +23,24 @@ if (...) then
 	end
 
 	-- Updates vertex node-neighbour
-	local function updateVertex(finder, openList, node, neighbour, endNode, clearance, heuristic, overrideCostEval)
+	local function updateVertex(openList, node, neighbour, endNode, heuristic)
 		local oldG = neighbour._g
-		local cmpCost = overrideCostEval or computeCost
-		cmpCost(node, neighbour, finder, clearance, heuristic)
+		computeCost(node, neighbour, heuristic)
 		if neighbour._g < oldG then
-			local nClearance = neighbour._clearance[finder._walkable]
-			local pushThisNode = clearance and nClearance and (nClearance >= clearance)
-			if (clearance and pushThisNode) or (not clearance) then
-				if neighbour._opened then neighbour._opened = false end				
-				neighbour._h = heuristic(endNode, neighbour)
-				neighbour._f = neighbour._g + neighbour._h
-				openList:push(neighbour)
-				neighbour._opened = true
-			end
+			if neighbour._opened then neighbour._opened = false end
+			neighbour._h = heuristic(endNode, neighbour)
+			neighbour._f = neighbour._g + neighbour._h
+			openList:push(neighbour)
+			neighbour._opened = true
 		end
 	end
 
   -- Calculates a path.
   -- Returns the path from location `<startX, startY>` to location `<endX, endY>`.
-  return function (finder, startNode, endNode, clearance, toClear, overrideHeuristic, overrideCostEval)
-		
-		local heuristic = overrideHeuristic or finder._heuristic
+  return function (finder, startNode, endNode, toClear)
 		local openList = Heap()
 		startNode._g = 0
-		startNode._h = heuristic(endNode, startNode)
+		startNode._h = finder._heuristic(endNode, startNode)
 		startNode._f = startNode._g + startNode._h
 		openList:push(startNode)
 		toClear[startNode] = true
@@ -59,17 +50,17 @@ if (...) then
 			local node = openList:pop()
 			node._closed = true
 			if node == endNode then return node end
-			local neighbours = finder._grid:getNeighbours(node, finder._walkable, finder._allowDiagonal, finder._tunnel)
+			local neighbours = finder._grid:getNeighbours(node)
 			for i = 1,#neighbours do
 				local neighbour = neighbours[i]
 				if not neighbour._closed then
 					toClear[neighbour] = true
 					if not neighbour._opened then
 						neighbour._g = huge
-						neighbour._parent = nil	
+						neighbour._parent = nil
 					end
-					updateVertex(finder, openList, node, neighbour, endNode, clearance, heuristic, overrideCostEval)
-				end	
+					updateVertex(openList, node, neighbour, endNode, finder._heuristic)
+				end
 			end
 
 			--[[
@@ -81,8 +72,6 @@ if (...) then
 			--]]
 
 		end
-		
-		return nil 
+		return nil
 	end
-
 end

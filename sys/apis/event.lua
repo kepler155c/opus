@@ -24,9 +24,9 @@ function Routine:terminate()
 end
 
 function Routine:resume(event, ...)
-  if coroutine.status(self.co) == 'running' then
-    return
-  end
+  --if coroutine.status(self.co) == 'running' then
+    --return
+  --end
 
   if not self.co then
     error('Cannot resume a dead routine')

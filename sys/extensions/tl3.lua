@@ -969,8 +969,23 @@ function turtle.abortAction()
 end
 
 -- [[ Pathing ]] --
-function turtle.faceAgainst(pt, options) -- 4 sided
+function turtle.setPersistent(isPersistent)
+  if isPersistent then
+    Pathing.setBlocks({ })
+  else
+    Pathing.setBlocks()
+  end
+end
 
+function turtle.setPathingBox(box)
+  Pathing.setBox(box)
+end
+
+function turtle.addWorldBlock(pt)
+  Pathing.addBlock(pt)
+end
+
+function turtle.faceAgainst(pt, options) -- 4 sided
   options = options or { }
   options.dest = { }
 
@@ -989,7 +1004,6 @@ function turtle.faceAgainst(pt, options) -- 4 sided
 end
 
 function turtle.moveAgainst(pt, options) -- 6 sided
-
   options = options or { }
   options.dest = { }
 
@@ -1090,6 +1104,32 @@ local function _actionUpAt(action, pt, ...)
   end
 end
 
+local function _actionXXXAt(action, pt, dir, ...)
+  local reversed = 
+    { [0] = 2, [1] = 3, [2] = 0, [3] = 1, [4] = 5, [5] = 4, }
+  dir = reversed[dir]
+  local apt = { x = pt.x + headings[dir].xd,
+                y = pt.y + headings[dir].yd,
+                z = pt.z + headings[dir].zd, }
+  local direction
+
+  -- ex: place a block at this point, from above, facing east
+  if dir < 4 then
+    apt.heading = (dir + 2) % 4
+    direction = 'forward'
+  elseif dir == 4 then
+    apt.heading = pt.heading
+    direction = 'down'
+  elseif dir == 5 then
+    apt.heading = pt.heading
+    direction = 'up'
+  end
+
+  if turtle.pathfind(apt) then
+    return action[direction](...)
+  end
+end
+
 function turtle.detectAt(pt)            return _actionAt(actionsAt.detect, pt) end
 function turtle.detectDownAt(pt)        return _actionDownAt(actionsAt.detect, pt) end
 function turtle.detectForwardAt(pt)     return _actionForwardAt(actionsAt.detect, pt) end
@@ -1109,6 +1149,7 @@ function turtle.placeAt(pt, arg)        return _actionAt(actionsAt.place, pt, ar
 function turtle.placeDownAt(pt, arg)    return _actionDownAt(actionsAt.place, pt, arg) end
 function turtle.placeForwardAt(pt, arg) return _actionForwardAt(actionsAt.place, pt, arg) end
 function turtle.placeUpAt(pt, arg)      return _actionUpAt(actionsAt.place, pt, arg) end
+function turtle.placeXXXAt(pt, dir, arg) return _actionXXXAt(actionsAt.place, pt, dir, arg) end
 
 function turtle.dropAt(pt, ...)         return _actionAt(actionsAt.drop, pt, ...) end
 function turtle.dropDownAt(pt, ...)     return _actionDownAt(actionsAt.drop, pt, ...) end

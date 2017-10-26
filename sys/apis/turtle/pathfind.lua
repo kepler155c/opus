@@ -7,59 +7,46 @@ local Util       = require('util')
 
 local turtle = _G.turtle
 
-local WALKABLE = 0
-
-local function createMap(dim)
-	local map = { }
-	for _ = 1, dim.ez do
-		local row = {}
-		for _ = 1, dim.ex do
-			local col = { }
-			for _ = 1, dim.ey do
-				table.insert(col, WALKABLE)
-			end
-			table.insert(row, col)
+local function addBlock(grid, b, dim)
+	if Point.inBox(b, dim) then
+		local node = grid:getNodeAt(b.x, b.y, b.z)
+		if node then
+			node.walkable = 1
 		end
-		table.insert(map, row)
 	end
-
-	return map
-end
-
-local function addBlock(map, dim, b)
-	map[b.z + dim.oz][b.x + dim.ox][b.y + dim.oy] = 1
 end
 
 -- map shrinks/grows depending upon blocks encountered
 -- the map will encompass any blocks encountered, the turtle position, and the destination
-local function mapDimensions(dest, blocks, boundingBox)
+local function mapDimensions(dest, blocks, boundingBox, dests)
 	local sx, sz, sy = turtle.point.x, turtle.point.z, turtle.point.y
 	local ex, ez, ey = turtle.point.x, turtle.point.z, turtle.point.y
 
 	local function adjust(pt)
 		if pt.x < sx then
 			sx = pt.x
-		end
-		if pt.z < sz then
-			sz = pt.z
+		elseif pt.x > ex then
+			ex = pt.x
 		end
 		if pt.y < sy then
 			sy = pt.y
-		end
-		if pt.x > ex then
-			ex = pt.x
-		end
-		if pt.z > ez then
-			ez = pt.z
-		end
-		if pt.y > ey then
+		elseif pt.y > ey then
 			ey = pt.y
+		end
+		if pt.z < sz then
+			sz = pt.z
+		elseif pt.z > ez then
+			ez = pt.z
 		end
 	end
 
 	adjust(dest)
 
-	for _,b in ipairs(blocks) do
+	for _,d in pairs(dests) do
+		adjust(d)
+	end
+
+	for _,b in pairs(blocks) do
 		adjust(b)
 	end
 
@@ -81,29 +68,23 @@ local function mapDimensions(dest, blocks, boundingBox)
 	end
 
 	return {
-		ex = ex - sx + 1,
-		ez = ez - sz + 1,
-		ey = ey - sy + 1,
-		ox = -sx + 1,
-		oz = -sz + 1,
-		oy = -sy + 1
+		ex = ex,
+		ez = ez,
+		ey = ey,
+		x = sx,
+		z = sz,
+		y = sy
 	}
 end
 
--- shifting and coordinate flipping
-local function pointToMap(dim, pt)
-	return { x = pt.x + dim.ox, z = pt.y + dim.oy, y = pt.z + dim.oz }
-end
-
-local function nodeToPoint(dim, node)
-	return { x = node:getX() - dim.ox, z = node:getY() - dim.oz, y = node:getZ() - dim.oy }
+local function nodeToPoint(node)
+	return { x = node:getX(), z = node:getZ(), y = node:getY() }
 end
 
 local heuristic = function(n, node)
-
 	local m, h = Point.calculateMoves(
-			{ x = node._x, z = node._y, y = node._z, heading = node._heading },
-			{ x = n._x, z = n._y, y = n._z, heading = n._heading })
+			{ x = node._x, y = node._y, z = node._z, heading = node._heading },
+			{ x = n._x, y = n._y, z = n._z, heading = n._heading })
 
 	return m, h
 end
@@ -112,9 +93,9 @@ local function dimsAreEqual(d1, d2)
 	return d1.ex == d2.ex and
 		   d1.ey == d2.ey and
 		   d1.ez == d2.ez and
-		   d1.ox == d2.ox and
-		   d1.oy == d2.oy and
-		   d1.oz == d2.oz
+		   d1.x == d2.x and
+		   d1.y == d2.y and
+		   d1.z == d2.z
 end
 
 -- turtle sensor returns blocks in relation to the world - not turtle orientation
@@ -122,7 +103,6 @@ end
 -- really kinda dumb since it returns the coordinates as offsets of our location
 -- instead of true coordinates
 local function addSensorBlocks(blocks, sblocks)
-
 	for _,b in pairs(sblocks) do
 		if b.type ~= 'AIR' then
 			local pt = { x = turtle.point.x, y = turtle.point.y + b.y, z = turtle.point.z }
@@ -142,28 +122,29 @@ local function addSensorBlocks(blocks, sblocks)
 	end
 end
 
-local function selectDestination(pts, box, map, dim)
-
+local function selectDestination(pts, box, grid)
+	if #pts == 1 then
+		return pts[1]
+	end
 	while #pts > 0 do
 		local pt = Point.closest(turtle.point, pts)
-
-		if (box and not Point.inBox(pt, box)) or
-			map[pt.z + dim.oz][pt.x + dim.ox][pt.y + dim.oy] == 1 then
+		if box and not Point.inBox(pt, box) then
+		  Util.removeByValue(pts, pt)
+		else
+			if grid:isWalkableAt(pt.x, pt.y, pt.z) then
+				return pt
+			end
 	    Util.removeByValue(pts, pt)
-	  else
-		return pt
 	  end
 	end
 end
 
 local function pathTo(dest, options)
-
 	local blocks = options.blocks or turtle.getState().blocks or { }
 	local dests  = options.dest   or { dest }  -- support alternative destinations
 	local box    = options.box    or turtle.getState().box
 
 	local lastDim = nil
-	local map = nil
 	local grid = nil
 
 	if box then
@@ -171,32 +152,26 @@ local function pathTo(dest, options)
 	end
 
 	-- Creates a pathfinder object
-	local myFinder = Pathfinder(grid, 'ASTAR', WALKABLE)
-
-	myFinder:setMode('ORTHOGONAL')
-	myFinder:setHeuristic(heuristic)
+	local myFinder = Pathfinder(heuristic)
 
 	while turtle.point.x ~= dest.x or turtle.point.z ~= dest.z or turtle.point.y ~= dest.y do
 
 		-- map expands as we encounter obstacles
-		local dim = mapDimensions(dest, blocks, box)
+		local dim = mapDimensions(dest, blocks, box, dests)
 
 		-- reuse map if possible
 		if not lastDim or not dimsAreEqual(dim, lastDim) then
-			map = createMap(dim)
 			-- Creates a grid object
-			grid = Grid(map)
+			grid = Grid(dim)
 			myFinder:setGrid(grid)
-			myFinder:setWalkable(WALKABLE)
 
 			lastDim = dim
 		end
-
-		for _,b in ipairs(blocks) do
-			addBlock(map, dim, b)
+		for _,b in pairs(blocks) do
+			addBlock(grid, b, dim)
 		end
 
-		dest = selectDestination(dests, box, map, dim)
+		dest = selectDestination(dests, box, grid)
 		if not dest then
 --			error('failed to reach destination')
 			return false, 'failed to reach destination'
@@ -206,8 +181,8 @@ local function pathTo(dest, options)
 		end
 
 		-- Define start and goal locations coordinates
-		local startPt = pointToMap(dim, turtle.point)
-		local endPt = pointToMap(dim, dest)
+		local startPt = turtle.point
+		local endPt = dest
 
 		-- Calculates the path, and its length
 		local path = myFinder:getPath(
@@ -218,7 +193,7 @@ local function pathTo(dest, options)
 	    Util.removeByValue(dests, dest)
 		else
 			for node in path:nodes() do
-				local pt = nodeToPoint(dim, node)
+				local pt = nodeToPoint(node)
 
 				if turtle.abort then
 					return false, 'aborted'
@@ -260,6 +235,12 @@ return {
 
 	setBlocks = function(blocks)
 		turtle.getState().blocks = blocks
+	end,
+
+	addBlock = function(block)
+		if turtle.getState().blocks then
+			table.insert(turtle.getState().blocks, block)
+		end
 	end,
 
 	reset = function()

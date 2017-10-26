@@ -17,7 +17,7 @@ local function netUp()
   _G.requireInjector()
 
   local Event = require('event')
-_G._e2 = _ENV
+
   for _,file in pairs(fs.list('sys/network')) do
     local fn, msg = Util.run(_ENV, 'sys/network/' .. file)
     if not fn then
@@ -47,8 +47,6 @@ print('Net daemon started')
 
 local function startNetwork()
   print('Starting network services')
-
-_G._e1 = _ENV
 
   local success, msg = Util.runFunction(
     Util.shallowCopy(_ENV), netUp)
