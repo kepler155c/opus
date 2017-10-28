@@ -28,11 +28,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 --]]
 
---- The Pathfinder class
-
---
--- Implementation of the `pathfinder` class.
-
 local _VERSION = ""
 local _RELEASEDATE = ""
 
@@ -49,8 +44,6 @@ if (...) then
 
 	--- Finders (search algorithms implemented). Refers to the search algorithms actually implemented in Jumper.
 	-- <li>[A*](http://en.wikipedia.org/wiki/A*_search_algorithm)</li>
-	-- @finder Finders
-	-- @see Pathfinder:getFinders
   local Finders = {
     ['ASTAR']     = require (_PATH .. '.search.astar'),
   }
@@ -62,21 +55,9 @@ if (...) then
   -- Performs a traceback from the goal node to the start node
   -- Only happens when the path was found
 
-	--- The `Pathfinder` class.<br/>
-	-- This class is callable.
-	-- Therefore,_ <code>Pathfinder(...)</code> _acts as a shortcut to_ <code>Pathfinder:new(...)</code>.
-	-- @type Pathfinder
   local Pathfinder = {}
   Pathfinder.__index = Pathfinder
 
-  --- Inits a new `pathfinder`
-  -- @class function
-  -- @tparam grid grid a `grid`
-  -- @tparam[opt] string finderName the name of the `Finder` (search algorithm) to be used for search.
-	-- Defaults to `ASTAR` when not given (see @{Pathfinder:getFinders}).
-  -- @treturn pathfinder a new `pathfinder` instance
-	-- @usage
-	-- local finder = Pathfinder:new(myGrid, 'ASTAR')
   function Pathfinder:new(heuristic)
     local newPathfinder = {}
     setmetatable(newPathfinder, Pathfinder)
@@ -85,23 +66,13 @@ if (...) then
     return newPathfinder
   end
 
-  --- Sets the `grid`. Defines the given `grid` as the one on which the `pathfinder` will perform the search.
-  -- @class function
-  -- @tparam grid grid a `grid`
-	-- @treturn pathfinder self (the calling `pathfinder` itself, can be chained)
-	-- @usage myFinder:setGrid(myGrid)
   function Pathfinder:setGrid(grid)
     self._grid = grid
     return self
   end
 
-  --- Calculates a `path`. Returns the `path` from location __[startX, startY]__ to location __[endX, endY]__.
+  --- Calculates a `path`. Returns the `path` from start to end location
   -- Both locations must exist on the collision map. The starting location can be unwalkable.
-  -- @class function
-  -- @tparam int startX the x-coordinate for the starting location
-  -- @tparam int startY the y-coordinate for the starting location
-  -- @tparam int endX the x-coordinate for the goal location
-  -- @tparam int endY the y-coordinate for the goal location
   -- @treturn path a path (array of nodes) when found, otherwise nil
 	-- @usage local path = myFinder:getPath(1,1,5,5)
   function Pathfinder:getPath(startX, startY, startZ, ih, endX, endY, endZ, oh)
@@ -112,8 +83,8 @@ if (...) then
       return nil
     end
 
-    startNode._heading = ih
-    endNode._heading = oh
+    startNode.heading = ih
+    endNode.heading = oh
 
     assert(startNode, ('Invalid location [%d, %d, %d]'):format(startX, startY, startZ))
     assert(endNode and self._grid:isWalkableAt(endX, endY, endZ),

@@ -7,27 +7,18 @@
 --
 
 if (...) then
-	--- The `Path` class.<br/>
-	-- This class is callable.
-	-- Therefore, <em><code>Path(...)</code></em> acts as a shortcut to <em><code>Path:new(...)</code></em>.
-	-- @type Path
+
+  local t_remove = table.remove
+
   local Path = {}
   Path.__index = Path
 
-  --- Inits a new `path`.
-  -- @class function
-  -- @treturn path a `path`
-	-- @usage local p = Path()
   function Path:new()
     return setmetatable({_nodes = {}}, Path)
   end
 
   --- Iterates on each single `node` along a `path`. At each step of iteration,
   -- returns the `node` plus a count value. Aliased as @{Path:nodes}
-  -- @class function
-  -- @treturn node a `node`
-  -- @treturn int the count for the number of nodes
-	-- @see Path:nodes
 	-- @usage
 	-- for node, count in p:iter() do
 	--   ...
@@ -40,6 +31,32 @@ if (...) then
         return self._nodes[i-1],i-1
       end
     end
+  end
+
+  --- `Path` compression modifier. Given a `path`, eliminates useless nodes to return a lighter `path`
+  -- consisting of straight moves. Does the opposite of @{Path:fill}
+  -- @class function
+  -- @treturn path self (the calling `path` itself, can be chained)
+  -- @see Path:fill
+  -- @usage p:filter()
+  function Path:filter()
+    local i = 2
+    local xi,yi,zi,dx,dy,dz, olddx, olddy, olddz
+    xi,yi,zi = self._nodes[i].x, self._nodes[i].y, self._nodes[i].z
+    dx, dy,dz = xi - self._nodes[i-1].x, yi-self._nodes[i-1].y, zi-self._nodes[i-1].z
+    while true do
+      olddx, olddy, olddz = dx, dy, dz
+      if self._nodes[i+1] then
+        i = i+1
+        xi, yi, zi = self._nodes[i].x, self._nodes[i].y, self._nodes[i].z
+        dx, dy, dz = xi - self._nodes[i-1].x, yi - self._nodes[i-1].y, zi - self._nodes[i-1].z
+        if olddx == dx and olddy == dy and olddz == dz then
+          t_remove(self._nodes, i-1)
+          i = i - 1
+        end
+      else break end
+    end
+    return self
   end
 
   return setmetatable(Path,

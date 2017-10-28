@@ -2,6 +2,40 @@ local Util = require('util')
 
 local Point = { }
 
+Point.facings = {
+  [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
+  [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
+  [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
+  [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
+}
+
+Point.directions = {
+  [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
+  [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  },
+}
+
+Point.headings = {
+  [ 0 ] = Point.facings[0],
+  [ 1 ] = Point.facings[1],
+  [ 2 ] = Point.facings[2],
+  [ 3 ] = Point.facings[3],
+  [ 4 ] = Point.directions[4],
+  [ 5 ] = Point.directions[5],
+  east  = Point.facings[0],
+  south = Point.facings[1],
+  west  = Point.facings[2],
+  north = Point.facings[3],
+  up    = Point.directions[4],
+  down  = Point.directions[5],
+}
+
+Point.EAST  = 0
+Point.SOUTH = 1
+Point.WEST  = 2
+Point.NORTH = 3
+Point.UP    = 4
+Point.DOWN  = 5
+
 function Point.copy(pt)
   return { x = pt.x, y = pt.y, z = pt.z }
 end
@@ -122,6 +156,10 @@ end
 
 -- given a set of points, find the one taking the least moves
 function Point.closest(reference, pts)
+  if #pts == 1 then
+    return pts[1]
+  end
+
   local lpt, lm -- lowest
   for _,pt in pairs(pts) do
     local m = Point.calculateMoves(reference, pt)
@@ -148,19 +186,85 @@ end
 function Point.adjacentPoints(pt)
   local pts = { }
 
-local headings = {
-  [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
-  [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
-  [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
-  [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
-  [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
-  [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  }
-}
-  for _, hi in pairs(headings) do
+  for i = 0, 5 do
+    local hi = Point.headings[i]
     table.insert(pts, { x = pt.x + hi.xd, y = pt.y + hi.yd, z = pt.z + hi.zd })
   end
 
   return pts
+end
+
+-- get the point nearest A that is in the direction of B
+function Point.nearestTo(pta, ptb)
+  local heading
+
+  if     pta.x < ptb.x then
+    heading = 0
+  elseif pta.z < ptb.z then
+    heading = 1
+  elseif pta.x > ptb.x then
+    heading = 2
+  elseif pta.z > ptb.z then
+    heading = 3
+  elseif pta.y < ptb.y then
+    heading = 4
+  elseif pta.y > ptb.y then
+    heading = 5
+  end
+
+  if heading then
+    return {
+      x = pta.x + Point.headings[heading].xd,
+      y = pta.y + Point.headings[heading].yd,
+      z = pta.z + Point.headings[heading].zd,
+    }
+  end
+
+  return pta -- error ?
+end
+
+function Point.rotate(pt, facing)
+  local x, z = pt.x, pt.z
+  if facing == 1 then
+    pt.x = z
+    pt.z = -x
+  elseif facing == 2 then
+    pt.x = -x
+    pt.z = -z
+  elseif facing == 3 then
+    pt.x = -z
+    pt.z = x
+  end
+end
+
+function Point.makeBox(pt1, pt2)
+  return {
+    x = pt1.x,
+    y = pt1.y,
+    z = pt1.z,
+    ex = pt2.x,
+    ey = pt2.y,
+    ez = pt2.z,
+  }
+end
+
+-- expand box to include point
+function Point.expandBox(box, pt)
+  if pt.x < box.x then
+    box.x = pt.x
+  elseif pt.x > box.ex then
+    box.ex = pt.x
+  end
+  if pt.y < box.y then
+    box.y = pt.y
+  elseif pt.y > box.ey then
+    box.ey = pt.y
+  end
+  if pt.z < box.z then
+    box.z = pt.z
+  elseif pt.z > box.ez then
+    box.ez = pt.z
+  end
 end
 
 function Point.normalizeBox(box)
@@ -181,20 +285,6 @@ function Point.inBox(pt, box)
          pt.x <= box.ex and
          pt.y <= box.ey and
          pt.z <= box.ez
-end
-
-function Point.rotate(pt, facing)
-  local x, z = pt.x, pt.z
-  if facing == 1 then
-    pt.x = z
-    pt.z = -x
-  elseif facing == 2 then
-    pt.x = -x
-    pt.z = -z
-  elseif facing == 3 then
-    pt.x = -z
-    pt.z = x
-  end
 end
 
 return Point

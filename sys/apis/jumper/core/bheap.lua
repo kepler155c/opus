@@ -1,14 +1,14 @@
 --- A light implementation of Binary heaps data structure.
 -- While running a search, some search algorithms (Astar, Dijkstra, Jump Point Search) have to maintains
--- a list of nodes called __open list__. Retrieve from this list the lowest cost node can be quite slow, 
--- as it normally requires to skim through the full set of nodes stored in this list. This becomes a real 
--- problem especially when dozens of nodes are being processed (on large maps). 
+-- a list of nodes called __open list__. Retrieve from this list the lowest cost node can be quite slow,
+-- as it normally requires to skim through the full set of nodes stored in this list. This becomes a real
+-- problem especially when dozens of nodes are being processed (on large maps).
 --
 -- The current module implements a <a href="http://www.policyalmanac.org/games/binaryHeaps.htm">binary heap</a>
--- data structure, from which the search algorithm will instantiate an open list, and cache the nodes being 
--- examined during a search. As such, retrieving the lower-cost node is faster and globally makes the search end 
+-- data structure, from which the search algorithm will instantiate an open list, and cache the nodes being
+-- examined during a search. As such, retrieving the lower-cost node is faster and globally makes the search end
 -- up quickly.
--- 
+--
 -- This module is internally used by the library on purpose.
 -- It should normally not be used explicitely, yet it remains fully accessible.
 --
@@ -23,7 +23,7 @@ if (...) then
 
 	-- Dependency
 	local Utils = require((...):gsub('%.bheap$','.utils'))
-	
+
 	-- Local reference
 	local floor = math.floor
 
@@ -40,7 +40,7 @@ if (...) then
 		else pIndex = (index-1)/2
 		end
 		if not heap._sort(heap._heap[pIndex], heap._heap[index]) then
-			heap._heap[pIndex], heap._heap[index] = 
+			heap._heap[pIndex], heap._heap[index] =
 				heap._heap[index], heap._heap[pIndex]
 			percolate_up(heap, pIndex)
 		end
@@ -89,7 +89,7 @@ if (...) then
 	-- @class function
 	-- @treturn bool __true__ of no item is queued in the heap, __false__ otherwise
 	-- @usage
-	-- if myHeap:empty() then 
+	-- if myHeap:empty() then
 	--   print('Heap is empty!')
 	-- end
 	function heap:empty()
@@ -129,7 +129,7 @@ if (...) then
 	-- @class function
 	-- @treturn value a value previously pushed into the heap
 	-- @usage
-	-- while not myHeap:empty() do 
+	-- while not myHeap:empty() do
 	--   local lowestValue = myHeap:pop()
 	--   ...
 	-- end
@@ -148,18 +148,18 @@ if (...) then
 	end
 
 	--- Restores the `heap` property.
-	-- Reorders the `heap` with respect to the comparison function being used. 
-	-- When given argument __item__ (a value existing in the `heap`), will sort from that very item in the `heap`. 
-	-- Otherwise, the whole `heap` will be cheacked. 
+	-- Reorders the `heap` with respect to the comparison function being used.
+	-- When given argument __item__ (a value existing in the `heap`), will sort from that very item in the `heap`.
+	-- Otherwise, the whole `heap` will be cheacked.
 	-- @class function
 	-- @tparam[opt] value item the modified value
 	-- @treturn heap self (the calling `heap` itself, can be chained)
-	-- @usage myHeap:heapify() 
+	-- @usage myHeap:heapify()
 	function heap:heapify(item)
 		if self._size == 0 then return end
 		if item then
 			local i = Utils.indexOf(self._heap,item)
-			if i then 
+			if i then
 				percolate_down(self, i)
 				percolate_up(self, i)
 			end

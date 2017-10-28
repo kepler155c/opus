@@ -3085,6 +3085,9 @@ function UI.Dialog:setParent()
   if not self.width then
     self.width = self.parent.width - 11
   end
+  if self.width > self.parent.width then
+    self.width = self.parent.width
+  end
   self.x = math.floor((self.parent.width - self.width) / 2) + 1
   self.y = math.floor((self.parent.height - self.height) / 2) + 1
   UI.Page.setParent(self)

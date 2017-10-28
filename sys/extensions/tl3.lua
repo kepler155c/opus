@@ -1,8 +1,4 @@
-local os         = _G.os
-local peripheral = _G.peripheral
-local turtle     = _G.turtle
-
-if not turtle or turtle.getPoint then
+if not _G.turtle then
   return
 end
 
@@ -13,16 +9,25 @@ local synchronized = require('sync')
 local Util         = require('util')
 local Pathing      = require('turtle.pathfind')
 
+local os         = _G.os
+local peripheral = _G.peripheral
+local turtle     = _G.turtle
+
 local function noop() end
+local headings = Point.headings
+local state = {
+  status = 'idle',
+  abort = false,
+}
 
 turtle.pathfind = Pathing.pathfind
 turtle.point = { x = 0, y = 0, z = 0, heading = 0 }
-turtle.status = 'idle'
-turtle.abort = false
-local state = { }
 
-function turtle.getPoint()  return turtle.point end
-function turtle.getState()  return state end
+function turtle.getPoint()   return turtle.point end
+function turtle.getState()   return state end
+function turtle.isAborted()  return state.abort end
+function turtle.getStatus()  return state.status end
+function turtle.setStatus(s) state.status = s end
 
 local function _defaultMove(action)
   while not action.move() do
@@ -45,15 +50,13 @@ function turtle.setPoint(pt, isGPS)
 end
 
 function turtle.resetState()
-  --turtle.abort = false -- should be part of state
-  --turtle.status = 'idle' -- should be part of state
+  state.abort = false
+  state.status = 'idle'
   state.attackPolicy = noop
   state.digPolicy = noop
   state.movePolicy = _defaultMove
   state.moveCallback = noop
   Pathing.reset()
-
-turtle.abort = false
   return true
 end
 
@@ -63,11 +66,8 @@ function turtle.reset()
   turtle.point.z = 0
   turtle.point.heading = 0 -- should be facing
   turtle.point.gps = false
-  turtle.abort = false -- should be part of state
-  --turtle.status = 'idle' -- should be part of state
 
   turtle.resetState()
-
   return true
 end
 
@@ -126,31 +126,7 @@ function turtle.getAction(direction)
   return actions[direction]
 end
 
--- [[ Heading data ]] --
-local headings = {
-  [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
-  [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
-  [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
-  [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
-  [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
-  [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  }
-}
-
-local namedHeadings = {
-  east  = headings[0],
-  south = headings[1],
-  west  = headings[2],
-  north = headings[3],
-  up    = headings[4],
-  down  = headings[5]
-}
-
-function turtle.getHeadings()  return headings end
-
 function turtle.getHeadingInfo(heading)
-  if heading and type(heading) == 'string' then
-    return namedHeadings[heading]
-  end
   heading = heading or turtle.point.heading
   return headings[heading]
 end
@@ -307,13 +283,13 @@ turtle.movePolicies = {
       if action.side == 'back' then
         return false
       end
-      local oldStatus = turtle.status
+      local oldStatus = state.status
       print('assured move: stuck')
-      turtle.status = 'stuck'
+      state.status = 'stuck'
       repeat
         os.sleep(1)
       until _defaultMove(action)
-      turtle.status = oldStatus
+      state.status = oldStatus
     end
     return true
   end,
@@ -381,18 +357,17 @@ function turtle.turnAround()
   return turtle.point
 end
 
--- combine with setHeading
-function turtle.setNamedHeading(headingName)
-  local headingInfo = namedHeadings[headingName]
-  if headingInfo then
-    return turtle.setHeading(headingInfo.heading)
-  end
-  return false, 'Invalid heading'
-end
-
 function turtle.setHeading(heading)
   if not heading then
-    return
+    return false, 'Invalid heading'
+  end
+
+  if type(heading) == 'string' then
+    local hi = headings[heading]
+    if not hi then
+      return false, 'Invalid heading'
+    end
+    heading = hi.heading
   end
 
   heading = heading % 4
@@ -484,7 +459,6 @@ function turtle.back()
 end
 
 function turtle.moveTowardsX(dx)
-
   local direction = dx - turtle.point.x
   local move
 
@@ -508,7 +482,6 @@ function turtle.moveTowardsX(dx)
 end
 
 function turtle.moveTowardsZ(dz)
-
   local direction = dz - turtle.point.z
   local move
 
@@ -534,7 +507,6 @@ end
 -- [[ go ]] --
 -- 1 turn goto (going backwards if possible)
 function turtle.gotoSingleTurn(dx, dz, dy, dh)
-
   dy = dy or turtle.point.y
 
   local function gx()
@@ -593,7 +565,6 @@ function turtle.gotoSingleTurn(dx, dz, dy, dh)
 end
 
 local function gotoEx(dx, dz, dy)
-
   -- determine the heading to ensure the least amount of turns
   -- first check is 1 turn needed - remaining require 2 turns
   if turtle.point.heading == 0 and turtle.point.x <= dx or
@@ -628,7 +599,6 @@ end
 
 -- fallback goto - will turn around if was previously moving backwards
 local function gotoMultiTurn(dx, dz, dy)
-
   if gotoEx(dx, dz, dy) then
     return true
   end
@@ -659,18 +629,18 @@ local function gotoMultiTurn(dx, dz, dy)
 end
 
 function turtle.gotoPoint(pt)
-  return turtle.goto(pt.x, pt.z, pt.y, pt.heading)
+  return turtle._goto(pt.x, pt.z, pt.y, pt.heading)
 end
 
 -- go backwards - turning around if necessary to fight mobs / break blocks
 function turtle.goback()
   local hi = headings[turtle.point.heading]
-  return turtle.goto(turtle.point.x - hi.xd, turtle.point.z - hi.zd, turtle.point.y, turtle.point.heading)
+  return turtle._goto(turtle.point.x - hi.xd, turtle.point.z - hi.zd, turtle.point.y, turtle.point.heading)
 end
 
 function turtle.gotoYfirst(pt)
-  if turtle.gotoY(pt.y) then
-    if turtle.goto(pt.x, pt.z, nil, pt.heading) then
+  if turtle._gotoY(pt.y) then
+    if turtle._goto(pt.x, pt.z, nil, pt.heading) then
       turtle.setHeading(pt.heading)
       return true
     end
@@ -678,7 +648,7 @@ function turtle.gotoYfirst(pt)
 end
 
 function turtle.gotoYlast(pt)
-  if turtle.goto(pt.x, pt.z, nil, pt.heading) then
+  if turtle._goto(pt.x, pt.z, nil, pt.heading) then
     if turtle.gotoY(pt.y) then
       turtle.setHeading(pt.heading)
       return true
@@ -686,7 +656,7 @@ function turtle.gotoYlast(pt)
   end
 end
 
-function turtle.goto(dx, dz, dy, dh)
+function turtle._goto(dx, dz, dy, dh)
   if not turtle.gotoSingleTurn(dx, dz, dy, dh) then
     if not gotoMultiTurn(dx, dz, dy) then
       return false
@@ -697,7 +667,7 @@ function turtle.goto(dx, dz, dy, dh)
 end
 
 -- avoid lint errors
-turtle._goto = turtle.goto
+turtle['goto'] = turtle._goto
 
 function turtle.gotoX(dx)
   turtle.headTowardsX(dx)
@@ -738,7 +708,6 @@ end
 
 -- [[ Slot management ]] --
 function turtle.getSlot(indexOrId, slots)
-
   if type(indexOrId) == 'string' then
     slots = slots or turtle.getInventory()
     local _,c = string.gsub(indexOrId, ':', '')
@@ -774,7 +743,6 @@ function turtle.getSlot(indexOrId, slots)
 end
 
 function turtle.select(indexOrId)
-
   if type(indexOrId) == 'number' then
     return turtle.native.select(indexOrId)
   end
@@ -925,7 +893,6 @@ function turtle.getItemCount(idOrName)
 end
 
 function turtle.equip(side, item)
-
   if item then
     if not turtle.select(item) then
       return false, 'Unable to equip ' .. item
@@ -938,6 +905,7 @@ function turtle.equip(side, item)
   return turtle.equipRight()
 end
 
+-- [[  ]] --
 function turtle.run(fn, ...)
   local args = { ... }
   local s, m
@@ -947,25 +915,22 @@ function turtle.run(fn, ...)
   end
 
   synchronized(turtle, function()
-    turtle.abort = false
-    turtle.status = 'busy'
     turtle.resetState()
     s, m = pcall(function() fn(unpack(args)) end)
-    turtle.abort = false
-    turtle.status = 'idle'
+    turtle.resetState()
     if not s and m then
-      printError(m)
+      _G.printError(m)
     end
   end)
 
   return s, m
 end
 
-function turtle.abortAction()
-  --if turtle.status ~= 'idle' then
-    turtle.abort = true
+function turtle.abort(abort)
+  state.abort = abort
+  if abort then
     os.queueEvent('turtle_abort')
-  --end
+  end
 end
 
 -- [[ Pathing ]] --
@@ -989,9 +954,7 @@ function turtle.faceAgainst(pt, options) -- 4 sided
   options = options or { }
   options.dest = { }
 
-  for i = 0, 3 do
-    local hi = turtle.getHeadingInfo(i)
-
+  for hi in pairs(Point.facings) do
     table.insert(options.dest, {
       x = pt.x + hi.xd,
       z = pt.z + hi.zd,
@@ -1104,10 +1067,14 @@ local function _actionUpAt(action, pt, ...)
   end
 end
 
-local function _actionXXXAt(action, pt, dir, ...)
-  local reversed = 
+local function _actionPlaceAt(action, pt, name, dir, facing)
+  if not dir then
+    return _actionAt(action, pt, name)
+  end
+
+  local reversed =
     { [0] = 2, [1] = 3, [2] = 0, [3] = 1, [4] = 5, [5] = 4, }
-  dir = reversed[dir]
+  dir = reversed[headings[dir].heading]
   local apt = { x = pt.x + headings[dir].xd,
                 y = pt.y + headings[dir].yd,
                 z = pt.z + headings[dir].zd, }
@@ -1118,55 +1085,108 @@ local function _actionXXXAt(action, pt, dir, ...)
     apt.heading = (dir + 2) % 4
     direction = 'forward'
   elseif dir == 4 then
-    apt.heading = pt.heading
+    apt.heading = facing
     direction = 'down'
   elseif dir == 5 then
-    apt.heading = pt.heading
+    apt.heading = facing
     direction = 'up'
   end
 
   if turtle.pathfind(apt) then
-    return action[direction](...)
+    return action[direction](name)
   end
 end
 
-function turtle.detectAt(pt)            return _actionAt(actionsAt.detect, pt) end
-function turtle.detectDownAt(pt)        return _actionDownAt(actionsAt.detect, pt) end
-function turtle.detectForwardAt(pt)     return _actionForwardAt(actionsAt.detect, pt) end
-function turtle.detectUpAt(pt)          return _actionUpAt(actionsAt.detect, pt) end
+function turtle.detectAt(pt)             return _actionAt(actionsAt.detect, pt) end
+function turtle.detectDownAt(pt)         return _actionDownAt(actionsAt.detect, pt) end
+function turtle.detectForwardAt(pt)      return _actionForwardAt(actionsAt.detect, pt) end
+function turtle.detectUpAt(pt)           return _actionUpAt(actionsAt.detect, pt) end
 
-function turtle.digAt(pt)               return _actionAt(actionsAt.dig, pt) end
-function turtle.digDownAt(pt)           return _actionDownAt(actionsAt.dig, pt) end
-function turtle.digForwardAt(pt)        return _actionForwardAt(actionsAt.dig, pt) end
-function turtle.digUpAt(pt)             return _actionUpAt(actionsAt.dig, pt) end
+function turtle.digAt(pt)                return _actionAt(actionsAt.dig, pt) end
+function turtle.digDownAt(pt)            return _actionDownAt(actionsAt.dig, pt) end
+function turtle.digForwardAt(pt)         return _actionForwardAt(actionsAt.dig, pt) end
+function turtle.digUpAt(pt)              return _actionUpAt(actionsAt.dig, pt) end
 
-function turtle.attackAt(pt)            return _actionAt(actionsAt.attack, pt) end
-function turtle.attackDownAt(pt)        return _actionDownAt(actionsAt.attack, pt) end
-function turtle.attackForwardAt(pt)     return _actionForwardAt(actionsAt.attack, pt) end
-function turtle.attackUpAt(pt)          return _actionUpAt(actionsAt.attack, pt) end
+function turtle.attackAt(pt)             return _actionAt(actionsAt.attack, pt) end
+function turtle.attackDownAt(pt)         return _actionDownAt(actionsAt.attack, pt) end
+function turtle.attackForwardAt(pt)      return _actionForwardAt(actionsAt.attack, pt) end
+function turtle.attackUpAt(pt)           return _actionUpAt(actionsAt.attack, pt) end
 
-function turtle.placeAt(pt, arg)        return _actionAt(actionsAt.place, pt, arg) end
-function turtle.placeDownAt(pt, arg)    return _actionDownAt(actionsAt.place, pt, arg) end
-function turtle.placeForwardAt(pt, arg) return _actionForwardAt(actionsAt.place, pt, arg) end
-function turtle.placeUpAt(pt, arg)      return _actionUpAt(actionsAt.place, pt, arg) end
-function turtle.placeXXXAt(pt, dir, arg) return _actionXXXAt(actionsAt.place, pt, dir, arg) end
+function turtle.placeAt(pt, arg, dir)    return _actionPlaceAt(actionsAt.place, pt, arg, dir) end
+function turtle.placeDownAt(pt, arg)     return _actionDownAt(actionsAt.place, pt, arg) end
+function turtle.placeForwardAt(pt, arg)  return _actionForwardAt(actionsAt.place, pt, arg) end
+function turtle.placeUpAt(pt, arg)       return _actionUpAt(actionsAt.place, pt, arg) end
 
-function turtle.dropAt(pt, ...)         return _actionAt(actionsAt.drop, pt, ...) end
-function turtle.dropDownAt(pt, ...)     return _actionDownAt(actionsAt.drop, pt, ...) end
-function turtle.dropForwardAt(pt, ...)  return _actionForwardAt(actionsAt.drop, pt, ...) end
-function turtle.dropUpAt(pt, ...)       return _actionUpAt(actionsAt.drop, pt, ...) end
+function turtle.dropAt(pt, ...)          return _actionAt(actionsAt.drop, pt, ...) end
+function turtle.dropDownAt(pt, ...)      return _actionDownAt(actionsAt.drop, pt, ...) end
+function turtle.dropForwardAt(pt, ...)   return _actionForwardAt(actionsAt.drop, pt, ...) end
+function turtle.dropUpAt(pt, ...)        return _actionUpAt(actionsAt.drop, pt, ...) end
 
-function turtle.suckAt(pt, qty)         return _actionAt(actionsAt.suck, pt, qty or 64) end
-function turtle.suckDownAt(pt, qty)     return _actionDownAt(actionsAt.suck, pt, qty or 64) end
-function turtle.suckForwardAt(pt, qty)  return _actionForwardAt(actionsAt.suck, pt, qty or 64) end
-function turtle.suckUpAt(pt, qty)       return _actionUpAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckAt(pt, qty)          return _actionAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckDownAt(pt, qty)      return _actionDownAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckForwardAt(pt, qty)   return _actionForwardAt(actionsAt.suck, pt, qty or 64) end
+function turtle.suckUpAt(pt, qty)        return _actionUpAt(actionsAt.suck, pt, qty or 64) end
 
-function turtle.compareAt(pt)           return _actionAt(actionsAt.compare, pt) end
-function turtle.compareDownAt(pt)       return _actionDownAt(actionsAt.compare, pt) end
-function turtle.compareForwardAt(pt)    return _actionForwardAt(actionsAt.compare, pt) end
-function turtle.compareUpAt(pt)         return _actionUpAt(actionsAt.compare, pt) end
+function turtle.compareAt(pt)            return _actionAt(actionsAt.compare, pt) end
+function turtle.compareDownAt(pt)        return _actionDownAt(actionsAt.compare, pt) end
+function turtle.compareForwardAt(pt)     return _actionForwardAt(actionsAt.compare, pt) end
+function turtle.compareUpAt(pt)          return _actionUpAt(actionsAt.compare, pt) end
 
-function turtle.inspectAt(pt)           return _actionAt(actionsAt.inspect, pt) end
-function turtle.inspectDownAt(pt)       return _actionDownAt(actionsAt.inspect, pt) end
-function turtle.inspectForwardAt(pt)    return _actionForwardAt(actionsAt.inspect, pt) end
-function turtle.inspectUpAt(pt)         return _actionUpAt(actionsAt.inspect, pt) end
+function turtle.inspectAt(pt)            return _actionAt(actionsAt.inspect, pt) end
+function turtle.inspectDownAt(pt)        return _actionDownAt(actionsAt.inspect, pt) end
+function turtle.inspectForwardAt(pt)     return _actionForwardAt(actionsAt.inspect, pt) end
+function turtle.inspectUpAt(pt)          return _actionUpAt(actionsAt.inspect, pt) end
+
+-- [[ GPS ]] --
+local GPS    = require('gps')
+local Config = require('config')
+
+function turtle.enableGPS(timeout)
+  --if turtle.point.gps then
+  --  return turtle.point
+  --end
+
+  local pt = GPS.getPointAndHeading(timeout)
+  if pt then
+    turtle.setPoint(pt, true)
+    return turtle.point
+  end
+end
+
+function turtle.gotoGPSHome()
+  local config = { }
+  Config.load('gps', config)
+
+  if config.home then
+    if turtle.enableGPS() then
+      turtle.pathfind(config.home)
+    end
+  end
+end
+
+function turtle.setGPSHome()
+  local config = { }
+  Config.load('gps', config)
+
+  if turtle.point.gps then
+    config.home = turtle.point
+    Config.update('gps', config)
+  else
+    local pt = GPS.getPoint()
+    if pt then
+      local originalHeading = turtle.point.heading
+      local heading = GPS.getHeading()
+      if heading then
+        local turns = (turtle.point.heading - originalHeading) % 4
+        pt.heading = (heading - turns) % 4
+        config.home = pt
+        Config.update('gps', config)
+
+        pt = GPS.getPoint()
+        pt.heading = heading
+        turtle.setPoint(pt, true)
+        turtle.gotoPoint(config.home)
+      end
+    end
+  end
+end

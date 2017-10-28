@@ -18,7 +18,7 @@ if (...) then
 		if node._g + mCost < neighbour._g then
 			neighbour._parent = node
 			neighbour._g = node._g + mCost
-			neighbour._heading = heading
+			neighbour.heading = heading
 		end
 	end
 
@@ -64,10 +64,10 @@ if (...) then
 			end
 
 			--[[
-			printf('x:%d y:%d z:%d  g:%d', node._x, node._y, node._z, node._g)
+			printf('x:%d y:%d z:%d  g:%d', node.x, node.y, node.z, node._g)
 			for i = 1,#neighbours do
 				local n = neighbours[i]
-				printf('x:%d y:%d z:%d f:%f g:%f h:%d', n._x, n._y, n._z, n._f, n._g, n._heading or -1)
+				printf('x:%d y:%d z:%d f:%f g:%f h:%d', n.x, n.y, n.z, n._f, n._g, n.heading or -1)
 			end
 			--]]
 

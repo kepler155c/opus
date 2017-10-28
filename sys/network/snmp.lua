@@ -90,7 +90,7 @@ local function snmpConnection(socket)
       }
       if turtle then
         info.fuel = turtle.getFuelLevel()
-        info.status = turtle.status
+        info.status = turtle.getStatus()
       end
       socket:write(info)
     end
@@ -144,7 +144,7 @@ local function sendInfo()
     info.uptime = math.floor(os.clock())
     if turtle then
       info.fuel = turtle.getFuelLevel()
-      info.status = turtle.status
+      info.status = turtle.getStatus()
       info.point = turtle.point
       info.inventory = turtle.getInventory()
       info.slotIndex = turtle.getSelectedSlot()
@@ -166,7 +166,7 @@ Event.onInterval(10, function()
 end)
 
 Event.on('turtle_response', function()
-  if turtle.status ~= info.status or
+  if turtle.getStatus() ~= info.status or
      turtle.fuel ~= info.fuel then
     sendInfo()
   end
