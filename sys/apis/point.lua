@@ -2,29 +2,37 @@ local Util = require('util')
 
 local Point = { }
 
-Point.facings = {
+Point.directions = {
   [ 0 ] = { xd =  1, zd =  0, yd =  0, heading = 0, direction = 'east'  },
   [ 1 ] = { xd =  0, zd =  1, yd =  0, heading = 1, direction = 'south' },
   [ 2 ] = { xd = -1, zd =  0, yd =  0, heading = 2, direction = 'west'  },
   [ 3 ] = { xd =  0, zd = -1, yd =  0, heading = 3, direction = 'north' },
-}
-
-Point.directions = {
   [ 4 ] = { xd =  0, zd =  0, yd =  1, heading = 4, direction = 'up'    },
   [ 5 ] = { xd =  0, zd =  0, yd = -1, heading = 5, direction = 'down'  },
 }
 
+Point.facings = {
+  [ 0 ] = Point.directions[0],
+  [ 1 ] = Point.directions[1],
+  [ 2 ] = Point.directions[2],
+  [ 3 ] = Point.directions[3],
+  east  = Point.directions[0],
+  south = Point.directions[1],
+  west  = Point.directions[2],
+  north = Point.directions[3],
+}
+
 Point.headings = {
-  [ 0 ] = Point.facings[0],
-  [ 1 ] = Point.facings[1],
-  [ 2 ] = Point.facings[2],
-  [ 3 ] = Point.facings[3],
+  [ 0 ] = Point.directions[0],
+  [ 1 ] = Point.directions[1],
+  [ 2 ] = Point.directions[2],
+  [ 3 ] = Point.directions[3],
   [ 4 ] = Point.directions[4],
   [ 5 ] = Point.directions[5],
-  east  = Point.facings[0],
-  south = Point.facings[1],
-  west  = Point.facings[2],
-  north = Point.facings[3],
+  east  = Point.directions[0],
+  south = Point.directions[1],
+  west  = Point.directions[2],
+  north = Point.directions[3],
   up    = Point.directions[4],
   down  = Point.directions[5],
 }
@@ -95,17 +103,9 @@ function Point.calculateHeading(pta, ptb)
   local xd, zd = pta.x - ptb.x, pta.z - ptb.z
 
   if (pta.heading % 2) == 0 and zd ~= 0 then
-    if zd < 0 then
-      heading = 1
-    else
-      heading = 3
-    end
+    heading = zd < 0 and 1 or 3
   elseif (pta.heading % 2) == 1 and xd ~= 0 then
-    if xd < 0 then
-      heading = 0
-    else
-      heading = 2
-    end
+    heading = xd < 0 and 0 or 2
   elseif pta.heading == 0 and xd > 0 then
     heading = 2
   elseif pta.heading == 2 and xd < 0 then
@@ -160,12 +160,15 @@ function Point.closest(reference, pts)
     return pts[1]
   end
 
-  local lpt, lm -- lowest
+  local lm, lpt = math.huge
   for _,pt in pairs(pts) do
-    local m = Point.calculateMoves(reference, pt)
-    if not lm or m < lm then
-      lpt = pt
-      lm = m
+    local distance = Point.turtleDistance(reference, pt)
+    if distance < lm then
+      local m = Point.calculateMoves(reference, pt, distance)
+      if m < lm then
+        lpt = pt
+        lm = m
+      end
     end
   end
   return lpt
@@ -287,33 +290,17 @@ function Point.inBox(pt, box)
          pt.z <= box.ez
 end
 
-return Point
+function Point.closestPointInBox(pt, box)
+  local cpt = {
+    x = math.abs(pt.x - box.x) < math.abs(pt.x - box.ex) and box.x or box.ex,
+    y = math.abs(pt.y - box.y) < math.abs(pt.y - box.ey) and box.y or box.ey,
+    z = math.abs(pt.z - box.z) < math.abs(pt.z - box.ez) and box.z or box.ez,
+  }
+  cpt.x = pt.x > box.x and pt.x < box.ex and pt.x or cpt.x
+  cpt.y = pt.y > box.y and pt.y < box.ey and pt.y or cpt.y
+  cpt.z = pt.z > box.z and pt.z < box.ez and pt.z or cpt.z
 
---[[
-Box = { }
-
-function Box.contain(boundingBox, containedBox)
-
-  local shiftX = boundingBox.ax - containedBox.ax
-  if shiftX > 0 then
-    containedBox.ax = containedBox.ax + shiftX
-    containedBox.bx = containedBox.bx + shiftX
-  end
-  local shiftZ = boundingBox.az - containedBox.az
-  if shiftZ > 0 then
-    containedBox.az = containedBox.az + shiftZ
-    containedBox.bz = containedBox.bz + shiftZ
-  end
-
-  shiftX = boundingBox.bx - containedBox.bx
-  if shiftX < 0 then
-    containedBox.ax = containedBox.ax + shiftX
-    containedBox.bx = containedBox.bx + shiftX
-  end
-  shiftZ = boundingBox.bz - containedBox.bz
-  if shiftZ < 0 then
-    containedBox.az = containedBox.az + shiftZ
-    containedBox.bz = containedBox.bz + shiftZ
-  end
+  return cpt
 end
---]]
+
+return Point

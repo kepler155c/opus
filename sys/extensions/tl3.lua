@@ -343,17 +343,17 @@ function turtle.getHeading()
 end
 
 function turtle.turnRight()
-  turtle.setHeading(turtle.point.heading + 1)
+  turtle.setHeading((turtle.point.heading + 1) % 4)
   return turtle.point
 end
 
 function turtle.turnLeft()
-  turtle.setHeading(turtle.point.heading - 1)
+  turtle.setHeading((turtle.point.heading - 1) % 4)
   return turtle.point
 end
 
 function turtle.turnAround()
-  turtle.setHeading(turtle.point.heading + 2)
+  turtle.setHeading((turtle.point.heading + 2) % 4)
   return turtle.point
 end
 
@@ -362,15 +362,12 @@ function turtle.setHeading(heading)
     return false, 'Invalid heading'
   end
 
-  if type(heading) == 'string' then
-    local hi = headings[heading]
-    if not hi then
-      return false, 'Invalid heading'
-    end
-    heading = hi.heading
+  local fi = Point.facings[heading]
+  if not fi then
+    return false, 'Invalid heading'
   end
 
-  heading = heading % 4
+  heading = fi.heading % 4
   if heading ~= turtle.point.heading then
     while heading < turtle.point.heading do
       heading = heading + 4
@@ -905,6 +902,14 @@ function turtle.equip(side, item)
   return turtle.equipRight()
 end
 
+function turtle.isEquipped(item)
+  if peripheral.getType('left') == item then
+    return 'left'
+  elseif peripheral.getType('right') == item then
+    return 'right'
+  end
+end
+
 -- [[  ]] --
 function turtle.run(fn, ...)
   local args = { ... }
@@ -954,7 +959,8 @@ function turtle.faceAgainst(pt, options) -- 4 sided
   options = options or { }
   options.dest = { }
 
-  for hi in pairs(Point.facings) do
+  for i = 0, 3 do
+    local hi = Point.facings[i]
     table.insert(options.dest, {
       x = pt.x + hi.xd,
       z = pt.z + hi.zd,
@@ -966,6 +972,10 @@ function turtle.faceAgainst(pt, options) -- 4 sided
   return turtle.pathfind(Point.closest(turtle.point, options.dest), options)
 end
 
+-- move against this point
+-- if the point does not contain a heading, then the turtle
+-- will face the block (if on same plane)
+-- if above or below, the heading is undetermined unless specified
 function turtle.moveAgainst(pt, options) -- 6 sided
   options = options or { }
   options.dest = { }
@@ -987,7 +997,7 @@ function turtle.moveAgainst(pt, options) -- 6 sided
       z = pt.z + hi.zd,
       y = pt.y + hi.yd,
       direction = direction,
-      heading = heading,
+      heading = pt.heading or heading,
     })
   end
 
@@ -1042,39 +1052,21 @@ local actionsAt = {
   },
 }
 
+-- pt = { x,y,z,heading,direction }
+-- direction should only be up or down if provided
+-- heading can be provided to tell which way to face during action
+-- ex: place a block at the point from above facing east
 local function _actionAt(action, pt, ...)
-  pt = turtle.moveAgainst(pt)
-  if pt then
-    return action[pt.direction](...)
-  end
-end
-
-local function _actionDownAt(action, pt, ...)
-  if turtle.pathfind(Point.above(pt)) then
-    return action.down(...)
-  end
-end
-
-local function _actionForwardAt(action, pt, ...)
-  if turtle.faceAgainst(pt) then
-    return action.forward(...)
-  end
-end
-
-local function _actionUpAt(action, pt, ...)
-  if turtle.pathfind(Point.below(pt)) then
-    return action.up(...)
-  end
-end
-
-local function _actionPlaceAt(action, pt, name, dir, facing)
-  if not dir then
-    return _actionAt(action, pt, name)
+  if not pt.heading and not pt.direction then
+    pt = turtle.moveAgainst(pt)
+    if pt then
+      return action[pt.direction](...)
+    end
   end
 
   local reversed =
     { [0] = 2, [1] = 3, [2] = 0, [3] = 1, [4] = 5, [5] = 4, }
-  dir = reversed[headings[dir].heading]
+  local dir = reversed[headings[pt.direction or pt.heading].heading]
   local apt = { x = pt.x + headings[dir].xd,
                 y = pt.y + headings[dir].yd,
                 z = pt.z + headings[dir].zd, }
@@ -1085,15 +1077,33 @@ local function _actionPlaceAt(action, pt, name, dir, facing)
     apt.heading = (dir + 2) % 4
     direction = 'forward'
   elseif dir == 4 then
-    apt.heading = facing
+    apt.heading = pt.heading
     direction = 'down'
   elseif dir == 5 then
-    apt.heading = facing
+    apt.heading = pt.heading
     direction = 'up'
   end
 
   if turtle.pathfind(apt) then
-    return action[direction](name)
+    return action[direction](...)
+  end
+end
+
+local function _actionDownAt(action, pt, ...)
+  pt = Util.shallowCopy(pt)
+  pt.direction = Point.DOWN
+  return _actionAt(action, pt, ...)
+end
+
+local function _actionUpAt(action, pt, ...)
+  pt = Util.shallowCopy(pt)
+  pt.direction = Point.UP
+  return _actionAt(action, pt, ...)
+end
+
+local function _actionForwardAt(action, pt, ...)
+  if turtle.faceAgainst(pt) then
+    return action.forward(...)
   end
 end
 
@@ -1112,7 +1122,7 @@ function turtle.attackDownAt(pt)         return _actionDownAt(actionsAt.attack, 
 function turtle.attackForwardAt(pt)      return _actionForwardAt(actionsAt.attack, pt) end
 function turtle.attackUpAt(pt)           return _actionUpAt(actionsAt.attack, pt) end
 
-function turtle.placeAt(pt, arg, dir)    return _actionPlaceAt(actionsAt.place, pt, arg, dir) end
+function turtle.placeAt(pt, arg, dir)    return _actionAt(actionsAt.place, pt, arg, dir) end
 function turtle.placeDownAt(pt, arg)     return _actionDownAt(actionsAt.place, pt, arg) end
 function turtle.placeForwardAt(pt, arg)  return _actionForwardAt(actionsAt.place, pt, arg) end
 function turtle.placeUpAt(pt, arg)       return _actionUpAt(actionsAt.place, pt, arg) end
@@ -1188,5 +1198,11 @@ function turtle.setGPSHome()
         turtle.gotoPoint(config.home)
       end
     end
+  end
+end
+
+function turtle.addFeatures(...)
+  for _,feature in pairs({ ... }) do
+    require('turtle.' .. feature)
   end
 end
