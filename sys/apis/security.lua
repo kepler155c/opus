@@ -9,6 +9,10 @@ function Security.verifyPassword(password)
   return config.password and password == config.password
 end
 
+function Security.hasPassword()
+  return not not config.password
+end
+
 function Security.getSecretKey()
   Config.load('os', config)
   if not config.secretKey then

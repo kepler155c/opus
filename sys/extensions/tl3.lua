@@ -4,10 +4,11 @@ end
 
 _G.requireInjector()
 
+local Pathing      = require('turtle.pathfind')
+local GPS          = require('gps')
 local Point        = require('point')
 local synchronized = require('sync')
 local Util         = require('util')
-local Pathing      = require('turtle.pathfind')
 
 local os         = _G.os
 local peripheral = _G.peripheral
@@ -15,10 +16,7 @@ local turtle     = _G.turtle
 
 local function noop() end
 local headings = Point.headings
-local state = {
-  status = 'idle',
-  abort = false,
-}
+local state = { }
 
 turtle.pathfind = Pathing.pathfind
 turtle.point = { x = 0, y = 0, z = 0, heading = 0 }
@@ -155,6 +153,7 @@ local function inventoryAction(fn, name, qty)
   return s
 end
 
+-- [[ Attack ]] --
 local function _attack(action)
   if action.attack() then
     repeat until not action.attack()
@@ -163,10 +162,21 @@ local function _attack(action)
   return false
 end
 
+turtle.attackPolicies = {
+  none = noop,
+
+  attack = function(action)
+    return _attack(action)
+  end,
+}
+
 function turtle.attack()        return _attack(actions.forward) end
 function turtle.attackUp()      return _attack(actions.up)      end
 function turtle.attackDown()    return _attack(actions.down)    end
 
+function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
+
+-- [[ Place ]] --
 local function _place(action, indexOrId)
 
   local slot
@@ -219,24 +229,10 @@ function turtle.refuel(qtyOrName, qty)
   return inventoryAction(turtle.native.refuel, qtyOrName, qty or 64)
 end
 
---[[
-function turtle.dig()           return state.dig(actions.forward) end
-function turtle.digUp()         return state.dig(actions.up)      end
-function turtle.digDown()       return state.dig(actions.down)    end
---]]
-
 function turtle.isTurtleAtSide(side)
   local sideType = peripheral.getType(side)
   return sideType and sideType == 'turtle'
 end
-
-turtle.attackPolicies = {
-  none = noop,
-
-  attack = function(action)
-    return _attack(action)
-  end,
-}
 
 turtle.digPolicies = {
   none = noop,
@@ -332,7 +328,6 @@ function turtle.setPolicy(...)
 end
 
 function turtle.setDigPolicy(policy)     state.digPolicy = policy    end
-function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
 function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
 function turtle.clearMoveCallback()      state.moveCallback = noop   end
 function turtle.getMoveCallback()        return state.moveCallback   end
@@ -455,7 +450,7 @@ function turtle.back()
   end
 end
 
-function turtle.moveTowardsX(dx)
+local function moveTowardsX(dx)
   local direction = dx - turtle.point.x
   local move
 
@@ -478,7 +473,7 @@ function turtle.moveTowardsX(dx)
   return true
 end
 
-function turtle.moveTowardsZ(dz)
+local function moveTowardsZ(dz)
   local direction = dz - turtle.point.z
   local move
 
@@ -503,12 +498,14 @@ end
 
 -- [[ go ]] --
 -- 1 turn goto (going backwards if possible)
-function turtle.gotoSingleTurn(dx, dz, dy, dh)
+function turtle.gotoSingleTurn(dx, dy, dz, dh)
+  dx = dx or turtle.point.x
   dy = dy or turtle.point.y
+  dz = dz or turtle.point.z
 
   local function gx()
     if turtle.point.x ~= dx then
-      turtle.moveTowardsX(dx)
+      moveTowardsX(dx)
     end
     if turtle.point.z ~= dz then
       if dh and dh % 2 == 1 then
@@ -521,7 +518,7 @@ function turtle.gotoSingleTurn(dx, dz, dy, dh)
 
   local function gz()
     if turtle.point.z ~= dz then
-      turtle.moveTowardsZ(dz)
+      moveTowardsZ(dz)
     end
     if turtle.point.x ~= dx then
       if dh and dh % 2 == 0 then
@@ -561,7 +558,7 @@ function turtle.gotoSingleTurn(dx, dz, dy, dh)
   return false
 end
 
-local function gotoEx(dx, dz, dy)
+local function gotoEx(dx, dy, dz)
   -- determine the heading to ensure the least amount of turns
   -- first check is 1 turn needed - remaining require 2 turns
   if turtle.point.heading == 0 and turtle.point.x <= dx or
@@ -595,8 +592,8 @@ local function gotoEx(dx, dz, dy)
 end
 
 -- fallback goto - will turn around if was previously moving backwards
-local function gotoMultiTurn(dx, dz, dy)
-  if gotoEx(dx, dz, dy) then
+local function gotoMultiTurn(dx, dy, dz)
+  if gotoEx(dx, dy, dz) then
     return true
   end
 
@@ -625,19 +622,20 @@ local function gotoMultiTurn(dx, dz, dy)
   return false
 end
 
-function turtle.gotoPoint(pt)
-  return turtle._goto(pt.x, pt.z, pt.y, pt.heading)
-end
-
 -- go backwards - turning around if necessary to fight mobs / break blocks
 function turtle.goback()
   local hi = headings[turtle.point.heading]
-  return turtle._goto(turtle.point.x - hi.xd, turtle.point.z - hi.zd, turtle.point.y, turtle.point.heading)
+  return turtle._goto({
+    x = turtle.point.x - hi.xd,
+    y = turtle.point.y,
+    z = turtle.point.z - hi.zd,
+    heading = turtle.point.heading,
+  })
 end
 
 function turtle.gotoYfirst(pt)
   if turtle._gotoY(pt.y) then
-    if turtle._goto(pt.x, pt.z, nil, pt.heading) then
+    if turtle._goto(pt) then
       turtle.setHeading(pt.heading)
       return true
     end
@@ -645,7 +643,7 @@ function turtle.gotoYfirst(pt)
 end
 
 function turtle.gotoYlast(pt)
-  if turtle._goto(pt.x, pt.z, nil, pt.heading) then
+  if turtle._goto({ x = pt.x, z = pt.z, heading = pt.heading }) then
     if turtle.gotoY(pt.y) then
       turtle.setHeading(pt.heading)
       return true
@@ -653,9 +651,10 @@ function turtle.gotoYlast(pt)
   end
 end
 
-function turtle._goto(dx, dz, dy, dh)
-  if not turtle.gotoSingleTurn(dx, dz, dy, dh) then
-    if not gotoMultiTurn(dx, dz, dy) then
+function turtle._goto(pt)
+  local dx, dy, dz, dh = pt.x, pt.y, pt.z, pt.heading
+  if not turtle.gotoSingleTurn(dx, dy, dz, dh) then
+    if not gotoMultiTurn(dx, dy, dz) then
       return false
     end
   end
@@ -1058,10 +1057,12 @@ local actionsAt = {
 -- ex: place a block at the point from above facing east
 local function _actionAt(action, pt, ...)
   if not pt.heading and not pt.direction then
-    pt = turtle.moveAgainst(pt)
+    local msg
+    pt, msg = turtle.moveAgainst(pt)
     if pt then
       return action[pt.direction](...)
     end
+    return pt, msg
   end
 
   local reversed =
@@ -1148,56 +1149,11 @@ function turtle.inspectForwardAt(pt)     return _actionForwardAt(actionsAt.inspe
 function turtle.inspectUpAt(pt)          return _actionUpAt(actionsAt.inspect, pt) end
 
 -- [[ GPS ]] --
-local GPS    = require('gps')
-local Config = require('config')
-
 function turtle.enableGPS(timeout)
-  --if turtle.point.gps then
-  --  return turtle.point
-  --end
-
   local pt = GPS.getPointAndHeading(timeout)
   if pt then
     turtle.setPoint(pt, true)
     return turtle.point
-  end
-end
-
-function turtle.gotoGPSHome()
-  local config = { }
-  Config.load('gps', config)
-
-  if config.home then
-    if turtle.enableGPS() then
-      turtle.pathfind(config.home)
-    end
-  end
-end
-
-function turtle.setGPSHome()
-  local config = { }
-  Config.load('gps', config)
-
-  if turtle.point.gps then
-    config.home = turtle.point
-    Config.update('gps', config)
-  else
-    local pt = GPS.getPoint()
-    if pt then
-      local originalHeading = turtle.point.heading
-      local heading = GPS.getHeading()
-      if heading then
-        local turns = (turtle.point.heading - originalHeading) % 4
-        pt.heading = (heading - turns) % 4
-        config.home = pt
-        Config.update('gps', config)
-
-        pt = GPS.getPoint()
-        pt.heading = heading
-        turtle.setPoint(pt, true)
-        turtle.gotoPoint(config.home)
-      end
-    end
   end
 end
 

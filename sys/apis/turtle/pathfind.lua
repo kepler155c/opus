@@ -149,12 +149,11 @@ local function pathTo(dest, options)
 
 		-- Define start and goal locations coordinates
 		local startPt = turtle.point
-		local endPt = dest
 
 		-- Calculates the path, and its length
 		local path = finder:getPath(
 			startPt.x, startPt.y, startPt.z, turtle.point.heading,
-			endPt.x, endPt.y, endPt.z, dest.heading)
+			dest.x, dest.y, dest.z, dest.heading)
 
 		if not path then
 	    Util.removeByValue(dests, dest)
@@ -176,7 +175,7 @@ local function pathTo(dest, options)
 
 				-- use single turn method so the turtle doesn't turn around
 				-- when encountering obstacles
-				if not turtle.gotoSingleTurn(pt.x, pt.z, pt.y, pt.heading) then
+				if not turtle.gotoSingleTurn(pt.x, pt.y, pt.z, pt.heading) then
 					local bpt = Point.nearestTo(turtle.point, pt)
 
 					table.insert(blocks, bpt)

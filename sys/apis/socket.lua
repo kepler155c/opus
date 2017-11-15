@@ -157,6 +157,11 @@ local function trusted(msg, port)
     return true
   end
 
+  if not Security.hasPassword() then
+    -- no password has been set on this computer
+    return true
+  end
+
   local trustList = Util.readTable('usr/.known_hosts') or { }
   local pubKey = trustList[msg.shost]
 

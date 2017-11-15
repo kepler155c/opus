@@ -682,7 +682,7 @@ end
 
 function UI.Window:centeredWrite(y, text, bg, fg)
   if #text >= self.width then
-    self:write(1, y, text, bg)
+    self:write(1, y, text, bg, fg)
   else
     local space = math.floor((self.width-#text) / 2)
     local filler = _rep(' ', space + 1)
@@ -1847,11 +1847,11 @@ UI.Button = class(UI.Window)
 UI.Button.defaults = {
   UIElement = 'Button',
   text = 'button',
-  backgroundColor = colors.gray,
-  backgroundFocusColor = colors.lightGray,
+  backgroundColor = colors.lightGray,
+  backgroundFocusColor = colors.gray,
   textFocusColor = colors.white,
   textInactiveColor = colors.gray,
-  textColor = colors.white,
+  textColor = colors.black,
   centered = true,
   height = 1,
   focusIndicator = ' ',
@@ -1998,7 +1998,7 @@ UI.DropMenuItem.defaults = {
   UIElement = 'DropMenuItem',
   textColor = colors.black,
   backgroundColor = colors.white,
-  textFocusColor = colors.black,
+  textFocusColor = colors.white,
   textInactiveColor = colors.lightGray,
   backgroundFocusColor = colors.lightGray,
 }
