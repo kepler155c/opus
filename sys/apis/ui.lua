@@ -95,7 +95,7 @@ function Manager:init()
   singleThread('monitor_touch', function(side, x, y)
     if self.currentPage then
       if self.currentPage.parent.device.side == side then
-        self:click(1, x, y)
+        self:click('mouse_click', 1, x, y)
       end
     end
   end)
@@ -2318,6 +2318,39 @@ function UI.Wizard:eventHandler(event)
       self.nextButton.event = 'accept'
     end
   end
+end
+
+--[[-- SlideOut --]]--
+UI.SlideOut = class(UI.Window)
+UI.SlideOut.defaults = {
+  UIElement = 'SlideOut',
+}
+function UI.SlideOut:setParent()
+  UI.Window.setParent(self)
+  self.canvas = self:addLayer()
+end
+
+function UI.SlideOut:enable()
+  self.enabled = false
+end
+
+function UI.SlideOut:show()
+  self:addTransition('expandUp')
+  self.canvas:setVisible(true)
+  self.enabled = true
+  for _,child in pairs(self.children) do
+    child:enable()
+  end
+  self:focusFirst()
+  self:draw()
+  UI:capture(self)
+end
+
+function UI.SlideOut:hide()
+  self:disable()
+  self.canvas:setVisible(false)
+  UI:release(self)
+  self:refocus()
 end
 
 --[[-- Notification --]]--

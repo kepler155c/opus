@@ -786,6 +786,11 @@ function turtle.getSummedInventory()
   return t
 end
 
+function turtle.has(item, count)
+  local slot = turtle.getSummedInventory()[item]
+  return slot and slot.count >= (count or 1)
+end
+
 function turtle.getFilledSlots(startSlot)
   startSlot = startSlot or 1
 
