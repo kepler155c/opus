@@ -77,8 +77,8 @@ function Manager:init()
   end)
 
   singleThread('mouse_scroll', function(direction, x, y)
-    if self.target then
-      local event = self:pointToChild(self.target, x, y)
+    if self.currentPage then
+      local event = self.currentPage:pointToChild(x, y)
       local directions = {
         [ -1 ] = 'up',
         [  1 ] = 'down'
@@ -105,7 +105,7 @@ function Manager:init()
 
     if self.currentPage then
       if not self.currentPage.parent.device.side then
-        local event = self:pointToChild(self.target, x, y)
+        local event = self.currentPage:pointToChild(x, y)
         if event.element.focus and not event.element.inactive then
           self.currentPage:setFocus(event.element)
           self.currentPage:sync()
@@ -118,7 +118,7 @@ function Manager:init()
     local ch = Input:translate('mouse_up', button, x, y)
 
     if ch == 'control-shift-mouse_click' then -- hack
-      local event = self:pointToChild(self.target, x, y)
+      local event = self.currentPage:pointToChild(x, y)
       _ENV.multishell.openTab({
         path = 'sys/apps/Lua.lua',
         args = { event.element },
@@ -133,8 +133,8 @@ function Manager:init()
 
   singleThread('mouse_drag', function(button, x, y)
     local ch = Input:translate('mouse_drag', button, x, y)
-    if ch and self.target then
-      local event = self:pointToChild(self.target, x, y)
+    if ch and self.currentPage then
+      local event = self.currentPage:pointToChild(x, y)
       event.type = ch
       self:inputEvent(event.element, event)
       self.currentPage:sync()
@@ -254,43 +254,23 @@ function Manager:inputEvent(parent, event)
   end
 end
 
-function Manager:pointToChild(parent, x, y)
-  x = x + parent.offx - parent.x + 1
-  y = y + parent.offy - parent.y + 1
-  if parent.children then
-    for _,child in pairs(parent.children) do
-      if child.enabled and not child.inactive and
-         x >= child.x and x < child.x + child.width and
-         y >= child.y and y < child.y + child.height then
-        local c = self:pointToChild(child, x, y)
-        if c then
-          return c
-        end
-      end
-    end
-  end
-  return {
-    element = parent,
-    x = x,
-    y = y
-  }
-end
-
 function Manager:click(code, button, x, y)
-  if self.target then
+  if self.currentPage then
 
-    local target = self.target
+    local target = self.currentPage
 
     -- need to add offsets into this check
-    if x < self.target.x or y < self.target.y or
-      x > self.target.x + self.target.width - 1 or
-      y > self.target.y + self.target.height - 1 then
+    --[[
+    if x < target.x or y < target.y or
+      x > target.x + target.width - 1 or
+      y > target.y + target.height - 1 then
       target:emit({ type = 'mouse_out' })
 
       target = self.currentPage
     end
+    --]]
 
-    local clickEvent = self:pointToChild(target, x, y)
+    local clickEvent = target:pointToChild(x, y)
 
     if code == 'mouse_doubleclick' then
       if self.doubleClickElement ~= clickEvent.element then
@@ -376,7 +356,6 @@ function Manager:setPage(pageOrName, ...)
       self.currentPage.focused.focused = true
       self.currentPage.focused:focus()
     end
-    self:capture(self.currentPage)
     if needSync then
       page:sync() -- first time a page has been set
     end
@@ -392,16 +371,6 @@ function Manager:setPreviousPage()
     local previousPage = self.currentPage.previousPage.previousPage
     self:setPage(self.currentPage.previousPage)
     self.currentPage.previousPage = previousPage
-  end
-end
-
-function Manager:capture(child)
-  self.target = child
-end
-
-function Manager:release(child)
-  if self.target == child then
-    self.target = self.currentPage
   end
 end
 
@@ -787,6 +756,40 @@ function UI.Window:setFocus(focus)
   end
 end
 
+function UI.Window:capture(child)
+  if self.parent then
+    self.parent:capture(child)
+  end
+end
+
+function UI.Window:release(child)
+  if self.parent then
+    self.parent:release(child)
+  end
+end
+
+function UI.Window:pointToChild(x, y)
+  x = x + self.offx - self.x + 1
+  y = y + self.offy - self.y + 1
+  if self.children then
+    for _,child in pairs(self.children) do
+      if child.enabled and not child.inactive and
+         x >= child.x and x < child.x + child.width and
+         y >= child.y and y < child.y + child.height then
+        local c = child:pointToChild(x, y)
+        if c then
+          return c
+        end
+      end
+    end
+  end
+  return {
+    element = self,
+    x = x,
+    y = y
+  }
+end
+
 function UI.Window:getFocusables()
   local focusable = { }
 
@@ -1109,6 +1112,7 @@ UI.Page.defaults = {
 }
 function UI.Page:postInit()
   self.parent = self.parent or UI.defaultDevice
+  self.__target = self
 end
 
 function UI.Page:setParent()
@@ -1134,6 +1138,32 @@ function UI.Page:disable()
   if self.z then
     self.canvas.visible = false
   end
+end
+
+function UI.Page:capture(child)
+  self.__target = child
+end
+
+function UI.Page:release(child)
+  if self.__target == child then
+    self.__target = self
+  end
+end
+
+function UI.Page:pointToChild(x, y)
+  if self.__target == self then
+    return UI.Window.pointToChild(self, x, y)
+  end
+  x = x + self.offx - self.x + 1
+  y = y + self.offy - self.y + 1
+  return self.__target:pointToChild(x, y)
+end
+
+function UI.Page:getFocusables()
+  if self.__target == self or self.__target.pageType ~= 'modal' then
+    return UI.Window.getFocusables(self)
+  end
+  return self.__target:getFocusables()
 end
 
 function UI.Page:getFocused()
@@ -2055,15 +2085,15 @@ function UI.DropMenu:show(x, y)
     child:enable()
   end
 
-  self:focusFirst()
   self:draw()
-  UI:capture(self)
+  self:capture(self)
+  self:focusFirst()
 end
 
 function UI.DropMenu:hide()
   self:disable()
   self.canvas:setVisible(false)
-  UI:release(self)
+  self:release(self)
 end
 
 function UI.DropMenu:eventHandler(event)
@@ -2324,6 +2354,7 @@ end
 UI.SlideOut = class(UI.Window)
 UI.SlideOut.defaults = {
   UIElement = 'SlideOut',
+  pageType = 'modal',
 }
 function UI.SlideOut:setParent()
   UI.Window.setParent(self)
@@ -2341,15 +2372,15 @@ function UI.SlideOut:show()
   for _,child in pairs(self.children) do
     child:enable()
   end
-  self:focusFirst()
   self:draw()
-  UI:capture(self)
+  self:capture(self)
+  self:focusFirst()
 end
 
 function UI.SlideOut:hide()
   self:disable()
   self.canvas:setVisible(false)
-  UI:release(self)
+  self:release(self)
   self:refocus()
 end
 
