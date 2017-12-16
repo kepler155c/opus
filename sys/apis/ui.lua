@@ -2756,14 +2756,14 @@ function UI.TextEntry:eventHandler(event)
         self.value = input:sub(1, self.pos-1) .. input:sub(self.pos+1)
         self.pos = self.pos - 1
         self:draw()
-        self:emit({ type = 'text_change', text = self.value })
+        self:emit({ type = 'text_change', text = self.value, element = self })
       end
     elseif ch == 'delete' then
       local input = tostring(self.value)
       if self.pos < #input then
         self.value = input:sub(1, self.pos) .. input:sub(self.pos+2)
         self:draw()
-        self:emit({ type = 'text_change', text = self.value })
+        self:emit({ type = 'text_change', text = self.value, element = self })
       end
     elseif #ch == 1 then
       local input = tostring(self.value)
@@ -2771,7 +2771,7 @@ function UI.TextEntry:eventHandler(event)
         self.value = input:sub(1, self.pos) .. ch .. input:sub(self.pos+1)
         self.pos = self.pos + 1
         self:draw()
-        self:emit({ type = 'text_change', text = self.value })
+        self:emit({ type = 'text_change', text = self.value, element = self })
       end
     else
       return false
@@ -2791,7 +2791,7 @@ function UI.TextEntry:eventHandler(event)
     self.pos = self.pos + #text
     self:draw()
     self:updateCursor()
-    self:emit({ type = 'text_change', text = self.value })
+    self:emit({ type = 'text_change', text = self.value, element = self })
     return true
 
   elseif event.type == 'mouse_click' then
@@ -2804,7 +2804,7 @@ function UI.TextEntry:eventHandler(event)
     local input = tostring(self.value)
     if #input > 0 then
       self:reset()
-      self:emit({ type = 'text_change', text = self.value })
+      self:emit({ type = 'text_change', text = self.value, element = self })
     end
   end
 
