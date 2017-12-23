@@ -53,7 +53,7 @@ local function loadApplications()
   end
 
   Util.each(applications, function(v, k) v.key = k end)
-  applications = Util.filter(applications, function(_, a)
+  applications = Util.filter(applications, function(a)
     if a.disabled then
       return false
     end

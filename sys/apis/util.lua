@@ -252,7 +252,7 @@ end
 function Util.filter(it, f)
   local ot = { }
   for k,v in pairs(it) do
-    if f(k, v) then
+    if f(v) then
       ot[k] = v
     end
   end
@@ -458,9 +458,9 @@ end
 --[[ String functions ]] --
 function Util.toBytes(n)
   if n >= 1000000 or n <= -1000000 then
-    return string.format('%sM', Util.round(n/1000000, 1))
+    return string.format('%sM', math.floor(n/1000000 * 10) / 10)
   elseif n >= 1000 or n <= -1000 then
-    return string.format('%sK', Util.round(n/1000, 1))
+    return string.format('%sK', math.floor(n/1000 * 10) / 10)
   end
   return tostring(n)
 end

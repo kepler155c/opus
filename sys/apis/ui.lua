@@ -870,7 +870,9 @@ end
 
 function UI.Window:addLayer(bg, fg)
   local canvas = self:getCanvas()
-  return canvas:addLayer(self, bg, fg)
+  canvas = canvas:addLayer(self, bg, fg)
+  canvas:clear(bg or self.backgroundColor, fg or self.textColor)
+  return canvas
 end
 
 function UI.Window:addTransition(effect, args)
@@ -2377,11 +2379,31 @@ function UI.SlideOut:show()
   self:focusFirst()
 end
 
+function UI.SlideOut:disable()
+  self.canvas:setVisible(false)
+  self.enabled = false
+  if self.children then
+    for _,child in pairs(self.children) do
+      child:disable()
+    end
+  end
+end
+
 function UI.SlideOut:hide()
   self:disable()
-  self.canvas:setVisible(false)
   self:release(self)
   self:refocus()
+end
+
+function UI.SlideOut:eventHandler(event)
+  if event.type == 'slide_show' then
+    self:show()
+    return true
+
+  elseif event.type == 'slide_hide' then
+    self:hide()
+    return true
+  end
 end
 
 --[[-- Notification --]]--
