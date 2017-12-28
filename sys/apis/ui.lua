@@ -1500,9 +1500,9 @@ function UI.Grid:drawRows()
   for index = startRow, lastRow do
 
     local sindex = self.sorted[index]
-    local row = self.values[sindex]
+    local rawRow = self.values[sindex]
     local key = sindex
-    row = self:getDisplayValues(row, key)
+    local row = self:getDisplayValues(rawRow, key)
 
     sb:clear()
 
@@ -1519,8 +1519,8 @@ function UI.Grid:drawRows()
     local selected = index == self.index and not self.inactive
 
     self:write(1, y, sb:get(),
-      self:getRowBackgroundColor(row, selected),
-      self:getRowTextColor(row, selected))
+      self:getRowBackgroundColor(rawRow, selected),
+      self:getRowTextColor(rawRow, selected))
 
     y = y + 1
   end
