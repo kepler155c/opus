@@ -457,6 +457,7 @@ end
 
 --[[ String functions ]] --
 function Util.toBytes(n)
+  if not tonumber(n) then error('Util.toBytes: n must be a number', 2) end
   if n >= 1000000 or n <= -1000000 then
     return string.format('%sM', math.floor(n/1000000 * 10) / 10)
   elseif n >= 1000 or n <= -1000 then

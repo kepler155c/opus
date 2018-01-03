@@ -2659,6 +2659,7 @@ UI.TextEntry.defaults = {
   shadowText = '',
   focused = false,
   textColor = colors.white,
+  shadowTextColor = colors.gray,
   backgroundColor = colors.black, -- colors.lightGray,
   backgroundFocusColor = colors.black, --lightGray,
   height = 1,
@@ -2717,7 +2718,7 @@ function UI.TextEntry:draw()
       text = _rep('*', #text)
     end
   else
-    tc = colors.gray
+    tc = self.shadowTextColor
     text = self.shadowText
   end
 
