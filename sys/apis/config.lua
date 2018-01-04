@@ -1,10 +1,11 @@
 local Util = require('util')
 
-local fs = _G.fs
+local fs    = _G.fs
+local shell = _ENV.shell
 
 local Config = { }
 
-Config.load = function(fname, data)
+function Config.load(fname, data)
 	local filename = 'usr/config/' .. fname
 
 	if not fs.exists('usr/config') then
@@ -18,7 +19,24 @@ Config.load = function(fname, data)
 	end
 end
 
-Config.update = function(fname, data)
+function Config.loadWithCheck(fname, data)
+	local filename = 'usr/config/' .. fname
+
+	if not fs.exists(filename) then
+	  Config.load(fname, data)
+	  print()
+	  print('The configuration file has been created.')
+	  print('The file name is: ' .. filename)
+	  print()
+	  _G.printError('Press enter to configure')
+	  _G.read()
+	  shell.run('edit ' .. filename)
+	end
+
+  Config.load(fname, data)
+end
+
+function Config.update(fname, data)
 	local filename = 'usr/config/' .. fname
 	Util.writeTable(filename, data)
 end
