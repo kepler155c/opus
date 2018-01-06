@@ -2,6 +2,7 @@ local Canvas     = require('ui.canvas')
 local class      = require('class')
 local Event      = require('event')
 local Input      = require('input')
+local Peripheral = require('peripheral')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
@@ -190,7 +191,7 @@ function Manager:configure(appName, ...)
     if defaults.device.name == 'terminal' then
       dev = term.current()
     else
-      dev = device[defaults.device.name]
+      dev = Peripheral.lookup(defaults.device.name) --- device[defaults.device.name]
     end
 
     if not dev then

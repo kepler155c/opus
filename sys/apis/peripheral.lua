@@ -1,4 +1,6 @@
-local Util = require('util')
+local Event = require('event')
+local Socket = require('socket')
+local Util   = require('util')
 
 local Peripheral = Util.shallowCopy(_G.peripheral)
 
@@ -90,6 +92,10 @@ function Peripheral.get(args)
     args = { type = args }
   end
 
+  if args.device then
+    return _G.device[args.device]
+  end
+
   if args.type then
     local p = Peripheral.getByType(args.type)
     if p then
@@ -110,6 +116,113 @@ function Peripheral.get(args)
       return p
     end
   end
+end
+
+local function getProxy(pi)
+  local socket = Socket.connect(pi.host, 189)
+
+  if not socket then
+    error("Timed out attaching peripheral: " .. pi.uri)
+  end
+
+  socket:write(pi.path)
+  local proxy = socket:read(3)
+
+  if not proxy then
+    error("Timed out attaching peripheral: " .. pi.uri)
+  end
+
+  local methods = proxy.methods
+  proxy.methods = nil
+
+  for _,method in pairs(methods) do
+    proxy[method] = function(...)
+      socket:write({ fn = method, args = { ... } })
+      local resp = socket:read()
+      if not resp then
+        error("Timed out communicating with peripheral: " .. pi.uri)
+      end
+      return table.unpack(resp)
+    end
+  end
+
+  if proxy.blit then
+    local methods = { 'clear', 'clearLine', 'setCursorPos', 'write', 'blit',
+                      'setTextColor', 'setTextColour', 'setBackgroundColor',
+                      'setBackgroundColour', 'scroll', 'setCursorBlink', }
+    local queue = nil
+
+    for _,method in pairs(methods) do
+      proxy[method] = function(...)
+        if not queue then
+          queue = { }
+          Event.onTimeout(0, function()
+            socket:write({ fn = 'fastBlit', args = { queue } })
+            queue = nil
+            socket:read()
+          end)
+        end
+
+        table.insert(queue, {
+          fn = method,
+          args = { ... },
+        })
+      end
+    end
+  end
+
+  if proxy.type == 'monitor' then
+    Event.addRoutine(function()
+      while true do
+        local event = socket:read()
+        if not event then
+          break
+        end
+        if not Util.empty(event) then
+          os.queueEvent(table.unpack(event))
+        end
+      end
+    end)
+  end
+
+  return proxy
+end
+
+--[[
+  Parse a uri into it's components
+
+  Examples:
+    monitor             = { device = 'monitor' }
+    side/top            = { side = 'top' }
+    method/list         = { method = 'list' }
+    12://device/monitor = { host = 12, device = 'monitor' }
+]]--
+local function parse(uri)
+  local pi = Util.split(uri:gsub('^%d*://', ''), '(.-)/')
+
+  if #pi == 1 then
+    pi = {
+      'device',
+      pi[1],
+    }
+  end
+
+  return {
+    host = uri:match('^(%d*)%:'),      -- 12
+    uri  = uri,                        -- 12://device/monitor
+    path = uri:gsub('^%d*://', ''),    -- device/monitor
+    [ pi[1] ] = pi[2],                 -- device = 'monitor'
+  }
+end
+
+function Peripheral.lookup(uri)
+  local pi = parse(uri)
+
+  if pi.host then
+    return getProxy(pi)
+  end
+
+  return Peripheral.get(pi)
 end
 
 return Peripheral

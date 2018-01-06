@@ -17,7 +17,7 @@ local function telnetHost(socket)
 
   local termInfo = socket:read(5)
   if not termInfo then
-    _G.printtError('read failed')
+    _G.printError('read failed')
     return
   end
 
