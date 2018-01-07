@@ -37,6 +37,7 @@ function socketClass:read(timeout)
         break
       end
       timerId = os.startTimer(5)
+      self:ping()
     end
   end
 end
@@ -54,10 +55,7 @@ end
 
 function socketClass:ping()
   if self.connected then
-    _G.transport.write(self, {
-      type = 'PING',
-      seq = self.wseq,
-    })
+    _G.transport.ping(self)
     return true
   end
 end

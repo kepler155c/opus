@@ -8,8 +8,8 @@ local Socket     = require('socket')
 local Util       = require('util')
 
 Event.addRoutine(function()
+  print('peripheral: listening on port 189')
   while true do
-    print('peripheral: listening on port 189')
     local socket = Socket.server(189)
 
     print('peripheral: connection from ' .. socket.dhost)
@@ -19,7 +19,9 @@ Event.addRoutine(function()
       if uri then
         local peripheral = Peripheral.lookup(uri)
 
-        if peripheral then
+        if not peripheral then
+          print('peripheral: invalid peripheral ' .. uri)
+        else
           print('peripheral: proxing ' .. uri)
           local proxy = {
             methods = { }

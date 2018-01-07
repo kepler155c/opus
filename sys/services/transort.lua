@@ -31,16 +31,27 @@ function transport.read(socket)
 end
 
 function transport.write(socket, data)
-
   --debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
   socket.transmit(socket.dport, socket.dhost, data)
 
-  local timerId = os.startTimer(2)
+  local timerId = os.startTimer(3)
 
   transport.timers[timerId] = socket
   socket.timers[socket.wseq] = timerId
 
   socket.wseq = socket.wseq + 1
+end
+
+function transport.ping(socket)
+  --debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
+  socket.transmit(socket.dport, socket.dhost, {
+      type = 'PING',
+      seq = -1,
+    })
+
+  local timerId = os.startTimer(3)
+  transport.timers[timerId] = socket
+  socket.timers[-1] = timerId
 end
 
 function transport.close(socket)
@@ -54,6 +65,7 @@ while true do
 
   if e == 'timer' then
     local socket = transport.timers[timerId]
+
     if socket and socket.connected then
       print('transport timeout - closing socket ' .. socket.sport)
       socket:close()
@@ -72,11 +84,12 @@ while true do
         socket:close()
 
       elseif msg.type == 'ACK' then
-        local timerId = socket.timers[msg.seq]
-
-        os.cancelTimer(timerId)
-        socket.timers[msg.seq] = nil
-        transport.timers[timerId] = nil
+        local ackTimerId = socket.timers[msg.seq]
+        if ackTimerId then
+          os.cancelTimer(ackTimerId)
+          socket.timers[msg.seq] = nil
+          transport.timers[ackTimerId] = nil
+        end
 
       elseif msg.type == 'PING' then
         socket.transmit(socket.dport, socket.dhost, {

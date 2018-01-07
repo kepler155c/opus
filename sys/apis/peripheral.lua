@@ -92,8 +92,8 @@ function Peripheral.get(args)
     args = { type = args }
   end
 
-  if args.device then
-    return _G.device[args.device]
+  if args.name then
+    return _G.device[args.name]
   end
 
   if args.type then
@@ -157,7 +157,9 @@ local function getProxy(pi)
         if not queue then
           queue = { }
           Event.onTimeout(0, function()
-            socket:write({ fn = 'fastBlit', args = { queue } })
+            if not socket:write({ fn = 'fastBlit', args = { queue } }) then
+              error("Timed out communicating with peripheral: " .. pi.uri)
+            end
             queue = nil
             socket:read()
           end)
@@ -192,26 +194,26 @@ end
   Parse a uri into it's components
 
   Examples:
-    monitor             = { device = 'monitor' }
-    side/top            = { side = 'top' }
-    method/list         = { method = 'list' }
-    12://device/monitor = { host = 12, device = 'monitor' }
+    monitor           = { name = 'monitor' }
+    side/top          = { side = 'top' }
+    method/list       = { method = 'list' }
+    12://name/monitor = { host = 12, name = 'monitor' }
 ]]--
 local function parse(uri)
   local pi = Util.split(uri:gsub('^%d*://', ''), '(.-)/')
 
   if #pi == 1 then
     pi = {
-      'device',
+      'name',
       pi[1],
     }
   end
 
   return {
     host = uri:match('^(%d*)%:'),      -- 12
-    uri  = uri,                        -- 12://device/monitor
-    path = uri:gsub('^%d*://', ''),    -- device/monitor
-    [ pi[1] ] = pi[2],                 -- device = 'monitor'
+    uri  = uri,                        -- 12://name/monitor
+    path = uri:gsub('^%d*://', ''),    -- name/monitor
+    [ pi[1] ] = pi[2],                 -- name = 'monitor'
   }
 end
 

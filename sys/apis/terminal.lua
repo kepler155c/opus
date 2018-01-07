@@ -149,8 +149,8 @@ function Terminal.mirror(ct, dt)
     ct[k] = function(...)
       local ret = { f(...) }
       if dt[k] then
-	    dt[k](...)
-	   end
+        dt[k](...)
+      end
       return unpack(ret)
     end
   end

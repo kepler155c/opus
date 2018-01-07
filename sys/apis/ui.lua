@@ -1600,7 +1600,9 @@ function UI.Grid:setPage(pageNo)
 end
 
 function UI.Grid:eventHandler(event)
-  if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
+  if event.type == 'mouse_click' or
+     event.type == 'mouse_rightclick' or
+     event.type == 'mouse_doubleclick' then
     if not self.disableHeader then
       if event.y == 1 then
         local col = 2
@@ -1628,6 +1630,8 @@ function UI.Grid:eventHandler(event)
       self:setIndex(row)
       if event.type == 'mouse_doubleclick' then
         self:emit({ type = 'key_enter' })
+      elseif event.type == 'mouse_rightclick' then
+        self:emit({ type = 'grid_select_right', selected = self.selected, element = self })
       end
       return true
     end
