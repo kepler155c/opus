@@ -1,7 +1,8 @@
 local Util = require('util')
 
-local keys = _G.keys
-local os   = _G.os
+local keyboard = _G.device.keyboard
+local keys     = _G.keys
+local os       = _G.os
 
 local modifiers = Util.transpose {
   keys.leftCtrl,  keys.rightCtrl,
@@ -10,28 +11,31 @@ local modifiers = Util.transpose {
 }
 
 local input = {
-  pressed = { },
+  state = { },
 }
 
 function input:modifierPressed()
-  return self.pressed[keys.leftCtrl] or
-         self.pressed[keys.rightCtrl] or
-         self.pressed[keys.leftAlt] or
-         self.pressed[keys.rightAlt]
+  return keyboard.state[keys.leftCtrl] or
+         keyboard.state[keys.rightCtrl] or
+         keyboard.state[keys.leftAlt] or
+         keyboard.state[keys.rightAlt]
 end
 
 function input:toCode(ch, code)
   local result = { }
 
-  if self.pressed[keys.leftCtrl] or self.pressed[keys.rightCtrl] then
+  if keyboard.state[keys.leftCtrl] or keyboard.state[keys.rightCtrl] or
+     code == keys.leftCtrl or code == keys.rightCtrl then
     table.insert(result, 'control')
   end
 
-  if self.pressed[keys.leftAlt] or self.pressed[keys.rightAlt] then
+  if keyboard.state[keys.leftAlt] or keyboard.state[keys.rightAlt] or
+     code == keys.leftAlt or code == keys.rightAlt then
     table.insert(result, 'alt')
   end
 
-  if self.pressed[keys.leftShift] or self.pressed[keys.rightShift] then
+  if keyboard.state[keys.leftShift] or keyboard.state[keys.rightShift] or
+     code == keys.leftShift or code == keys.rightShift then
     if code and modifiers[code] then
       table.insert(result, 'shift')
     elseif #ch == 1 then
@@ -48,7 +52,7 @@ function input:toCode(ch, code)
 end
 
 function input:reset()
-  self.pressed = { }
+  self.state = { }
   self.fired = nil
 
   self.timer = nil
@@ -64,7 +68,7 @@ function input:translate(event, code, p1, p2)
         return input:toCode(keys.getName(code), code)
       end
     else
-      self.pressed[code] = true
+      self.state[code] = true
       if self:modifierPressed() and not modifiers[code] or code == 57 then
         self.fired = true
         return input:toCode(keys.getName(code), code)
@@ -81,18 +85,18 @@ function input:translate(event, code, p1, p2)
 
   elseif event == 'key_up' then
     if not self.fired then
-      if self.pressed[code] then
+      if self.state[code] then
         self.fired = true
         local ch = input:toCode(keys.getName(code), code)
-        self.pressed[code] = nil
+        self.state[code] = nil
         return ch
       end
     end
-    self.pressed[code] = nil
+    self.state[code] = nil
 
   elseif event == 'paste' then
-    self.pressed[keys.leftCtrl] = nil
-    self.pressed[keys.rightCtrl] = nil
+    --self.state[keys.leftCtrl] = nil
+    --self.state[keys.rightCtrl] = nil
     self.fired = true
     return input:toCode('paste', 255)
 

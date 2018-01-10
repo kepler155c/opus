@@ -43,111 +43,6 @@ end
 --[[-- Top Level Manager --]]--
 local Manager = class()
 function Manager:init()
-  local running = false
-
-  -- single thread all input events
-  local function singleThread(event, fn)
-    Event.on(event, function(_, ...)
-      if not running then
-        running = true
-        fn(...)
-        running = false
-      else
-        Input:translate(event, ...)
-      end
-    end)
-  end
-
-  Event.on('multishell_focus', function()
-    Input:reset()
-  end)
-
-  singleThread('term_resize', function(side)
-    if self.currentPage then
-      -- the parent doesn't have any children set...
-      -- that's why we have to resize both the parent and the current page
-      -- kinda makes sense
-      if self.currentPage.parent.device.side == side then
-        self.currentPage.parent:resize()
-
-        self.currentPage:resize()
-        self.currentPage:draw()
-        self.currentPage:sync()
-      end
-    end
-  end)
-
-  singleThread('mouse_scroll', function(direction, x, y)
-    if self.currentPage then
-      local event = self.currentPage:pointToChild(x, y)
-      local directions = {
-        [ -1 ] = 'up',
-        [  1 ] = 'down'
-      }
-      -- revisit - should send out scroll_up and scroll_down events
-      -- let the element convert them to up / down
-      self:inputEvent(event.element,
-        { type = 'key', key = directions[direction] })
-      self.currentPage:sync()
-    end
-  end)
-
-  -- this should be moved to the device !
-  singleThread('monitor_touch', function(side, x, y)
-    if self.currentPage then
-      if self.currentPage.parent.device.side == side then
-        self:click('mouse_click', 1, x, y)
-      end
-    end
-  end)
-
-  singleThread('mouse_click', function(button, x, y)
-    Input:translate('mouse_click', button, x, y)
-
-    if self.currentPage then
-      if not self.currentPage.parent.device.side then
-        local event = self.currentPage:pointToChild(x, y)
-        if event.element.focus and not event.element.inactive then
-          self.currentPage:setFocus(event.element)
-          self.currentPage:sync()
-        end
-      end
-    end
-  end)
-
-  singleThread('mouse_up', function(button, x, y)
-    local ch = Input:translate('mouse_up', button, x, y)
-
-    if ch == 'control-shift-mouse_click' then -- hack
-      local event = self.currentPage:pointToChild(x, y)
-      _ENV.multishell.openTab({
-        path = 'sys/apps/Lua.lua',
-        args = { event.element },
-        focused = true })
-
-    elseif ch and self.currentPage then
-      if not self.currentPage.parent.device.side then
-        self:click(ch, button, x, y)
-      end
-    end
-  end)
-
-  singleThread('mouse_drag', function(button, x, y)
-    local ch = Input:translate('mouse_drag', button, x, y)
-    if ch and self.currentPage then
-      local event = self.currentPage:pointToChild(x, y)
-      event.type = ch
-      self:inputEvent(event.element, event)
-      self.currentPage:sync()
-    end
-  end)
-
-  singleThread('paste', function(text)
-    Input:translate('paste')
-    self:emitEvent({ type = 'paste', text = text })
-    self.currentPage:sync()
-  end)
-
   local function keyFunction(event, code, held)
     local ch = Input:translate(event, code, held)
 
@@ -159,9 +54,108 @@ function Manager:init()
     end
   end
 
-  singleThread('char', function(code, held) keyFunction('char', code, held) end)
-  singleThread('key_up', function(code, held) keyFunction('key_up', code, held) end)
-  singleThread('key', function(code, held) keyFunction('key', code, held) end)
+  local handlers = {
+    char = keyFunction,
+    key_up = keyFunction,
+    key = keyFunction,
+
+    term_resize = function(_, side)
+      if self.currentPage then
+        -- the parent doesn't have any children set...
+        -- that's why we have to resize both the parent and the current page
+        -- kinda makes sense
+        if self.currentPage.parent.device.side == side then
+          self.currentPage.parent:resize()
+
+          self.currentPage:resize()
+          self.currentPage:draw()
+          self.currentPage:sync()
+        end
+      end
+    end,
+
+    mouse_scroll = function(_, direction, x, y)
+      if self.currentPage then
+        local event = self.currentPage:pointToChild(x, y)
+        local directions = {
+          [ -1 ] = 'up',
+          [  1 ] = 'down'
+        }
+        -- revisit - should send out scroll_up and scroll_down events
+        -- let the element convert them to up / down
+        self:inputEvent(event.element,
+          { type = 'key', key = directions[direction] })
+        self.currentPage:sync()
+      end
+    end,
+
+    -- this should be moved to the device !
+    monitor_touch = function(_, side, x, y)
+      Input:translate('mouse_click', 1, x, y)
+      local ch = Input:translate('mouse_up', 1, x, y)
+      if self.currentPage then
+        if self.currentPage.parent.device.side == side then
+          self:click(ch, 1, x, y)
+        end
+      end
+    end,
+
+    mouse_click = function(_, button, x, y)
+      Input:translate('mouse_click', button, x, y)
+
+      if self.currentPage then
+        if not self.currentPage.parent.device.side then
+          local event = self.currentPage:pointToChild(x, y)
+          if event.element.focus and not event.element.inactive then
+            self.currentPage:setFocus(event.element)
+            self.currentPage:sync()
+          end
+        end
+      end
+    end,
+
+    mouse_up = function(_, button, x, y)
+      local ch = Input:translate('mouse_up', button, x, y)
+
+      if ch == 'control-shift-mouse_click' then -- hack
+        local event = self.currentPage:pointToChild(x, y)
+        _ENV.multishell.openTab({
+          path = 'sys/apps/Lua.lua',
+          args = { event.element },
+          focused = true })
+
+      elseif ch and self.currentPage then
+        if not self.currentPage.parent.device.side then
+          self:click(ch, button, x, y)
+        end
+      end
+    end,
+
+    mouse_drag = function(_, button, x, y)
+      local ch = Input:translate('mouse_drag', button, x, y)
+      if ch and self.currentPage then
+        local event = self.currentPage:pointToChild(x, y)
+        event.type = ch
+        self:inputEvent(event.element, event)
+        self.currentPage:sync()
+      end
+    end,
+
+    paste = function(_, text)
+      Input:translate('paste')
+      self:emitEvent({ type = 'paste', text = text })
+      self.currentPage:sync()
+    end,
+  }
+
+  -- use 1 handler to single thread all events
+  Event.on({
+    'char', 'key_up', 'key', 'term_resize',
+    'mouse_scroll', 'monitor_touch', 'mouse_click',
+    'mouse_up', 'mouse_drag', 'paste' },
+    function(event, ...)
+      handlers[event](event, ...)
+    end)
 end
 
 function Manager:configure(appName, ...)

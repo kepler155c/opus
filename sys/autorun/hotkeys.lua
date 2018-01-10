@@ -2,10 +2,11 @@ _G.requireInjector()
 
 local Util = require('util')
 
+local keyboard   = _G.device.keyboard
 local multishell = _ENV.multishell
 
 -- overview
-multishell.addHotkey('control-o', function()
+keyboard.addHotkey('control-o', function()
   for _,tab in pairs(multishell.getTabs()) do
     if tab.isOverview then
       multishell.setFocus(tab.tabId)
@@ -14,7 +15,7 @@ multishell.addHotkey('control-o', function()
 end)
 
 -- restart tab
-multishell.addHotkey('control-backspace', function()
+keyboard.addHotkey('control-backspace', function()
   local tabs = multishell.getTabs()
   local tabId = multishell.getFocus()
   local tab = tabs[tabId]
@@ -28,7 +29,7 @@ multishell.addHotkey('control-backspace', function()
 end)
 
 -- next tab
-multishell.addHotkey('control-tab', function()
+keyboard.addHotkey('control-tab', function()
   local tabs = multishell.getTabs()
   local visibleTabs = { }
   local currentTabId = multishell.getFocus()

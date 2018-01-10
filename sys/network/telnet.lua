@@ -48,7 +48,7 @@ local function telnetHost(socket)
   end
 
   local shellThread = Event.addRoutine(function()
-    os.run(_ENV, 'sys/apps/shell')
+    os.run(_ENV, 'sys/apps/shell', table.unpack(termInfo.program))
     Event.exitPullEvents()
   end)
 

@@ -2,6 +2,8 @@ local Event = require('event')
 local Socket = require('socket')
 local Util   = require('util')
 
+local os = _G.os
+
 local Peripheral = Util.shallowCopy(_G.peripheral)
 
 function Peripheral.getList()
@@ -176,12 +178,12 @@ local function getProxy(pi)
   if proxy.type == 'monitor' then
     Event.addRoutine(function()
       while true do
-        local event = socket:read()
-        if not event then
+        local data = socket:read()
+        if not data then
           break
         end
-        if not Util.empty(event) then
-          os.queueEvent(table.unpack(event))
+        if data.fn and data.fn == 'event' then
+          os.queueEvent(table.unpack(data.data))
         end
       end
     end)

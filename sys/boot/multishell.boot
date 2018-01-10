@@ -2,7 +2,6 @@
 local colors = _G.colors
 local fs     = _G.fs
 local http   = _G.http
-local shell  = _ENV.shell
 local term   = _G.term
 
 local w, h = term.getSize()
@@ -40,6 +39,7 @@ local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(_ENV) do
   sandboxEnv[k] = v
 end
+sandboxEnv.multishell = _ENV.multishell or { }
 
 local function makeEnv()
   local env = setmetatable({ }, { __index = _G })
@@ -86,44 +86,7 @@ else
   fs.mount('', 'gitfs', GIT_REPO)
 end
 
-local Util = run('sys/apis/util.lua')
-
--- user environment
-if not fs.exists('usr/apps') then
-  fs.makeDir('usr/apps')
-end
-if not fs.exists('usr/autorun') then
-  fs.makeDir('usr/autorun')
-end
-if not fs.exists('usr/etc/fstab') then
-  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/develop')
-end
-if not fs.exists('usr/config/shell') then
-  Util.writeTable('usr/config/shell', {
-    aliases  = shell.aliases(),
-    path     = 'usr/apps:sys/apps:' .. shell.path(),
-    lua_path = '/sys/apis:/usr/apis',
-  })
-end
-
--- shell environment
-local config = Util.readTable('usr/config/shell')
-if config.aliases then
-  for k in pairs(shell.aliases()) do
-    shell.clearAlias(k)
-  end
-  for k,v in pairs(config.aliases) do
-    shell.setAlias(k, v)
-  end
-end
-shell.setPath(config.path)
-sandboxEnv.LUA_PATH = config.lua_path
-
--- extensions
-local dir = 'sys/extensions'
-for _,file in ipairs(fs.list(dir)) do
-  run('sys/apps/shell', fs.combine(dir, file))
-end
+run('sys/kernel.lua')
 
 -- install user file systems
 fs.loadTab('usr/etc/fstab')

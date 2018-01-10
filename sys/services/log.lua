@@ -3,6 +3,7 @@ _G.requireInjector()
 local Terminal = require('terminal')
 local Util     = require('util')
 
+local keyboard   = _G.device.keyboard
 local multishell = _ENV.multishell
 local os         = _G.os
 local term       = _G.term
@@ -25,7 +26,7 @@ end
 print('Debug started')
 print('Press ^d to activate debug window')
 
-multishell.addHotkey('control-d', function()
+keyboard.addHotkey('control-d', function()
   local currentId = multishell.getFocus()
   if currentId ~= tabId then
     previousId = currentId
@@ -40,4 +41,4 @@ os.pullEventRaw('terminate')
 print('Debug stopped')
 
 _G.debug = function() end
-multishell.removeHotkey('control-d')
+keyboard.removeHotkey('control-d')

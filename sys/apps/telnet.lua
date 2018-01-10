@@ -5,21 +5,25 @@ local Socket   = require('socket')
 local Terminal = require('terminal')
 local Util     = require('util')
 
-local os   = _G.os
-local read = _G.read
-local term = _G.term
+local multishell = _ENV.multishell
+local os         = _G.os
+local read       = _G.read
+local term       = _G.term
 
-local remoteId
-local args = { ... }
-if #args == 1 then
-  remoteId = tonumber(args[1])
-else
+local args = Util.args({ ... })
+
+local remoteId = tonumber(table.remove(args.remainder, 1))
+if not remoteId then
   print('Enter host ID')
   remoteId = tonumber(read())
 end
 
 if not remoteId then
-  error('Syntax: telnet <host ID>')
+  error('Syntax: telnet [-title TITLE] ID [PROGRAM]')
+end
+
+if args.title then
+  multishell.setTitle(multishell.getCurrent(), args.title)
 end
 
 print('connecting...')
@@ -39,6 +43,7 @@ socket:write({
   width = w,
   height = h,
   isColor = ct.isColor(),
+  program = args.remainder,
 })
 
 Event.addRoutine(function()
@@ -48,7 +53,7 @@ Event.addRoutine(function()
       break
     end
     for _,v in ipairs(data) do
-      ct[v.f](unpack(v.args))
+      ct[v.f](table.unpack(v.args))
     end
   end
 end)

@@ -5,7 +5,6 @@
 local Event      = require('event')
 local Peripheral = require('peripheral')
 local Socket     = require('socket')
-local Util       = require('util')
 
 Event.addRoutine(function()
   print('peripheral: listening on port 189')
@@ -19,6 +18,8 @@ Event.addRoutine(function()
       if uri then
         local peripheral = Peripheral.lookup(uri)
 
+-- only 1 proxy of this device can happen at one time
+-- need to prevent multiple shares
         if not peripheral then
           print('peripheral: invalid peripheral ' .. uri)
         else
@@ -28,7 +29,7 @@ Event.addRoutine(function()
           }
 
           if peripheral.blit then
-            peripheral = Util.shallowCopy(peripheral)
+            --peripheral = Util.shallowCopy(peripheral)
             peripheral.fastBlit = function(data)
               for _,v in ipairs(data) do
                 peripheral[v.fn](unpack(v.args))
@@ -47,12 +48,12 @@ Event.addRoutine(function()
           socket:write(proxy)
 
           if proxy.type == 'monitor' then
-            local h
-            h = Event.on('monitor_touch', function(...)
-              if not socket:write({ ... }) then
-                Event.off(h)
-              end
-            end)
+            peripheral.eventChannel = function(...)
+              socket:write({
+                fn = 'event',
+                data = { ... }
+              })
+            end
           end
 
           while true do
@@ -61,8 +62,13 @@ Event.addRoutine(function()
               print('peripheral: lost connection from ' .. socket.dhost)
               break
             end
-            socket:write({ peripheral[data.fn](table.unpack(data.args)) })
+            if peripheral[data.fn] then
+              socket:write({ peripheral[data.fn](table.unpack(data.args)) })
+            end
           end
+
+          peripheral.eventChannel = nil
+          peripheral.fastBlit = nil
         end
       end
     end)

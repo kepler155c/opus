@@ -460,6 +460,8 @@ function Util.toBytes(n)
   if not tonumber(n) then error('Util.toBytes: n must be a number', 2) end
   if n >= 1000000 or n <= -1000000 then
     return string.format('%sM', math.floor(n/1000000 * 10) / 10)
+  elseif n >= 10000 or n <= -10000 then
+    return string.format('%sK', math.floor(n/1000))
   elseif n >= 1000 or n <= -1000 then
     return string.format('%sK', math.floor(n/1000 * 10) / 10)
   end
@@ -549,7 +551,6 @@ end
 -- end word wrapping
 
 function Util.wordWrap(str, limit)
-
   local longLines = Util.split(str)
   local lines = { }
 
@@ -560,6 +561,23 @@ function Util.wordWrap(str, limit)
   return lines
 end
 
+function Util.args(arg)
+  local tab = { remainder = { } }
+
+  local k = 1
+  while k <= #arg do
+    local v = arg[k]
+    if string.sub(v, 1, 1) == '-' then
+      local jopt = string.sub(v, 2)
+      tab[ jopt ] = arg[ k + 1 ]
+      k = k + 1
+    else
+      table.insert(tab.remainder, v)
+    end
+    k = k + 1
+  end
+  return tab
+end
 -- http://lua-users.org/wiki/AlternativeGetOpt
 local function getopt( arg, options )
   local tab = {}

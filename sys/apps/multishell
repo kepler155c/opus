@@ -6,11 +6,12 @@ end
 _G.requireInjector()
 
 local Config = require('config')
-local Input  = require('input')
 local Util   = require('util')
 
 local colors     = _G.colors
 local fs         = _G.fs
+local kernel     = _G.kernel
+local keyboard   = _G.device.keyboard
 local keys       = _G.keys
 local multishell = _ENV.multishell
 local os         = _G.os
@@ -28,8 +29,6 @@ local overviewId
 local runningTab
 local tabsDirty = false
 local closeInd = '*'
-local hooks = { }
-local hotkeys = { }
 local downState = { }
 
 multishell.term = term.current()
@@ -124,11 +123,11 @@ local function selectTab(tab)
 
   if currentTab and currentTab ~= tab then
     currentTab.window.setVisible(false)
-    if coroutine.status(currentTab.co) == 'suspended' then
+    --if coroutine.status(currentTab.co) == 'suspended' then
       -- the process that opens a new tab won't get the lose focus event
       -- os.queueEvent('multishell_notifyfocus', currentTab.tabId)
       --resumeTab(currentTab, 'multishell_losefocus')
-    end
+    --end
     if tab and not currentTab.hidden then
       tab.previousTabId = currentTab.tabId
     end
@@ -137,7 +136,9 @@ local function selectTab(tab)
   if tab ~= currentTab then
     currentTab = tab
     tab.window.setVisible(true)
-    resumeTab(tab, 'multishell_focus')
+    Util.clear(keyboard.state)  --- reset keyboard state
+    -- why not just queue event with tab ID if we want to notify
+    --resumeTab(tab, 'multishell_focus')
   end
 end
 
@@ -195,14 +196,6 @@ local function launchProcess(tab)
   tabs[tab.tabId] = tab
   resumeTab(tab)
   return tab
-end
-
-function multishell.addHotkey(code, fn)
-  hotkeys[code] = fn
-end
-
-function multishell.removeHotkey(code)
-  hotkeys[code] = nil
 end
 
 function multishell.getFocus()
@@ -309,31 +302,7 @@ function multishell.getCount()
   return Util.size(tabs)
 end
 
-function multishell.hook(event, fn)
-  if type(event) == 'table' then
-    for _,v in pairs(event) do
-      multishell.hook(v, fn)
-    end
-  else
-    if not hooks[event] then
-      hooks[event] = { }
-    end
-    table.insert(hooks[event], fn)
-  end
-end
-
--- you can only unhook from within the function that hooked
-function multishell.unhook(event, fn)
-  local eventHooks = hooks[event]
-  if eventHooks then
-    Util.removeByValue(eventHooks, fn)
-    if #eventHooks == 0 then
-      hooks[event] = nil
-    end
-  end
-end
-
-multishell.hook('multishell_terminate', function(_, eventData)
+kernel.hook('multishell_terminate', function(_, eventData)
   local tabId = eventData[1] or -1
   local tab = tabs[tabId]
 
@@ -345,7 +314,7 @@ multishell.hook('multishell_terminate', function(_, eventData)
   return true
 end)
 
-multishell.hook('multishell_redraw', function()
+kernel.hook('multishell_redraw', function()
   tabsDirty = false
 
   local function write(x, text, bg, fg)
@@ -413,7 +382,7 @@ multishell.hook('multishell_redraw', function()
   return true
 end)
 
-multishell.hook('term_resize', function(_, eventData)
+kernel.hook('term_resize', function(_, eventData)
   if not eventData[1] then                            --- TEST
     w,h = parentTerm.getSize()
 
@@ -433,40 +402,16 @@ multishell.hook('term_resize', function(_, eventData)
   end
 end)
 
--- downstate should be stored in the tab (maybe)
-multishell.hook('key_up', function(_, eventData)
+--[[
+kernel.hook('key_up', function(_, eventData)
   local code = eventData[1]
-
-  if downState[code] ~= currentTab then
-    downState[code] = nil
+  if not keyboard.state[code] then
     return true
   end
-  downState[code] = nil
 end)
+]]
 
-multishell.hook('key', function(_, eventData)
-  local code = eventData[1]
-  local firstPress = not eventData[2]
-
-  if firstPress then
-    downState[code] = currentTab
-  else
-    --key was pressed initially in a previous window
-    if downState[code] ~= currentTab then
-      return true
-    end
-  end
-end)
-
-multishell.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
-  local code = Input:translate(event, eventData[1], eventData[2])
-
-  if code and hotkeys[code] then
-    hotkeys[code](event, eventData)
-  end
-end)
-
-multishell.hook('mouse_click', function(_, eventData)
+kernel.hook('mouse_click', function(_, eventData)
   local x, y = eventData[2], eventData[3]
   if y == 1 then
     if x == 1 then
@@ -492,7 +437,7 @@ multishell.hook('mouse_click', function(_, eventData)
   eventData[3] = eventData[3] - 1
 end)
 
-multishell.hook({ 'mouse_up', 'mouse_drag' }, function(event, eventData)
+kernel.hook({ 'mouse_up', 'mouse_drag' }, function(event, eventData)
   if downState.mouse ~= currentTab then
     -- don't send mouse up as the mouse click event was on another window
     if event == 'mouse_up' then
@@ -504,7 +449,7 @@ multishell.hook({ 'mouse_up', 'mouse_drag' }, function(event, eventData)
   eventData[3] = eventData[3] - 1
 end)
 
-multishell.hook('mouse_scroll', function(_, eventData)
+kernel.hook('mouse_scroll', function(_, eventData)
   local dir, y = eventData[1], eventData[3]
 
   if y == 1 then
@@ -592,7 +537,7 @@ while true do
   local sEvent = table.remove(tEventData, 1)
   local stopPropagation
 
-  local eventHooks = hooks[sEvent]
+  local eventHooks = kernel.hooks[sEvent]
   if eventHooks then
     for i = #eventHooks, 1, -1 do
       stopPropagation = eventHooks[i](sEvent, tEventData)

@@ -58,33 +58,37 @@ local function nextUID()
   return Event.uid - 1
 end
 
-function Event.on(event, fn)
+function Event.on(events, fn)
+  events = type(events) == 'table' and events or { events }
 
-  local handlers = Event.types[event]
-  if not handlers then
-    handlers = { }
-    Event.types[event] = handlers
-  end
-
-  local handler = {
+  local handler = setmetatable({
     uid     = nextUID(),
-    event   = event,
+    event   = events,
     fn      = fn,
-  }
-  handlers[handler.uid] = handler
-  setmetatable(handler, { __index = Routine })
+  }, { __index = Routine })
+
+  for _,event in pairs(events) do
+    local handlers = Event.types[event]
+    if not handlers then
+      handlers = { }
+      Event.types[event] = handlers
+    end
+
+    handlers[handler.uid] = handler
+  end
 
   return handler
 end
 
 function Event.off(h)
   if h and h.event then
-    Event.types[h.event][h.uid] = nil
+    for _,event in pairs(h.event) do
+      Event.types[event][h.uid] = nil
+    end
   end
 end
 
 local function addTimer(interval, recurring, fn)
-
   local timerId = os.startTimer(interval)
   local handler
 
@@ -133,20 +137,18 @@ function Event.waitForEvent(event, timeout)
 end
 
 function Event.addRoutine(fn)
-  local r = {
+  local r = setmetatable({
     co  = coroutine.create(fn),
     uid = nextUID()
-  }
-  setmetatable(r, { __index = Routine })
-  Event.routines[r.uid] = r
+  }, { __index = Routine })
 
+  Event.routines[r.uid] = r
   r:resume()
 
   return r
 end
 
 function Event.pullEvents(...)
-
   for _, fn in ipairs({ ... }) do
     Event.addRoutine(fn)
   end
@@ -162,7 +164,6 @@ function Event.exitPullEvents()
 end
 
 local function processHandlers(event)
-
   local handlers = Event.types[event]
   if handlers then
     for _,h in pairs(handlers) do
@@ -184,7 +185,6 @@ local function tokeys(t)
 end
 
 local function processRoutines(...)
-
   local keys = tokeys(Event.routines)
   for _,key in ipairs(keys) do
     local r = Event.routines[key]
@@ -200,7 +200,6 @@ function Event.processEvent(e)
 end
 
 function Event.pullEvent(eventType)
-
   while true do
     local e = { os.pullEventRaw() }
 

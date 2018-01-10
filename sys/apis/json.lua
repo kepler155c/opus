@@ -68,6 +68,7 @@ local function encodeCommon(val, pretty, tabLevel, tTracking)
         str = str .. encodeCommon(v, pretty, tabLevel, tTracking)
       end)
     else
+debug(val)
       arrEncoding(val, "{", "}", pairs, function(k,v)
         assert(type(k) == "string", "JSON object keys must be strings", 2)
         str = str .. encodeCommon(k, pretty, tabLevel, tTracking)
@@ -92,6 +93,13 @@ end
 
 function json.encodePretty(val)
   return encodeCommon(val, true, 0, {})
+end
+
+function json.encodeToFile(path, val)
+  local file = io.open(path, "w")
+  assert(file, "Unable to open file")
+  file:write(json.encodePretty(val))
+  file:close()
 end
 
 ------------------------------------------------------------------ decoding
