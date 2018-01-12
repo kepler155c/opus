@@ -1,4 +1,4 @@
-if device.wireless_modem then
+if _G.device.wireless_modem then
 
   _G.requireInjector()
   local Config = require('config')
@@ -7,11 +7,8 @@ if device.wireless_modem then
   Config.load('gps', config)
 
   if config.host and type(config.host) == 'table' then
-
-    multishell.setTitle(multishell.getCurrent(), 'GPS Daemon')
-
-    os.run(getfenv(1), '/rom/programs/gps', 'host', config.host.x, config.host.y, config.host.z)
-
+    _ENV._APP_TITLE = 'GPS Daemon'
+    os.run(_ENV, '/rom/programs/gps', 'host', config.host.x, config.host.y, config.host.z)
     print('GPS daemon stopped')
   end
 end

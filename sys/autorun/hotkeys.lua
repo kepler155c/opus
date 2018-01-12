@@ -2,6 +2,7 @@ _G.requireInjector()
 
 local Util = require('util')
 
+local kernel     = _G.kernel
 local keyboard   = _G.device.keyboard
 local multishell = _ENV.multishell
 
@@ -16,11 +17,10 @@ end)
 
 -- restart tab
 keyboard.addHotkey('control-backspace', function()
-  local tabs = multishell.getTabs()
-  local tabId = multishell.getFocus()
-  local tab = tabs[tabId]
+  local uid = multishell.getFocus()
+  local tab = kernel.find(uid)
   if not tab.isOverview then
-    multishell.terminate(tabId)
+    multishell.terminate(uid)
     tab = Util.shallowCopy(tab)
     tab.isDead = false
     tab.focused = true
@@ -35,7 +35,7 @@ keyboard.addHotkey('control-tab', function()
   local currentTabId = multishell.getFocus()
 
   local function compareTab(a, b)
-    return a.tabId < b.tabId
+    return a.uid < b.uid
   end
   for _,tab in Util.spairs(tabs, compareTab) do
     if not tab.hidden then
@@ -44,14 +44,14 @@ keyboard.addHotkey('control-tab', function()
   end
 
   for k,tab in ipairs(visibleTabs) do
-    if tab.tabId == currentTabId then
+    if tab.uid == currentTabId then
       if k < #visibleTabs then
-        multishell.setFocus(visibleTabs[k + 1].tabId)
+        multishell.setFocus(visibleTabs[k + 1].uid)
         return
       end
     end
   end
   if #visibleTabs > 0 then
-    multishell.setFocus(visibleTabs[1].tabId)
+    multishell.setFocus(visibleTabs[1].uid)
   end
 end)

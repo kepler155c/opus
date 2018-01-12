@@ -6,8 +6,8 @@ local Util  = require('util')
 
 local multishell = _ENV.multishell
 
-multishell.setTitle(multishell.getCurrent(), 'Tabs')
-UI:configure('Tabs', ...)
+multishell.setTitle(multishell.getCurrent(), 'Tasks')
+UI:configure('Tasks', ...)
 
 local page = UI.Page {
   menuBar = UI.MenuBar {
@@ -19,7 +19,7 @@ local page = UI.Page {
   grid = UI.ScrollingGrid {
     y = 2,
     columns = {
-      { heading = 'ID',     key = 'tabId',    width = 4 },
+      { heading = 'ID',     key = 'uid',      width = 4 },
       { heading = 'Title',  key = 'title'     },
       { heading = 'Status', key = 'status'    },
       { heading = 'Time',   key = 'timestamp' },
@@ -39,9 +39,9 @@ function page:eventHandler(event)
   local t = self.grid:getSelected()
   if t then
     if event.type == 'activate' or event.type == 'grid_select' then
-      multishell.setFocus(t.tabId)
+      multishell.setFocus(t.uid)
     elseif event.type == 'terminate' then
-      multishell.terminate(t.tabId)
+      multishell.terminate(t.uid)
     end
   end
   if event.type == 'quit' then

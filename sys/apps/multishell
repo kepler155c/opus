@@ -1,8 +1,3 @@
-local sandboxEnv = { }
-for k,v in pairs(_ENV) do
-  sandboxEnv[k] = v
-end
-
 _G.requireInjector()
 
 local Config = require('config')
@@ -11,7 +6,6 @@ local Util   = require('util')
 local colors     = _G.colors
 local fs         = _G.fs
 local kernel     = _G.kernel
-local keyboard   = _G.device.keyboard
 local keys       = _G.keys
 local multishell = _ENV.multishell
 local os         = _G.os
@@ -22,34 +16,15 @@ local window     = _G.window
 
 local parentTerm = term.current()
 local w,h = parentTerm.getSize()
-local tabs = { }
-local currentTab
-local _tabId = 0
 local overviewId
-local runningTab
 local tabsDirty = false
-local closeInd = '*'
-local downState = { }
+local closeInd = Util.getVersion() >= 1.76 and '\215' or '*'
 
-multishell.term = term.current()
+multishell.term = term.current() --deprecated
 
--- Default label
-if not os.getComputerLabel() then
-  local id = os.getComputerID()
-  if _G.turtle then
-    os.setComputerLabel('turtle_' .. id)
-  elseif _G.pocket then
-    os.setComputerLabel('pocket_' .. id)
-  elseif _G.commands then
-    os.setComputerLabel('command_' .. id)
-  else
-    os.setComputerLabel('computer_' .. id)
-  end
-end
-
-if Util.getVersion() >= 1.76 then
-  closeInd = '\215'
-end
+-- redirect kernel output to a window
+kernel.window = window.create(parentTerm, 1, 2, w, h - 1, false)
+kernel.terminal = kernel.window
 
 local config = {
   standard = {
@@ -71,10 +46,7 @@ local config = {
 }
 Config.load('multishell', config)
 
-local _colors = config.standard
-if parentTerm.isColor() then
-  _colors = config.color
-end
+local _colors = parentTerm.isColor() and config.color or config.standard
 
 local function redrawMenu()
   if not tabsDirty then
@@ -83,85 +55,73 @@ local function redrawMenu()
   end
 end
 
-local function resumeTab(tab, event, eventData)
-  if not tab or coroutine.status(tab.co) == 'dead' then
-    return
-  end
+function multishell.getFocus()
+  local currentTab = kernel.routines[1]
+  return currentTab.uid
+end
 
-  if not tab.filter or tab.filter == event or event == "terminate" then
-    eventData = eventData or { }
-    term.redirect(tab.terminal)
-    local previousTab = runningTab
-    runningTab = tab
-    local ok, result = coroutine.resume(tab.co, event, unpack(eventData))
-    tab.terminal = term.current()
-    if ok then
-      tab.filter = result
-    else
-      printError(result)
+function multishell.setFocus(tabId)
+  return kernel.raise(tabId)
+end
+
+function multishell.getTitle(tabId)
+  local tab = kernel.find(tabId)
+  return tab and tab.title
+end
+
+function multishell.setTitle(tabId, title)
+  local tab = kernel.find(tabId)
+  if tab then
+    if not tab.isOverview then
+      tab.title = title or ''
     end
-
-    runningTab = previousTab
-
-    return ok, result
+    redrawMenu()
   end
 end
 
-local function selectTab(tab)
-  if not tab then
-    for _,ftab in pairs(tabs) do
-      if not ftab.hidden then
-        tab = ftab
-        break
-      end
-    end
-  end
-
-  if not tab then
-    tab = tabs[overviewId]
-  end
-
-  if currentTab and currentTab ~= tab then
-    currentTab.window.setVisible(false)
-    --if coroutine.status(currentTab.co) == 'suspended' then
-      -- the process that opens a new tab won't get the lose focus event
-      -- os.queueEvent('multishell_notifyfocus', currentTab.tabId)
-      --resumeTab(currentTab, 'multishell_losefocus')
-    --end
-    if tab and not currentTab.hidden then
-      tab.previousTabId = currentTab.tabId
-    end
-  end
-
-  if tab ~= currentTab then
-    currentTab = tab
-    tab.window.setVisible(true)
-    Util.clear(keyboard.state)  --- reset keyboard state
-    -- why not just queue event with tab ID if we want to notify
-    --resumeTab(tab, 'multishell_focus')
-  end
+function multishell.getCurrent()
+  local runningTab = kernel.getCurrent()
+  return runningTab and runningTab.uid
 end
 
-local function nextTabId()
-  _tabId = _tabId + 1
-  return _tabId
+function multishell.getTab(tabId)
+  return kernel.find(tabId)
 end
 
-local function launchProcess(tab)
-  tab.tabId = nextTabId()
-  tab.timestamp = os.clock()
+function multishell.terminate(tabId)
+  os.queueEvent('multishell_terminate', tabId)
+end
+
+function multishell.getTabs()
+  return kernel.routines
+end
+
+function multishell.launch( tProgramEnv, sProgramPath, ... )
+  -- backwards compatibility
+  return multishell.openTab({
+    env = tProgramEnv,
+    path = sProgramPath,
+    args = { ... },
+  })
+end
+
+function multishell.openTab(tab)
+  if not tab.title and tab.path then
+    tab.title = fs.getName(tab.path)
+  end
+  tab.title = tab.title or 'untitled'
   tab.window = window.create(parentTerm, 1, 2, w, h - 1, false)
   tab.terminal = tab.window
-  tab.env = Util.shallowCopy(tab.env or sandboxEnv)
+
+  local routine = kernel.newRoutine(tab)
 
   tab.co = coroutine.create(function()
-
     local result, err
 
     if tab.fn then
-      result, err = Util.runFunction(tab.env, tab.fn, table.unpack(tab.args or { } ))
+      result, err = Util.runFunction(routine.env, tab.fn, table.unpack(tab.args or { } ))
     elseif tab.path then
-      result, err = Util.run(tab.env, tab.path, table.unpack(tab.args or { } ))
+      result, err = Util.run(routine.env, tab.path, table.unpack(tab.args or { } ))
     else
       err = 'multishell: invalid tab'
     end
@@ -179,119 +139,29 @@ local function launchProcess(tab)
         end
       end
     end
-    tabs[tab.tabId] = nil
-    if tab == currentTab then
-      local previousTab
-      if tab.previousTabId then
-        previousTab = tabs[tab.previousTabId]
-        if previousTab and previousTab.hidden then
-          previousTab = nil
-        end
-      end
-      selectTab(previousTab)
-    end
-    redrawMenu()
   end)
 
-  tabs[tab.tabId] = tab
-  resumeTab(tab)
-  return tab
-end
+  kernel.run(routine)
 
-function multishell.getFocus()
-  return currentTab.tabId
-end
-
-function multishell.setFocus(tabId)
-  local tab = tabs[tabId]
-  if tab then
-    selectTab(tab)
-    redrawMenu()
-    return true
-  end
-  return false
-end
-
-function multishell.getTitle(tabId)
-  local tab = tabs[tabId]
-  if tab then
-    return tab.title
-  end
-end
-
-function multishell.setTitle(tabId, title)
-  local tab = tabs[tabId]
-  if tab then
-    if not tab.isOverview then
-      tab.title = title or ''
-    end
-    redrawMenu()
-  end
-end
-
-function multishell.getCurrent()
-  if runningTab then
-    return runningTab.tabId
-  end
-end
-
-function multishell.getTab(tabId)
-  return tabs[tabId]
-end
-
-function multishell.terminate(tabId)
-  os.queueEvent('multishell_terminate', tabId)
-end
-
-function multishell.getTabs()
-  return tabs
-end
-
-function multishell.launch( tProgramEnv, sProgramPath, ... )
-  -- backwards compatibility
-  return multishell.openTab({
-    env = tProgramEnv,
-    path = sProgramPath,
-    args = { ... },
-  })
-end
-
-function multishell.openTab(tab)
-  if not tab.title and tab.path then
-    tab.title = fs.getName(tab.path)
-  end
-  tab.title = tab.title or 'untitled'
-
-  local previousTerm = term.current()
-  launchProcess(tab)
-  term.redirect(previousTerm)
-
-  if tab.hidden then
-    if coroutine.status(tab.co) == 'dead' or tab.isDead then
-      tab.hidden = false
-    end
-  elseif tab.focused then
-    multishell.setFocus(tab.tabId)
+  if tab.focused then
+    multishell.setFocus(tab.uid)
   else
     redrawMenu()
   end
 
-  return tab.tabId
+  return tab.uid
 end
 
 function multishell.hideTab(tabId)
-  local tab = tabs[tabId]
+  local tab = kernel.find(tabId)
   if tab then
     tab.hidden = true
-    if currentTab.tabId == tabId then
-      selectTab(tabs[currentTab.previousTabId])
-    end
     redrawMenu()
   end
 end
 
 function multishell.unhideTab(tabId)
-  local tab = tabs[tabId]
+  local tab = kernel.find(tabId)
   if tab then
     tab.hidden = false
     redrawMenu()
@@ -299,16 +169,34 @@ function multishell.unhideTab(tabId)
 end
 
 function multishell.getCount()
-  return Util.size(tabs)
+  return #kernel.routines
 end
 
-kernel.hook('multishell_terminate', function(_, eventData)
-  local tabId = eventData[1] or -1
-  local tab = tabs[tabId]
+kernel.hook('kernel_focus', function(_, eventData)
+  local previous = eventData[2]
+  if previous then
+    local routine = kernel.find(previous)
+    if routine and routine.window then
+      routine.window.setVisible(false)
+      if routine.hidden then
+        kernel.lower(previous)
+      end
+    end
+  end
 
+  local focused = kernel.find(eventData[1])
+  if focused and focused.window then
+    focused.window.setVisible(true)
+  end
+
+  redrawMenu()
+end)
+
+kernel.hook('multishell_terminate', function(_, eventData)
+  local tab = kernel.find(eventData[1])
   if tab and not tab.isOverview then
     if coroutine.status(tab.co) ~= 'dead' then
-      resumeTab(tab, "terminate")
+      tab:resume("terminate")
     end
   end
   return true
@@ -330,10 +218,12 @@ kernel.hook('multishell_redraw', function()
   parentTerm.clearLine()
 
   local function compareTab(a, b)
-    return a.tabId < b.tabId
+    return a.uid < b.uid
   end
 
-  for _,tab in pairs(tabs) do
+  local currentTab = kernel.routines[1]
+
+  for _,tab in pairs(kernel.routines) do
     if tab.hidden and tab ~= currentTab then
       tab.width = 0
     else
@@ -343,18 +233,18 @@ kernel.hook('multishell_redraw', function()
 
   local function width()
     local tw = 0
-    Util.each(tabs, function(t) tw = tw + t.width end)
+    Util.each(kernel.routines, function(t) tw = tw + t.width end)
     return tw
   end
 
   while width() > w - 3 do
     local tab = select(2,
-      Util.spairs(tabs, function(a, b) return a.width > b.width end)())
+      Util.spairs(kernel.routines, function(a, b) return a.width > b.width end)())
     tab.width = tab.width - 1
   end
 
   local tabX = 0
-  for _,tab in Util.spairs(tabs, compareTab) do
+  for _,tab in Util.spairs(kernel.routines, compareTab) do
     if tab.width > 0 then
       tab.sx = tabX + 1
       tab.ex = tabX + tab.width
@@ -375,7 +265,7 @@ kernel.hook('multishell_redraw', function()
     end
   end
 
-  if currentTab then
+  if currentTab and currentTab.window then
     currentTab.window.restoreCursor()
   end
 
@@ -388,8 +278,8 @@ kernel.hook('term_resize', function(_, eventData)
 
     local windowHeight = h-1
 
-    for _,key in pairs(Util.keys(tabs)) do
-      local tab = tabs[key]
+    for _,key in pairs(Util.keys(kernel.routines)) do
+      local tab = kernel.routines[key]
       local x,y = tab.window.getCursorPos()
       if y > windowHeight then
         tab.window.scroll(y - windowHeight)
@@ -402,69 +292,41 @@ kernel.hook('term_resize', function(_, eventData)
   end
 end)
 
---[[
-kernel.hook('key_up', function(_, eventData)
-  local code = eventData[1]
-  if not keyboard.state[code] then
-    return true
-  end
-end)
-]]
-
 kernel.hook('mouse_click', function(_, eventData)
   local x, y = eventData[2], eventData[3]
+  local currentTab = kernel.routines[1]
+
   if y == 1 then
     if x == 1 then
       multishell.setFocus(overviewId)
     elseif x == w then
       if currentTab then
-        multishell.terminate(currentTab.tabId)
+        multishell.terminate(currentTab.uid)
       end
     else
-      for _,tab in pairs(tabs) do
+      for _,tab in pairs(kernel.routines) do
         if not tab.hidden and tab.sx then
           if x >= tab.sx and x <= tab.ex then
-            multishell.setFocus(tab.tabId)
+            multishell.setFocus(tab.uid)
             break
           end
         end
       end
     end
-    downState.mouse = nil
     return true
   end
-  downState.mouse = currentTab
   eventData[3] = eventData[3] - 1
 end)
 
-kernel.hook({ 'mouse_up', 'mouse_drag' }, function(event, eventData)
-  if downState.mouse ~= currentTab then
-    -- don't send mouse up as the mouse click event was on another window
-    if event == 'mouse_up' then
-      downState.mouse = nil
-    end
-
-    return true -- stop propagation
-  end
+kernel.hook({ 'mouse_up', 'mouse_drag' }, function(_, eventData)
   eventData[3] = eventData[3] - 1
 end)
 
 kernel.hook('mouse_scroll', function(_, eventData)
-  local dir, y = eventData[1], eventData[3]
-
-  if y == 1 then
+  if eventData[3] == 1 then
     return true
   end
-
-  if currentTab.terminal.scrollUp then
-    if dir == -1 then
-      currentTab.terminal.scrollUp()
-    else
-      currentTab.terminal.scrollDown()
-    end
-  end
-
-  eventData[3] = y - 1
+  eventData[3] = eventData[3] - 1
 end)
 
 local function startup()
@@ -518,44 +380,10 @@ overviewId = multishell.openTab({
   path = 'sys/apps/Overview.lua',
   isOverview = true,
 })
-tabs[overviewId].title = '+'
+kernel.find(overviewId).title = '+'
 
 multishell.openTab({
   focused = true,
   fn = startup,
   title = 'Autorun',
 })
-
-local currentTabEvents = Util.transpose {
-  'char', 'key', 'key_up',
-  'mouse_click', 'mouse_drag', 'mouse_scroll', 'mouse_up',
-  'paste', 'terminate',
-}
-
-while true do
-  local tEventData = { os.pullEventRaw() }
-  local sEvent = table.remove(tEventData, 1)
-  local stopPropagation
-
-  local eventHooks = kernel.hooks[sEvent]
-  if eventHooks then
-    for i = #eventHooks, 1, -1 do
-      stopPropagation = eventHooks[i](sEvent, tEventData)
-      if stopPropagation then
-        break
-      end
-    end
-  end
-
-  if not stopPropagation then
-    if currentTabEvents[sEvent] then
-      resumeTab(currentTab, sEvent, tEventData)
-
-    else
-      -- Passthrough to all processes
-      for _,key in pairs(Util.keys(tabs)) do
-        resumeTab(tabs[key], sEvent, tEventData)
-      end
-    end
-  end
-end

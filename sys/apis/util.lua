@@ -412,9 +412,9 @@ function Util.httpGet(url, headers)
 end
 
 function Util.download(url, filename)
-  local contents = Util.httpGet(url)
+  local contents, msg = Util.httpGet(url)
   if not contents then
-    error('Failed to download ' .. url)
+    error(string.format('Failed to download %s\n%s', url, msg))
   end
 
   if filename then
@@ -441,6 +441,7 @@ function Util.runUrl(env, url, ...)   -- os.run equivalent
 end
 
 function Util.run(env, path, ...)
+  if type(env) ~= 'table' then error('Util.run: env must be a table', 2) end
   setmetatable(env, { __index = _G })
   local fn, m = loadfile(path, env)
   if fn then

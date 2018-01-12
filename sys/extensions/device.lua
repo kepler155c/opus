@@ -30,6 +30,7 @@ local Util       = require('util')
 local device   = _G.device
 local kernel   = _G.kernel
 local keyboard = _G.device.keyboard
+local mouse    = _G.device.mouse
 local os       = _G.os
 
 kernel.hook('peripheral', function(_, eventData)
@@ -72,6 +73,23 @@ kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
   if hotkey and keyboard.hotkeys[hotkey] then
     keyboard.hotkeys[hotkey](event, eventData)
   end
+end)
+
+kernel.hook({ 'mouse_click', 'mouse_up', 'mouse_drag' }, function(event, eventData)
+  local button = eventData[1]
+  if event == 'mouse_click' then
+    mouse.state[button] = true
+  else
+    if not mouse.state[button] then
+      return true -- ensure mouse ups are only generated if a mouse down was sent
+    end
+    mouse.state[button] = nil
+  end
+end)
+
+kernel.hook('kernel_focus', function()
+  Util.clear(keyboard.state)
+  Util.clear(mouse.state)
 end)
 
 function keyboard.addHotkey(code, fn)

@@ -125,9 +125,9 @@ function Manager:init()
           focused = true })
 
       elseif ch and self.currentPage then
-        if not self.currentPage.parent.device.side then
+        --if not self.currentPage.parent.device.side then
           self:click(ch, button, x, y)
-        end
+        --end
       end
     end,
 

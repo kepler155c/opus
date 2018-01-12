@@ -6,10 +6,9 @@
   * background read buffering
 ]]--
 
-local multishell = _ENV.multishell
 local os = _G.os
 
-multishell.setTitle(multishell.getCurrent(), 'Net transport')
+_ENV._APP_TITLE = 'Net transport'
 
 local computerId = os.getComputerID()
 

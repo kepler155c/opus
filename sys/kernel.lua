@@ -1,4 +1,4 @@
-local sandboxEnv = setmetatable({ }, { __index = _G })
+local sandboxEnv = { }
 for k,v in pairs(_ENV) do
   sandboxEnv[k] = v
 end
@@ -8,43 +8,21 @@ _G.requireInjector()
 local Util = require('util')
 
 _G.kernel = {
-  hooks = { }
+  UID = 0,
+  hooks = { },
+  routines = { },
+  terminal = _G.term.current(),
 }
 
 local kernel = _G.kernel
-local fs     = _G.fs
-local shell  = _ENV.shell
+local os     = _G.os
+local term   = _G.term
 
--- user environment
-if not fs.exists('usr/apps') then
-  fs.makeDir('usr/apps')
-end
-if not fs.exists('usr/autorun') then
-  fs.makeDir('usr/autorun')
-end
-if not fs.exists('usr/etc/fstab') then
-  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/develop')
-end
-if not fs.exists('usr/config/shell') then
-  Util.writeTable('usr/config/shell', {
-    aliases  = shell.aliases(),
-    path     = 'usr/apps:sys/apps:' .. shell.path(),
-    lua_path = '/sys/apis:/usr/apis',
-  })
-end
-
--- shell environment
-local config = Util.readTable('usr/config/shell')
-if config.aliases then
-  for k in pairs(shell.aliases()) do
-    shell.clearAlias(k)
-  end
-  for k,v in pairs(config.aliases) do
-    shell.setAlias(k, v)
-  end
-end
-shell.setPath(config.path)
-_G.LUA_PATH = config.lua_path
+local focusedRoutineEvents = Util.transpose {
+  'char', 'key', 'key_up',
+  'mouse_click', 'mouse_drag', 'mouse_scroll', 'mouse_up',
+  'paste', 'terminate',
+}
 
 -- any function that runs in a kernel hook does not run in
 -- a separate coroutine or have a window. an error in a hook
@@ -73,11 +51,158 @@ function kernel.unhook(event, fn)
   end
 end
 
--- extensions
-local dir = 'sys/extensions'
-for _,file in ipairs(fs.list(dir)) do
-  local s, m = Util.run(sandboxEnv, 'sys/apps/shell', fs.combine(dir, file))
-  if not s then
-    error(m)
+local Routine = { }
+
+function Routine:resume(event, ...)
+  if not self.co or coroutine.status(self.co) == 'dead' then
+    return
   end
+
+  if not self.filter or self.filter == event or event == "terminate" then
+    term.redirect(self.terminal)
+
+    local previous = kernel.running
+    kernel.running = self -- stupid shell set title
+    local ok, result = coroutine.resume(self.co, event, ...)
+    kernel.running = previous
+
+    self.terminal = term.current()
+    if ok then
+      self.filter = result
+    else
+      _G.printError(result)
+    end
+    if coroutine.status(self.co) == 'dead' then
+      Util.removeByValue(kernel.routines, self)
+      if #kernel.routines > 0 then
+        os.queueEvent('kernel_focus', kernel.routines[1].uid)
+      end
+    end
+    return ok, result
+  end
+end
+
+function kernel.getFocused()
+  return kernel.routines[1]
+end
+
+function kernel.getCurrent()
+  return kernel.running
+end
+
+function kernel.newRoutine(args)
+  kernel.UID = kernel.UID + 1
+
+  args = args or { }
+
+  local routine = setmetatable(args, { __index = Routine })
+  routine.uid = kernel.UID
+
+  return routine
+end
+
+function kernel.run(routine)
+  routine.timestamp = os.clock()
+  routine.terminal = routine.terminal or kernel.terminal
+  routine.window = routine.window or kernel.window
+  routine.env = Util.shallowCopy(routine.env or sandboxEnv)
+
+  routine.co = routine.co or coroutine.create(function()
+    local result, err
+
+    if routine.fn then
+      result, err = Util.runFunction(routine.env, routine.fn, table.unpack(routine.args or { } ))
+    elseif routine.path then
+      result, err = Util.run(routine.env, routine.path, table.unpack(routine.args or { } ))
+    else
+      err = 'kernel: invalid routine'
+    end
+
+    if not result and err and err ~= 'Terminated' then
+      _G.printError(tostring(err))
+    end
+  end)
+
+  table.insert(kernel.routines, routine)
+
+  local previousTerm = term.current()
+  local s, m = routine:resume()
+  term.redirect(previousTerm)
+
+  return s, m
+end
+
+function kernel.raise(uid)
+  local routine = Util.find(kernel.routines, 'uid', uid)
+
+  if routine then
+    local previous = kernel.routines[1]
+    if routine ~= previous then
+      Util.removeByValue(kernel.routines, routine)
+      table.insert(kernel.routines, 1, routine)
+    end
+    os.queueEvent('kernel_focus', routine.uid, previous and previous.uid)
+    return true
+  end
+  return false
+end
+
+function kernel.lower(uid)
+  local routine = Util.find(kernel.routines, 'uid', uid)
+
+  if routine and #kernel.routines > 1 then
+    Util.removeByValue(kernel.routines, routine)
+    table.insert(kernel.routines, routine)
+    return true
+  end
+  return false
+end
+
+function kernel.find(uid)
+  return Util.find(kernel.routines, 'uid', uid)
+end
+
+function kernel.halt()
+  os.queueEvent('kernel_halt')
+end
+
+function kernel.event(event, eventData)
+  local stopPropagation
+
+  local eventHooks = kernel.hooks[event]
+  if eventHooks then
+    for i = #eventHooks, 1, -1 do
+      local s, m = pcall(function()
+        stopPropagation = eventHooks[i](event, eventData)
+      end)
+      if not s then
+        error(m)
+      end
+      if stopPropagation then
+        break
+      end
+    end
+  end
+
+  if not stopPropagation then
+    if focusedRoutineEvents[event] then
+      local active = kernel.routines[1]
+      if active then
+        active:resume(event, table.unpack(eventData))
+      end
+    else
+      -- Passthrough to all processes
+      for _,routine in pairs(Util.shallowCopy(kernel.routines)) do
+        routine:resume(event, table.unpack(eventData))
+      end
+    end
+  end
+end
+
+function kernel.start()
+  repeat
+    local eventData = { os.pullEventRaw() }
+    local event = table.remove(eventData, 1)
+    kernel.event(event, eventData)
+  until event == 'kernel_halt' or not kernel.routines[1]
 end

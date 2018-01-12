@@ -17,7 +17,9 @@ sandboxEnv.exit = function() Event.exitPullEvents() end
 sandboxEnv._echo = function( ... ) return { ... } end
 injector(sandboxEnv)
 
-multishell.setTitle(multishell.getCurrent(), 'Lua')
+if multishell and multishell.setTitle then
+  multishell.setTitle(multishell.getCurrent(), 'Lua')
+end
 UI:configure('Lua', ...)
 
 local command = ''
@@ -143,9 +145,6 @@ function page:eventHandler(event)
     self.prompt:updateCursor()
 
   elseif event.type == 'device' then
-    if not _G.device then
-      sandboxEnv.device = Peripheral.getList()
-    end
     self:setPrompt('device', true)
     self:executeStatement('device')
 

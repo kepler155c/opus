@@ -295,8 +295,9 @@ function fs.loadTab(path)
           fs.mount(table.unpack(Util.matches(l)))
         end)
         if not s then
-          printError('Mount failed')
-          printError(l)
+          _G.printError('Mount failed')
+          _G.printError(l)
+          _G.printError(m)
         end
       end
     end

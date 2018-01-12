@@ -1,4 +1,4 @@
-local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/develop/sys/apis'
+local DEFAULT_UPATH = 'https://raw.githubusercontent.com/kepler155c/opus/develop-1.8/sys/apis'
 local PASTEBIN_URL  = 'http://pastebin.com/raw'
 local GIT_URL       = 'https://raw.githubusercontent.com'
 

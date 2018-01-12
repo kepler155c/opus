@@ -165,7 +165,7 @@
     run = "Events.lua",
   },
   [ "2a4d562b1d9a9c90bdede6fac8ce4f7402462b86" ] = {
-    title = "Tabs",
+    title = "Tasks",
     category = "System",
     icon = "\0307 \0303\0317__\0307\031   \
 \0303     \
