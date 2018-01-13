@@ -5,6 +5,7 @@ local Util  = require('util')
 
 local device     = _G.device
 local fs         = _G.fs
+local multishell = _ENV.multishell
 local network    = _G.network
 local os         = _G.os
 local printError = _G.printError
@@ -13,7 +14,9 @@ if not device.wireless_modem then
   return
 end
 
-_ENV._APP_TITLE = 'Net Daemon'
+if multishell and multishell.setTitle then
+  multishell.setTitle(multishell.getCurrent(), 'Net Daemon')
+end
 
 print('Net daemon started')
 

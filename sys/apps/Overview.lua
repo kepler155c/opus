@@ -128,6 +128,7 @@ function UI.VerticalTabBar:setParent()
     c.x = 1
     c.y = k + 1
     c.ox, c.oy = c.x, c.y
+    c.ow = 8
     c.width = 8
   end
 end

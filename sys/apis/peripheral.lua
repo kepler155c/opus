@@ -127,11 +127,17 @@ local function getProxy(pi)
     error("Timed out attaching peripheral: " .. pi.uri)
   end
 
+  -- write the uri of the periperal we are requesting...
+  -- ie. type/monitor
   socket:write(pi.path)
   local proxy = socket:read(3)
 
   if not proxy then
     error("Timed out attaching peripheral: " .. pi.uri)
+  end
+
+  if type(proxy) == 'string' then
+    error(proxy)
   end
 
   local methods = proxy.methods
@@ -165,6 +171,9 @@ local function getProxy(pi)
             queue = nil
             socket:read()
           end)
+        end
+        if not socket.connected then
+          error("Timed out communicating with peripheral: " .. pi.uri)
         end
 
         table.insert(queue, {
@@ -222,7 +231,7 @@ end
 function Peripheral.lookup(uri)
   local pi = parse(uri)
 
-  if pi.host then
+  if pi.host and _G.device.wireless_modem then
     return getProxy(pi)
   end
 

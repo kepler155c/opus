@@ -6,7 +6,40 @@ local _gsub  = string.gsub
 
 local Terminal = { }
 
-function Terminal.scrollable(ct, size)
+function Terminal.scrollable(win, size)
+  local w, h = win.getSize()
+  local scrollPos = 0
+  local scp = win.setCursorPos
+
+  win.setCursorPos = function(x, y)
+    scp(x, y)
+    if y > scrollPos + h then
+      win.scrollTo(y - h)
+    elseif y < scrollPos then
+      win.scrollTo(y - 2)
+    end
+  end
+
+  win.scrollUp = function()
+    win.scrollTo(scrollPos - 1)
+  end
+
+  win.scrollDown = function()
+    win.scrollTo(scrollPos + 1)
+  end
+
+  win.scrollTo = function(p)
+    p = math.min(math.max(p, 0), size)
+    if p ~= scrollPos then
+      scrollPos = p
+      win.reposition(1, -scrollPos + 1, w, h + size)
+    end
+  end
+
+  win.reposition(1, 1, w, h + size, true)
+end
+
+function Terminal.scrollable2(ct, size)
 
   local w, h = ct.getSize()
   local win = _G.window.create(ct, 1, 1, w, h + size, true)
@@ -63,7 +96,6 @@ function Terminal.scrollable(ct, size)
 
   return win
 end
-
 function Terminal.toGrayscale(ct)
 
   local scolors = {

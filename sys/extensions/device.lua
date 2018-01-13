@@ -83,7 +83,9 @@ kernel.hook({ 'mouse_click', 'mouse_up', 'mouse_drag' }, function(event, eventDa
     if not mouse.state[button] then
       return true -- ensure mouse ups are only generated if a mouse down was sent
     end
-    mouse.state[button] = nil
+    if event == 'mouse_up' then
+      mouse.state[button] = nil
+    end
   end
 end)
 

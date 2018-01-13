@@ -1,9 +1,8 @@
-local injector = _G.requireInjector or load(http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
+local injector = _G.requireInjector or load(_G.http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
 injector()
 
 local Event      = require('event')
 local History    = require('history')
-local Peripheral = require('peripheral')
 local UI         = require('ui')
 local Util       = require('util')
 

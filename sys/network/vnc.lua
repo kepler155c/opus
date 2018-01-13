@@ -2,16 +2,18 @@ local Event  = require('event')
 local Socket = require('socket')
 local Util   = require('util')
 
+local os       = _G.os
+local terminal = _ENV.multishell.term
+
 local function vncHost(socket)
   local methods = { 'blit', 'clear', 'clearLine', 'setCursorPos', 'write',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
                     'setBackgroundColour', 'scroll', 'setCursorBlink', }
 
-  socket.term = multishell.term
-  socket.oldTerm = Util.shallowCopy(socket.term)
+  local oldTerm = Util.shallowCopy(terminal)
 
   for _,k in pairs(methods) do
-    socket.term[k] = function(...)
+    terminal[k] = function(...)
       if not socket.queue then
         socket.queue = { }
         Event.onTimeout(0, function()
@@ -23,7 +25,7 @@ local function vncHost(socket)
         f = k,
         args = { ... },
       })
-      socket.oldTerm[k](...)
+      oldTerm[k](...)
     end
   end
 
@@ -35,17 +37,17 @@ local function vncHost(socket)
     end
 
     if data.type == 'shellRemote' then
-      os.queueEvent(unpack(data.event))
+      os.queueEvent(table.unpack(data.event))
     elseif data.type == 'termInfo' then
-      socket.term.getSize = function()
+      terminal.getSize = function()
         return data.width, data.height
       end
       os.queueEvent('term_resize')
     end
   end
 
-  for k,v in pairs(socket.oldTerm) do
-    socket.term[k] = v
+  for k,v in pairs(oldTerm) do
+    terminal[k] = v
   end
   os.queueEvent('term_resize')
 end

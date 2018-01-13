@@ -20,11 +20,7 @@ local overviewId
 local tabsDirty = false
 local closeInd = Util.getVersion() >= 1.76 and '\215' or '*'
 
-multishell.term = term.current() --deprecated
-
--- redirect kernel output to a window
-kernel.window = window.create(parentTerm, 1, 2, w, h - 1, false)
-kernel.terminal = kernel.window
+multishell.term = parentTerm --deprecated
 
 local config = {
   standard = {
@@ -156,6 +152,7 @@ function multishell.hideTab(tabId)
   local tab = kernel.find(tabId)
   if tab then
     tab.hidden = true
+    kernel.lower(tab.uid)
     redrawMenu()
   end
 end
@@ -224,6 +221,7 @@ kernel.hook('multishell_redraw', function()
   local currentTab = kernel.routines[1]
 
   for _,tab in pairs(kernel.routines) do
+tab.title = tab.env._APP_TITLE or tab.title
     if tab.hidden and tab ~= currentTab then
       tab.width = 0
     else

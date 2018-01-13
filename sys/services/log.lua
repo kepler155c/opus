@@ -1,7 +1,10 @@
 _G.requireInjector()
 
+--[[
+  Adds the control-d hotkey to view the kernel log.
+]]
+
 local Terminal = require('terminal')
-local Util     = require('util')
 
 local kernel     = _G.kernel
 local keyboard   = _G.device.keyboard
@@ -9,19 +12,20 @@ local multishell = _ENV.multishell
 local os         = _G.os
 local term       = _G.term
 
-_ENV._APP_TITLE = 'Debug'
+if multishell and multishell.setTitle then
+  multishell.setTitle(multishell.getCurrent(), 'System Log')
+end
 
-term.redirect(Terminal.scrollable(term.current(), 50))
-
-local tabId = multishell.getCurrent()
+local routine = kernel.getCurrent()
 local previousId
 
-_G.debug = function(pattern, ...)
-  local oldTerm = term.current()
-  term.redirect(kernel.terminal)
-  Util.print(pattern, ...)
-  term.redirect(oldTerm)
-end
+kernel.window.reposition(1, 2)
+Terminal.scrollable(kernel.window, 50)
+
+routine.terminal = kernel.window
+routine.window = kernel.window
+
+term.redirect(routine.window)
 
 kernel.hook('mouse_scroll', function(_, eventData)
   local dir, y = eventData[1], eventData[3]
@@ -38,22 +42,15 @@ kernel.hook('mouse_scroll', function(_, eventData)
   end
 end)
 
-print('Debug started')
-print('Press ^d to activate debug window')
-
 keyboard.addHotkey('control-d', function()
-  local currentId = multishell.getFocus()
-  if currentId ~= tabId then
-    previousId = currentId
-    multishell.setFocus(tabId)
+  local current = kernel.getFocused()
+  if current.uid ~= routine.uid then
+    previousId = current.uid
+    kernel.raise(routine.uid)
   elseif previousId then
-    multishell.setFocus(previousId)
+    kernel.raise(previousId)
   end
 end)
 
 os.pullEventRaw('terminate')
-
-print('Debug stopped')
-
-_G.debug = function() end
 keyboard.removeHotkey('control-d')

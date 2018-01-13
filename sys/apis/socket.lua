@@ -9,7 +9,6 @@ local os        = _G.os
 local socketClass = { }
 
 function socketClass:read(timeout)
-
   local data, distance = _G.transport.read(self)
   if data then
     return data, distance
@@ -30,6 +29,9 @@ function socketClass:read(timeout)
       if data then
         os.cancelTimer(timerId)
         return data, distance
+      end
+      if not self.connected then
+        break
       end
 
     elseif e == 'timer' and id == timerId then
@@ -104,6 +106,9 @@ local function newSocket(isLoopback)
 end
 
 function Socket.connect(host, port)
+  if not device.wireless_modem then
+    return false, 'Wireless modem not found'
+  end
 
   local socket = newSocket(host == os.getComputerID())
   socket.dhost = tonumber(host)
@@ -149,7 +154,6 @@ function Socket.connect(host, port)
 end
 
 local function trusted(msg, port)
-
   if port == 19 or msg.shost == os.getComputerID() then
     -- no auth for trust server or loopback
     return true
@@ -172,7 +176,6 @@ local function trusted(msg, port)
 end
 
 function Socket.server(port)
-
   device.wireless_modem.open(port)
   Logger.log('socket', 'Waiting for connections on port ' .. port)
 

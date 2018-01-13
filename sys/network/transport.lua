@@ -2,16 +2,14 @@
   Low level socket protocol implementation.
 
   * sequencing
-  * write acknowledgements
   * background read buffering
 ]]--
 
+local Event = require('event')
+
 local os = _G.os
 
-_ENV._APP_TITLE = 'Net transport'
-
 local computerId = os.getComputerID()
-
 local transport = {
   timers  = { },
   sockets = { },
@@ -61,21 +59,18 @@ function transport.close(socket)
   transport.sockets[socket.sport] = nil
 end
 
-print('Net transport started')
+Event.on('timer', function(_, timerId)
+  local socket = transport.timers[timerId]
 
-while true do
-  local e, timerId, dport, dhost, msg, distance = os.pullEvent()
+  if socket and socket.connected then
+    print('transport timeout - closing socket ' .. socket.sport)
+    socket:close()
+    transport.timers[timerId] = nil
+  end
+end)
 
-  if e == 'timer' then
-    local socket = transport.timers[timerId]
-
-    if socket and socket.connected then
-      debug('transport timeout - closing socket ' .. socket.sport)
-      socket:close()
-      transport.timers[timerId] = nil
-    end
-
-  elseif e == 'modem_message' and dhost == computerId and msg then
+Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
+  if dhost == computerId and msg then
     local socket = transport.sockets[dport]
     if socket and socket.connected then
 
@@ -85,6 +80,7 @@ while true do
         -- received disconnect from other end
         socket.connected = false
         socket:close()
+        os.queueEvent('transport_' .. socket.sport)
 
       elseif msg.type == 'ACK' then
         local ackTimerId = socket.timers[msg.seq]
@@ -105,7 +101,7 @@ while true do
       elseif msg.type == 'DATA' and msg.data then
         socket.activityTimer = os.clock()
         if msg.seq ~= socket.rseq then
-          debug('transport seq error - closing socket ' .. socket.sport)
+          print('transport seq error - closing socket ' .. socket.sport)
           socket:close()
         else
           socket.rseq = socket.rseq + 1
@@ -125,4 +121,6 @@ while true do
       end
     end
   end
-end
+end)
+
+print('Net transport started')

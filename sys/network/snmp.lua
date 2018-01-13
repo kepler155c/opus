@@ -15,7 +15,6 @@ local gpsLastPoint
 local gpsLastRequestTime
 
 local function snmpConnection(socket)
-
   while true do
     local msg = socket:read()
     if not msg then
@@ -98,7 +97,6 @@ local function snmpConnection(socket)
 end
 
 Event.addRoutine(function()
-
   print('snmp: listening on port 161')
 
   while true do
@@ -137,7 +135,6 @@ local info = {
 local infoTimer = os.clock()
 
 local function sendInfo()
-
   if os.clock() - infoTimer >= 1 then -- don't flood
     infoTimer = os.clock()
     info.label = os.getComputerLabel()

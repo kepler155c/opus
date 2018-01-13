@@ -24,6 +24,12 @@ local focusedRoutineEvents = Util.transpose {
   'paste', 'terminate',
 }
 
+_G.debug = function(pattern, ...)
+  local oldTerm = term.redirect(kernel.terminal)
+  Util.print(pattern, ...)
+  term.redirect(oldTerm)
+end
+
 -- any function that runs in a kernel hook does not run in
 -- a separate coroutine or have a window. an error in a hook
 -- function will crash the system.
@@ -151,6 +157,13 @@ function kernel.lower(uid)
   local routine = Util.find(kernel.routines, 'uid', uid)
 
   if routine and #kernel.routines > 1 then
+    if routine == kernel.routines[1] then
+      local nextRoutine = kernel.routines[2]
+      if nextRoutine then
+        kernel.raise(nextRoutine.uid)
+      end
+    end
+
     Util.removeByValue(kernel.routines, routine)
     table.insert(kernel.routines, routine)
     return true
@@ -172,12 +185,7 @@ function kernel.event(event, eventData)
   local eventHooks = kernel.hooks[event]
   if eventHooks then
     for i = #eventHooks, 1, -1 do
-      local s, m = pcall(function()
-        stopPropagation = eventHooks[i](event, eventData)
-      end)
-      if not s then
-        error(m)
-      end
+      stopPropagation = eventHooks[i](event, eventData)
       if stopPropagation then
         break
       end
@@ -199,10 +207,23 @@ function kernel.event(event, eventData)
   end
 end
 
-function kernel.start()
-  repeat
-    local eventData = { os.pullEventRaw() }
-    local event = table.remove(eventData, 1)
-    kernel.event(event, eventData)
-  until event == 'kernel_halt' or not kernel.routines[1]
+function kernel.start(terminal, kernelWindow)
+  kernel.window = kernelWindow
+  kernel.terminal = kernel.window
+
+  local s, m = pcall(function()
+    repeat
+      local eventData = { os.pullEventRaw() }
+      local event = table.remove(eventData, 1)
+      kernel.event(event, eventData)
+    until event == 'kernel_halt' or not kernel.routines[1]
+  end)
+
+  kernel.window.setVisible(true)
+  if not s then
+    term.redirect(kernel.window)
+    print('\nCrash detected\n')
+    _G.printError(m)
+  end
+  term.redirect(terminal)
 end

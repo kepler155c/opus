@@ -22,6 +22,7 @@ Event.addRoutine(function()
 -- need to prevent multiple shares
         if not peripheral then
           print('peripheral: invalid peripheral ' .. uri)
+          socket:write('Invalid peripheral: ' .. uri)
         else
           print('peripheral: proxing ' .. uri)
           local proxy = {
@@ -60,6 +61,11 @@ Event.addRoutine(function()
             local data = socket:read()
             if not data then
               print('peripheral: lost connection from ' .. socket.dhost)
+              break
+            end
+            if not _G.device[peripheral.name] then
+              print('periperal: detached')
+              socket:close()
               break
             end
             if peripheral[data.fn] then

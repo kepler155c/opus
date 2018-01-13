@@ -563,22 +563,23 @@ function Util.wordWrap(str, limit)
 end
 
 function Util.args(arg)
-  local tab = { remainder = { } }
+  local options, args = { }, { }
 
   local k = 1
   while k <= #arg do
     local v = arg[k]
     if string.sub(v, 1, 1) == '-' then
-      local jopt = string.sub(v, 2)
-      tab[ jopt ] = arg[ k + 1 ]
+      local opt = string.sub(v, 2)
+      options[opt] = arg[k + 1]
       k = k + 1
     else
-      table.insert(tab.remainder, v)
+      table.insert(args, v)
     end
     k = k + 1
   end
-  return tab
+  return options, args
 end
+
 -- http://lua-users.org/wiki/AlternativeGetOpt
 local function getopt( arg, options )
   local tab = {}

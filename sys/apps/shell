@@ -330,7 +330,7 @@ end
 local tArgs = { ... }
 if #tArgs > 0 then
   local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
-  return run(_ENV, ...)                   -- maybe _ENV
+  return run(env, ...)
 end
 
 local Config  = require('config')

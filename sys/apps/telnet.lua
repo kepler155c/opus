@@ -10,9 +10,9 @@ local os         = _G.os
 local read       = _G.read
 local term       = _G.term
 
-local args = Util.args({ ... })
+local options, args = Util.args({ ... })
 
-local remoteId = tonumber(table.remove(args.remainder, 1))
+local remoteId = tonumber(table.remove(args, 1) or '')
 if not remoteId then
   print('Enter host ID')
   remoteId = tonumber(read())
@@ -22,8 +22,8 @@ if not remoteId then
   error('Syntax: telnet [-title TITLE] ID [PROGRAM]')
 end
 
-if args.title then
-  multishell.setTitle(multishell.getCurrent(), args.title)
+if options.title then
+  multishell.setTitle(multishell.getCurrent(), options.title)
 end
 
 print('connecting...')
@@ -43,7 +43,7 @@ socket:write({
   width = w,
   height = h,
   isColor = ct.isColor(),
-  program = args.remainder,
+  program = args,
 })
 
 Event.addRoutine(function()
@@ -61,10 +61,10 @@ end)
 ct.clear()
 ct.setCursorPos(1, 1)
 
-local filter = Util.transpose({
+local filter = Util.transpose {
   'char', 'paste', 'key', 'key_up', 'terminate',
   'mouse_scroll', 'mouse_click', 'mouse_drag', 'mouse_up',
-})
+}
 
 while true do
   local e = { os.pullEventRaw() }

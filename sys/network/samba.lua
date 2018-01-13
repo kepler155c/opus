@@ -1,6 +1,8 @@
 local Event  = require('event')
 local Socket = require('socket')
 
+local fs = _G.fs
+
 local fileUid = 0
 local fileHandles = { }
 
@@ -46,10 +48,10 @@ local function sambaConnection(socket)
     end
     local ret
     local s, m = pcall(function()
-  	  ret = fn(unpack(msg.args))
+      ret = fn(unpack(msg.args))
 	  end)
 	  if not s and m then
-		  printError('samba: ' .. m)
+		  _G.printError('samba: ' .. m)
 	  end
     socket:write({ response = ret })
   end
@@ -58,7 +60,6 @@ local function sambaConnection(socket)
 end
 
 Event.addRoutine(function()
-
   print('samba: listening on port 139')
 
   while true do
@@ -72,11 +73,11 @@ Event.addRoutine(function()
   end
 end)
 
-Event.on('network_attach', function(e, computer)
+Event.on('network_attach', function(_, computer)
   fs.mount(fs.combine('network', computer.label), 'netfs', computer.id)
 end)
 
-Event.on('network_detach', function(e, computer)
+Event.on('network_detach', function(_, computer)
   print('samba: detaching ' .. computer.label)
   fs.unmount(fs.combine('network', computer.label))
 end)
