@@ -217,10 +217,6 @@ kernel.hook('multishell_redraw', function()
   parentTerm.setCursorPos(1, 1)
   parentTerm.clearLine()
 
-  local function compareTab(a, b)
-    return a.uid < b.uid
-  end
-
   local currentTab = kernel.routines[1]
 
   for _,tab in pairs(kernel.routines) do
@@ -242,6 +238,10 @@ tab.title = tab.env._APP_TITLE or tab.title
     local tab = select(2,
       Util.spairs(kernel.routines, function(a, b) return a.width > b.width end)())
     tab.width = tab.width - 1
+  end
+
+  local function compareTab(a, b)
+    return b.hidden and -1 or a.uid < b.uid
   end
 
   local tabX = 0
