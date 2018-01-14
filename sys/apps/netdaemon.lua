@@ -3,8 +3,6 @@ _G.requireInjector()
 local Event = require('event')
 local Util  = require('util')
 
-_G.network = { }
-
 local device     = _G.device
 local fs         = _G.fs
 local network    = _G.network

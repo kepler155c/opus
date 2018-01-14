@@ -15,6 +15,7 @@ _G.kernel = {
   window = _G.term.current(),
 }
 
+local fs     = _G.fs
 local kernel = _G.kernel
 local os     = _G.os
 local term   = _G.term
@@ -85,6 +86,9 @@ function Routine:resume(event, ...)
       Util.removeByValue(kernel.routines, self)
       if #kernel.routines > 0 then
         os.queueEvent('kernel_focus', kernel.routines[1].uid)
+      end
+      if self.haltOnExit then
+        kernel.halt()
       end
     end
     return ok, result
@@ -229,3 +233,22 @@ function kernel.start()
   end
   term.redirect(kernel.terminal)
 end
+
+local function loadExtensions(runLevel)
+  local dir = 'sys/extensions'
+  local files = fs.list(dir)
+  table.sort(files)
+  for _,file in ipairs(files) do
+    local level, name = file:match('(%d).(%S+).lua')
+--print(name)
+    if tonumber(level) <= runLevel then
+      local s, m = shell.run(fs.combine(dir, file))
+      if not s then
+        error(m)
+      end
+    end
+  end
+end
+
+local args = { ... }
+loadExtensions(args[1] and tonumber(args[1]) or 7)

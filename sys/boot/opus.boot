@@ -3,7 +3,6 @@ local colors = _G.colors
 local fs     = _G.fs
 local http   = _G.http
 local os     = _G.os
-local shell  = _ENV.shell
 local term   = _G.term
 local window = _G.window
 
@@ -16,6 +15,8 @@ for k,v in pairs(_ENV) do
   sandboxEnv[k] = v
 end
 sandboxEnv.multishell = { }
+sandboxEnv.BRANCH = BRANCH
+sandboxEnv.LUA_PATH = 'sys/apis:usr/apis'
 
 _G.debug = function() end
 
@@ -64,24 +65,6 @@ local function splash()
   return splashWindow
 end
 
-local function setLabel()
-  -- Default label
-  if not os.getComputerLabel() then
-    showStatus('Setting computer label')
-
-    local id = os.getComputerID()
-    if _G.turtle then
-      os.setComputerLabel('turtle_' .. id)
-    elseif _G.pocket then
-      os.setComputerLabel('pocket_' .. id)
-    elseif _G.commands then
-      os.setComputerLabel('command_' .. id)
-    else
-      os.setComputerLabel('computer_' .. id)
-    end
-  end
-end
-
 local function makeEnv()
   local env = setmetatable({ }, { __index = _G })
   for k,v in pairs(sandboxEnv) do
@@ -115,62 +98,6 @@ local function runUrl(file, ...)
   error('Failed to download ' .. url)
 end
 
-local function createUserEnvironment(Util)
-  showStatus('Creating user environment')
-
-  if not fs.exists('usr/apps') then
-    fs.makeDir('usr/apps')
-  end
-  if not fs.exists('usr/autorun') then
-    fs.makeDir('usr/autorun')
-  end
-  if not fs.exists('usr/etc/fstab') then
-    Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/' .. BRANCH)
-  end
-end
-
-local function createShellEnvironment(Util)
-  showStatus('Creating shell environment')
-
-  if not fs.exists('usr/config/shell') then
-    Util.writeTable('usr/config/shell', {
-      aliases  = shell.aliases(),
-      path     = 'usr/apps:sys/apps:' .. shell.path(),
-      lua_path = '/sys/apis:/usr/apis',
-    })
-  end
-
-  local config = Util.readTable('usr/config/shell')
-  if config.aliases then
-    for k in pairs(shell.aliases()) do
-      shell.clearAlias(k)
-    end
-    for k,v in pairs(config.aliases) do
-      shell.setAlias(k, v)
-    end
-  end
-  shell.setPath(config.path)
-  sandboxEnv.LUA_PATH = config.lua_path
-end
-
-local function loadExtensions()
-  local dir = 'sys/extensions'
-  local files = fs.list(dir)
-  table.sort(files)
-  for _,file in ipairs(files) do
-    showStatus('Loading ' .. file)
-    local s, m = kernel.run({
-      title = file:match('%d.(%S+).lua'),
-      hidden = true,
-      path = 'sys/apps/shell',
-      args = { fs.combine(dir, file) },
-      terminal = kernelWindow,
-    })
-    if not s then
-      error(m)
-    end
-  end
-end
 
 local args = { ... }
 
@@ -184,39 +111,32 @@ local s, m = pcall(function()
   else
     -- not local, run the file system directly from git
     _G.requireInjector = runUrl('sys/apis/injector.lua')
-    runUrl('sys/extensions/vfs.lua')
+    runUrl('sys/extensions/2.vfs.lua')
 
     -- install file system
     fs.mount('', 'gitfs', GIT_REPO)
   end
 
-  _G.requireInjector()
-  local Util = require('util')
+  showStatus('Starting kernel')
+  run('sys/apps/shell', 'sys/kernel.lua', args[1] and 6 or 7)
 
-  setLabel()
-  createUserEnvironment(Util)
-  createShellEnvironment(Util)
-
-  showStatus('Reticulating splines')
-  Util.run(makeEnv(), 'sys/kernel.lua')
-
-  loadExtensions()
-
-  showStatus('Mounting file systems')
-  fs.loadTab('usr/etc/fstab')
-
-  splashWindow.setVisible(false)
   if args[1] then
-    kernelWindow.setVisible(true)
-    kernelWindow.setVisible(false)
+    local s, m = kernel.run({
+      title = 'startup',
+      path = 'sys/apps/shell',
+      args = args,
+      haltOnExit = true,
+    })
+    if s then
+      kernel.raise(s.uid)
+    else
+      error(m)
+    end
   end
 
-  term.redirect(terminal)
-
-  _G.kernel.run({
-    path = 'sys/apps/shell',
-    args = args[1] and args or { 'sys/apps/multishell' },
-  })
+  splashWindow.setVisible(false)
+  kernelWindow.setVisible(true)
+  _G.kernel.start()
 end)
 
 if not s then
@@ -224,10 +144,7 @@ if not s then
   kernelWindow.setVisible(true)
   print('\nError loading Opus OS\n')
   _G.printError(m .. '\n')
-else
-  if _G.kernel.routines[1] then
-    _G.kernel.start()
-  end
+  term.redirect(terminal)
 end
 
 if fs.restore then

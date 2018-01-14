@@ -14,7 +14,7 @@ local shell      = _ENV.shell
 local term       = _G.term
 local window     = _G.window
 
-local parentTerm = kernel.terminal.parent -- term.current()
+local parentTerm = _G.device.terminal -- term.current()
 local w,h = parentTerm.getSize()
 local overviewId
 local tabsDirty = false
@@ -378,6 +378,7 @@ end
 overviewId = multishell.openTab({
   path = 'sys/apps/Overview.lua',
   isOverview = true,
+  focusd = true,
 })
 kernel.find(overviewId).title = '+'
 
