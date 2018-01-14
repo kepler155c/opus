@@ -26,7 +26,6 @@ if options.title then
   multishell.setTitle(multishell.getCurrent(), options.title)
 end
 
-print('connecting...')
 local socket, msg = Socket.connect(remoteId, 23)
 
 if not socket then
@@ -44,6 +43,7 @@ socket:write({
   height = h,
   isColor = ct.isColor(),
   program = args,
+  pos = { ct.getCursorPos() },
 })
 
 Event.addRoutine(function()
@@ -58,8 +58,8 @@ Event.addRoutine(function()
   end
 end)
 
-ct.clear()
-ct.setCursorPos(1, 1)
+--ct.clear()
+--ct.setCursorPos(1, 1)
 
 local filter = Util.transpose {
   'char', 'paste', 'key', 'key_up', 'terminate',
@@ -77,10 +77,10 @@ while true do
   end
 
   if not socket.connected then
-    print()
-    print('Connection lost')
-    print('Press enter to exit')
-    pcall(read)
+--    print()
+--    print('Connection lost')
+--    print('Press enter to exit')
+--    pcall(read)
     break
   end
 end

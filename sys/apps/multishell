@@ -14,7 +14,7 @@ local shell      = _ENV.shell
 local term       = _G.term
 local window     = _G.window
 
-local parentTerm = term.current()
+local parentTerm = kernel.terminal.parent -- term.current()
 local w,h = parentTerm.getSize()
 local overviewId
 local tabsDirty = false
@@ -128,6 +128,7 @@ function multishell.openTab(tab)
       end
       printError('Press enter to close')
       tab.isDead = true
+      tab.hidden = false
       while true do
         local e, code = os.pullEventRaw('key')
         if e == 'terminate' or e == 'key' and code == keys.enter then
@@ -137,7 +138,7 @@ function multishell.openTab(tab)
     end
   end)
 
-  kernel.run(routine)
+  kernel.launch(routine)
 
   if tab.focused then
     multishell.setFocus(tab.uid)

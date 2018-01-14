@@ -1,23 +1,21 @@
-local Util = require('util')
-
 local colors = _G.colors
 local term   = _G.term
 local _gsub  = string.gsub
 
 local Terminal = { }
 
-function Terminal.scrollable(win, size)
+function Terminal.scrollable(win, parent)
   local w, h = win.getSize()
+  local _, ph = parent.getSize()
   local scrollPos = 0
   local scp = win.setCursorPos
 
   win.setCursorPos = function(x, y)
+  _G._p = y
+    if y > scrollPos + ph then
+      win.scrollTo(y - ph)
+    end
     scp(x, y)
-    if y > scrollPos + h then
-      win.scrollTo(y - h)
-    elseif y < scrollPos then
-      win.scrollTo(y - 2)
-    end
   end
 
   win.scrollUp = function()
@@ -29,75 +27,15 @@ function Terminal.scrollable(win, size)
   end
 
   win.scrollTo = function(p)
-    p = math.min(math.max(p, 0), size)
+    p = math.min(math.max(p, 0), h - ph)
     if p ~= scrollPos then
       scrollPos = p
-      win.reposition(1, -scrollPos + 1, w, h + size)
+      win.reposition(1, -scrollPos + 1, w, h)
     end
   end
-
-  win.reposition(1, 1, w, h + size, true)
 end
 
-function Terminal.scrollable2(ct, size)
-
-  local w, h = ct.getSize()
-  local win = _G.window.create(ct, 1, 1, w, h + size, true)
-  local oldWin = Util.shallowCopy(win)
-  local scrollPos = 0
-
-  local function drawScrollbar(oldPos, newPos)
-    local x, y = oldWin.getCursorPos()
-
-    local pos = math.floor(oldPos / size * (h - 1))
-    oldWin.setCursorPos(w, oldPos + pos + 1)
-    oldWin.write(' ')
-
-    pos = math.floor(newPos / size * (h - 1))
-    oldWin.setCursorPos(w, newPos + pos + 1)
-    oldWin.write('#')
-
-    oldWin.setCursorPos(x, y)
-  end
-
-  win.setCursorPos = function(x, y)
-    oldWin.setCursorPos(x, y)
-    if y > scrollPos + h then
-      win.scrollTo(y - h)
-    elseif y < scrollPos then
-      win.scrollTo(y - 2)
-    end
-  end
-
-  win.scrollUp = function()
-    win.scrollTo(scrollPos - 1)
-  end
-
-  win.scrollDown = function()
-    win.scrollTo(scrollPos + 1)
-  end
-
-  win.scrollTo = function(p)
-    p = math.min(math.max(p, 0), size)
-    if p ~= scrollPos then
-      drawScrollbar(scrollPos, p)
-      scrollPos = p
---local w, h = win.getSize()
-      win.reposition(1, -scrollPos + 1, w, h + size)
-    end
-  end
-
-  win.clear = function()
-    oldWin.clear()
-    scrollPos = 0
-  end
-
-  drawScrollbar(0, 0)
-
-  return win
-end
 function Terminal.toGrayscale(ct)
-
   local scolors = {
     [ colors.white ] = colors.white,
     [ colors.orange ] = colors.lightGray,
@@ -183,7 +121,7 @@ function Terminal.mirror(ct, dt)
       if dt[k] then
         dt[k](...)
       end
-      return unpack(ret)
+      return table.unpack(ret)
     end
   end
 end

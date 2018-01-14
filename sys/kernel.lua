@@ -12,6 +12,7 @@ _G.kernel = {
   hooks = { },
   routines = { },
   terminal = _G.term.current(),
+  window = _G.term.current(),
 }
 
 local kernel = _G.kernel
@@ -25,7 +26,7 @@ local focusedRoutineEvents = Util.transpose {
 }
 
 _G.debug = function(pattern, ...)
-  local oldTerm = term.redirect(kernel.terminal)
+  local oldTerm = term.redirect(kernel.window)
   Util.print(pattern, ...)
   term.redirect(oldTerm)
 end
@@ -65,7 +66,7 @@ function Routine:resume(event, ...)
   end
 
   if not self.filter or self.filter == event or event == "terminate" then
-    term.redirect(self.terminal)
+    local previousTerm = term.redirect(self.terminal)
 
     local previous = kernel.running
     kernel.running = self -- stupid shell set title
@@ -73,6 +74,8 @@ function Routine:resume(event, ...)
     kernel.running = previous
 
     self.terminal = term.current()
+    term.redirect(previousTerm)
+
     if ok then
       self.filter = result
     else
@@ -103,16 +106,15 @@ function kernel.newRoutine(args)
 
   local routine = setmetatable(args, { __index = Routine })
   routine.uid = kernel.UID
+  routine.timestamp = os.clock()
+  routine.env = args.env or Util.shallowCopy(sandboxEnv)
+  routine.terminal = args.terminal or kernel.terminal
+  routine.window = args.window or kernel.window
 
   return routine
 end
 
-function kernel.run(routine)
-  routine.timestamp = os.clock()
-  routine.terminal = routine.terminal or kernel.terminal
-  routine.window = routine.window or kernel.window
-  routine.env = Util.shallowCopy(routine.env or sandboxEnv)
-
+function kernel.launch(routine)
   routine.co = routine.co or coroutine.create(function()
     local result, err
 
@@ -131,11 +133,15 @@ function kernel.run(routine)
 
   table.insert(kernel.routines, routine)
 
-  local previousTerm = term.current()
   local s, m = routine:resume()
-  term.redirect(previousTerm)
 
-  return s, m
+  return not s and s or routine.uid, m
+end
+
+function kernel.run(args)
+  local routine = kernel.newRoutine(args)
+  kernel.launch(routine)
+  return routine
 end
 
 function kernel.raise(uid)
@@ -207,10 +213,7 @@ function kernel.event(event, eventData)
   end
 end
 
-function kernel.start(terminal, kernelWindow)
-  kernel.window = kernelWindow
-  kernel.terminal = kernel.window
-
+function kernel.start()
   local s, m = pcall(function()
     repeat
       local eventData = { os.pullEventRaw() }
@@ -221,9 +224,8 @@ function kernel.start(terminal, kernelWindow)
 
   kernel.window.setVisible(true)
   if not s then
-    term.redirect(kernel.window)
     print('\nCrash detected\n')
     _G.printError(m)
   end
-  term.redirect(terminal)
+  term.redirect(kernel.terminal)
 end

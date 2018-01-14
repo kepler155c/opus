@@ -3,7 +3,7 @@ local Socket = require('socket')
 local Util   = require('util')
 
 local os       = _G.os
-local terminal = _ENV.multishell.term
+local terminal = _G.device.terminal
 
 local function vncHost(socket)
   local methods = { 'blit', 'clear', 'clearLine', 'setCursorPos', 'write',

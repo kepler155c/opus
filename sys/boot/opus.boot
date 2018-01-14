@@ -23,6 +23,7 @@ local terminal = term.current()
 local w, h = term.getSize()
 local kernelWindow = window.create(terminal, 1, 1, w, h, false)
 term.redirect(kernelWindow)
+kernelWindow.parent = terminal
 local splashWindow
 
 local function showStatus(status, ...)
@@ -152,11 +153,19 @@ local function createShellEnvironment(Util)
   sandboxEnv.LUA_PATH = config.lua_path
 end
 
-local function loadExtensions(Util)
+local function loadExtensions()
   local dir = 'sys/extensions'
-  for _,file in ipairs(fs.list(dir)) do
+  local files = fs.list(dir)
+  table.sort(files)
+  for _,file in ipairs(files) do
     showStatus('Loading ' .. file)
-    local s, m = Util.run(makeEnv(), 'sys/apps/shell', fs.combine(dir, file))
+    local s, m = kernel.run({
+      title = file:match('%d.(%S+).lua'),
+      hidden = true,
+      path = 'sys/apps/shell',
+      args = { fs.combine(dir, file) },
+      terminal = kernelWindow,
+    })
     if not s then
       error(m)
     end
@@ -191,7 +200,7 @@ local s, m = pcall(function()
   showStatus('Reticulating splines')
   Util.run(makeEnv(), 'sys/kernel.lua')
 
-  loadExtensions(Util)
+  loadExtensions()
 
   showStatus('Mounting file systems')
   fs.loadTab('usr/etc/fstab')
@@ -199,15 +208,15 @@ local s, m = pcall(function()
   splashWindow.setVisible(false)
   if args[1] then
     kernelWindow.setVisible(true)
+    kernelWindow.setVisible(false)
   end
-  --term.clear()
-  --term.redirect(terminal)
 
-  _G.kernel.run(_G.kernel.newRoutine({
+  term.redirect(terminal)
+
+  _G.kernel.run({
     path = 'sys/apps/shell',
     args = args[1] and args or { 'sys/apps/multishell' },
-    terminal = terminal,
-  }))
+  })
 end)
 
 if not s then
@@ -217,7 +226,7 @@ if not s then
   _G.printError(m .. '\n')
 else
   if _G.kernel.routines[1] then
-    _G.kernel.start(terminal, kernelWindow)
+    _G.kernel.start()
   end
 end
 

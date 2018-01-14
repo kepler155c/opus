@@ -25,7 +25,7 @@ local page = UI.Page {
       { heading = 'Time',   key = 'timestamp' },
     },
     values = multishell.getTabs(),
-    sortColumn = 'title',
+    sortColumn = 'uid',
     autospace = true,
   },
   accelerators = {

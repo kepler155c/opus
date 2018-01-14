@@ -2,15 +2,11 @@ local Event  = require('event')
 local Socket = require('socket')
 local Util   = require('util')
 
-local multishell = _ENV.multishell
-local os         = _G.os
-local term       = _G.term
+local kernel = _G.kernel
+local term   = _G.term
+local window = _G.window
 
 local function telnetHost(socket)
-  _G.requireInjector()
-
-  local Event = require('event')
-
   local methods = { 'clear', 'clearLine', 'setCursorPos', 'write', 'blit',
                     'setTextColor', 'setTextColour', 'setBackgroundColor',
                     'setBackgroundColour', 'scroll', 'setCursorBlink', }
@@ -21,11 +17,12 @@ local function telnetHost(socket)
     return
   end
 
-  socket.term = term.current()
-  local oldWindow = Util.shallowCopy(socket.term)
+  local win = window.create(_G.device.terminal, 1, 1, termInfo.width, termInfo.height, false)
+  win.setCursorPos(table.unpack(termInfo.pos))
 
   for _,k in pairs(methods) do
-    socket.term[k] = function(...)
+    local fn = win[k]
+    win[k] = function(...)
 
       if not socket.queue then
         socket.queue = { }
@@ -39,34 +36,36 @@ local function telnetHost(socket)
         f = k,
         args = { ... },
       })
-      oldWindow[k](...)
+      fn(...)
     end
   end
 
-  socket.term.getSize = function()
-    return termInfo.width, termInfo.height
-  end
-
-  local shellThread = Event.addRoutine(function()
-    os.run(_ENV, 'sys/apps/shell', table.unpack(termInfo.program))
-    Event.exitPullEvents()
-  end)
+  local shellThread = kernel.run({
+    terminal = win,
+    window = win,
+    title = 'Telnet client',
+    hidden = true,
+    co = coroutine.create(function()
+      Util.run(_ENV, 'sys/apps/shell', table.unpack(termInfo.program))
+      if socket.queue then
+        socket:write(socket.queue)
+      end
+      socket:close()
+    end)
+  })
 
   Event.addRoutine(function()
     while true do
       local data = socket:read()
       if not data then
-        Event.exitPullEvents()
+        shellThread:resume('terminate')
         break
       end
+      local previousTerm = term.current()
       shellThread:resume(table.unpack(data))
+      term.redirect(previousTerm)
     end
   end)
-
-  Event.pullEvents()
-
-  socket:close()
-  shellThread:terminate()
 end
 
 Event.addRoutine(function()
@@ -76,11 +75,8 @@ Event.addRoutine(function()
 
     print('telnet: connection from ' .. socket.dhost)
 
-    multishell.openTab({
-      fn = telnetHost,
-      args = { socket },
-      title = 'Telnet Client',
-      hidden = true,
-    })
+    Event.addRoutine(function()
+      telnetHost(socket)
+    end)
   end
 end)

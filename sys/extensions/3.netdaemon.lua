@@ -3,45 +3,40 @@ _G.requireInjector()
 local Event = require('event')
 local Util  = require('util')
 
+_G.network = { }
+
 local device     = _G.device
 local fs         = _G.fs
-local multishell = _ENV.multishell
 local network    = _G.network
 local os         = _G.os
 local printError = _G.printError
 
 if not device.wireless_modem then
-  return
-end
-
-if multishell and multishell.setTitle then
-  multishell.setTitle(multishell.getCurrent(), 'Net Daemon')
+	return
 end
 
 print('Net daemon started')
 
 for _,file in pairs(fs.list('sys/network')) do
-  local fn, msg = Util.run(_ENV, 'sys/network/' .. file)
-  if not fn then
-    printError(msg)
-  end
+	local fn, msg = Util.run(_ENV, 'sys/network/' .. file)
+	if not fn then
+		printError(msg)
+	end
 end
 
 Event.on('device_detach', function()
-  if not device.wireless_modem then
-    Event.exitPullEvents()
-  end
+	if not device.wireless_modem then
+		Event.exitPullEvents()
+	end
 end)
 
 Event.pullEvents()
 
 for _,c in pairs(network) do
-  c.active = false
-  os.queueEvent('network_detach', c)
+	c.active = false
+	os.queueEvent('network_detach', c)
 end
 os.queueEvent('network_down')
 Event.pullEvent('network_down')
 
-Util.clear(_G.network)
-
-print('Net daemon stopped')
+Util.clear(network)
