@@ -2,7 +2,6 @@
 local colors = _G.colors
 local fs     = _G.fs
 local http   = _G.http
-local os     = _G.os
 local term   = _G.term
 local window = _G.window
 
@@ -14,9 +13,7 @@ local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(_ENV) do
   sandboxEnv[k] = v
 end
-sandboxEnv.multishell = { }
 sandboxEnv.BRANCH = BRANCH
-sandboxEnv.LUA_PATH = 'sys/apis:usr/apis'
 
 _G.debug = function() end
 
@@ -34,7 +31,6 @@ local function showStatus(status, ...)
   splashWindow.clearLine()
   splashWindow.setCursorPos((w - #str) / 2, h)
   splashWindow.write(str)
-  os.sleep(.1)
 end
 
 local function splash()
@@ -98,7 +94,6 @@ local function runUrl(file, ...)
   error('Failed to download ' .. url)
 end
 
-
 local args = { ... }
 
 splash()
@@ -117,18 +112,18 @@ local s, m = pcall(function()
     fs.mount('', 'gitfs', GIT_REPO)
   end
 
-  showStatus('Starting kernel')
+  --showStatus('Starting kernel')
   run('sys/apps/shell', 'sys/kernel.lua', args[1] and 6 or 7)
 
   if args[1] then
-    local s, m = kernel.run({
+    local s, m = _G.kernel.run({
       title = 'startup',
       path = 'sys/apps/shell',
       args = args,
       haltOnExit = true,
     })
     if s then
-      kernel.raise(s.uid)
+      _G.kernel.raise(s.uid)
     else
       error(m)
     end

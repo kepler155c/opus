@@ -38,3 +38,5 @@ os.queueEvent('network_down')
 Event.pullEvent('network_down')
 
 Util.clear(network)
+
+print('Net daemon stopped')

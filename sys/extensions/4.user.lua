@@ -33,6 +33,6 @@ if config.aliases then
   end
 end
 shell.setPath(config.path)
---sandboxEnv.LUA_PATH = config.lua_path
+shell.setEnv('LUA_PATH', config.lua_path)
 
 fs.loadTab('usr/etc/fstab')

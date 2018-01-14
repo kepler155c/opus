@@ -1,8 +1,10 @@
-if turtle and device.wireless_modem then
+local modem  = _G.device.wireless_modem
+local turtle = _G.turtle
 
+if turtle and modem then
   local s, m = turtle.run(function()
 
-    requireInjector(getfenv(1))
+    _G.requireInjector()
 
     local Config = require('config')
     local config = {

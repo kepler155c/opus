@@ -7,7 +7,6 @@ local colors     = _G.colors
 local fs         = _G.fs
 local kernel     = _G.kernel
 local keys       = _G.keys
-local multishell = _ENV.multishell
 local os         = _G.os
 local printError = _G.printError
 local shell      = _ENV.shell
@@ -19,6 +18,9 @@ local w,h = parentTerm.getSize()
 local overviewId
 local tabsDirty = false
 local closeInd = Util.getVersion() >= 1.76 and '\215' or '*'
+local multishell = { }
+
+shell.setEnv('multishell', multishell)
 
 multishell.term = parentTerm --deprecated
 
@@ -141,7 +143,7 @@ function multishell.openTab(tab)
   kernel.launch(routine)
 
   if tab.focused then
-    multishell.setFocus(tab.uid)
+    multishell.setFocus(routine.uid)
   else
     redrawMenu()
   end
@@ -349,6 +351,7 @@ local function startup()
         term.write('[PASS] ')
         term.setTextColor(colors.white)
         term.write(fs.combine(directory, file))
+        print()
       else
         if term.isColor() then
           term.setTextColor(colors.red)
@@ -357,11 +360,10 @@ local function startup()
         term.setTextColor(colors.white)
         term.write(fs.combine(directory, file))
         if err then
-          _G.printError(err)
+          _G.printError('\n' .. err)
         end
         success = false
       end
-      print()
     end
   end
 
@@ -370,20 +372,20 @@ local function startup()
   runDir('usr/autorun', shell.run)
 
   if not success then
-    print()
-    error('An autorun program has errored')
+    multishell.setFocus(multishell.getCurrent())
+    printError('\nA startup program has errored')
+    os.pullEvent('terminate')
   end
 end
 
 overviewId = multishell.openTab({
   path = 'sys/apps/Overview.lua',
   isOverview = true,
-  focusd = true,
+  focused = true,
 })
 kernel.find(overviewId).title = '+'
 
 multishell.openTab({
-  focused = true,
   fn = startup,
   title = 'Autorun',
 })

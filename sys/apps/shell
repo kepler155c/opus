@@ -1,18 +1,18 @@
 local parentShell = _ENV.shell
 
 _ENV.shell = { }
-_ENV.multishell = _ENV.multishell or { }
+--_ENV.multishell = _ENV.multishell or { }
 
 local fs         = _G.fs
 local shell      = _ENV.shell
-local multishell = _ENV.multishell
+--local multishell = _ENV.multishell
 
 local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(_ENV) do
   sandboxEnv[k] = v
 end
 sandboxEnv.shell = shell
-sandboxEnv.multishell = multishell
+--sandboxEnv.multishell = multishell
 
 _G.requireInjector()
 
@@ -63,8 +63,8 @@ local function run(env, ...)
     error(err)
   end
 
-  if multishell and multishell.setTitle then
-    multishell.setTitle(multishell.getCurrent(), fs.getName(path))
+  if _ENV.multishell then
+    _ENV.multishell.setTitle(_ENV.multishell.getCurrent(), fs.getName(path))
   end
 
   if isUrl then
@@ -84,15 +84,15 @@ end
 function shell.run(...)
   local oldTitle
 
-  if multishell and multishell.getTitle then
-    oldTitle = multishell.getTitle(multishell.getCurrent())
+  if _ENV.multishell then
+    oldTitle = _ENV.multishell.getTitle(_ENV.multishell.getCurrent())
   end
 
   local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
   local r = { pcall(run, env, ...) }
 
-  if multishell and multishell.setTitle then
-    multishell.setTitle(multishell.getCurrent(), oldTitle or 'shell')
+  if _ENV.multishell then
+    _ENV.multishell.setTitle(_ENV.multishell.getCurrent(), oldTitle or 'shell')
   end
 
   return table.unpack(r)
@@ -275,6 +275,15 @@ function shell.getRunningProgram()
   return tProgramStack[#tProgramStack]
 end
 
+function shell.setEnv(name, value)
+  _ENV[name] = value
+  sandboxEnv[name] = value
+end
+
+function shell.getEnv()
+  return sandboxEnv
+end
+
 function shell.setAlias( _sCommand, _sProgram )
   tAliases[_sCommand] = _sProgram
 end
@@ -306,12 +315,13 @@ function shell.newTab(tabInfo, ...)
       table.insert(tabInfo.args, 1, tabInfo.path)
       tabInfo.path = 'sys/apps/shell'
     end
-    return multishell.openTab(tabInfo)
+    return _ENV.multishell.openTab(tabInfo)
   end
   return nil, 'No such program'
 end
 
 function shell.openTab( ... )
+  -- needs to use multishell.launch .. so we can run with stock multishell
   return shell.newTab({ }, ...)
 end
 
@@ -324,7 +334,7 @@ function shell.openHiddenTab( ... )
 end
 
 function shell.switchTab(tabId)
-  multishell.setFocus(tabId)
+  _ENV.multishell.setFocus(tabId)
 end
 
 local tArgs = { ... }

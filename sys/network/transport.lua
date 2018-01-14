@@ -122,5 +122,3 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
     end
   end
 end)
-
-print('Net transport started')

@@ -19,7 +19,7 @@ local page = UI.Page {
   grid = UI.ScrollingGrid {
     y = 2,
     columns = {
-      { heading = 'ID',     key = 'uid',      width = 4 },
+      { heading = 'ID',     key = 'uid',      width = 3 },
       { heading = 'Title',  key = 'title'     },
       { heading = 'Status', key = 'status'    },
       { heading = 'Time',   key = 'timestamp' },

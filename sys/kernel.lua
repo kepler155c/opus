@@ -1,8 +1,3 @@
-local sandboxEnv = { }
-for k,v in pairs(_ENV) do
-  sandboxEnv[k] = v
-end
-
 _G.requireInjector()
 
 local Util = require('util')
@@ -18,6 +13,7 @@ _G.kernel = {
 local fs     = _G.fs
 local kernel = _G.kernel
 local os     = _G.os
+local shell  = _ENV.shell
 local term   = _G.term
 
 local focusedRoutineEvents = Util.transpose {
@@ -111,7 +107,7 @@ function kernel.newRoutine(args)
   local routine = setmetatable(args, { __index = Routine })
   routine.uid = kernel.UID
   routine.timestamp = os.clock()
-  routine.env = args.env or Util.shallowCopy(sandboxEnv)
+  routine.env = args.env or Util.shallowCopy(shell.getEnv())
   routine.terminal = args.terminal or kernel.terminal
   routine.window = args.window or kernel.window
 
@@ -246,6 +242,7 @@ local function loadExtensions(runLevel)
       if not s then
         error(m)
       end
+      --os.sleep(0)
     end
   end
 end
