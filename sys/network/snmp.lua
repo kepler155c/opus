@@ -3,11 +3,11 @@ local GPS    = require('gps')
 local Socket = require('socket')
 local Util   = require('util')
 
-local device     = _G.device
-local multishell = _ENV.multishell
-local network    = _G.network
-local os         = _G.os
-local turtle     = _G.turtle
+local device  = _G.device
+local kernel  = _G.kernel
+local network = _G.network
+local os      = _G.os
+local turtle  = _G.turtle
 
 -- move this into gps api
 local gpsRequested
@@ -33,7 +33,7 @@ local function snmpConnection(socket)
     elseif msg.type == 'script' then
       local fn, err = loadstring(msg.args, 'script')
       if fn then
-        multishell.openTab({
+        kernel.run({
           fn = fn,
           title = 'script',
         })

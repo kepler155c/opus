@@ -24,15 +24,6 @@ term.redirect(kernelWindow)
 kernelWindow.parent = terminal
 local splashWindow
 
-local function showStatus(status, ...)
-  local str = string.format(status, ...)
-  print(str)
-  splashWindow.setCursorPos(1, h)
-  splashWindow.clearLine()
-  splashWindow.setCursorPos((w - #str) / 2, h)
-  splashWindow.write(str)
-end
-
 local function splash()
   splashWindow = window.create(terminal, 1, 1, w, h, false)
   splashWindow.setTextColor(colors.white)
@@ -57,6 +48,11 @@ local function splash()
       splashWindow.blit(string.rep(' ', #line), string.rep('a', #line), line)
     end
   end
+
+  local str = 'Loading Opus OS...'
+  print(str)
+  splashWindow.setCursorPos((w - #str) / 2, h)
+  splashWindow.write(str)
   splashWindow.setVisible(true)
   return splashWindow
 end
@@ -98,8 +94,6 @@ local args = { ... }
 
 splash()
 local s, m = pcall(function()
-  showStatus('Loading Opus OS...')
-
   -- Install require shim
   if fs.exists('sys/apis/injector.lua') then
     _G.requireInjector = run('sys/apis/injector.lua')
@@ -112,25 +106,28 @@ local s, m = pcall(function()
     fs.mount('', 'gitfs', GIT_REPO)
   end
 
-  --showStatus('Starting kernel')
+  -- runLevel 6 if passed a program to run
+  -- otherwise, runLevel 7 (multishell)
   run('sys/apps/shell', 'sys/kernel.lua', args[1] and 6 or 7)
 
-  if args[1] then
-    local s, m = _G.kernel.run({
-      title = 'startup',
-      path = 'sys/apps/shell',
-      args = args,
-      haltOnExit = true,
-    })
-    if s then
-      _G.kernel.raise(s.uid)
-    else
-      error(m)
+  kernel.hook('kernel_ready', function()
+    splashWindow.setVisible(false)
+    kernelWindow.setVisible(true)
+    if args[1] then
+      local s, m = _G.kernel.run({
+        title = 'startup',
+        path = 'sys/apps/shell',
+        args = args,
+        haltOnExit = true,
+      })
+      if s then
+        _G.kernel.raise(s.uid)
+      else
+        error(m)
+      end
     end
-  end
 
-  splashWindow.setVisible(false)
-  kernelWindow.setVisible(true)
+  end)
   _G.kernel.start()
 end)
 

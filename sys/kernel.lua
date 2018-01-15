@@ -230,22 +230,26 @@ function kernel.start()
   term.redirect(kernel.terminal)
 end
 
-local function loadExtensions(runLevel)
+local function init(runLevel)
+  runLevel = tonumber(runLevel) or error('Invalid run level')
+
   local dir = 'sys/extensions'
   local files = fs.list(dir)
   table.sort(files)
   for _,file in ipairs(files) do
     local level, name = file:match('(%d).(%S+).lua')
---print(name)
     if tonumber(level) <= runLevel then
       local s, m = shell.run(fs.combine(dir, file))
       if not s then
         error(m)
       end
-      --os.sleep(0)
     end
   end
+  os.queueEvent('kernel_ready')
 end
 
-local args = { ... }
-loadExtensions(args[1] and tonumber(args[1]) or 7)
+kernel.run({
+  fn = init,
+  title = 'init',
+  args = { ... },
+})

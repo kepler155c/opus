@@ -1,8 +1,6 @@
 _G.requireInjector()
 
-print('require event')
 local Event = require('event')
-print('require util')
 local Util  = require('util')
 
 local device     = _G.device
@@ -11,7 +9,6 @@ local network    = _G.network
 local os         = _G.os
 local printError = _G.printError
 
-print('check wireless_modem')
 if not device.wireless_modem then
 	return
 end

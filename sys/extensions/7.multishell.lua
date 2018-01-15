@@ -378,14 +378,16 @@ local function startup()
   end
 end
 
-overviewId = multishell.openTab({
-  path = 'sys/apps/Overview.lua',
-  isOverview = true,
-  focused = true,
-})
-kernel.find(overviewId).title = '+'
+kernel.hook('kernel_ready', function()
+  overviewId = multishell.openTab({
+    path = 'sys/apps/Overview.lua',
+    isOverview = true,
+    focused = true,
+  })
+  kernel.find(overviewId).title = '+'
 
-multishell.openTab({
-  fn = startup,
-  title = 'Autorun',
-})
+  multishell.openTab({
+    fn = startup,
+    title = 'Autorun',
+  })
+end)

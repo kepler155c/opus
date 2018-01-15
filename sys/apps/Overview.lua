@@ -366,13 +366,15 @@ function page:eventHandler(event)
 
   elseif event.type == 'lua' then
     multishell.openTab({
-      path = 'sys/apps/Lua.lua',
+      path ='sys/apps/shell',
+      args = { 'sys/apps/Lua.lua' },
       focused = true,
     })
 
   elseif event.type == 'files' then
     multishell.openTab({
-      path = 'sys/apps/Files.lua',
+      path ='sys/apps/shell',
+      args = { 'sys/apps/Files.lua' },
       focused = true,
     })
 
