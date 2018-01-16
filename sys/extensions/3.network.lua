@@ -1,4 +1,5 @@
 local kernel = _G.kernel
+local os     = _G.os
 
 _G.network = { }
 
@@ -18,4 +19,5 @@ end)
 
 if _G.device.wireless_modem then
 	startNetwork()
+	os.sleep(0) -- give the network a cycle to start
 end

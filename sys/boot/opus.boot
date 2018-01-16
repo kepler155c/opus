@@ -1,9 +1,6 @@
 -- Loads the Opus environment regardless if the file system is local or not
-local colors = _G.colors
 local fs     = _G.fs
 local http   = _G.http
-local term   = _G.term
-local window = _G.window
 
 local BRANCH   = 'develop-1.8'
 local GIT_REPO = 'kepler155c/opus/' .. BRANCH
@@ -16,46 +13,6 @@ end
 sandboxEnv.BRANCH = BRANCH
 
 _G.debug = function() end
-
-local terminal = term.current()
-local w, h = term.getSize()
-local kernelWindow = window.create(terminal, 1, 1, w, h, false)
-term.redirect(kernelWindow)
-kernelWindow.parent = terminal
-local splashWindow
-
-local function splash()
-  splashWindow = window.create(terminal, 1, 1, w, h, false)
-  splashWindow.setTextColor(colors.white)
-  if splashWindow.isColor() then
-    splashWindow.setBackgroundColor(colors.black)
-    splashWindow.clear()
-    local opus = {
-      'fffff00',
-      'ffff07000',
-      'ff00770b00 4444',
-      'ff077777444444444',
-      'f07777744444444444',
-      'f0000777444444444',
-      '070000111744444',
-      '777770000',
-      '7777000000',
-      '70700000000',
-      '077000000000',
-    }
-    for k,line in ipairs(opus) do
-      splashWindow.setCursorPos((w - 18) / 2, k + (h - #opus) / 2)
-      splashWindow.blit(string.rep(' ', #line), string.rep('a', #line), line)
-    end
-  end
-
-  local str = 'Loading Opus OS...'
-  print(str)
-  splashWindow.setCursorPos((w - #str) / 2, h)
-  splashWindow.write(str)
-  splashWindow.setVisible(true)
-  return splashWindow
-end
 
 local function makeEnv()
   local env = setmetatable({ }, { __index = _G })
@@ -92,7 +49,6 @@ end
 
 local args = { ... }
 
-splash()
 local s, m = pcall(function()
   -- Install require shim
   if fs.exists('sys/apis/injector.lua') then
@@ -106,37 +62,12 @@ local s, m = pcall(function()
     fs.mount('', 'gitfs', GIT_REPO)
   end
 
-  -- runLevel 6 if passed a program to run
-  -- otherwise, runLevel 7 (multishell)
-  run('sys/apps/shell', 'sys/kernel.lua', args[1] and 6 or 7)
-
-  kernel.hook('kernel_ready', function()
-    splashWindow.setVisible(false)
-    kernelWindow.setVisible(true)
-    if args[1] then
-      local s, m = _G.kernel.run({
-        title = 'startup',
-        path = 'sys/apps/shell',
-        args = args,
-        haltOnExit = true,
-      })
-      if s then
-        _G.kernel.raise(s.uid)
-      else
-        error(m)
-      end
-    end
-
-  end)
-  _G.kernel.start()
+  run('sys/apps/shell', 'sys/kernel.lua', table.unpack(args))
 end)
 
 if not s then
-  splashWindow.setVisible(false)
-  kernelWindow.setVisible(true)
   print('\nError loading Opus OS\n')
   _G.printError(m .. '\n')
-  term.redirect(terminal)
 end
 
 if fs.restore then

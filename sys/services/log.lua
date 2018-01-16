@@ -22,7 +22,7 @@ end
 -- need: window.getParent()
 --       window.copy(target)
 
-local terminal = _G.kernel.terminal.parent
+local terminal = _G.kernel.terminal
 local w, h = kernel.window.getSize()
 local win = window.create(kernel.window, 1, 1, w, h + 50, false)
 
@@ -52,12 +52,12 @@ Terminal.scrollable(win, kernel.window)
 -- update kernel with new window, set this tab with the new kernal window
 local routine = kernel.getCurrent()
 for _,r in pairs(kernel.routines) do
-  if r.terminal == kernel.terminal then
+  if r.terminal == kernel.window then
     r.terminal = win
     r.window = win
   end
 end
-kernel.terminal = win
+--kernel.terminal = win
 kernel.window = win
 routine.terminal = win
 routine.window = win

@@ -6,8 +6,6 @@ _G.kernel = {
   UID = 0,
   hooks = { },
   routines = { },
-  terminal = _G.term.current(),
-  window = _G.term.current(),
 }
 
 local fs     = _G.fs
@@ -15,6 +13,11 @@ local kernel = _G.kernel
 local os     = _G.os
 local shell  = _ENV.shell
 local term   = _G.term
+local window = _G.window
+
+local w, h = term.getSize()
+kernel.terminal = term.current()
+kernel.window = window.create(kernel.terminal, 1, 1, w, h, false)
 
 local focusedRoutineEvents = Util.transpose {
   'char', 'key', 'key_up',
@@ -77,6 +80,9 @@ function Routine:resume(event, ...)
       self.filter = result
     else
       _G.printError(result)
+      if self.haltOnError then
+        error(result)
+      end
     end
     if coroutine.status(self.co) == 'dead' then
       Util.removeByValue(kernel.routines, self)
@@ -108,7 +114,7 @@ function kernel.newRoutine(args)
   routine.uid = kernel.UID
   routine.timestamp = os.clock()
   routine.env = args.env or Util.shallowCopy(shell.getEnv())
-  routine.terminal = args.terminal or kernel.terminal
+  routine.terminal = args.terminal or kernel.window
   routine.window = args.window or kernel.window
 
   return routine
@@ -127,7 +133,7 @@ function kernel.launch(routine)
     end
 
     if not result and err and err ~= 'Terminated' then
-      _G.printError(tostring(err))
+      error(err, 2)
     end
   end)
 
@@ -219,19 +225,22 @@ function kernel.start()
       local eventData = { os.pullEventRaw() }
       local event = table.remove(eventData, 1)
       kernel.event(event, eventData)
-    until event == 'kernel_halt' or not kernel.routines[1]
+    until event == 'kernel_halt'
   end)
 
-  kernel.window.setVisible(true)
   if not s then
+    kernel.window.setVisible(true)
+    term.redirect(kernel.window)
     print('\nCrash detected\n')
     _G.printError(m)
   end
   term.redirect(kernel.terminal)
 end
 
-local function init(runLevel)
-  runLevel = tonumber(runLevel) or error('Invalid run level')
+local function init(...)
+  local args = { ... }
+
+  local runLevel = #args > 0 and 6 or 7
 
   local dir = 'sys/extensions'
   local files = fs.list(dir)
@@ -245,11 +254,32 @@ local function init(runLevel)
       end
     end
   end
+
   os.queueEvent('kernel_ready')
+
+  if args[1] then
+    kernel.hook('kernel_ready', function()
+      local s, m = kernel.run({
+        title = args[1],
+        path = 'sys/apps/shell',
+        args = args,
+        haltOnExit = true,
+        terminal = kernel.terminal,
+      })
+      if s then
+        kernel.raise(s.uid)
+      else
+        error(m)
+      end
+    end)
+  end
 end
 
 kernel.run({
   fn = init,
   title = 'init',
+  haltOnError = true,
   args = { ... },
 })
+
+kernel.start()
