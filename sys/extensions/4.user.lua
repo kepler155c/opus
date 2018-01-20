@@ -11,8 +11,8 @@ end
 if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
-if not fs.exists('usr/etc/fstab') then
-  Util.writeFile('usr/etc/fstab', 'usr gitfs kepler155c/opus-apps/' .. _ENV.BRANCH)
+if not fs.exists('usr/config/fstab') then
+  Util.writeFile('usr/config/fstab', 'usr gitfs kepler155c/opus-apps/' .. _ENV.BRANCH)
 end
 
 if not fs.exists('usr/config/shell') then
@@ -35,4 +35,4 @@ end
 shell.setPath(config.path)
 shell.setEnv('LUA_PATH', config.lua_path)
 
-fs.loadTab('usr/etc/fstab')
+fs.loadTab('usr/config/fstab')

@@ -121,10 +121,10 @@ function Peripheral.get(args)
 end
 
 local function getProxy(pi)
-  local socket = Socket.connect(pi.host, 189)
+  local socket, msg = Socket.connect(pi.host, 189)
 
   if not socket then
-    error("Timed out attaching peripheral: " .. pi.uri)
+    error("Timed out attaching peripheral: " .. pi.uri .. '\n' .. msg)
   end
 
   -- write the uri of the periperal we are requesting...

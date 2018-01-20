@@ -22,7 +22,9 @@ if not remoteId then
   error('Syntax: vnc <host ID>')
 end
 
-multishell.setTitle(multishell.getCurrent(), 'VNC-' .. remoteId)
+if multishell then
+  multishell.setTitle(multishell.getCurrent(), 'VNC-' .. remoteId)
+end
 
 print('connecting...')
 local socket, msg = Socket.connect(remoteId, 5900)

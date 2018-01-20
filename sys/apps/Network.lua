@@ -12,7 +12,6 @@ local network    = _G.network
 local os         = _G.os
 local shell      = _ENV.shell
 
-multishell.setTitle(multishell.getCurrent(), 'Network')
 UI:configure('Network', ...)
 
 local gridColumns = {

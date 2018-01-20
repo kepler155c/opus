@@ -11,14 +11,13 @@ local UI     = require('ui')
 local Util   = require('util')
 
 local fs         = _G.fs
-local multishell = _ENV.multishell
+local multishell = _ENV.multishell or error('This program requires multishell')
 local pocket     = _G.pocket
 local term       = _G.term
 local turtle     = _G.turtle
 
 local REGISTRY_DIR = 'usr/.registry'
 
-multishell.setTitle(multishell.getCurrent(), 'Overview')
 UI:configure('Overview', ...)
 
 local config = {

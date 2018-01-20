@@ -95,7 +95,7 @@
 \030 \031f |  |\
 \030 \031fo| o|\
 ",
-    run = "usr/apps/music.lua",
+    run = "usr/apps/Music.lua",
     requires = 'turtle',
   },
   c47ae15370cfe1ed2781eedc1dc2547d12d9e972 = {
@@ -128,7 +128,7 @@
     icon = "\0304  \030   \
 \030f \0304 \0307 \030 \031  \031f_\
 \030f \0304 \0307 \030 \031f/",
-    run = "Peripherals.lua",
+    run = "Devices.lua",
   },
   f39d173d91c22348565c20283b89d4d1cabd3b7e = {
     title = "Falling",
@@ -170,7 +170,7 @@
     icon = "\030f\031f    \0315/\
 \030f\031f \0315/\\/ \
 \030f\0315/\031f    ",
-    run = "Tabs.lua",
+    run = "Tasks.lua",
   },
   [ "114edfc04a1ab03541bdc80ce064f66a7cfcedbb" ] = {
     title = "Recorder",

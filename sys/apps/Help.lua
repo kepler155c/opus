@@ -5,9 +5,7 @@ local Util  = require('util')
 
 local colors     = _G.colors
 local help       = _G.help
-local multishell = _ENV.multishell
 
-multishell.setTitle(multishell.getCurrent(), 'Help')
 UI:configure('Help', ...)
 
 local topics = { }

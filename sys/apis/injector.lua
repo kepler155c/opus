@@ -55,12 +55,13 @@ local function loadUrl(url)
   end
 end
 
+-- Add require and package to the environment
 local function requireWrapper(env)
 
   local function standardSearcher(modname)
-    if package.loaded[modname] then
+    if env.package.loaded[modname] then
       return function()
-        return package.loaded[modname]
+        return env.package.loaded[modname]
       end
     end
   end
@@ -79,7 +80,7 @@ local function requireWrapper(env)
   local function pathSearcher(modname)
     local fname = modname:gsub('%.', '/') .. '.lua'
 
-    for dir in string.gmatch(package.path, "[^:]+") do
+    for dir in string.gmatch(env.package.path, "[^:]+") do
       local path = fs.combine(dir, fname)
       if fs.exists(path) and not fs.isDir(path) then
         return loadfile(path, env)
@@ -115,7 +116,7 @@ local function requireWrapper(env)
     local fname = modname:gsub('%.', '/') .. '.lua'
 
     if fname:sub(1, 1) ~= '/' then
-      for entry in string.gmatch(package.upath, "[^;]+") do
+      for entry in string.gmatch(env.package.upath, "[^;]+") do
         local url = entry .. '/' .. fname
         local c = loadUrl(url)
         if c then
@@ -127,8 +128,8 @@ local function requireWrapper(env)
 
   -- place package and require function into env
   env.package = {
-    path = LUA_PATH or 'sys/apis',
-    upath = LUA_UPATH or DEFAULT_UPATH,
+    path = env.LUA_PATH or 'sys/apis',
+    upath = env.LUA_UPATH or DEFAULT_UPATH,
     config = '/\n:\n?\n!\n-',
     loaded = {
       math   = math,
@@ -148,15 +149,14 @@ local function requireWrapper(env)
   }
 
   function env.require(modname)
-
-    for _,searcher in ipairs(package.loaders) do
+    for _,searcher in ipairs(env.package.loaders) do
       local fn, msg = searcher(modname)
       if fn then
         local module, msg2 = fn(modname, env)
         if not module then
           error(msg2 or (modname .. ' module returned nil'), 2)
         end
-        package.loaded[modname] = module
+        env.package.loaded[modname] = module
         return module
       end
       if msg then
@@ -171,6 +171,6 @@ end
 
 return function(env)
   env = env or getfenv(2)
-  setfenv(requireWrapper, env)
+  --setfenv(requireWrapper, env)
   return requireWrapper(env)
 end

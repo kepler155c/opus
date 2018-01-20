@@ -11,7 +11,6 @@ local multishell = _ENV.multishell
 local os         = _G.os
 local shell      = _ENV.shell
 
-multishell.setTitle(multishell.getCurrent(), 'Files')
 UI:configure('Files', ...)
 
 local config = {
@@ -255,9 +254,15 @@ function Browser:setDir(dirName, noStatus)
   self.grid:setIndex(self.dir.index)
 end
 
-function Browser:run(path, ...)
-  local tabId = shell.openTab(path, ...)
-  multishell.setFocus(tabId)
+function Browser:run(...)
+  if multishell then
+    local tabId = shell.openTab(...)
+    multishell.setFocus(tabId)
+  else
+    shell.run(...)
+    Event.terminate = false
+    self:draw()
+  end
 end
 
 function Browser:hasMarked()

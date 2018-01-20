@@ -25,10 +25,7 @@ end
 local function run(file, ...)
   local s, m = loadfile(file, makeEnv())
   if s then
-    s, m = pcall(s, ...)
-    if s then
-      return m
-    end
+    return s(...)
   end
   error('Error loading ' .. file .. '\n' .. m)
 end
@@ -47,23 +44,19 @@ local function runUrl(file, ...)
   error('Failed to download ' .. url)
 end
 
-local args = { ... }
+-- Install require shim
+if fs.exists('sys/apis/injector.lua') then
+  _G.requireInjector = run('sys/apis/injector.lua')
+else
+  -- not local, run the file system directly from git
+  _G.requireInjector = runUrl('sys/apis/injector.lua')
+  runUrl('sys/extensions/2.vfs.lua')
 
-local s, m = pcall(function()
-  -- Install require shim
-  if fs.exists('sys/apis/injector.lua') then
-    _G.requireInjector = run('sys/apis/injector.lua')
-  else
-    -- not local, run the file system directly from git
-    _G.requireInjector = runUrl('sys/apis/injector.lua')
-    runUrl('sys/extensions/2.vfs.lua')
+  -- install file system
+  fs.mount('', 'gitfs', GIT_REPO)
+end
 
-    -- install file system
-    fs.mount('', 'gitfs', GIT_REPO)
-  end
-
-  run('sys/apps/shell', 'sys/kernel.lua', table.unpack(args))
-end)
+local s, m = pcall(run, 'sys/apps/shell', 'sys/kernel.lua', ...)
 
 if not s then
   print('\nError loading Opus OS\n')

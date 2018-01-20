@@ -7,7 +7,6 @@ local UI         = require('ui')
 local Util       = require('util')
 
 local colors     = _G.colors
-local multishell = _ENV.multishell
 local os         = _G.os
 local textutils  = _G.textutils
 
@@ -16,9 +15,6 @@ sandboxEnv.exit = function() Event.exitPullEvents() end
 sandboxEnv._echo = function( ... ) return { ... } end
 injector(sandboxEnv)
 
-if multishell and multishell.setTitle then
-  multishell.setTitle(multishell.getCurrent(), 'Lua')
-end
 UI:configure('Lua', ...)
 
 local command = ''

@@ -7,13 +7,11 @@ local UI       = require('ui')
 local Util     = require('util')
 
 local fs         = _G.fs
-local multishell = _ENV.multishell
 local os         = _G.os
 local settings   = _G.settings
 local shell      = _ENV.shell
 local turtle     = _G.turtle
 
-multishell.setTitle(multishell.getCurrent(), 'System')
 UI:configure('System', ...)
 
 local env = {

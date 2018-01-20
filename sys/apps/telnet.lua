@@ -22,7 +22,7 @@ if not remoteId then
   error('Syntax: telnet [-title TITLE] ID [PROGRAM]')
 end
 
-if options.title then
+if options.title and multishell then
   multishell.setTitle(multishell.getCurrent(), options.title)
 end
 

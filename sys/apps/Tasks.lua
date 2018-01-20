@@ -4,9 +4,9 @@ local Event = require('event')
 local UI    = require('ui')
 local Util  = require('util')
 
+local kernel     = _G.kernel
 local multishell = _ENV.multishell
 
-multishell.setTitle(multishell.getCurrent(), 'Tasks')
 UI:configure('Tasks', ...)
 
 local page = UI.Page {
@@ -24,7 +24,7 @@ local page = UI.Page {
       { heading = 'Status', key = 'status'    },
       { heading = 'Time',   key = 'timestamp' },
     },
-    values = multishell.getTabs(),
+    values = kernel.routines,
     sortColumn = 'uid',
     autospace = true,
   },

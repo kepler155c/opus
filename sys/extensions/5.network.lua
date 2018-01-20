@@ -21,3 +21,4 @@ if _G.device.wireless_modem then
 	startNetwork()
 	os.sleep(0) -- give the network a cycle to start
 end
+

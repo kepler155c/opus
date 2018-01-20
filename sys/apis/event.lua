@@ -154,8 +154,10 @@ function Event.pullEvents(...)
   end
 
   repeat
-    local e = Event.pullEvent()
-  until e[1] == 'terminate'
+    Event.pullEvent()
+  until Event.terminate
+
+  Event.terminate = false
 end
 
 function Event.exitPullEvents()
@@ -203,11 +205,12 @@ function Event.pullEvent(eventType)
   while true do
     local e = { os.pullEventRaw() }
 
+    Event.terminate = Event.terminate or e[1] == 'terminate'
+
     processHandlers(e[1])
     processRoutines(table.unpack(e))
 
-    if Event.terminate or e[1] == 'terminate' then
-      Event.terminate = false
+    if Event.terminate then
       return { 'terminate' }
     end
 

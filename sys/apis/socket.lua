@@ -24,7 +24,7 @@ function socketClass:read(timeout)
   while true do
     local e, id = os.pullEvent()
 
-    if e == 'transport_' .. self.sport then
+    if e == 'transport_' .. self.uid then
       data, distance = _G.transport.read(self)
       if data then
         os.cancelTimer(timerId)

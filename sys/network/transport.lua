@@ -13,12 +13,16 @@ local computerId = os.getComputerID()
 local transport = {
   timers  = { },
   sockets = { },
+  UID = 0,
 }
 _G.transport = transport
 
 function transport.open(socket)
+  transport.UID = transport.UID + 1
+
   transport.sockets[socket.sport] = socket
   socket.activityTimer = os.clock()
+  socket.uid = transport.UID
 end
 
 function transport.read(socket)
@@ -78,9 +82,11 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 
       if msg.type == 'DISC' then
         -- received disconnect from other end
+        if socket.connected then
+          os.queueEvent('transport_' .. socket.uid)
+        end
         socket.connected = false
         socket:close()
-        os.queueEvent('transport_' .. socket.sport)
 
       elseif msg.type == 'ACK' then
         local ackTimerId = socket.timers[msg.seq]
@@ -109,7 +115,7 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 
           -- use resume instead ??
           if not socket.messages[2] then  -- table size is 1
-            os.queueEvent('transport_' .. socket.sport)
+            os.queueEvent('transport_' .. socket.uid)
           end
 
           --debug('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))

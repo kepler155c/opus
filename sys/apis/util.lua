@@ -154,6 +154,7 @@ function Util.merge(obj, args)
       obj[k] = v
     end
   end
+  return obj
 end
 
 function Util.deepMerge(obj, args)

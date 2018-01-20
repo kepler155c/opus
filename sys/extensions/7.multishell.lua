@@ -54,7 +54,7 @@ local function redrawMenu()
 end
 
 function multishell.getFocus()
-  local currentTab = kernel.routines[1]
+  local currentTab = kernel.getFocused()
   return currentTab.uid
 end
 
@@ -70,9 +70,7 @@ end
 function multishell.setTitle(tabId, title)
   local tab = kernel.find(tabId)
   if tab then
-    if not tab.isOverview then
-      tab.title = title or ''
-    end
+    tab.title = title
     redrawMenu()
   end
 end
@@ -105,15 +103,15 @@ end
 
 function multishell.openTab(tab)
   if not tab.title and tab.path then
-    tab.title = fs.getName(tab.path)
+    tab.title = fs.getName(tab.path):match('([^%.]+)')
   end
   tab.title = tab.title or 'untitled'
-  tab.window = window.create(parentTerm, 1, 2, w, h - 1, false)
-  tab.terminal = tab.window
+  tab.window = tab.window or window.create(parentTerm, 1, 2, w, h - 1, false)
+  tab.terminal = tab.terminal or tab.window
 
   local routine = kernel.newRoutine(tab)
 
-  tab.co = coroutine.create(function()
+  routine.co = coroutine.create(function()
     local result, err
 
     if tab.fn then
@@ -128,9 +126,9 @@ function multishell.openTab(tab)
       if err then
         printError(tostring(err))
       end
-      printError('Press enter to close')
-      tab.isDead = true
-      tab.hidden = false
+      print('\nPress enter to close')
+      routine.isDead = true
+      routine.hidden = false
       while true do
         local e, code = os.pullEventRaw('key')
         if e == 'terminate' or e == 'key' and code == keys.enter then
@@ -147,8 +145,7 @@ function multishell.openTab(tab)
   else
     redrawMenu()
   end
-
-  return tab.uid
+  return routine.uid
 end
 
 function multishell.hideTab(tabId)
@@ -217,10 +214,9 @@ kernel.hook('multishell_redraw', function()
   parentTerm.setCursorPos(1, 1)
   parentTerm.clearLine()
 
-  local currentTab = kernel.routines[1]
+  local currentTab = kernel.getFocused()
 
   for _,tab in pairs(kernel.routines) do
-tab.title = tab.env._APP_TITLE or tab.title
     if tab.hidden and tab ~= currentTab then
       tab.width = 0
     else
@@ -241,7 +237,8 @@ tab.title = tab.env._APP_TITLE or tab.title
   end
 
   local function compareTab(a, b)
-    return b.hidden and -1 or a.uid < b.uid
+    if a.hidden then return false end
+    return b.hidden or a.uid < b.uid
   end
 
   local tabX = 0
@@ -295,12 +292,12 @@ end)
 
 kernel.hook('mouse_click', function(_, eventData)
   local x, y = eventData[2], eventData[3]
-  local currentTab = kernel.routines[1]
 
   if y == 1 then
     if x == 1 then
       multishell.setFocus(overviewId)
     elseif x == w then
+      local currentTab = kernel.getFocused()
       if currentTab then
         multishell.terminate(currentTab.uid)
       end
@@ -344,6 +341,7 @@ local function startup()
     for _,file in ipairs(files) do
       os.sleep(0)
       local result, err = open(directory .. '/' .. file)
+
       if result then
         if term.isColor() then
           term.setTextColor(colors.green)
@@ -362,6 +360,7 @@ local function startup()
         if err then
           _G.printError('\n' .. err)
         end
+        print()
         success = false
       end
     end
@@ -383,8 +382,8 @@ kernel.hook('kernel_ready', function()
     path = 'sys/apps/Overview.lua',
     isOverview = true,
     focused = true,
+    title = '+',
   })
-  kernel.find(overviewId).title = '+'
 
   multishell.openTab({
     fn = startup,

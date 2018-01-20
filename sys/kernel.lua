@@ -1,6 +1,7 @@
 _G.requireInjector()
 
-local Util = require('util')
+local Terminal = require('terminal')
+local Util     = require('util')
 
 _G.kernel = {
   UID = 0,
@@ -18,6 +19,8 @@ local window = _G.window
 local w, h = term.getSize()
 kernel.terminal = term.current()
 kernel.window = window.create(kernel.terminal, 1, 1, w, h, false)
+
+Terminal.scrollable(kernel.window)
 
 local focusedRoutineEvents = Util.transpose {
   'char', 'key', 'key_up',
@@ -73,16 +76,17 @@ function Routine:resume(event, ...)
     local ok, result = coroutine.resume(self.co, event, ...)
     kernel.running = previous
 
-    self.terminal = term.current()
-    term.redirect(previousTerm)
-
     if ok then
       self.filter = result
     else
       _G.printError(result)
-      if self.haltOnError then
-        error(result)
-      end
+    end
+
+    self.terminal = term.current()
+    term.redirect(previousTerm)
+
+    if not ok and self.haltOnError then
+      error(result)
     end
     if coroutine.status(self.co) == 'dead' then
       Util.removeByValue(kernel.routines, self)
@@ -108,14 +112,15 @@ end
 function kernel.newRoutine(args)
   kernel.UID = kernel.UID + 1
 
-  args = args or { }
+  local routine = setmetatable({
+    uid = kernel.UID,
+    timestamp = os.clock(),
+    terminal = kernel.window,
+    window = kernel.window,
+  }, { __index = Routine })
 
-  local routine = setmetatable(args, { __index = Routine })
-  routine.uid = kernel.UID
-  routine.timestamp = os.clock()
+  Util.merge(routine, args)
   routine.env = args.env or Util.shallowCopy(shell.getEnv())
-  routine.terminal = args.terminal or kernel.window
-  routine.window = args.window or kernel.window
 
   return routine
 end
@@ -242,6 +247,7 @@ local function init(...)
 
   local runLevel = #args > 0 and 6 or 7
 
+  print('Starting Opus OS')
   local dir = 'sys/extensions'
   local files = fs.list(dir)
   table.sort(files)
@@ -252,6 +258,7 @@ local function init(...)
       if not s then
         error(m)
       end
+      os.sleep(0)
     end
   end
 
@@ -264,6 +271,7 @@ local function init(...)
         path = 'sys/apps/shell',
         args = args,
         haltOnExit = true,
+        haltOnError = true,
         terminal = kernel.terminal,
       })
       if s then
