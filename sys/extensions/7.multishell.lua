@@ -366,7 +366,6 @@ local function startup()
     end
   end
 
-  runDir('sys/services', shell.openHiddenTab)
   runDir('sys/autorun', shell.run)
   runDir('usr/autorun', shell.run)
 

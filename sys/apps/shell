@@ -328,7 +328,7 @@ function shell.openTab( ... )
     elseif sPath ~= nil then
       return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), "sys/apps/shell", sCommand, table.unpack(tWords, 2))
     else
-      _G.printError( "No such program" )
+      return false, "No such program"
     end
   end
 end

@@ -252,7 +252,7 @@ local function init(...)
   local files = fs.list(dir)
   table.sort(files)
   for _,file in ipairs(files) do
-    local level, name = file:match('(%d).(%S+).lua')
+    local level = file:match('(%d).%S+.lua')
     if tonumber(level) <= runLevel then
       local s, m = shell.run(fs.combine(dir, file))
       if not s then

@@ -7,30 +7,6 @@
     title = "Network",
     run = "Network.lua",
   },
-  [ "90ef98d4b6fd15466f0a1f212ec1db8d9ebe018c" ] = {
-    title = "Turtles",
-    category = "Apps",
-    icon = " \0305 \030c \0305 \030   \
-\030d \030c \0305 \030c \0308 \030d\031f\"\
- \0308\031f.\030 \031  \0308\031f.\030 \031   ",
-    run = "Turtles.lua",
-  },
-  [ "9f46ca3ef617166776ef6014a58d4e66859caa62" ] = {
-    title = "DJ",
-    category = "Games",
-    icon = " \030f   \
-\030f  \0307  \
-\030f \0307  \0300 ",
-    run = "/rom/programs/fun/dj",
-  },
-  [ "76b849f460640bc789c433894382fb5acbac42a2" ] = {
-    title = "Worm",
-    category = "Games",
-    icon = "\030d \030  \030e \030  \
-\030d \030    \
-\030d    ",
-    run = "/rom/programs/fun/worm",
-  },
   c7116629a6a855cb774d9c7c8ad822fd83c71fb5 = {
     title = "Reboot",
     category = "System",
@@ -39,22 +15,6 @@
 \0304\031f   - ",
     run = "rom/programs/reboot",
   },
-  [ "381e3298b2b8f6caeb2208b57d805ada38402f0b" ] = {
-    category = "Apps",
-    icon = "\0300\0317if\031  \0307 \
-\0300\0317turt\
-\0300\0317retu",
-    title = "Scripts",
-    run = "Script.lua",
-  },
-  db56e2e1db9f7accfc37f2b132d27505c66ba521 = {
-    title = "Adventure",
-    category = "Games",
-    icon = "\030f\0310You \031 \
-\030f\0310Ther\030 \031  \
-\030f\0314?\031f \031   \030  ",
-    run = "rom/programs/fun/adventure",
-  },
   fb91e24fa52d8d2b32937bf04d843f730319a902 = {
     title = "Update",
     category = "System",
@@ -62,33 +22,6 @@
 \0301\03181\030 \031    \
 \0301\03170\03180\03171\0307\031f>",
     run = "http://pastebin.com/raw/sj4VMVJj",
-  },
-  [ "7ef35cac539f84722b0a988caee03b2df734c56a" ] = {
-    title = "AppStore",
-    category = "System",
-    icon = "\030 \0310=\0300 \030 XX\0300\031f \030  \
-\030 \031f \0300    \030  \
-\030 \031f \0310o \031f \0310o\031f ",
-    run = "Appstore.lua",
-  },
-  [ "4486006f811b88cacd5f211fd579717e29b600cd" ] = {
-    title = "Miner",
-    category = "Apps",
-    icon = "    \0315\\\030 \031  \
- \0304\031f _ \030 \031c/\0315\\\
- \0304   ",
-    run = "simpleMiner.lua",
-    requires = 'turtle',
-  },
-  [ "131260cbfbb0c821f8eae5e7c3c296c7aa4d50b9" ] = {
-    title = "Music",
-    category = "Apps",
-    icon = "\030 \031f === \
-\030 \031f |  |\
-\030 \031fo| o|\
-",
-    run = "usr/apps/Music.lua",
-    requires = 'turtle',
   },
   c47ae15370cfe1ed2781eedc1dc2547d12d9e972 = {
     title = "Help",
@@ -106,41 +39,6 @@
 \030f     ",
     run = "sys/apps/Lua.lua",
   },
---[[
-  [ "81c0d915fa6d82fd30661c5e66e204cea52bb2b5" ] = {
-    title = "Activity",
-    category = "Apps",
-    icon = "\0318/\030f\031  \030 \0318\\\
-\030f \0308\0319o\030f\031  \
-\0318\\\030f\031  \030 \0318/",
-    run = "storageActivity.lua",
-  },
-  [ "89307d419a2fe4fbb69af92b3d3af27b6ec14d3e" ] = {
-    title = "Telnet",
-    category = "Apps",
-    icon = "    \0314>\0310_\
- \031f)))\031   \
-\0314>\0310_\031     ",
-    run = "telnet.lua",
-  },
-  [ "8a77613b475e46064321fd7da18d126ee35e5066" ] = {
-    title = "VNC",
-    category = "Apps",
-    icon = "\
-\031e\\\031   \031e/\031dn\
- \031e\\/\031  \0319c",
-    run = "vnc.lua",
-  },
-  [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
-    title = "Micropaint",
-    category = "Apps",
-  icon = "\030 \031f   \030f   \
-\030 \031f^ \0300   \030f \
-\030 \031fv \0300   \030  ",
-    run = "http://pastebin.com/raw/tMRzJXx2",
-    requires = "advancedComputer",
-  },
---]]
   df485c871329671f46570634d63216761441bcd6 = {
     title = "Devices",
     category = "System",
@@ -149,15 +47,6 @@
 \030f \0304 \0307 \030 \031f/",
     run = "Devices.lua",
   },
-  f39d173d91c22348565c20283b89d4d1cabd3b7e = {
-    title = "Falling",
-    category = "Games",
-    icon = "\030f \0302   \
-\0309  \0302 \0301 \
-\030e \0309  \0301 ",
-    run = "rom/programs/pocket/falling",
-    requires = 'advancedPocket',
-  },
   bc0792d8dc81e8aa30b987246a5ce97c40cd6833 = {
     title = "System",
     category = "System",
@@ -165,15 +54,6 @@
 \0307\031f---o\030 \031  \
    \0307\031f| ",
     run = "System.lua",
-  },
-  [ "9e092dda4f0e27d0c7686ddd00272079e678b6e6" ] = {
-    title = "Storage",
-    category = "Apps",
-    icon = "\0307       \
-\0307 \0308\0311 \0305 \0308\031  \0307 \0308 \0301 \
-\0307       ",
-    run = "chestManager.lua",
-    requires = 'turtle',
   },
   c5497bca58468ae64aed6c0fd921109217988db3 = {
     title = "Events",
@@ -191,14 +71,6 @@
 \030f\0315/\031f    ",
     run = "Tasks.lua",
   },
-  [ "114edfc04a1ab03541bdc80ce064f66a7cfcedbb" ] = {
-    title = "Recorder",
-    category = "Apps",
-    icon = "\030 \031f \031b \031foo  \
-\030 \031f \030e\031b    \030 \031f/\
-\030 \031b \030e    \030 \031f\\",
-    run = "recorder.lua",
-  },
   [ "6ce6c512ea433a7fc5c8841628e7696cd0ff7f2b" ] = {
     title = "Files",
     category = "Apps",
@@ -206,14 +78,6 @@
 \0300\0317====\
 \0300\0317====",
     run = "Files.lua",
-  },
-  b77aad5fb24921ef76ac8f3e500ed93fddae8f2a = {
-    title = "Redirection",
-    category = "Games",
-    icon = "\0307  \0308 \0307 \
-\0308\031b> \030b\0310>\0308\0318 \
-\0307    ",
-    run = "rom/programs/fun/advanced/redirection",
   },
   [ "7fddb7d8d1d60b1eeefa9af01082e0811d4b484d" ] = {
     title = "Shutdown",
@@ -231,68 +95,46 @@
 \030f\0314\149\030f    ",
     run = "shell",
   },
-  [ "131f0b008f44298812221d120d982940609be781" ] = {
-    title = "Builder",
-    category = "Apps",
-    icon = "\0317_____\
-\030e\031c###\0308\0317=\030e\031c#\
-\030e\031c#\0307\031f.\030e\031c###",
-    run = "usr/apps/builder.lua",
-    requires = "turtle",
-  },
-  [ "d8c298dd41e4a4ec20e8307901797b64688b3b77" ] = {
-    title = "GPS Deploy",
-    category = "Apps",
-    run = "http://pastebin.com/raw/VXAyXqBv",
-    requires = "turtle",
-  },
-  [ "53a5d150062b1e03206b9e15854b81060e3c7552" ] = {
-    title = "Minesweeper",
+  b77aad5fb24921ef76ac8f3e500ed93fddae8f2a = {
+    title = "Redirection",
     category = "Games",
-    icon = "\030f\031f \03131\0308\031f  \030f\031d2\
-\030f\031f \031d2\03131\0308\031f \030f\03131\
-\030f\03131\0308\031f  \030f\03131\031e3",
-    run = "https://pastebin.com/raw/nsKrHTbN",
+    icon = "\0307  \0308 \0307 \
+\0308\031b> \030b\0310>\0308\0318 \
+\0307    ",
+    run = "rom/programs/fun/advanced/redirection",
+    requires = 'advanced',
   },
-  [ "a2accffe95b2c8be30e8a05e0c6ab7e8f5966f43" ] = {
-    title = "Strafe",
+  f39d173d91c22348565c20283b89d4d1cabd3b7e = {
+    title = "Falling",
     category = "Games",
-    icon = "\0308\031f  \0300 \0308  \
-\0308\031f \0300  \030f  \
-\0300\031f  \030f   ",
-    run = "https://pastebin.com/raw/jyDH7mLH",
+    icon = "\030f \0302   \
+\0309  \0302 \0301 \
+\030e \0309  \0301 ",
+    run = "rom/programs/pocket/falling",
+    requires = 'advancedPocket',
   },
-  [ "48d6857f6b2869d031f463b13aa34df47e18c548" ] = {
-    title = "Breakout",
+  db56e2e1db9f7accfc37f2b132d27505c66ba521 = {
+    title = "Adventure",
     category = "Games",
-    icon = "\0301\031f \0309 \030c \030b \030e \030c \0306 \
-\030 \031f       \
-\030 \031f   \0300   \0310 ",
-    run = "https://gist.github.com/LDDestroier/c7528d95bc0103545c2a/raw",
+    icon = "\030f\0310You \031 \
+\030f\0310Ther\030 \031  \
+\030f\0314?\031f \031   \030  ",
+    run = "rom/programs/fun/adventure",
   },
-  [ "d78f28759f255a0db76604ee560b87c4715a0da5" ] = {
-    title = "Sketch",
-    category = "Apps",
-    icon = " \031bskch\
-\0303\031f  \030d  \
-\030d\031f   ",
-    run = "http://pastebin.com/raw/Mm5hd97E",
+  [ "76b849f460640bc789c433894382fb5acbac42a2" ] = {
+    title = "Worm",
+    category = "Games",
+    icon = "\030d \030  \030e \030  \
+\030d \030    \
+\030d    ",
+    run = "/rom/programs/fun/worm",
   },
-  [ "58ec8d6e36e346d9f42eb43935652e3e58e2c829" ] = {
-    category = "Apps",
-    icon = "\030f\031f      \0304 \
-\030f\031dshell]\0304\0314 \
-\0304\031f       ",
-    title = "Mwm",
-    run = "mwm.lua usr/config/mwm",
-  },
-  [ "8d1b0a73bedc0dc492377c2f6ab880940b97ec6e" ] = {
-    icon = "\030 \031f \0305 \030    \030d \030  \
-\0305\031f \030d  \030  \030d \0305 \030d \
-\030 \031f \030c \030  \0304 \030  \030c \030  ",
-    category = "Apps",
-    title = "Treefarm",
-    run = "treefarm.lua",
-    requires = "turtle",
+  [ "9f46ca3ef617166776ef6014a58d4e66859caa62" ] = {
+    title = "DJ",
+    category = "Games",
+    icon = " \030f   \
+\030f  \0307  \
+\030f \0307  \0300 ",
+    run = "/rom/programs/fun/dj",
   },
 }

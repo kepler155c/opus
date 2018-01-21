@@ -38,12 +38,21 @@ local function loadApplications()
   local requirements = {
     turtle = function() return turtle end,
     advancedTurtle = function() return turtle and term.isColor() end,
+    advanced = function() return term.isColor() end,
     pocket = function() return pocket end,
     advancedPocket = function() return pocket and term.isColor() end,
     advancedComputer = function() return not turtle and not pocket and term.isColor() end,
   }
 
   applications = Util.readTable('sys/etc/app.db')
+
+  if fs.exists('usr/etc/apps') then
+    local dbs = fs.list('usr/etc/apps')
+    for _, db in pairs(dbs) do
+      local apps = Util.readTable('usr/etc/apps/' .. db) or { }
+      Util.merge(applications, apps)
+    end
+  end
 
   if fs.exists(REGISTRY_DIR) then
     local files = fs.list(REGISTRY_DIR)

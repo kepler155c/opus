@@ -13,7 +13,7 @@ if not device.wireless_modem then
 	return
 end
 
-print('Net daemon started')
+print('Net daemon starting')
 
 for _,file in pairs(fs.list('sys/network')) do
 	local fn, msg = Util.run(_ENV, 'sys/network/' .. file)
@@ -28,6 +28,7 @@ Event.on('device_detach', function()
 	end
 end)
 
+print('Net daemon started')
 os.queueEvent('network_up')
 Event.pullEvents()
 

@@ -18,6 +18,7 @@ kernel.hook('device_attach', function(_, eventData)
 end)
 
 if _G.device.wireless_modem then
+	print('waiting for network...')
 	startNetwork()
 	os.pullEvent('network_up')
 end
