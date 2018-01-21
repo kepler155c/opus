@@ -1,4 +1,5 @@
 local kernel = _G.kernel
+local os     = _G.os
 
 _G.network = { }
 
@@ -18,5 +19,6 @@ end)
 
 if _G.device.wireless_modem then
 	startNetwork()
+	os.pullEvent('network_up')
 end
 

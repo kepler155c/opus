@@ -28,6 +28,7 @@ Event.on('device_detach', function()
 	end
 end)
 
+os.queueEvent('network_up')
 Event.pullEvents()
 
 for _,c in pairs(network) do
