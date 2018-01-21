@@ -10,19 +10,18 @@ local multishell = _ENV.multishell
 local os         = _G.os
 local term       = _G.term
 
+local routine = kernel.getCurrent()
 if multishell then
   multishell.setTitle(multishell.getCurrent(), 'System Log')
+  multishell.hideTab(routine.uid)
 end
 
 local w, h = kernel.window.getSize()
 kernel.window.reposition(1, 2, w, h - 1)
 
-local routine = kernel.getCurrent()
 routine.terminal = kernel.window
 routine.window = kernel.window
 term.redirect(kernel.window)
-
-local previousId
 
 kernel.hook('mouse_scroll', function(_, eventData)
   local dir, y = eventData[1], eventData[3]
@@ -42,10 +41,9 @@ end)
 keyboard.addHotkey('control-d', function()
   local current = kernel.getFocused()
   if current.uid ~= routine.uid then
-    previousId = current.uid
     kernel.raise(routine.uid)
-  elseif previousId then
-    kernel.raise(previousId)
+  elseif kernel.routines[2] then
+    kernel.raise(kernel.routines[2].uid)
   end
 end)
 

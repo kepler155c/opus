@@ -1,4 +1,4 @@
-_G.requireInjector()
+_G.requireInjector(_ENV)
 
 local Terminal = require('terminal')
 local Util     = require('util')
@@ -137,8 +137,8 @@ function kernel.launch(routine)
       err = 'kernel: invalid routine'
     end
 
-    if not result and err and err ~= 'Terminated' then
-      error(err, 2)
+    if not result and err ~= 'Terminated' then
+      error(err or 'Error occurred', 2)
     end
   end)
 

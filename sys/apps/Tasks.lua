@@ -1,4 +1,4 @@
-_G.requireInjector()
+_G.requireInjector(_ENV)
 
 local Event = require('event')
 local UI    = require('ui')

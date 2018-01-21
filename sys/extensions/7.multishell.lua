@@ -13,7 +13,7 @@ local shell      = _ENV.shell
 local term       = _G.term
 local window     = _G.window
 
-local parentTerm = _G.device.terminal -- term.current()
+local parentTerm = _G.device.terminal
 local w,h = parentTerm.getSize()
 local overviewId
 local tabsDirty = false

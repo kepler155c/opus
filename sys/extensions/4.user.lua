@@ -3,6 +3,7 @@ _G.requireInjector()
 local Util = require('util')
 
 local fs    = _G.fs
+local os    = _G.os
 local shell = _ENV.shell
 
 if not fs.exists('usr/apps') then
@@ -12,7 +13,8 @@ if not fs.exists('usr/autorun') then
   fs.makeDir('usr/autorun')
 end
 if not fs.exists('usr/config/fstab') then
-  Util.writeFile('usr/config/fstab', 'usr gitfs kepler155c/opus-apps/' .. _ENV.BRANCH)
+  Util.writeFile('usr/config/fstab',
+    'usr gitfs kepler155c/opus-apps/' .. os.getenv('BRANCH'))
 end
 
 if not fs.exists('usr/config/shell') then
@@ -33,6 +35,6 @@ if config.aliases then
   end
 end
 shell.setPath(config.path)
-shell.setEnv('LUA_PATH', config.lua_path)
+os.setenv('LUA_PATH', config.lua_path)
 
 fs.loadTab('usr/config/fstab')

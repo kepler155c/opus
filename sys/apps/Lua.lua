@@ -1,5 +1,4 @@
-local injector = _G.requireInjector or load(_G.http.get('https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua').readAll())()
-injector()
+_G.requireInjector(_ENV)
 
 local Event      = require('event')
 local History    = require('history')
@@ -13,7 +12,7 @@ local textutils  = _G.textutils
 local sandboxEnv = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
 sandboxEnv.exit = function() Event.exitPullEvents() end
 sandboxEnv._echo = function( ... ) return { ... } end
-injector(sandboxEnv)
+_G.requireInjector(sandboxEnv)
 
 UI:configure('Lua', ...)
 

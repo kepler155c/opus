@@ -15,14 +15,6 @@
  \0308\031f.\030 \031  \0308\031f.\030 \031   ",
     run = "Turtles.lua",
   },
-  [ "81c0d915fa6d82fd30661c5e66e204cea52bb2b5" ] = {
-    title = "Activity",
-    category = "Apps",
-    icon = "\0318/\030f\031  \030 \0318\\\
-\030f \0308\0319o\030f\031  \
-\0318\\\030f\031  \030 \0318/",
-    run = "storageActivity.lua",
-  },
   [ "9f46ca3ef617166776ef6014a58d4e66859caa62" ] = {
     title = "DJ",
     category = "Games",
@@ -114,6 +106,15 @@
 \030f     ",
     run = "sys/apps/Lua.lua",
   },
+--[[
+  [ "81c0d915fa6d82fd30661c5e66e204cea52bb2b5" ] = {
+    title = "Activity",
+    category = "Apps",
+    icon = "\0318/\030f\031  \030 \0318\\\
+\030f \0308\0319o\030f\031  \
+\0318\\\030f\031  \030 \0318/",
+    run = "storageActivity.lua",
+  },
   [ "89307d419a2fe4fbb69af92b3d3af27b6ec14d3e" ] = {
     title = "Telnet",
     category = "Apps",
@@ -122,6 +123,24 @@
 \0314>\0310_\031     ",
     run = "telnet.lua",
   },
+  [ "8a77613b475e46064321fd7da18d126ee35e5066" ] = {
+    title = "VNC",
+    category = "Apps",
+    icon = "\
+\031e\\\031   \031e/\031dn\
+ \031e\\/\031  \0319c",
+    run = "vnc.lua",
+  },
+  [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
+    title = "Micropaint",
+    category = "Apps",
+  icon = "\030 \031f   \030f   \
+\030 \031f^ \0300   \030f \
+\030 \031fv \0300   \030  ",
+    run = "http://pastebin.com/raw/tMRzJXx2",
+    requires = "advancedComputer",
+  },
+--]]
   df485c871329671f46570634d63216761441bcd6 = {
     title = "Devices",
     category = "System",
@@ -179,14 +198,6 @@
 \030 \031f \030e\031b    \030 \031f/\
 \030 \031b \030e    \030 \031f\\",
     run = "recorder.lua",
-  },
-  [ "8a77613b475e46064321fd7da18d126ee35e5066" ] = {
-    title = "VNC",
-    category = "Apps",
-    icon = "\
-\031e\\\031   \031e/\031dn\
- \031e\\/\031  \0319c",
-    run = "vnc.lua",
   },
   [ "6ce6c512ea433a7fc5c8841628e7696cd0ff7f2b" ] = {
     title = "Files",
@@ -258,15 +269,6 @@
 \030 \031f       \
 \030 \031f   \0300   \0310 ",
     run = "https://gist.github.com/LDDestroier/c7528d95bc0103545c2a/raw",
-  },
-  [ "8d59207c8a84153b3e9f035cc3b6ec7a23671323" ] = {
-    title = "Micropaint",
-    category = "Apps",
-  icon = "\030 \031f   \030f   \
-\030 \031f^ \0300   \030f \
-\030 \031fv \0300   \030  ",
-    run = "http://pastebin.com/raw/tMRzJXx2",
-    requires = "advancedComputer",
   },
   [ "d78f28759f255a0db76604ee560b87c4715a0da5" ] = {
     title = "Sketch",

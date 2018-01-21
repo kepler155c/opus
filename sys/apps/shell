@@ -304,7 +304,7 @@ function shell.newTab(tabInfo, ...)
 
   if path then
     tabInfo.path = path
-    tabInfo.env = sandboxEnv
+    tabInfo.env = Util.shallowCopy(sandboxEnv)
     tabInfo.args = args
     tabInfo.title = fs.getName(path):match('([^%.]+)')
 
@@ -319,7 +319,18 @@ end
 
 function shell.openTab( ... )
   -- needs to use multishell.launch .. so we can run with stock multishell
-  return shell.newTab({ }, ...)
+  local tWords = tokenise( ... )
+  local sCommand = tWords[1]
+  if sCommand then
+    local sPath = shell.resolveProgram(sCommand)
+    if sPath == "sys/apps/shell" then
+      return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), sPath, table.unpack(tWords, 2))
+    elseif sPath ~= nil then
+      return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), "sys/apps/shell", sCommand, table.unpack(tWords, 2))
+    else
+      _G.printError( "No such program" )
+    end
+  end
 end
 
 function shell.openForegroundTab( ... )

@@ -10,11 +10,16 @@ local Tween  = require('ui.tween')
 local UI     = require('ui')
 local Util   = require('util')
 
+local colors     = _G.colors
 local fs         = _G.fs
-local multishell = _ENV.multishell or error('This program requires multishell')
 local pocket     = _G.pocket
+local shell      = _ENV.shell
 local term       = _G.term
 local turtle     = _G.turtle
+
+if not _ENV.multishell then
+  error('multishell is required')
+end
 
 local REGISTRY_DIR = 'usr/.registry'
 
@@ -350,32 +355,16 @@ function page:eventHandler(event)
       table.remove(config.Recent, maxRecent + 1)
     end
     Config.update('Overview', config)
-    multishell.openTab({
-      title = event.button.app.title,
-      path = 'sys/apps/shell',
-      args = { event.button.app.run },
-      focused = true,
-    })
+    shell.switchTab(shell.openTab(event.button.app.run))
 
   elseif event.type == 'shell' then
-    multishell.openTab({
-      path = 'sys/apps/shell',
-      focused = true,
-    })
+    shell.switchTab(shell.openTab('sys/apps/shell'))
 
   elseif event.type == 'lua' then
-    multishell.openTab({
-      path ='sys/apps/shell',
-      args = { 'sys/apps/Lua.lua' },
-      focused = true,
-    })
+    shell.switchTab(shell.openTab('sys/apps/Lua.lua'))
 
   elseif event.type == 'files' then
-    multishell.openTab({
-      path ='sys/apps/shell',
-      args = { 'sys/apps/Files.lua' },
-      focused = true,
-    })
+    shell.switchTab(shell.openTab('sys/apps/Files.lua'))
 
   elseif event.type == 'focus_change' then
     if event.focused.parent.UIElement == 'Icon' then

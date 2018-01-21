@@ -1,6 +1,7 @@
 -- Loads the Opus environment regardless if the file system is local or not
 local fs     = _G.fs
 local http   = _G.http
+local os     = _G.os
 
 local BRANCH   = 'develop-1.8'
 local GIT_REPO = 'kepler155c/opus/' .. BRANCH
@@ -42,6 +43,14 @@ local function runUrl(file, ...)
     end
   end
   error('Failed to download ' .. url)
+end
+
+function os.getenv(varname)
+  return sandboxEnv[varname]
+end
+
+function os.setenv(varname, value)
+  sandboxEnv[varname] = value
 end
 
 -- Install require shim
