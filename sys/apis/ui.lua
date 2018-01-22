@@ -3,6 +3,7 @@ local class      = require('class')
 local Event      = require('event')
 local Input      = require('input')
 local Peripheral = require('peripheral')
+local Terminal   = require('terminal')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
@@ -13,6 +14,7 @@ local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
 local term       = _G.term
+local window     = _G.window
 
 --[[
   Using the shorthand window definition, elements are created from
@@ -2403,6 +2405,63 @@ function UI.SlideOut:eventHandler(event)
     self:hide()
     return true
   end
+end
+
+--[[-- Embedded --]]--
+UI.Embedded = class(UI.Window)
+UI.Embedded.defaults = {
+  UIElement = 'Embedded',
+  backgroundColor = colors.black,
+  textColor = colors.white,
+  accelerators = {
+    up = 'scroll_up',
+    down = 'scroll_down',
+  }
+}
+
+function UI.Embedded:setParent()
+  UI.Window.setParent(self)
+  self.win = window.create(UI.term.device, 1, 1, self.width, self.height, false)
+  Canvas.convertWindow(self.win, UI.term.device, self.x, self.y)
+  Terminal.scrollable(self.win, 100)
+
+  local canvas = self:getCanvas()
+  self.win.canvas.parent = canvas
+  table.insert(canvas.layers, self.win.canvas)
+  self.canvas = self.win.canvas
+
+  self.win.setCursorPos(1, 1)
+  self.win.setBackgroundColor(self.backgroundColor)
+  self.win.setTextColor(self.textColor)
+  self.win.clear()
+end
+
+function UI.Embedded:draw()
+  self.canvas:dirty()
+end
+
+function UI.Embedded:enable()
+  self.canvas:setVisible(true)
+  UI.Window.enable(self)
+end
+
+function UI.Embedded:disable()
+  self.canvas:setVisible(false)
+  UI.Window.disable(self)
+end
+
+function UI.Embedded:eventHandler(event)
+  if event.type == 'scroll_up' then
+    self.win.scrollUp()
+    return true
+  elseif event.type == 'scroll_down' then
+    self.win.scrollDown()
+    return true
+  end
+end
+
+function UI.Embedded:focus()
+  -- allow scrolling
 end
 
 --[[-- Notification --]]--

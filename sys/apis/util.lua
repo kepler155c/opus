@@ -55,11 +55,11 @@ function Util.tostring(pattern, ...)
       end
       str = str .. string.format(' %s: %s\n', k, value)
     end
-    if #str < width then
-      str = str:gsub('\n', '') .. ' }'
-    else
+    --if #str < width then
+      --str = str:gsub('\n', '') .. ' }'
+    --else
       str = str .. '}'
-    end
+    --end
     return str
   end
 

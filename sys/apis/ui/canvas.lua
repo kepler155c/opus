@@ -129,7 +129,6 @@ end
 
 function Canvas:writeBlit(x, y, text, bg, fg)
   if y > 0 and y <= self.height and x <= self.width then
-
     local width = #text
 
     -- fix ffs
@@ -342,6 +341,7 @@ function Canvas.convertWindow(win, parent, wx, wy)
       str,
       win.getBackgroundColor(),
       win.getTextColor())
+    win.setCursorPos(x + #str, y)
   end
 
   function win.blit(text, fg, bg)
@@ -353,8 +353,10 @@ function Canvas.convertWindow(win, parent, wx, wy)
     win.canvas:redraw(parent)
   end
 
-  function win.scroll()
-    error('scroll: not implemented')
+  function win.scroll(n)
+    table.insert(win.canvas.lines, table.remove(win.canvas.lines, 1))
+    win.canvas.lines[#win.canvas.lines].text = _rep(' ', win.canvas.width)
+    win.canvas:dirty()
   end
 
   function win.reposition(x, y, width, height)
