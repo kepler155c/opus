@@ -9,16 +9,16 @@
 --
 if (...) then
 
-  local Node = {}
-  Node.__index = Node
+	local Node = {}
+	Node.__index = Node
 
-  function Node:new(x,y,z)
-    return setmetatable({x = x, y = y, z = z }, Node)
-  end
+	function Node:new(x,y,z)
+		return setmetatable({x = x, y = y, z = z }, Node)
+	end
 
-  -- Enables the use of operator '<' to compare nodes.
-  -- Will be used to sort a collection of nodes in a binary heap on the basis of their F-cost
-  function Node.__lt(A,B) return (A._f < B._f) end
+	-- Enables the use of operator '<' to compare nodes.
+	-- Will be used to sort a collection of nodes in a binary heap on the basis of their F-cost
+	function Node.__lt(A,B) return (A._f < B._f) end
 
 	function Node:getX() return self.x end
 	function Node:getY() return self.y end
@@ -33,7 +33,7 @@ if (...) then
 		return self
 	end
 
-  return setmetatable(Node,
+	return setmetatable(Node,
 		{__call = function(_,...)
 			return Node:new(...)
 		end}

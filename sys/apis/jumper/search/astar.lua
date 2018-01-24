@@ -35,9 +35,9 @@ if (...) then
 		end
 	end
 
-  -- Calculates a path.
-  -- Returns the path from location `<startX, startY>` to location `<endX, endY>`.
-  return function (finder, startNode, endNode, toClear)
+	-- Calculates a path.
+	-- Returns the path from location `<startX, startY>` to location `<endX, endY>`.
+	return function (finder, startNode, endNode, toClear)
 		local openList = Heap()
 		startNode._g = 0
 		startNode._h = finder._heuristic(endNode, startNode)

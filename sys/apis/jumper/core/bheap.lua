@@ -14,9 +14,9 @@
 --
 
 --[[
-  Notes:
-  This lighter implementation of binary heaps, based on :
-    https://github.com/Yonaba/Binary-Heaps
+	Notes:
+	This lighter implementation of binary heaps, based on :
+		https://github.com/Yonaba/Binary-Heaps
 --]]
 
 if (...) then

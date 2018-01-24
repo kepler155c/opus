@@ -20,19 +20,19 @@ if (...) then
 	end
 
 	-- Extract a path from a given start/end position
-  local function traceBackPath(finder, node, startNode)
-    local path = Path:new()
-    path._grid = finder._grid
-    while true do
-      if node._parent then
-        t_insert(path._nodes,1,node)
-        node = node._parent
-      else
-        t_insert(path._nodes,1,startNode)
-        return path
-      end
-    end
-  end
+	local function traceBackPath(finder, node, startNode)
+		local path = Path:new()
+		path._grid = finder._grid
+		while true do
+			if node._parent then
+				t_insert(path._nodes,1,node)
+				node = node._parent
+			else
+				t_insert(path._nodes,1,startNode)
+				return path
+			end
+		end
+	end
 
 	-- Lookup for value in a table
 	local indexOf = function(t,v)
@@ -43,9 +43,9 @@ if (...) then
 	end
 
 	-- Is i out of range
-  local function outOfRange(i,low,up)
-    return (i< low or i > up)
-  end
+	local function outOfRange(i,low,up)
+		return (i< low or i > up)
+	end
 
 	return {
 		arraySize = arraySize,

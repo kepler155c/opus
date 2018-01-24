@@ -1,6 +1,5 @@
 _G.requireInjector(_ENV)
 
-local Event      = require('event')
 local History    = require('history')
 local UI         = require('ui')
 local Util       = require('util')
@@ -10,8 +9,10 @@ local os         = _G.os
 local textutils  = _G.textutils
 local term       = _G.term
 
+local _exit
+
 local sandboxEnv = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
-sandboxEnv.exit = function() Event.exitPullEvents() end
+sandboxEnv.exit = function() _exit = true end
 sandboxEnv._echo = function( ... ) return { ... } end
 _G.requireInjector(sandboxEnv)
 
@@ -19,7 +20,6 @@ UI:configure('Lua', ...)
 
 local command = ''
 local history = History.load('usr/.lua_history', 25)
-local extChars = Util.getVersion() > 1.76
 
 local page = UI.Page {
 	menuBar = UI.MenuBar {
@@ -41,10 +41,6 @@ local page = UI.Page {
 			[ 'control-space' ] = 'autocomplete',
 		},
 	},
-	indicator = UI.Text {
-		backgroundColor = colors.black,
-		y = 2, x = -1, width = 1,
-	},
 	grid = UI.ScrollingGrid {
 		y = 3, ey = -2,
 		columns = {
@@ -62,20 +58,9 @@ local page = UI.Page {
 	},
 	output = UI.Embedded {
 		y = -6,
+		backgroundColor = colors.gray,
 	},
-	--notification = UI.Notification(),
 }
-
-function page.indicator:showResult(s)
-	local values = {
-		[ true  ] = { c = colors.green, i = (extChars and '\003') or '+' },
-		[ false ] = { c = colors.red,   i = 'x' }
-	}
-
-	self.textColor = values[s].c
-	self.value = values[s].i
-	self:draw()
-end
 
 function page:setPrompt(value, focus)
 	self.prompt:setValue(value)
@@ -133,12 +118,12 @@ end
 
 function page:eventHandler(event)
 	if event.type == 'global' then
-		self:setPrompt('', true)
+		self:setPrompt('_G', true)
 		self:executeStatement('_G')
 		command = nil
 
 	elseif event.type == 'local' then
-		self:setPrompt('', true)
+		self:setPrompt('_ENV', true)
 		self:executeStatement('_ENV')
 		command = nil
 
@@ -341,8 +326,11 @@ end
 function page:executeStatement(statement)
 	command = statement
 
+	local s, m
 	local oterm = term.redirect(self.output.win)
-	local s, m = self:rawExecute(command)
+	pcall(function()
+		s, m = self:rawExecute(command)
+	end)
 	if not s then
 		_G.printError(m)
 	end
@@ -353,14 +341,14 @@ function page:executeStatement(statement)
 	else
 		self.grid:setValues({ })
 		self.grid:draw()
-		if m then
-			if not self.output.enabled then
-				self:emit({ type = 'show_output' })
-			end
-			--self.notification:error(m, 5)
+		if m and not self.output.enabled then
+			self:emit({ type = 'show_output' })
 		end
 	end
-	self.indicator:showResult(not not s)
+
+	if _exit then
+		UI:exitPullEvents()
+	end
 end
 
 local args = { ... }
@@ -371,5 +359,4 @@ if args[1] then
 end
 
 UI:setPage(page)
-Event.pullEvents()
-UI.term:reset()
+UI:pullEvents()

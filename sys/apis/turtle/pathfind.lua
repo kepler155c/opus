@@ -1,5 +1,3 @@
-_G.requireInjector()
-
 local Grid       = require('jumper.grid')
 local Pathfinder = require('jumper.pathfinder')
 local Point      = require('point')
@@ -63,11 +61,11 @@ end
 
 local function dimsAreEqual(d1, d2)
 	return d1.ex == d2.ex and
-		   d1.ey == d2.ey and
-		   d1.ez == d2.ez and
-		   d1.x == d2.x and
-		   d1.y == d2.y and
-		   d1.z == d2.z
+			 d1.ey == d2.ey and
+			 d1.ez == d2.ez and
+			 d1.x == d2.x and
+			 d1.y == d2.y and
+			 d1.z == d2.z
 end
 
 -- turtle sensor returns blocks in relation to the world - not turtle orientation
@@ -98,13 +96,13 @@ local function selectDestination(pts, box, grid)
 	while #pts > 0 do
 		local pt = Point.closest(turtle.point, pts)
 		if box and not Point.inBox(pt, box) then
-		  Util.removeByValue(pts, pt)
+			Util.removeByValue(pts, pt)
 		else
 			if grid:isWalkableAt(pt.x, pt.y, pt.z) then
 				return pt
 			end
-	    Util.removeByValue(pts, pt)
-	  end
+			Util.removeByValue(pts, pt)
+		end
 	end
 end
 
@@ -156,7 +154,7 @@ local function pathTo(dest, options)
 			dest.x, dest.y, dest.z, dest.heading)
 
 		if not path then
-	    Util.removeByValue(dests, dest)
+			Util.removeByValue(dests, dest)
 		else
 			path:filter()
 

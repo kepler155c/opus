@@ -13,15 +13,15 @@ _G.device.keyboard = {
 	side    = 'keyboard',
 	type    = 'keyboard',
 	name    = 'keyboard',
-  hotkeys = { },
-  state   = { },
+	hotkeys = { },
+	state   = { },
 }
 
 _G.device.mouse = {
 	side    = 'mouse',
 	type    = 'mouse',
 	name    = 'mouse',
-  state   = { },
+	state   = { },
 }
 
 local Input      = require('input')
@@ -34,24 +34,24 @@ local mouse    = _G.device.mouse
 local os       = _G.os
 
 kernel.hook('peripheral', function(_, eventData)
-  local side = eventData[1]
-  if side then
-    local dev = Peripheral.addDevice(device, side)
-    if dev then
-      os.queueEvent('device_attach', dev.name)
-    end
-  end
+	local side = eventData[1]
+	if side then
+		local dev = Peripheral.addDevice(device, side)
+		if dev then
+			os.queueEvent('device_attach', dev.name)
+		end
+	end
 end)
 
 kernel.hook('peripheral_detach', function(_, eventData)
-  local side = eventData[1]
-  if side then
-    local dev = Util.find(device, 'side', side)
-    if dev then
-      os.queueEvent('device_detach', dev.name)
-      device[dev.name] = nil
-    end
-  end
+	local side = eventData[1]
+	if side then
+		local dev = Util.find(device, 'side', side)
+		if dev then
+			os.queueEvent('device_detach', dev.name)
+			device[dev.name] = nil
+		end
+	end
 end)
 
 kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
@@ -68,38 +68,38 @@ kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
 	end
 
 	-- and fire hotkeys
-  local hotkey = Input:translate(event, eventData[1], eventData[2])
+	local hotkey = Input:translate(event, eventData[1], eventData[2])
 
-  if hotkey and keyboard.hotkeys[hotkey] then
-    keyboard.hotkeys[hotkey](event, eventData)
-  end
+	if hotkey and keyboard.hotkeys[hotkey.code] then
+		keyboard.hotkeys[hotkey.code](event, eventData)
+	end
 end)
 
 kernel.hook({ 'mouse_click', 'mouse_up', 'mouse_drag' }, function(event, eventData)
-  local button = eventData[1]
-  if event == 'mouse_click' then
-    mouse.state[button] = true
-  else
-    if not mouse.state[button] then
-      return true -- ensure mouse ups are only generated if a mouse down was sent
-    end
-    if event == 'mouse_up' then
-      mouse.state[button] = nil
-    end
-  end
+	local button = eventData[1]
+	if event == 'mouse_click' then
+		mouse.state[button] = true
+	else
+		if not mouse.state[button] then
+			return true -- ensure mouse ups are only generated if a mouse down was sent
+		end
+		if event == 'mouse_up' then
+			mouse.state[button] = nil
+		end
+	end
 end)
 
 kernel.hook('kernel_focus', function()
-  Util.clear(keyboard.state)
-  Util.clear(mouse.state)
+	Util.clear(keyboard.state)
+	Util.clear(mouse.state)
 end)
 
 function keyboard.addHotkey(code, fn)
-  keyboard.hotkeys[code] = fn
+	keyboard.hotkeys[code] = fn
 end
 
 function keyboard.removeHotkey(code)
-  keyboard.hotkeys[code] = nil
+	keyboard.hotkeys[code] = nil
 end
 
 kernel.hook('monitor_touch', function(event, eventData)

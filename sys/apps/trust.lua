@@ -1,4 +1,4 @@
-_G.requireInjector()
+_G.requireInjector(_ENV)
 
 local Crypto   = require('crypto')
 local Security = require('security')
@@ -12,27 +12,27 @@ local remoteId
 local args = { ... }
 
 if #args == 1 then
-  remoteId = tonumber(args[1])
+	remoteId = tonumber(args[1])
 else
-  print('Enter host ID')
-  remoteId = tonumber(_G.read())
+	print('Enter host ID')
+	remoteId = tonumber(_G.read())
 end
 
 if not remoteId then
-  error('Syntax: trust <host ID>')
+	error('Syntax: trust <host ID>')
 end
 
 local password = Terminal.readPassword('Enter password: ')
 
 if not password then
-  error('Invalid password')
+	error('Invalid password')
 end
 
 print('connecting...')
 local socket, msg = Socket.connect(remoteId, 19)
 
 if not socket then
-  error(msg)
+	error(msg)
 end
 
 local publicKey = Security.getPublicKey()
@@ -43,9 +43,9 @@ local data = socket:read(2)
 socket:close()
 
 if data and data.success then
-  print(data.msg)
+	print(data.msg)
 elseif data then
-  error(data.msg)
+	error(data.msg)
 else
-  error('No response')
+	error('No response')
 end
