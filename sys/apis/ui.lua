@@ -2346,10 +2346,7 @@ function UI.Wizard:eventHandler(event)
 			event.current:disable()
 		end
 
-		-- a new current view
 		local current = event.next or event.prev
-		current:enable()
-
 		if Util.find(self.pages, 'index', current.index - 1) then
 			self.previousButton:enable()
 		else
@@ -2363,6 +2360,8 @@ function UI.Wizard:eventHandler(event)
 			self.nextButton.text = 'Accept'
 			self.nextButton.event = 'accept'
 		end
+		-- a new current view
+		current:enable()
 		self:draw()
 	end
 end
