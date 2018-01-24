@@ -6,7 +6,7 @@ local os      = _G.os
 
 local requireInjector
 if not install.testing then
-	local url ='https://raw.githubusercontent.com/kepler155c/opus/master/sys/apis/injector.lua'
+	local url ='https://raw.githubusercontent.com/kepler155c/opus/develop-1.8/sys/apis/injector.lua'
 	requireInjector = load(http.get(url).readAll())()
 else
 	requireInjector = _G.requireInjector
