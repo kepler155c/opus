@@ -129,8 +129,8 @@ local function requireWrapper(env)
 
 	-- place package and require function into env
 	env.package = {
-		path   = env.LUA_PATH  or os.getenv('LUA_PATH')  or DEFAULT_PATH,
-		upath  = env.LUA_UPATH or os.getenv('LUA_UPATH') or DEFAULT_UPATH,
+		path   = env.LUA_PATH  or (os.getenv and os.getenv('LUA_PATH'))  or DEFAULT_PATH,
+		upath  = env.LUA_UPATH or (os.getenv and os.getenv('LUA_UPATH')) or DEFAULT_UPATH,
 		config = '/\n:\n?\n!\n-',
 		loaded = {
 			math   = math,
