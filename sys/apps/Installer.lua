@@ -4,16 +4,16 @@ local http    = _G.http
 local install = _ENV.install
 local os      = _G.os
 
-local requireInjector
+local injector
 if not install.testing then
 	_ENV.BRANCH = 'develop-1.8'
 	local url ='https://raw.githubusercontent.com/kepler155c/opus/develop-1.8/sys/apis/injector.lua'
-	requireInjector = load(http.get(url).readAll())()
+	injector = load(http.get(url).readAll(), 'injector.lua', nil, _ENV)
 else
-	requireInjector = _G.requireInjector
+	injector = _G.requireInjector
 end
 
-requireInjector(_ENV)
+injector(_ENV)
 
 if not install.testing then
 	if package then
