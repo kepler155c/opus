@@ -1,6 +1,6 @@
 local Util = require('util')
 
-local keyboard = _G.device.keyboard
+local keyboard = _G.device and _G.device.keyboard
 local keys     = _G.keys
 local os       = _G.os
 
@@ -13,6 +13,10 @@ local modifiers = Util.transpose {
 local input = {
 	state = { },
 }
+
+if not keyboard then
+	keyboard = { state = input.state }
+end
 
 function input:modifierPressed()
 	return keyboard.state[keys.leftCtrl] or
