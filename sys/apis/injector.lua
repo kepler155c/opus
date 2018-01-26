@@ -1,7 +1,8 @@
-local PASTEBIN_URL  = 'http://pastebin.com/raw'
-local GIT_URL       = 'https://raw.githubusercontent.com'
-local DEFAULT_PATH  = 'sys/apis'
-local DEFAULT_UPATH = GIT_URL .. '/kepler155c/opus/' .. _ENV.BRANCH .. '/sys/apis'
+local PASTEBIN_URL   = 'http://pastebin.com/raw'
+local GIT_URL        = 'https://raw.githubusercontent.com'
+local DEFAULT_PATH   = 'sys/apis'
+local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'master'
+local DEFAULT_UPATH  = GIT_URL .. '/kepler155c/opus/' .. DEFAULT_BRANCH .. '/sys/apis'
 
 local fs   = _G.fs
 local http = _G.http
@@ -129,8 +130,8 @@ local function requireWrapper(env)
 
 	-- place package and require function into env
 	env.package = {
-		path   = env.LUA_PATH  or (os.getenv and os.getenv('LUA_PATH'))  or DEFAULT_PATH,
-		upath  = env.LUA_UPATH or (os.getenv and os.getenv('LUA_UPATH')) or DEFAULT_UPATH,
+		path   = env.LUA_PATH  or _G.LUA_PATH  or DEFAULT_PATH,
+		upath  = env.LUA_UPATH or _G.LUA_UPATH or DEFAULT_UPATH,
 		config = '/\n:\n?\n!\n-',
 		loaded = {
 			math   = math,
