@@ -516,6 +516,7 @@ local function autocomplete(line)
 			for _,sItem in pairs(results) do
 				nMaxLen = math.max(string.len(sItem) + 1, nMaxLen)
 			end
+			local w = term.getSize()
 			local nCols = math.floor(w / nMaxLen)
 			if #tDirs < nCols then
 				for _ = #tDirs + 1, nCols do

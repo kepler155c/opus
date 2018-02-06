@@ -13,6 +13,11 @@ Event.addRoutine(function()
 			if api then
 				local proxy = _G[api]
 
+				if not proxy then
+					print('proxy: invalid API')
+					return
+				end
+
 				local methods = { }
 				for k,v in pairs(proxy) do
 					if type(v) == 'function' then

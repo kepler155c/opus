@@ -69,7 +69,11 @@ Event.addRoutine(function()
 							break
 						end
 						if peripheral[data.fn] then
+							-- need to trigger an error on the other end
+							-- local s, m = pcall()
 							socket:write({ peripheral[data.fn](table.unpack(data.args)) })
+						else
+							socket:write({ false, "Invalid function: " .. data.fn })
 						end
 					end
 
