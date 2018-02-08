@@ -109,8 +109,10 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 				if msg.seq ~= socket.rseq then
 					print('transport seq error - closing socket ' .. socket.sport)
 					debug(msg.data)
-					socket:close()
-					os.queueEvent('transport_' .. socket.uid)
+					debug('current ' .. socket.rseq)
+					debug('expected ' .. msg.seq)
+--					socket:close()
+--					os.queueEvent('transport_' .. socket.uid)
 				else
 					socket.rseq = socket.rseq + 1
 					table.insert(socket.messages, { msg.data, distance })
