@@ -53,7 +53,7 @@ function transport.ping(socket)
 				seq = -1,
 			})
 
-		local timerId = os.startTimer(3)
+		local timerId = os.startTimer(5)
 		transport.timers[timerId] = socket
 		socket.timers[-1] = timerId
 	end
