@@ -146,6 +146,12 @@ local function sendInfo()
 			info.inventory = turtle.getInventory()
 			info.slotIndex = turtle.getSelectedSlot()
 		end
+		if device.neuralInterface then
+			info.status = device.neuralInterface.status
+			if not info.status and device.neuralInterface.getMetaOwner then
+				info.status = 'health: ' .. device.neuralInterface.getMetaOwner().health
+			end
+		end
 		device.wireless_modem.transmit(999, os.getComputerID(), info)
 	end
 end
