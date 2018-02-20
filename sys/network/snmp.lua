@@ -149,7 +149,9 @@ local function sendInfo()
 		if device.neuralInterface then
 			info.status = device.neuralInterface.status
 			if not info.status and device.neuralInterface.getMetaOwner then
-				info.status = 'health: ' .. device.neuralInterface.getMetaOwner().health
+				info.status = 'health: ' ..
+					math.floor(device.neuralInterface.getMetaOwner().health /
+						device.neuralInterface.getMetaOwner().maxHealth * 100)
 			end
 		end
 		device.wireless_modem.transmit(999, os.getComputerID(), info)

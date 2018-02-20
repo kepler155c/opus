@@ -48,6 +48,7 @@ local Browser = UI.Page {
       { text = 'Edit', dropdown = {
           { text = 'Cut          ^x', event = 'cut'    },
           { text = 'Copy         ^c', event = 'copy'   },
+          { text = 'Copy path      ', event = 'copy_path' },
           { text = 'Paste        ^v', event = 'paste'  },
           UI.MenuBar.spacer,
           { text = 'Mark          m', event = 'mark'   },
@@ -228,7 +229,6 @@ function Browser:updateDirectory(dir)
 end
 
 function Browser:setDir(dirName, noStatus)
-
   self:unmarkAll()
 
   if self.dir then
@@ -377,6 +377,11 @@ function Browser:eventHandler(event)
       --self:unmarkAll()
       self.grid:draw()
       self:setStatus('Copied %d file(s)', Util.size(copied))
+    end
+
+  elseif event.type == 'copy_path' then
+    if file then
+      os.queueEvent('clipboard_copy', file.fullName)
     end
 
   elseif event.type == 'paste' then
