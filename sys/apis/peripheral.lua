@@ -54,11 +54,8 @@ function Peripheral.addDevice(deviceList, side)
 		name = uniqueName
 	end
 
-	local s, m = pcall(function() deviceList[name] = Peripheral.wrap(side) end)
-	if not s and m then
-		_G.printError('wrap failed')
-		_G.printError(m)
-	end
+	-- this can randomly fail
+	pcall(function() deviceList[name] = Peripheral.wrap(side) end)
 
 	if deviceList[name] then
 		Util.merge(deviceList[name], {
