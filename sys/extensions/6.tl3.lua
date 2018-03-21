@@ -129,6 +129,13 @@ function turtle.getHeadingInfo(heading)
 	return headings[heading]
 end
 
+-- hackish way to support unlimited fuel
+if type(turtle.getFuelLevel()) ~= 'number' then
+	function turtle.getFuelLevel()
+		return 10000000
+	end
+end
+
 -- [[ Basic turtle actions ]] --
 local function inventoryAction(fn, name, qty)
 	local slots = turtle.getFilledSlots()

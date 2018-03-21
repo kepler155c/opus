@@ -6,8 +6,8 @@ local os      = _G.os
 
 local injector
 if not install.testing then
-	_G.OPUS_BRANCH = 'develop-1.8'
-	local url ='https://raw.githubusercontent.com/kepler155c/opus/develop-1.8/sys/apis/injector.lua'
+	_G.OPUS_BRANCH = 'master-1.8'
+	local url ='https://raw.githubusercontent.com/kepler155c/opus/master-1.8/sys/apis/injector.lua'
 	injector = load(http.get(url).readAll(), 'injector.lua', nil, _ENV)()
 else
 	injector = _G.requireInjector
