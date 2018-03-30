@@ -1,13 +1,17 @@
 --[[
 	Mount a readonly file system from another computer across rednet. The
-	target computer must be running OpusOS or redserver.
+	target computer must be running OpusOS or redserver. Dissimlar to samba
+	in that a snapshot of the target is taken upon mounting - making this
+	faster.
+
+	Useful for mounting a non-changing directory tree.
 
 	Syntax:
-	rn://<id>/directory/subdir
+	rttp://<id>/directory/subdir
 
 	Examples:
-	rn://12/usr/etc
-	rn://8/usr
+	rttp://12/usr/etc
+	rttp://8/usr
 ]]--
 
 local rttp = require('rttp')

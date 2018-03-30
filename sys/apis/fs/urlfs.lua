@@ -51,7 +51,7 @@ function urlfs.open(node, fn, fl)
 
 	local c = node.cache
 	if not c then
-		if node.url:match('^([%w][%w%+%-%.]*)%:') == 'rn' then
+		if node.url:match("^(rttps?:)") then
 			local s, response = rttp.get(node.url)
 			c = s and response.statusCode == 200 and response.data
 		else
