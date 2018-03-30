@@ -74,7 +74,7 @@ Event.on('timer', function(_, timerId)
 end)
 
 Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
-	if dhost == computerId and msg then
+	if dhost == computerId and type(msg) == 'table' then
 		local socket = transport.sockets[dport]
 		if socket and socket.connected then
 

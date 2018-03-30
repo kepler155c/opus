@@ -1,3 +1,4 @@
+local rttp = require('rttp')
 local Util = require('util')
 
 local fs = _G.fs
@@ -50,7 +51,12 @@ function urlfs.open(node, fn, fl)
 
 	local c = node.cache
 	if not c then
-		c = Util.httpGet(node.url)
+		if node.url:match('^([%w][%w%+%-%.]*)%:') == 'rn' then
+			local s, response = rttp.get(node.url)
+			c = s and response.statusCode == 200 and response.data
+		else
+			c = Util.httpGet(node.url)
+		end
 		if c then
 			node.cache = c
 			node.size = #c

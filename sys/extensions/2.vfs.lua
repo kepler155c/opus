@@ -149,6 +149,7 @@ function fs.complete(partial, dir, includeFiles, includeSlash)
 end
 
 function fs.listEx(dir)
+  dir = fs.combine(dir, '')
 	local node = getNode(dir)
 	if node.fs.listEx then
 		return node.fs.listEx(node, dir)
