@@ -31,10 +31,12 @@ local function snmpConnection(socket)
 			socket:write('pong')
 
 		elseif msg.type == 'script' then
-			local fn, err = loadstring(msg.args, 'script')
+			local env = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
+			local fn, err = load(msg.args, 'script', nil, env)
 			if fn then
 				kernel.run({
 					fn = fn,
+					env = env,
 					title = 'script',
 				})
 			else
