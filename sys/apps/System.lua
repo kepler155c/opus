@@ -144,7 +144,7 @@ if turtle then
 	local Home = require('turtle.home')
 
 	local values = { }
-	Config.load('gps', values.home or { })
+	Config.load('gps', values.home and { values.home } or { })
 
 	systemPage.tabs:add({
 		gpsTab = UI.Window {
