@@ -182,7 +182,7 @@ if turtle then
 			systemPage:sync()
 			if Home.set() then
 				Config.load('gps', values)
-				self.grid:setValues(values.home or { })
+				self.grid:setValues(values.home and { values.home } or { })
 				self.grid:draw()
 				systemPage.notification:success('Location set')
 			else
