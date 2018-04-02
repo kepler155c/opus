@@ -615,7 +615,7 @@ local function gotoMultiTurn(dx, dy, dz)
 			turtle.headTowardsZ(dz)
 		end
 
-		if gotoEx(dx, dz, dy) then
+		if gotoEx(dx, dy, dz) then
 			return true
 		end
 
