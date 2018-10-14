@@ -144,14 +144,21 @@ function Point.calculateMoves(pta, ptb, distance)
 		end
 	end
 
-	if ptb.heading then
-		if heading ~= ptb.heading then
-			moves = moves + Point.calculateTurns(heading, ptb.heading)
-			heading = ptb.heading
-		end
+	if not ptb.heading then
+		return moves, heading, moves
 	end
 
-	return moves, heading
+	-- calc turns as slightly less than moves
+	local weighted = moves
+	if heading ~= ptb.heading then
+		local turns = Point.calculateTurns(heading, ptb.heading)
+		moves = moves + turns
+		local wturns = { [0] = 0, [1] = .9, [2] = 1.9 }
+		weighted = weighted + wturns[turns]
+		heading = ptb.heading
+	end
+
+	return moves, heading, weighted
 end
 
 -- given a set of points, find the one taking the least moves
@@ -164,7 +171,7 @@ function Point.closest(reference, pts)
 	for _,pt in pairs(pts) do
 		local distance = Point.turtleDistance(reference, pt)
 		if distance < lm then
-			local m = Point.calculateMoves(reference, pt, distance)
+			local _, _, m = Point.calculateMoves(reference, pt, distance)
 			if m < lm then
 				lpt = pt
 				lm = m

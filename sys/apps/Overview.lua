@@ -32,9 +32,9 @@ local config = {
 Config.load('Overview', config)
 
 local applications = { }
+local extSupport = Util.getVersion() >= 1.76
 
 local function loadApplications()
-
 	local requirements = {
 		turtle = function() return turtle end,
 		advancedTurtle = function() return turtle and term.isColor() end,
@@ -117,7 +117,7 @@ local function parseIcon(iconText)
 		icon = NFT.parse(iconText)
 		if icon then
 			if icon.height > 3 or icon.width > 8 then
-				error('Invalid size')
+				error('Must be an NFT image - 3 rows, 8 cols max')
 			end
 		end
 		return icon
@@ -174,6 +174,10 @@ local page = UI.Page {
 	},
 }
 
+if extSupport then
+	page.container.backgroundColor = colors.black
+end
+
 UI.Icon = class(UI.Window)
 UI.Icon.defaults = {
 	UIElement = 'Icon',
@@ -194,7 +198,6 @@ function UI.Icon:eventHandler(event)
 end
 
 function page.container:setCategory(categoryName, animate)
-
 	-- reset the viewport window
 	self.children = { }
 	self.offy = 0
@@ -231,7 +234,10 @@ function page.container:setCategory(categoryName, animate)
 	for _,program in ipairs(filtered) do
 
 		local icon
-		if program.icon then
+		if extSupport and program.iconExt then
+			icon = parseIcon(program.iconExt)
+		end
+		if not icon and program.icon then
 			icon = parseIcon(program.icon)
 		end
 		if not icon then
@@ -344,7 +350,6 @@ function page:resize()
 end
 
 function page:eventHandler(event)
-
 	if event.type == 'tab_select' then
 		self.container:setCategory(event.button.text, true)
 		self.container:draw()
@@ -455,7 +460,10 @@ function editor:enable(app)
 		self.form:setValues(app)
 
 		local icon
-		if app.icon then
+		if extSupport and app.iconExt then
+			icon = parseIcon(app.iconExt)
+		end
+		if not icon and app.icon then
 			icon = parseIcon(app.icon)
 		end
 		self.form.image:setImage(icon)
@@ -479,7 +487,6 @@ function editor:updateApplications(app)
 end
 
 function editor:eventHandler(event)
-
 	if event.type == 'form_cancel' or event.type == 'cancel' then
 		UI:setPreviousPage()
 
@@ -501,13 +508,17 @@ function editor:eventHandler(event)
 				local s, m = pcall(function()
 					local iconLines = Util.readFile(fileName)
 					if not iconLines then
-						error('Unable to load file')
+						error('Must be an NFT image - 3 rows, 8 cols max')
 					end
 					local icon, m = parseIcon(iconLines)
 					if not icon then
 						error(m)
 					end
-					self.form.values.icon = iconLines
+					if extSupport then
+						self.form.values.iconExt = iconLines
+					else
+						self.form.values.icon = iconLines
+					end
 					self.form.image:setImage(icon)
 					self.form.image:draw()
 				end)
