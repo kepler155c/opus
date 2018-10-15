@@ -136,6 +136,18 @@ function Event.waitForEvent(event, timeout)
 	until e[1] == 'timer' and e[2] == timerId
 end
 
+-- Set a handler for the terminate event. Within the function, return
+-- true or false to indicate whether the event should be propagated to
+-- all sub-threads
+function Event.onTerminate(fn)
+	Event.termFn = fn
+end
+
+function Event.termFn()
+	Event.terminate = true
+	return true -- propagate
+end
+
 function Event.addRoutine(fn)
 	local r = setmetatable({
 		co  = coroutine.create(fn),
@@ -204,11 +216,16 @@ end
 function Event.pullEvent(eventType)
 	while true do
 		local e = { os.pullEventRaw() }
+		local propagate = true           -- don't like this...
 
-		Event.terminate = Event.terminate or e[1] == 'terminate'
+		if e[1] == 'terminate' then
+			propagate = Event.termFn()
+		end
 
-		processHandlers(e[1])
-		processRoutines(table.unpack(e))
+		if propagate then
+			processHandlers(e[1])
+			processRoutines(table.unpack(e))
+		end
 
 		if Event.terminate then
 			return { 'terminate' }

@@ -10,7 +10,7 @@ local os         = _G.os
 local read       = _G.read
 local term       = _G.term
 
-local options, args = Util.args({ ... })
+local args = { ... }
 
 local remoteId = tonumber(table.remove(args, 1) or '')
 if not remoteId then
@@ -19,11 +19,11 @@ if not remoteId then
 end
 
 if not remoteId then
-	error('Syntax: telnet [-title TITLE] ID [PROGRAM]')
+	error('Syntax: telnet ID [PROGRAM] [ARGS]')
 end
 
-if options.title and multishell then
-	multishell.setTitle(multishell.getCurrent(), options.title)
+if multishell then
+	multishell.setTitle(multishell.getCurrent(), 'Telnet ' .. remoteId)
 end
 
 local socket, msg = Socket.connect(remoteId, 23)

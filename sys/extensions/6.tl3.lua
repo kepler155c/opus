@@ -458,6 +458,7 @@ function turtle.back()
 end
 
 local function moveTowardsX(dx)
+	if not tonumber(dx) then error('moveTowardsX: Invalid arguments') end
 	local direction = dx - turtle.point.x
 	local move
 

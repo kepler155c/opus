@@ -653,7 +653,6 @@ function Util.getOptions(options, args, ignoreInvalid)
 		end
 	end
 	return true, Util.size(rawOptions)
-
 end
 
 return Util
