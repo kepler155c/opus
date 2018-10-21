@@ -30,8 +30,11 @@ for name, package in pairs(Packages:installed()) do
 		fs.mount(table.unpack(Util.matches(package.mount)))
 	end
 
-	addPath(appPaths, fs.combine(fs.combine('packages', name), 'apps'))
-	addPath(luaPaths, fs.combine(fs.combine('packages', name), 'apis'))
+	addPath(appPaths, fs.combine('packages', name))
+	local apiPath = fs.combine(fs.combine('packages', name), 'apis')
+	if fs.exists(apiPath) then
+		addPath(luaPaths, apiPath)
+	end
 end
 
 shell.setPath(table.concat(appPaths, ':'))

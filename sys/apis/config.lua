@@ -15,7 +15,10 @@ function Config.load(fname, data)
 	if not fs.exists(filename) then
 		Util.writeTable(filename, data)
 	else
-		Util.merge(data, Util.readTable(filename) or { })
+		local contents = Util.readTable(filename) or
+			error('Configuration file is corrupt:' .. filename)
+
+		Util.merge(data, contents)
 	end
 end
 
