@@ -306,6 +306,9 @@ function Manager:setDefaultDevice(dev)
 end
 
 function Manager:addPage(name, page)
+	if not self.pages then
+		self.pages = { }
+	end
 	self.pages[name] = page
 end
 
