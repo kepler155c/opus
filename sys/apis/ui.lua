@@ -1058,6 +1058,17 @@ function UI.StringBuffer:insert(s, width)
 	end
 end
 
+function UI.StringBuffer:insertRight(s, width)
+	local len = #tostring(s or '')
+	if len > width then
+		s = _sub(s, 1, width)
+	end
+	if len < width then
+		table.insert(self.buffer, _rep(' ', width - len))
+	end
+	table.insert(self.buffer, s)
+end
+
 function UI.StringBuffer:get(sep)
 	return Util.widthify(table.concat(self.buffer, sep or ''), self.bufSize)
 end
@@ -1511,7 +1522,11 @@ function UI.Grid:drawRows()
 		end
 
 		for _,col in pairs(self.columns) do
-			sb:insert(ind .. safeValue(row[col.key] or ''), col.cw + 1)
+			if col.justify == 'right' then
+				sb:insertRight(ind .. safeValue(row[col.key] or ''), col.cw + 1)
+			else
+				sb:insert(ind .. safeValue(row[col.key] or ''), col.cw + 1)
+			end
 			ind = ' '
 		end
 
@@ -2327,17 +2342,31 @@ function UI.Wizard:prevView()
 	end
 end
 
+function UI.Wizard:isViewValid()
+	local currentView = Util.find(self.pages, 'enabled', true)
+	return not currentView.validate and true or currentView:validate()
+end
+
 function UI.Wizard:eventHandler(event)
 	if event.type == 'nextView' then
 		local currentView = Util.find(self.pages, 'enabled', true)
 		local nextView = Util.find(self.pages, 'index', currentView.index + 1)
-		currentView:emit({ type = 'enable_view', next = nextView, current = currentView })
+		if self:isViewValid() then
+			currentView:emit({ type = 'enable_view', next = nextView, current = currentView })
+		end
 
 	elseif event.type == 'previousView' then
 		local currentView = Util.find(self.pages, 'enabled', true)
 		local nextView = Util.find(self.pages, 'index', currentView.index - 1)
-		currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
+		if self:isViewValid() then
+			currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
+		end
 		return true
+
+	elseif event.type == 'wizard_complete' then
+		if self:isViewValid() then
+			self:emit({ type = 'accept' })
+		end
 
 	elseif event.type == 'enable_view' then
 		if event.current then
@@ -2350,6 +2379,8 @@ function UI.Wizard:eventHandler(event)
 		end
 
 		local current = event.next or event.prev
+		if not current then error('property "index" is required on wizard pages') end
+
 		if Util.find(self.pages, 'index', current.index - 1) then
 			self.previousButton:enable()
 		else
@@ -2361,7 +2392,7 @@ function UI.Wizard:eventHandler(event)
 			self.nextButton.event = 'nextView'
 		else
 			self.nextButton.text = 'Accept'
-			self.nextButton.event = 'accept'
+			self.nextButton.event = 'wizard_complete'
 		end
 		-- a new current view
 		current:enable()
@@ -3183,16 +3214,18 @@ function UI.Form:createForm()
 		end
 	end
 
-	table.insert(self.children, UI.Button {
-		y = -self.margin, x = -12 - self.margin,
-		text = 'Ok',
-		event = 'form_ok',
-	})
-	table.insert(self.children, UI.Button {
-		y = -self.margin, x = -7 - self.margin,
-		text = 'Cancel',
-		event = 'form_cancel',
-	})
+	if not self.manualControls then
+		table.insert(self.children, UI.Button {
+			y = -self.margin, x = -12 - self.margin,
+			text = 'Ok',
+			event = 'form_ok',
+		})
+		table.insert(self.children, UI.Button {
+			y = -self.margin, x = -7 - self.margin,
+			text = 'Cancel',
+			event = 'form_cancel',
+		})
+	end
 end
 
 function UI.Form:validateField(field)
@@ -3201,25 +3234,44 @@ function UI.Form:validateField(field)
 			return false, 'Field is required'
 		end
 	end
+	if field.validate == 'numeric' then
+		if #tostring(field.value) > 0 then
+			if not tonumber(field.value) then
+				return false, 'Invalid number'
+			end
+		end
+	end
+	return true
+end
+
+function UI.Form:save()
+	for _,child in pairs(self.children) do
+		if child.formKey then
+			local s, m = self:validateField(child)
+			if not s then
+				self:setFocus(child)
+				self:emit({ type = 'form_invalid', message = m, field = child })
+				return false
+			end
+		end
+	end
+	for _,child in pairs(self.children) do
+		if child.formKey then
+			if child.pruneEmpty and type(child.value) == 'string' and #child.value == 0 then
+				self.values[child.formKey] = nil
+			else
+				self.values[child.formKey] = child.value
+			end
+		end
+	end
+
 	return true
 end
 
 function UI.Form:eventHandler(event)
 	if event.type == 'form_ok' then
-		for _,child in pairs(self.children) do
-			if child.formKey  then
-				local s, m = self:validateField(child)
-				if not s then
-					self:setFocus(child)
-					self:emit({ type = 'form_invalid', message = m, field = child })
-					return false
-				end
-			end
-		end
-		for _,child in pairs(self.children) do
-			if child.formKey then
-				self.values[child.formKey] = child.value
-			end
+		if not self:save() then
+			return false
 		end
 		self:emit({ type = self.event, UIElement = self })
 	else

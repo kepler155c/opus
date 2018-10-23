@@ -55,7 +55,13 @@ function Peripheral.addDevice(deviceList, side)
 	end
 
 	-- this can randomly fail
-	pcall(function() deviceList[name] = Peripheral.wrap(side) end)
+	pcall(function()
+		deviceList[name] = Peripheral.wrap(side)
+		if ptype == 'wireless_modem' and not deviceList.wireless_modem then
+			-- TODO: fix this
+			deviceList.wireless_modem = deviceList[name]
+		end
+	end)
 
 	if deviceList[name] then
 		Util.merge(deviceList[name], {
