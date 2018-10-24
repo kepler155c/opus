@@ -172,6 +172,20 @@ function Util.deepMerge(obj, args)
 	end
 end
 
+-- remove table entries if passed function returns false
+function Util.prune(t, fn)
+	for _,k in pairs(Util.keys(t)) do
+		local v = t[k]
+		if type(v) == 'table' then
+			t[k] = Util.prune(v, fn)
+		end
+		if not fn(t[k]) then
+			t[k] = nil
+		end
+	end
+	return t
+end
+
 function Util.transpose(t)
 	local tt = { }
 	for k,v in pairs(t) do
