@@ -1232,7 +1232,8 @@ function UI.Page:setFocus(child)
 	self.focused = child
 	if not child.focused then
 		child.focused = true
-		self:emit({ type = 'focus_change', focused = child })
+		child:emit({ type = 'focus_change', focused = child })
+		--self:emit({ type = 'focus_change', focused = child })
 	end
 
 	child:focus()
@@ -2304,13 +2305,13 @@ function UI.Wizard:add(pages)
 	end
 end
 
-function UI.Wizard:enable()
+function UI.Wizard:enable(...)
 	self.enabled = true
 	for _,child in ipairs(self.children) do
 		if not child.index then
-			child:enable()
+			child:enable(...)
 		elseif child.index == 1 then
-			child:enable()
+			child:enable(...)
 		else
 			child:disable()
 		end
@@ -2415,12 +2416,12 @@ function UI.SlideOut:enable()
 	self.enabled = false
 end
 
-function UI.SlideOut:show()
+function UI.SlideOut:show(...)
 	self:addTransition('expandUp')
 	self.canvas:setVisible(true)
 	self.enabled = true
 	for _,child in pairs(self.children) do
-		child:enable()
+		child:enable(...)
 	end
 	self:draw()
 	self:capture(self)
@@ -2973,7 +2974,7 @@ function UI.Chooser:draw()
 		value = choice.name
 	end
 	self:write(1, 1, '<', bg, colors.black)
-	self:write(2, 1, ' ' .. Util.widthify(value, self.width-4) .. ' ', bg)
+	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg)
 	self:write(self.width, 1, '>', bg, colors.black)
 end
 
@@ -3257,7 +3258,8 @@ function UI.Form:save()
 	end
 	for _,child in pairs(self.children) do
 		if child.formKey then
-			if child.pruneEmpty and type(child.value) == 'string' and #child.value == 0 then
+			if (child.pruneEmpty and type(child.value) == 'string' and #child.value == 0) or
+				 (child.pruneEmpty and type(child.value) == 'boolean' and not child.value) then
 				self.values[child.formKey] = nil
 			else
 				self.values[child.formKey] = child.value
