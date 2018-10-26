@@ -8,6 +8,15 @@
 	Button = {
 		--focusIndicator = '\183',
 	},
+	Checkbox = {
+		checkedIndicator = '\4',
+		leftMarker = '\124',
+		rightMarker = '\124',
+	},
+	Chooser = {
+		leftIndicator = '\17',
+		rightIndicator = '\16',
+	},
 	Grid = {
 		focusIndicator = '\183',
 		inverseSortIndicator = '\24',

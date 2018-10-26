@@ -2948,6 +2948,8 @@ UI.Chooser.defaults = {
 	choices = { },
 	nochoice = 'Select',
 	backgroundFocusColor = colors.lightGray,
+	leftIndicator = '<',
+	rightIndicator = '>',
 	height = 1,
 }
 function UI.Chooser:setParent()
@@ -2973,9 +2975,9 @@ function UI.Chooser:draw()
 	if choice then
 		value = choice.name
 	end
-	self:write(1, 1, '<', bg, colors.black)
+	self:write(1, 1, self.leftIndicator, self.backgroundColor, colors.black)
 	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg)
-	self:write(self.width, 1, '>', bg, colors.black)
+	self:write(self.width, 1, self.rightIndicator, self.backgroundColor, colors.black)
 end
 
 function UI.Chooser:focus()
@@ -3013,6 +3015,57 @@ function UI.Chooser:eventHandler(event)
 			self:emit({ type = 'key', key = 'right' })
 			return true
 		end
+	end
+end
+
+--[[-- Chooser --]]--
+UI.Checkbox = class(UI.Window)
+UI.Checkbox.defaults = {
+	UIElement = 'Checkbox',
+	nochoice = 'Select',
+	checkedIndicator = 'X',
+	leftMarker = '[',
+	rightMarker = ']',
+	value = false,
+	textColor = colors.white,
+	backgroundColor = colors.black,
+	backgroundFocusColor = colors.lightGray,
+	height = 1,
+	width = 3,
+	accelerators = {
+		space = 'checkbox_toggle',
+		mouse_click = 'checkbox_toggle',
+	}
+}
+function UI.Checkbox:draw()
+	local bg = self.backgroundColor
+	if self.focused then
+		bg = self.backgroundFocusColor
+	end
+	if type(self.value) == 'string' then
+		self.value = nil  -- TODO: fix form
+	end
+	local text = string.format('[%s]', not self.value and ' ' or self.checkedIndicator)
+	self:write(1, 1, text, bg)
+	self:write(1, 1, self.leftMarker, self.backgroundColor, self.textColor)
+	self:write(2, 1, not self.value and ' ' or self.checkedIndicator, bg)
+	self:write(3, 1, self.rightMarker, self.backgroundColor, self.textColor)
+end
+
+function UI.Checkbox:focus()
+	self:draw()
+end
+
+function UI.Checkbox:reset()
+	self.value = false
+end
+
+function UI.Checkbox:eventHandler(event)
+	if event.type == 'checkbox_toggle' then
+		self.value = not self.value
+		self:emit({ type = 'checkbox_change', checked = self.value, element = self })
+		self:draw()
+		return true
 	end
 end
 
