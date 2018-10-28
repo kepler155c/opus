@@ -1219,7 +1219,7 @@ function UI.Page:focusNext()
 end
 
 function UI.Page:setFocus(child)
-	if not child.focus then
+	if not child or not child.focus then
 		return
 	end
 

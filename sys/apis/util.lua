@@ -489,6 +489,7 @@ function Util.insertString(str, istr, pos)
 end
 
 function Util.split(str, pattern)
+	if not str then error('Util:split: invalid parameters', 2) end
 	pattern = pattern or "(.-)\n"
 	local t = {}
 	local function helper(line) table.insert(t, line) return "" end
