@@ -356,6 +356,7 @@ function Util.readFile(fname)
 end
 
 function Util.writeFile(fname, data)
+	if not fname or not data then error('Util.writeFile: invalid parameters', 2) end
 	local file = io.open(fname, "w")
 	if not file then
 		error('Unable to open ' .. fname, 2)
@@ -489,7 +490,7 @@ function Util.insertString(str, istr, pos)
 end
 
 function Util.split(str, pattern)
-	if not str then error('Util:split: invalid parameters', 2) end
+	if not str then error('Util.split: Invalid parameters', 2) end
 	pattern = pattern or "(.-)\n"
 	local t = {}
 	local function helper(line) table.insert(t, line) return "" end

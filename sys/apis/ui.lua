@@ -1463,7 +1463,14 @@ function UI.Grid:update()
 		end
 	end
 
-	self.sorted = Util.keys(self.values)
+	self.sorted = { }
+	for k,v in pairs(self.values) do
+		if self:isRowValid(k, v) then
+			table.insert(self.sorted, k)
+		end
+	end
+
+	--self.sorted = Util.keys(self.values)
 	if order then
 		table.sort(self.sorted, function(a,b)
 			return order(self.values[a], self.values[b])
@@ -1543,6 +1550,12 @@ function UI.Grid:drawRows()
 	if y <= self.height then
 		self:clearArea(1, y, self.width, self.height - y + 1)
 	end
+end
+
+-- Non-intuitive: update must be called if the table was specified
+-- in the shortcut definition (as this callback was not yet overridden)
+function UI.Grid:isRowValid(--[[ key, value ]])
+	return true
 end
 
 function UI.Grid:getRowTextColor(row, selected)
@@ -2359,9 +2372,7 @@ function UI.Wizard:eventHandler(event)
 	elseif event.type == 'previousView' then
 		local currentView = Util.find(self.pages, 'enabled', true)
 		local nextView = Util.find(self.pages, 'index', currentView.index - 1)
-		if self:isViewValid() then
-			currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
-		end
+		currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
 		return true
 
 	elseif event.type == 'wizard_complete' then
