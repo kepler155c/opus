@@ -7,7 +7,7 @@ _G.requireInjector(_ENV)
 local Pathing      = require('turtle.pathfind')
 local GPS          = require('gps')
 local Point        = require('point')
-local synchronized = require('sync')
+local synchronized = require('sync').sync
 local Util         = require('util')
 
 local os         = _G.os

@@ -34,6 +34,12 @@ _G._debug = function(pattern, ...)
 	term.redirect(oldTerm)
 end
 
+if not _G.debug then -- don't clobber lua debugger
+	function _G.debug(...)
+		_G._debug(...)
+	end
+end
+
 -- any function that runs in a kernel hook does not run in
 -- a separate coroutine or have a window. an error in a hook
 -- function will crash the system.

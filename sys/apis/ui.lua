@@ -2959,6 +2959,7 @@ UI.Chooser.defaults = {
 	choices = { },
 	nochoice = 'Select',
 	backgroundFocusColor = colors.lightGray,
+	textInactiveColor = colors.gray,
 	leftIndicator = '<',
 	rightIndicator = '>',
 	height = 1,
@@ -2981,13 +2982,14 @@ function UI.Chooser:draw()
 	if self.focused then
 		bg = self.backgroundFocusColor
 	end
+	local fg = self.inactive and self.textInactiveColor or self.textColor
 	local choice = Util.find(self.choices, 'value', self.value)
 	local value = self.nochoice
 	if choice then
 		value = choice.name
 	end
 	self:write(1, 1, self.leftIndicator, self.backgroundColor, colors.black)
-	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg)
+	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg, fg)
 	self:write(self.width, 1, self.rightIndicator, self.backgroundColor, colors.black)
 end
 
