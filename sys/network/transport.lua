@@ -33,7 +33,7 @@ function transport.read(socket)
 end
 
 function transport.write(socket, data)
-	--debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
+	--_debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
 	socket.transmit(socket.dport, socket.dhost, data)
 
 	--local timerId = os.startTimer(3)
@@ -45,7 +45,7 @@ function transport.write(socket, data)
 end
 
 function transport.ping(socket)
-	--debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
+	--_debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
 	if os.clock() - socket.activityTimer > 10 then
 		socket.activityTimer = os.clock()
 		socket.transmit(socket.dport, socket.dhost, {
@@ -78,7 +78,7 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 		local socket = transport.sockets[dport]
 		if socket and socket.connected then
 
-			--if msg.type then debug('<< ' .. Util.tostring(msg)) end
+			--if msg.type then _debug('<< ' .. Util.tostring(msg)) end
 
 			if msg.type == 'DISC' then
 				-- received disconnect from other end
@@ -108,9 +108,9 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 				socket.activityTimer = os.clock()
 				if msg.seq ~= socket.rseq then
 					print('transport seq error - closing socket ' .. socket.sport)
-					debug(msg.data)
-					debug('current ' .. socket.rseq)
-					debug('expected ' .. msg.seq)
+					_debug(msg.data)
+					_debug('current ' .. socket.rseq)
+					_debug('expected ' .. msg.seq)
 --					socket:close()
 --					os.queueEvent('transport_' .. socket.uid)
 				else
@@ -122,7 +122,7 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 						os.queueEvent('transport_' .. socket.uid)
 					end
 
-					--debug('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))
+					--_debug('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))
 					--socket.transmit(socket.dport, socket.dhost, {
 					--  type = 'ACK',
 					--  seq = msg.seq,

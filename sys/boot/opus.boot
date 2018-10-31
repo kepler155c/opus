@@ -11,7 +11,7 @@ for k,v in pairs(_ENV) do
 	sandboxEnv[k] = v
 end
 
-_G.debug = function() end
+_G._debug = function() end
 
 local function makeEnv()
 	local env = setmetatable({ }, { __index = _G })

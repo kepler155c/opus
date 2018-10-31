@@ -32,7 +32,7 @@ local config = {
 		backgroundColor = colors.gray,
 		tabBarBackgroundColor = colors.gray,
 		focusBackgroundColor = colors.gray,
-		errorColor = colors.red,
+		errorColor = colors.black,
 	},
 	color = {
 		textColor  = colors.lightGray,
@@ -41,7 +41,7 @@ local config = {
 		backgroundColor = colors.gray,
 		tabBarBackgroundColor = colors.gray,
 		focusBackgroundColor = colors.gray,
-		errorColor = colors.black,
+		errorColor = colors.red,
 	},
 }
 Config.load('multishell', config)

@@ -28,7 +28,7 @@ local focusedRoutineEvents = Util.transpose {
 	'paste', 'terminate',
 }
 
-_G.debug = function(pattern, ...)
+_G._debug = function(pattern, ...)
 	local oldTerm = term.redirect(kernel.window)
 	Util.print(pattern, ...)
 	term.redirect(oldTerm)
