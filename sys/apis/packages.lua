@@ -1,8 +1,7 @@
-_G.requireInjector(_ENV)
-
 local Util = require('util')
 
 local fs = _G.fs
+local textutils = _G.textutils
 
 local PACKAGE_DIR = 'packages'
 
@@ -22,11 +21,33 @@ function Packages:installed()
 end
 
 function Packages:list()
-	return Util.readTable('sys/packageList.lua') or { }
+	if self.packageList then
+		return self.packageList
+	end
+	self.packageList = Util.readTable('sys/packageList.lua') or { }
+
+	return self.packageList
 end
 
 function Packages:isInstalled(package)
 	return self:installed()[package]
+end
+
+function Packages:getManifest(package)
+--	local fname = 'packages/' .. package .. '/.package'
+	local fname = 'usr/milo/.package'
+	if fs.exists(fname) then
+		return Util.readTable(fname)
+	end
+	local list = self:list()
+	local url = list and list[package]
+
+	if url then
+		local c = Util.httpGet(url) -- will need to call load
+		if c then
+			return textutils.unserialize(c)
+		end
+	end
 end
 
 return Packages

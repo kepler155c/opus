@@ -11,10 +11,10 @@ end
 if not fs.exists('usr/autorun') then
 	fs.makeDir('usr/autorun')
 end
-if not fs.exists('usr/config/fstab') then
-	Util.writeFile('usr/config/fstab',
-		'usr gitfs kepler155c/opus-apps/' .. _G.OPUS_BRANCH)
-end
+--if not fs.exists('usr/config/fstab') then
+--	Util.writeFile('usr/config/fstab',
+--		'usr gitfs kepler155c/opus-apps/' .. _G.OPUS_BRANCH)
+--end
 
 if not fs.exists('usr/config/shell') then
 	Util.writeTable('usr/config/shell', {

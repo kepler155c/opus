@@ -1,14 +1,15 @@
 _G.requireInjector(_ENV)
 
-local class  = require('class')
-local Config = require('config')
-local Event  = require('event')
-local FileUI = require('ui.fileui')
-local NFT    = require('nft')
-local SHA1   = require('sha1')
-local Tween  = require('ui.tween')
-local UI     = require('ui')
-local Util   = require('util')
+local class    = require('class')
+local Config   = require('config')
+local Event    = require('event')
+local FileUI   = require('ui.fileui')
+local NFT      = require('nft')
+local Packages = require('packages')
+local SHA1     = require('sha1')
+local Tween    = require('ui.tween')
+local UI       = require('ui')
+local Util     = require('util')
 
 local colors     = _G.colors
 local fs         = _G.fs
@@ -46,11 +47,14 @@ local function loadApplications()
 
 	applications = Util.readTable('sys/etc/app.db')
 
-	if fs.exists('usr/etc/apps') then
-		local dbs = fs.list('usr/etc/apps')
-		for _, db in pairs(dbs) do
-			local apps = Util.readTable('usr/etc/apps/' .. db) or { }
-			Util.merge(applications, apps)
+	for dir in pairs(Packages:installed()) do
+		local path = fs.combine('packages/' .. dir, 'etc/apps')
+		if fs.exists(path) then
+			local dbs = fs.list(path)
+			for _, db in pairs(dbs) do
+				local apps = Util.readTable(fs.combine(path, db)) or { }
+				Util.merge(applications, apps)
+			end
 		end
 	end
 

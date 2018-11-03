@@ -568,10 +568,10 @@ local function shellRead(history)
 		local ie = Input:translate(event, p1, p2, p3)
 		if ie then
 			if ie.code == 'scroll_up' then
-				terminal.scrollUp()
+				--terminal.scrollUp()
 
 			elseif ie.code == 'scroll_down' then
-				terminal.scrollDown()
+				--terminal.scrollDown()
 
 			elseif ie.code == 'terminate' then
 				bExit = true

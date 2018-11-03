@@ -3,11 +3,15 @@ local Util = require('util')
 
 local TREE_URL = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1'
 local FILE_URL = 'https://raw.githubusercontent.com/%s/%s/%s/%s'
-
 local git = { }
 
-function git.list(repository)
+local os = _G.os
 
+if not _G.GIT then
+	_G.GIT = { }
+end
+
+function git.list(repository, cache)
 	local t = Util.split(repository, '(.-)/')
 
 	local user = t[1]
@@ -15,6 +19,14 @@ function git.list(repository)
 	local branch = t[3] or 'master'
 
 	local dataUrl = string.format(TREE_URL, user, repo, branch)
+if _G.GIT[dataUrl] then
+	_G.GIT[dataUrl].count = _G.GIT[dataUrl].count + 1
+else
+	_G.GIT[dataUrl] = {
+		count = 1
+	}
+end
+
 	local contents = Util.download(dataUrl)
 
 	if not contents then
@@ -22,7 +34,7 @@ function git.list(repository)
 	end
 
 	local data = json.decode(contents)
-
+Util.writeTable('.git/' .. dataUrl, { day = os.day(), data = data })
 	if data.message and data.message:find("API rate limit exceeded") then
 		error("Out of API calls, try again later")
 	end

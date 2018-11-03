@@ -430,7 +430,7 @@ end
 function Util.download(url, filename)
 	local contents, msg = Util.httpGet(url)
 	if not contents then
-		error(string.format('Failed to download %s\n%s', url, msg))
+		error(string.format('Failed to download %s\n%s', url, msg), 2)
 	end
 
 	if filename then

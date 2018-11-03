@@ -26,11 +26,17 @@ end
 -- https://github.com/mpeterv/depgraph/blob/master/src/depgraph/init.lua
 
 for name, package in pairs(Packages:installed()) do
-	if  package.mount then
-		fs.mount(table.unpack(Util.matches(package.mount)))
+	local packageDir = fs.combine('packages', name)
+	debug(fs.combine(packageDir, '.install'))
+	if fs.exists(fs.combine(packageDir, '.install')) then
+		local install = Util.readTable(fs.combine(packageDir, '.install'))
+		if install and install.mount then
+debug('mounting: ' .. install.mount)
+			fs.mount(table.unpack(Util.matches(install.mount)))
+		end
 	end
 
-	addPath(appPaths, fs.combine('packages', name))
+	addPath(appPaths, packageDir)
 	local apiPath = fs.combine(fs.combine('packages', name), 'apis')
 	if fs.exists(apiPath) then
 		addPath(luaPaths, apiPath)
