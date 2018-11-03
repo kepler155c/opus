@@ -27,11 +27,9 @@ end
 
 for name, package in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
-	debug(fs.combine(packageDir, '.install'))
 	if fs.exists(fs.combine(packageDir, '.install')) then
 		local install = Util.readTable(fs.combine(packageDir, '.install'))
 		if install and install.mount then
-debug('mounting: ' .. install.mount)
 			fs.mount(table.unpack(Util.matches(install.mount)))
 		end
 	end
