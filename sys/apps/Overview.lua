@@ -82,7 +82,7 @@ local function loadApplications()
 			end
 		end
 
-		return true -- Util.startsWidth(a.run, 'http') or shell.resolveProgram(a.run)
+		return true -- Util.startsWith(a.run, 'http') or shell.resolveProgram(a.run)
 	end)
 end
 

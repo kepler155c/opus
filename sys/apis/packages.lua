@@ -34,8 +34,7 @@ function Packages:isInstalled(package)
 end
 
 function Packages:getManifest(package)
---	local fname = 'packages/' .. package .. '/.package'
-	local fname = 'usr/milo/.package'
+	local fname = 'packages/' .. package .. '/.package'
 	if fs.exists(fname) then
 		return Util.readTable(fname)
 	end

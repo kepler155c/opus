@@ -25,7 +25,7 @@ end
 -- dependency graph
 -- https://github.com/mpeterv/depgraph/blob/master/src/depgraph/init.lua
 
-for name, package in pairs(Packages:installed()) do
+for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
 	if fs.exists(fs.combine(packageDir, '.install')) then
 		local install = Util.readTable(fs.combine(packageDir, '.install'))

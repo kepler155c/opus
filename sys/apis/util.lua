@@ -507,7 +507,7 @@ function Util.matches(str, pattern)
 	return t
 end
 
-function Util.startsWidth(s, match)
+function Util.startsWith(s, match)
 	return string.sub(s, 1, #match) == match
 end
 
