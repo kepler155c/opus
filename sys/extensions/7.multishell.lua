@@ -1,7 +1,8 @@
 _G.requireInjector(_ENV)
 
-local Config = require('config')
-local Util   = require('util')
+local Config   = require('config')
+local Packages = require('packages')
+local Util     = require('util')
 
 local colors     = _G.colors
 local fs         = _G.fs
@@ -375,6 +376,10 @@ local function startup()
 	end
 
 	runDir('sys/autorun', shell.run)
+	for name in pairs(Packages:installed()) do
+		local packageDir = 'packages/' .. name .. '/autorun'
+		runDir(packageDir, shell.run)
+	end
 	runDir('usr/autorun', shell.run)
 
 	if not success then
