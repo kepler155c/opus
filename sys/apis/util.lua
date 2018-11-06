@@ -221,6 +221,7 @@ function Util.findAll(t, name, value)
 end
 
 function Util.shallowCopy(t)
+	if not t then error('Util.shallowCopy: invalid table', 2) end
 	local t2 = { }
 	for k,v in pairs(t) do
 		t2[k] = v
