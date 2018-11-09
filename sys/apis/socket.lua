@@ -128,6 +128,7 @@ function Socket.connect(host, port)
 		local e, id, sport, dport, msg = os.pullEvent()
 		if e == 'modem_message' and
 			 sport == socket.sport and
+			 type(msg) == 'table' and
 			 msg.dhost == socket.shost then
 
 			os.cancelTimer(timerId)
@@ -183,7 +184,8 @@ function Socket.server(port)
 		local _, _, sport, dport, msg = os.pullEvent('modem_message')
 
 		if sport == port and
-			 msg and type(msg) == 'table' and
+			 msg and
+			 type(msg) == 'table' and
 			 msg.dhost == os.getComputerID() and
 			 msg.type == 'OPEN' then
 
