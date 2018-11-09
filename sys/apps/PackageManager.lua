@@ -3,7 +3,6 @@ _G.requireInjector(_ENV)
 local Ansi     = require('ansi')
 local Packages = require('packages')
 local UI       = require('ui')
-local Util     = require('util')
 
 local colors   = _G.colors
 local shell    = _ENV.shell
@@ -75,7 +74,7 @@ end
 function page:run(operation, name)
 	local oterm = term.redirect(self.action.output.win)
 	self.action.output:clear()
-	local cmd = string.format('Package %s %s', operation, name)
+	local cmd = string.format('package %s %s', operation, name)
 	--for _ = 1, 3 do
 	--	print(cmd .. '\n')
 	--	os.sleep(1)

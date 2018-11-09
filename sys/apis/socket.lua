@@ -183,7 +183,7 @@ function Socket.server(port)
 		local _, _, sport, dport, msg = os.pullEvent('modem_message')
 
 		if sport == port and
-			 msg and
+			 msg and type(msg) == 'table' and
 			 msg.dhost == os.getComputerID() and
 			 msg.type == 'OPEN' then
 

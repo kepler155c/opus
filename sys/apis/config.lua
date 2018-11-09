@@ -20,6 +20,8 @@ function Config.load(fname, data)
 
 		Util.merge(data, contents)
 	end
+
+	return data
 end
 
 function Config.loadWithCheck(fname, data)
@@ -36,7 +38,7 @@ function Config.loadWithCheck(fname, data)
 		shell.run('edit ' .. filename)
 	end
 
-	Config.load(fname, data)
+	return Config.load(fname, data)
 end
 
 function Config.update(fname, data)
