@@ -59,7 +59,6 @@ local function connect()
 		while true do
 			local data = socket:read()
 			if not data then
-				_debug('exiting routine')
 				break
 			end
 			for _,v in ipairs(data) do
