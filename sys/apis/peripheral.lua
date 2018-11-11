@@ -28,9 +28,9 @@ function Peripheral.addDevice(deviceList, side)
 	end
 
 	if ptype == 'modem' then
-		if Peripheral.call(name, 'isWireless') then
-			ptype = 'wireless_modem'
-		else
+		if not Peripheral.call(name, 'isWireless') then
+--			ptype = 'wireless_modem'
+--		else
 			ptype = 'wired_modem'
 		end
 	end
@@ -57,10 +57,6 @@ function Peripheral.addDevice(deviceList, side)
 	-- this can randomly fail
 	pcall(function()
 		deviceList[name] = Peripheral.wrap(side)
-		if ptype == 'wireless_modem' and not deviceList.wireless_modem then
-			-- TODO: fix this
-			deviceList.wireless_modem = deviceList[name]
-		end
 	end)
 
 	if deviceList[name] then
