@@ -30,7 +30,7 @@ end
 -- create a psuedo-device named 'wireleess_modem'
 kernel.hook('device_attach', function(_, eventData)
 	local dev = device[eventData[1]]
-	if dev.type == 'modem' then
+	if dev and dev.type == 'modem' then
 		if setModem(dev) then
 			startNetwork()
 		end

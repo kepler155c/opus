@@ -2364,8 +2364,8 @@ end
 function UI.Wizard:eventHandler(event)
 	if event.type == 'nextView' then
 		local currentView = Util.find(self.pages, 'enabled', true)
-		local nextView = Util.find(self.pages, 'index', currentView.index + 1)
 		if self:isViewValid() then
+			local nextView = Util.find(self.pages, 'index', currentView.index + 1)
 			currentView:emit({ type = 'enable_view', next = nextView, current = currentView })
 		end
 
