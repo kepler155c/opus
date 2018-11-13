@@ -3001,22 +3001,26 @@ function UI.Chooser:eventHandler(event)
 	if event.type == 'key' then
 		if event.key == 'right' or event.key == 'space' then
 			local _,k = Util.find(self.choices, 'value', self.value)
+			local choice
 			if k and k < #self.choices then
-				self.value = self.choices[k+1].value
+				choice = self.choices[k+1]
 			else
-				self.value = self.choices[1].value
+				choice = self.choices[1]
 			end
-			self:emit({ type = 'choice_change', value = self.value })
+			self.value = choice.value
+			self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
 			self:draw()
 			return true
 		elseif event.key == 'left' then
 			local _,k = Util.find(self.choices, 'value', self.value)
+			local choice
 			if k and k > 1 then
-				self.value = self.choices[k-1].value
+				choice = self.choices[k-1]
 			else
-				self.value = self.choices[#self.choices].value
+				choice = self.choices[#self.choices]
 			end
-			self:emit({ type = 'choice_change', value = self.value })
+			self.value = choice.value
+			self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
 			self:draw()
 			return true
 		end

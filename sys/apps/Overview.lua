@@ -37,12 +37,12 @@ local extSupport = Util.getVersion() >= 1.76
 
 local function loadApplications()
 	local requirements = {
-		turtle = function() return turtle end,
-		advancedTurtle = function() return turtle and term.isColor() end,
-		advanced = function() return term.isColor() end,
-		pocket = function() return pocket end,
-		advancedPocket = function() return pocket and term.isColor() end,
-		advancedComputer = function() return not turtle and not pocket and term.isColor() end,
+		turtle = not not turtle,
+		advancedTurtle = turtle and term.isColor(),
+		advanced = term.isColor(),
+		pocket = not not pocket,
+		advancedPocket = pocket and term.isColor(),
+		advancedComputer = not turtle and not pocket and term.isColor(),
 	}
 
 	applications = Util.readTable('sys/etc/app.db')
@@ -76,10 +76,7 @@ local function loadApplications()
 		end
 
 		if a.requires then
-			local fn = requirements[a.requires]
-			if fn and not fn() then
-				return false
-			end
+			return requirements[a.requires]
 		end
 
 		return true -- Util.startsWith(a.run, 'http') or shell.resolveProgram(a.run)
