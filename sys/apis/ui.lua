@@ -1886,6 +1886,8 @@ function UI.TitleBar:draw()
 	sb:center(string.format(' %s ', self.title))
 	if self.previousPage or self.event then
 		sb:insert(-1, self.closeInd)
+	else
+		sb:insert(-2, self.frameChar)
 	end
 	self:write(1, 1, sb:get())
 end
