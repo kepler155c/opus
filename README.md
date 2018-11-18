@@ -17,7 +17,7 @@
 pastebin run uzghlbnc
 ```
 
-Select either master1.8 for stable or develop1.8 for the upcoming release
+Select either master-1.8 for stable or develop-1.8 for the upcoming release
 
 ## Install (MC 1.7)
 ```
