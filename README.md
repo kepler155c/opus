@@ -12,7 +12,14 @@
 * Run scripts on single or groups of computers (GUI)
 * Turtle follow (with GPS) and turtle come to you (without GPS)
 
-## Install
+## Install (MC 1.8+)
+...
+pastebin run uzghlbnc
+...
+
+Select either master1.8 for stable or develop1.8 for the upcoming release
+
+## Install (MC 1.7)
 ```
 pastebin run sj4VMVJj
 reboot
