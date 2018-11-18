@@ -13,9 +13,9 @@
 * Turtle follow (with GPS) and turtle come to you (without GPS)
 
 ## Install (MC 1.8+)
-...
+```
 pastebin run uzghlbnc
-...
+```
 
 Select either master1.8 for stable or develop1.8 for the upcoming release
 
