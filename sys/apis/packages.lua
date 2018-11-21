@@ -1,6 +1,6 @@
 local Util = require('util')
 
-local fs = _G.fs
+local fs        = _G.fs
 local textutils = _G.textutils
 
 local PACKAGE_DIR = 'packages'
@@ -24,7 +24,7 @@ function Packages:list()
 	if self.packageList then
 		return self.packageList
 	end
-	self.packageList = Util.readTable('sys/packageList.lua') or { }
+	self.packageList = Util.readTable('usr/config/packages') or { }
 
 	return self.packageList
 end
@@ -42,9 +42,13 @@ function Packages:getManifest(package)
 	local url = list and list[package]
 
 	if url then
-		local c = Util.httpGet(url) -- will need to call load
+		local c = Util.httpGet(url)
 		if c then
-			return textutils.unserialize(c)
+			c = textutils.unserialize(c)
+			if c then
+				c.repository = c.repository:gsub('{{OPUS_BRANCH}}', _G.OPUS_BRANCH)
+				return c
+			end
 		end
 	end
 end

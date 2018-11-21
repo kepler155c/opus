@@ -24,6 +24,17 @@ if not fs.exists('usr/config/shell') then
 	})
 end
 
+if not fs.exists('usr/config/packages') then
+	local packages = {
+		[ 'develop-1.8' ] = 'https://pastebin.com/raw/WhEiNGZE',
+		[ 'master-1.8' ] = 'https://pastebin.com/raw/pexZpAxt',
+	}
+
+	if packages[_G.OPUS_BRANCH] then
+		Util.download(packages[_G.OPUS_BRANCH], 'usr/config/packages')
+	end
+end
+
 local config = Util.readTable('usr/config/shell')
 if config.aliases then
 	for k in pairs(shell.aliases()) do
