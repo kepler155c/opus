@@ -1,4 +1,5 @@
-local os = _G.os
+local os    = _G.os
+local table = _G.table
 
 local Event = {
 	uid       = 1,       -- unique id for handlers
@@ -6,7 +7,28 @@ local Event = {
 	types     = { },     -- event handlers
 	timers    = { },     -- named timers
 	terminate = false,
+	free      = { },
 }
+
+-- Use a pool of coroutines for event handlers
+local function createCoroutine(h)
+	local co = table.remove(Event.free)
+	if not co then
+		co = coroutine.create(function(_, ...)
+			local args = { ... }
+			while true do
+				h.fn(table.unpack(args))
+				h.co = nil
+				table.insert(Event.free, co)
+				args = { coroutine.yield() }
+				h = table.remove(args, 1)
+				h.co = co
+			end
+		end)
+	end
+	h.primeCo = true -- TODO: fix...
+	return co
+end
 
 local Routine = { }
 
@@ -24,18 +46,20 @@ function Routine:terminate()
 end
 
 function Routine:resume(event, ...)
-	--if coroutine.status(self.co) == 'running' then
-		--return
-	--end
-
 	if not self.co then
 		error('Cannot resume a dead routine')
 	end
 
 	if not self.filter or self.filter == event or event == "terminate" then
-		local s, m = coroutine.resume(self.co, event, ...)
-
-		if coroutine.status(self.co) == 'dead' then
+		local s, m
+		if self.primeCo then
+			-- Only need self passed when using a coroutine from the pool
+			s, m = coroutine.resume(self.co, self, event, ...)
+			self.primeCo = nil
+		else
+			s, m = coroutine.resume(self.co, event, ...)
+		end
+		if self:isDead() then
 			self.co = nil
 			self.filter = nil
 			Event.routines[self.uid] = nil
@@ -83,8 +107,12 @@ end
 function Event.off(h)
 	if h and h.event then
 		for _,event in pairs(h.event) do
+			local handler = Event.types[event][h.uid]
+			handler:terminate()
 			Event.types[event][h.uid] = nil
 		end
+	elseif h and h.co then
+		h:terminate()
 	end
 end
 
@@ -107,7 +135,12 @@ local function addTimer(interval, recurring, fn)
 end
 
 function Event.onInterval(interval, fn)
-	return addTimer(interval, true, fn)
+	return Event.addRoutine(function()
+		while true do
+			os.sleep(interval)
+			fn()
+		end
+	end)
 end
 
 function Event.onTimeout(timeout, fn)
@@ -183,7 +216,7 @@ local function processHandlers(event)
 		for _,h in pairs(handlers) do
 			if not h.co then
 				-- callbacks are single threaded (only 1 co per handler)
-				h.co = coroutine.create(h.fn)
+				h.co = createCoroutine(h)
 				Event.routines[h.uid] = h
 			end
 		end
