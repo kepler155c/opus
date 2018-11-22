@@ -2592,9 +2592,10 @@ UI.Throttle = class(UI.Window)
 UI.Throttle.defaults = {
 	UIElement = 'Throttle',
 	backgroundColor = colors.gray,
-	height = 6,
+	bordercolor = colors.cyan,
+	height = 4,
 	width = 10,
-	timeout = .095,
+	timeout = .075,
 	ctr = 0,
 	image = {
 		'  //)    (O )~@ &~&-( ?Q        ',
@@ -2610,6 +2611,7 @@ function UI.Throttle:setParent()
 end
 
 function UI.Throttle:enable()
+	self.c = os.clock()
 	self.enabled = false
 end
 
@@ -2618,27 +2620,26 @@ function UI.Throttle:disable()
 		self.enabled = false
 		self.canvas:removeLayer()
 		self.canvas = nil
-		self.c = nil
+		self.ctr = 0
 	end
 end
 
 function UI.Throttle:update()
 	local cc = os.clock()
-	if not self.c then
-		self.c = cc
-	elseif cc > self.c + self.timeout then
+	if cc > self.c + self.timeout then
 		os.sleep(0)
 		self.c = os.clock()
 		self.enabled = true
 		if not self.canvas then
-			self.canvas = self:addLayer(self.backgroundColor, colors.cyan)
+			self.canvas = self:addLayer(self.backgroundColor, self.borderColor)
 			self.canvas:setVisible(true)
-			self:clear(colors.cyan)
+			self:clear(self.borderColor)
 		end
 		local image = self.image[self.ctr + 1]
 		local width = self.width - 2
 		for i = 0, #self.image do
-			self:write(2, i + 2, image:sub(width * i + 1, width * i + width), colors.black, colors.white)
+			self:write(2, i + 1, image:sub(width * i + 1, width * i + width),
+				self.backgroundColor, self.textColor)
 		end
 
 		self.ctr = (self.ctr + 1) % #self.image
