@@ -108,7 +108,9 @@ function Event.off(h)
 	if h and h.event then
 		for _,event in pairs(h.event) do
 			local handler = Event.types[event][h.uid]
-			handler:terminate()
+			if handler then
+				handler:terminate()
+			end
 			Event.types[event][h.uid] = nil
 		end
 	elseif h and h.co then
