@@ -13,7 +13,11 @@ function Packages:installed()
 	if fs.exists(PACKAGE_DIR) then
 		for _, dir in pairs(fs.list(PACKAGE_DIR)) do
 			local path = fs.combine(fs.combine(PACKAGE_DIR, dir), '.package')
-			self.cache[dir] = Util.readTable(path)
+			local c = Util.readTable(path)
+			if c then
+				c.repository = c.repository:gsub('{{OPUS_BRANCH}}', _G.OPUS_BRANCH)
+				self.cache[dir] = c
+			end
 		end
 	end
 
