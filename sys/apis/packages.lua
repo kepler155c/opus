@@ -13,11 +13,7 @@ function Packages:installed()
 	if fs.exists(PACKAGE_DIR) then
 		for _, dir in pairs(fs.list(PACKAGE_DIR)) do
 			local path = fs.combine(fs.combine(PACKAGE_DIR, dir), '.package')
-			local c = Util.readTable(path)
-			if c then
-				c.repository = c.repository:gsub('{{OPUS_BRANCH}}', _G.OPUS_BRANCH)
-				self.cache[dir] = c
-			end
+			self.cache[dir] = Util.readTable(path)
 		end
 	end
 
@@ -40,7 +36,11 @@ end
 function Packages:getManifest(package)
 	local fname = 'packages/' .. package .. '/.package'
 	if fs.exists(fname) then
-		return Util.readTable(fname)
+		local c = Util.readTable(fname)
+		if c then
+			c.repository = c.repository:gsub('{{OPUS_BRANCH}}', _G.OPUS_BRANCH)
+			return c
+		end
 	end
 	local list = self:list()
 	local url = list and list[package]
