@@ -48,6 +48,13 @@ function Point.copy(pt)
 	return { x = pt.x, y = pt.y, z = pt.z }
 end
 
+function Point.round(pt)
+	pt.x = Util.round(pt.x)
+	pt.y = Util.round(pt.y)
+	pt.z = Util.round(pt.z)
+	return pt
+end
+
 function Point.same(pta, ptb)
 	return pta.x == ptb.x and
 				 pta.y == ptb.y and
