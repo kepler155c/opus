@@ -81,7 +81,8 @@ local function loopback(port, sport, msg)
 end
 
 local function newSocket(isLoopback)
-	for i = 16384, 32767 do
+	for _ = 16384, 32767 do
+		local i = math.random(16384, 32767)
 		if not device.wireless_modem.isOpen(i) then
 			local socket = {
 				shost = os.getComputerID(),

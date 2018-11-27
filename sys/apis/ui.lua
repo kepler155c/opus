@@ -3,6 +3,7 @@ local class      = require('class')
 local Event      = require('event')
 local Input      = require('input')
 local Peripheral = require('peripheral')
+local Sound      = require('sound')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
@@ -2542,6 +2543,7 @@ end
 
 function UI.Notification:error(value, timeout)
 	self.backgroundColor = colors.red
+	Sound.play('entity.villager.no', .5)
 	self:display(value, timeout)
 end
 
