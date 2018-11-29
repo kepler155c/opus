@@ -173,7 +173,7 @@ local function trusted(msg, port)
 		local data = Crypto.decrypt(msg.t or '', pubKey)
 
 		--local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
-		return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 10
+		return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 24
 	end
 end
 
