@@ -1266,6 +1266,7 @@ UI.Grid.defaults = {
 	backgroundSelectedColor = colors.gray,
 	headerBackgroundColor = colors.cyan,
 	headerTextColor = colors.white,
+	headerSortColor = colors.yellow,
 	unfocusedTextSelectedColor = colors.white,
 	unfocusedBackgroundSelectedColor = colors.gray,
 	focusIndicator = '>',
@@ -1482,7 +1483,7 @@ function UI.Grid:update()
 end
 
 function UI.Grid:drawHeadings()
-	local sb = UI.StringBuffer(self.width)
+	local x = 1
 	for _,col in ipairs(self.columns) do
 		local ind = ' '
 		if col.key == self.sortColumn then
@@ -1492,9 +1493,13 @@ function UI.Grid:drawHeadings()
 				ind = self.sortIndicator
 			end
 		end
-		sb:insert(ind .. col.heading, col.cw + 1)
+		self:write(x,
+			1,
+			Util.widthify(ind .. col.heading, col.cw + 1),
+			self.headerBackgroundColor,
+			col.key == self.sortColumn and self.headerSortColor or self.headerTextColor)
+		x = x + col.cw + 1
 	end
-	self:write(1, 1, sb:get(), self.headerBackgroundColor, self.headerTextColor)
 end
 
 function UI.Grid:sortCompare(a, b)
@@ -1636,13 +1641,12 @@ function UI.Grid:eventHandler(event)
 				local col = 2
 				for _,c in ipairs(self.columns) do
 					if event.x < col + c.cw then
-						if self.sortColumn == c.key then
-							self:setInverseSort(not self.inverseSort)
-						else
-							self.sortColumn = c.key
-							self:setInverseSort(false)
-						end
-						self:draw()
+						self:emit({
+							type = 'grid_sort',
+							sortColumn = c.key,
+							inverseSort = self.sortColumn == c.key and not self.inverseSort,
+							element = self,
+						})
 						break
 					end
 					col = col + c.cw + 1
@@ -1665,6 +1669,10 @@ function UI.Grid:eventHandler(event)
 		end
 		return false
 
+	elseif event.type == 'grid_sort' then
+		self.sortColumn = event.sortColumn
+		self:setInverseSort(event.inverseSort)
+		self:draw()
 	elseif event.type == 'scroll_down' then
 		self:setIndex(self.index + 1)
 	elseif event.type == 'scroll_up' then
