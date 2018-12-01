@@ -1424,6 +1424,18 @@ function UI.Grid:getSelected()
 	end
 end
 
+function UI.Grid:setSelected(name, value)
+	if self.sorted then
+		for k,v in pairs(self.sorted) do
+			if self.values[v][name] == value then
+				self:setIndex(k)
+				return
+			end
+		end
+	end
+	self:setIndex(1)
+end
+
 function UI.Grid:focus()
 	self:drawRows()
 end
@@ -1465,14 +1477,7 @@ function UI.Grid:update()
 		end
 	end
 
-	self.sorted = { }
-	for k,v in pairs(self.values) do
-		if self:isRowValid(k, v) then
-			table.insert(self.sorted, k)
-		end
-	end
-
-	--self.sorted = Util.keys(self.values)
+	self.sorted = Util.keys(self.values)
 	if order then
 		table.sort(self.sorted, function(a,b)
 			return order(self.values[a], self.values[b])
@@ -1556,12 +1561,6 @@ function UI.Grid:drawRows()
 	if y <= self.height then
 		self:clearArea(1, y, self.width, self.height - y + 1)
 	end
-end
-
--- Non-intuitive: update must be called if the table was specified
--- in the shortcut definition (as this callback was not yet overridden)
-function UI.Grid:isRowValid(--[[ key, value ]])
-	return true
 end
 
 function UI.Grid:getRowTextColor(row, selected)

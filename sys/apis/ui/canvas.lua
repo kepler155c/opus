@@ -137,7 +137,7 @@ function Canvas:writeBlit(x, y, text, bg, fg)
 			if bg then
 				bg = _sub(bg, 2 - x)
 			end
-			if bg then
+			if fg then
 				fg = _sub(fg, 2 - x)
 			end
 			width = width + x - 1
@@ -149,7 +149,7 @@ function Canvas:writeBlit(x, y, text, bg, fg)
 			if bg then
 				bg = _sub(bg, 1, self.width - x + 1)
 			end
-			if bg then
+			if fg then
 				fg = _sub(fg, 1, self.width - x + 1)
 			end
 			width = #text
