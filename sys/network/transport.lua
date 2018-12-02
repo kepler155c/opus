@@ -79,8 +79,11 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 		if socket and socket.connected then
 
 			--if msg.type then _debug('<< ' .. Util.tostring(msg)) end
+			if socket.co and coroutine.status(socket.co) == 'dead' then
+				_G._debug('socket coroutine dead')
+				socket:close()
 
-			if msg.type == 'DISC' then
+			elseif msg.type == 'DISC' then
 				-- received disconnect from other end
 				if socket.connected then
 					os.queueEvent('transport_' .. socket.uid)
