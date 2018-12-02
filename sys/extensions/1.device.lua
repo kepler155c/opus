@@ -154,18 +154,20 @@ local function createDevice(name, devType, method, manipulator)
 end
 
 drivers['manipulator'] = function(dev)
-	local name = dev.getName()
-	if dev.getInventory then
-		createDevice(name .. ':inventory', 'inventory', 'getInventory', dev)
-	end
-	if dev.getEquipment then
-		createDevice(name .. ':equipment', 'equipment', 'getEquipment', dev)
-	end
-	if dev.getEnder then
-		createDevice(name .. ':enderChest', 'enderChest', 'getEnder', dev)
-	end
+	if dev.getName then
+		local name = dev.getName()
+		if dev.getInventory then
+			createDevice(name .. ':inventory', 'inventory', 'getInventory', dev)
+		end
+		if dev.getEquipment then
+			createDevice(name .. ':equipment', 'equipment', 'getEquipment', dev)
+		end
+		if dev.getEnder then
+			createDevice(name .. ':enderChest', 'enderChest', 'getEnder', dev)
+		end
 
-	return dev._children
+		return dev._children
+	end
 end
 
 -- initialize drivers
