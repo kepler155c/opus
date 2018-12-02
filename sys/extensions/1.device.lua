@@ -33,12 +33,25 @@ local keyboard = _G.device.keyboard
 local mouse    = _G.device.mouse
 local os       = _G.os
 
+local drivers = { }
+
 kernel.hook('peripheral', function(_, eventData)
 	local side = eventData[1]
 	if side then
 		local dev = Peripheral.addDevice(device, side)
 		if dev then
-			os.queueEvent('device_attach', dev.name)
+			if drivers[dev.type] then
+				local e = drivers[dev.type](dev)
+				if type(e) == 'table' then
+					for _, v in pairs(e) do
+						os.queueEvent('device_attach', v.name)
+					end
+				elseif e then
+					os.queueEvent('device_attach', e.name)
+				end
+			end
+
+			os.queueEvent('device_attach', dev.name, dev)
 		end
 	end
 end)
@@ -48,7 +61,12 @@ kernel.hook('peripheral_detach', function(_, eventData)
 	if side then
 		local dev = Util.find(device, 'side', side)
 		if dev then
-			os.queueEvent('device_detach', dev.name)
+			os.queueEvent('device_detach', dev.name, dev)
+			if dev._children then
+				for _,v in pairs(dev._children) do
+					os.queueEvent('peripheral_detach', v.name)
+				end
+			end
 			device[dev.name] = nil
 		end
 	end
@@ -109,3 +127,39 @@ kernel.hook('monitor_touch', function(event, eventData)
 		return true -- stop propagation
 	end
 end)
+
+local function createDevice(name, devType, methods, parent)
+	methods.name = name
+	methods.side = name
+	methods.type = devType
+	device[name] = methods
+
+	if not parent._children then
+		parent._children = { methods }
+	else
+		table.insert(parent._children, methods)
+	end
+end
+
+drivers['manipulator'] = function(dev)
+	pcall(function()
+		local name = dev.getName()
+		if dev.getInventory then
+			createDevice(name .. ':inventory', 'inventory', dev.getInventory(), dev)
+		end
+		if dev.getEquipment then
+			createDevice(name .. ':equipment', 'equipment', dev.getEquipment(), dev)
+		end
+		if dev.getEnder then
+			createDevice(name .. ':enderChest', 'enderChest', dev.getEnder(), dev)
+		end
+	end)
+	return dev._children
+end
+
+-- initialize drivers
+for _,v in pairs(device) do
+	if drivers[v.type] then
+		drivers[v.type](v)
+	end
+end

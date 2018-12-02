@@ -55,19 +55,21 @@ function Peripheral.addDevice(deviceList, side)
 	end
 
 	-- this can randomly fail
-	pcall(function()
-		deviceList[name] = Peripheral.wrap(side)
-	end)
+	if not deviceList[name] then
+		pcall(function()
+			deviceList[name] = Peripheral.wrap(side)
+		end)
 
-	if deviceList[name] then
-		Util.merge(deviceList[name], {
-			name = name,
-			type = ptype,
-			side = side,
-		})
-
-		return deviceList[name]
+		if deviceList[name] then
+			Util.merge(deviceList[name], {
+				name = name,
+				type = ptype,
+				side = side,
+			})
+		end
 	end
+
+	return deviceList[name]
 end
 
 function Peripheral.getBySide(side)
