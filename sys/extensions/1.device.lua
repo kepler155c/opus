@@ -128,32 +128,43 @@ kernel.hook('monitor_touch', function(event, eventData)
 	end
 end)
 
-local function createDevice(name, devType, methods, parent)
-	methods.name = name
-	methods.side = name
-	methods.type = devType
-	device[name] = methods
-
-	if not parent._children then
-		parent._children = { methods }
-	else
-		table.insert(parent._children, methods)
+local function createDevice(name, devType, method, manipulator)
+	local dev = {
+		name = name,
+		side = name,
+		type = devType,
+	}
+	local methods = {
+		'drop', 'getDocs', 'getItem', 'getItemMeta', 'getTransferLocations',
+		'list', 'pullItems', 'pushItems', 'size', 'suck',
+	}
+	if manipulator[method] then
+		for _,k in pairs(methods) do
+			dev[k] = function(...)
+				return manipulator[method]()[k](...)
+			end
+		end
+		if not manipulator._children then
+			manipulator._children = { dev }
+		else
+			table.insert(manipulator._children, dev)
+		end
+		device[name] = dev
 	end
 end
 
 drivers['manipulator'] = function(dev)
-	pcall(function()
-		local name = dev.getName()
-		if dev.getInventory then
-			createDevice(name .. ':inventory', 'inventory', dev.getInventory(), dev)
-		end
-		if dev.getEquipment then
-			createDevice(name .. ':equipment', 'equipment', dev.getEquipment(), dev)
-		end
-		if dev.getEnder then
-			createDevice(name .. ':enderChest', 'enderChest', dev.getEnder(), dev)
-		end
-	end)
+	local name = dev.getName()
+	if dev.getInventory then
+		createDevice(name .. ':inventory', 'inventory', 'getInventory', dev)
+	end
+	if dev.getEquipment then
+		createDevice(name .. ':equipment', 'equipment', 'getEquipment', dev)
+	end
+	if dev.getEnder then
+		createDevice(name .. ':enderChest', 'enderChest', 'getEnder', dev)
+	end
+
 	return dev._children
 end
 
