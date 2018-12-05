@@ -944,6 +944,7 @@ function UI.Device:postInit()
 end
 
 function UI.Device:resize()
+	self.device.setTextScale(self.textScale)
 	self.width, self.height = self.device.getSize()
 	self.lines = { }
 	self.canvas:resize(self.width, self.height)
@@ -2328,61 +2329,45 @@ function UI.Wizard:add(pages)
 	end
 end
 
+function UI.Wizard:getPage(index)
+	return Util.find(self.pages, 'index', index)
+end
+
 function UI.Wizard:enable(...)
 	self.enabled = true
-	for _,child in ipairs(self.children) do
-		if not child.index then
-			child:enable(...)
-		elseif child.index == 1 then
+	self.index = 1
+	local initial = self:getPage(1)
+	for _,child in pairs(self.children) do
+		if child == initial or not child.index then
 			child:enable(...)
 		else
 			child:disable()
 		end
 	end
-	self:emit({ type = 'enable_view', next = Util.find(self.pages, 'index', 1) })
-end
-
-function UI.Wizard:nextView()
-	local currentView = Util.find(self.pages, 'enabled', true)
-	local nextView = Util.find(self.pages, 'index', currentView.index + 1)
-
-	if nextView then
-		self:emit({ type = 'enable_view', view = nextView })
-		self:addTransition('slideLeft')
-		currentView:disable()
-		nextView:enable()
-	end
-end
-
-function UI.Wizard:prevView()
-	local currentView = Util.find(self.pages, 'enabled', true)
-	local nextView = Util.find(self.pages, 'index', currentView.index - 1)
-
-	if nextView then
-		self:emit({ type = 'enable_view', view = nextView })
-		self:addTransition('slideRight')
-		currentView:disable()
-		nextView:enable()
-	end
+	self:emit({ type = 'enable_view', next = initial })
 end
 
 function UI.Wizard:isViewValid()
-	local currentView = Util.find(self.pages, 'enabled', true)
+	local currentView = self:getPage(self.index)
 	return not currentView.validate and true or currentView:validate()
 end
 
 function UI.Wizard:eventHandler(event)
 	if event.type == 'nextView' then
-		local currentView = Util.find(self.pages, 'enabled', true)
+		local currentView = self:getPage(self.index)
 		if self:isViewValid() then
-			local nextView = Util.find(self.pages, 'index', currentView.index + 1)
+			self.index = self.index + 1
+			local nextView = self:getPage(self.index)
 			currentView:emit({ type = 'enable_view', next = nextView, current = currentView })
 		end
 
 	elseif event.type == 'previousView' then
-		local currentView = Util.find(self.pages, 'enabled', true)
-		local nextView = Util.find(self.pages, 'index', currentView.index - 1)
-		currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
+		local currentView = self:getPage(self.index)
+		local nextView = self:getPage(self.index - 1)
+		if nextView then
+			self.index = self.index - 1
+			currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
+		end
 		return true
 
 	elseif event.type == 'wizard_complete' then
@@ -2403,13 +2388,13 @@ function UI.Wizard:eventHandler(event)
 		local current = event.next or event.prev
 		if not current then error('property "index" is required on wizard pages') end
 
-		if Util.find(self.pages, 'index', current.index - 1) then
+		if self:getPage(self.index - 1) then
 			self.previousButton:enable()
 		else
 			self.previousButton:disable()
 		end
 
-		if Util.find(self.pages, 'index', current.index + 1) then
+		if self:getPage(self.index + 1) then
 			self.nextButton.text = 'Next >'
 			self.nextButton.event = 'nextView'
 		else
