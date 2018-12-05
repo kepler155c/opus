@@ -1,5 +1,6 @@
 _G.requireInjector(_ENV)
 
+local Config = require('config')
 local Event  = require('event')
 local Socket = require('socket')
 local UI     = require('ui')
@@ -19,6 +20,9 @@ local gridColumns = {
 	{ heading = 'Dist',   key = 'distance' },
 	{ heading = 'Status', key = 'status'   },
 }
+
+local trusted = Util.readTable('usr/.known_hosts')
+local config = Config.load('network', { })
 
 if UI.term.width >= 30 then
 	table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5 })
@@ -40,6 +44,15 @@ local page = UI.Page {
 				{ text = 'Remove',    event = 'untrust' },
 			} },
 			{ text = 'Help', event = 'help' },
+			{
+				text = '\206',
+				x = -3,
+				dropdown = {
+					{ text = 'Show all', event = 'show_all' },
+					UI.MenuBar.spacer,
+					{ text = 'Show trusted', event = 'show_trusted' },
+				},
+			},
 		},
 	},
 	grid = UI.ScrollingGrid {
@@ -143,6 +156,15 @@ This only needs to be done once.
 				q = 'cancel',
 			}
 		})
+
+	elseif event.type == 'show_all' then
+		config.showTrusted = false
+		Config.update('network', config)
+
+	elseif event.type == 'show_trusted' then
+		config.showTrusted = true
+		Config.update('network', config)
+
 	elseif event.type == 'quit' then
 		Event.exitPullEvents()
 	end
@@ -184,7 +206,17 @@ function page.grid:getDisplayValues(row)
 end
 
 Event.onInterval(1, function()
-	page.grid:update()
+	local t = { }
+	if config.showTrusted then
+		for k,v in pairs(network) do
+			if trusted[k] then
+				t[k] = v
+			end
+		end
+		page.grid:setValues(t)
+	else
+		page.grid:update()
+	end
 	page.grid:draw()
 	page:sync()
 end)
