@@ -43,14 +43,14 @@ local page = UI.Page {
 				{ text = 'Establish', event = 'trust'   },
 				{ text = 'Remove',    event = 'untrust' },
 			} },
-			{ text = 'Help', event = 'help' },
+			{ text = 'Help', event = 'help', noCheck = true },
 			{
 				text = '\206',
 				x = -3,
 				dropdown = {
-					{ text = 'Show all', event = 'show_all' },
+					{ text = 'Show all', event = 'show_all', noCheck = true },
 					UI.MenuBar.spacer,
-					{ text = 'Show trusted', event = 'show_trusted' },
+					{ text = 'Show trusted', event = 'show_trusted', noCheck = true },
 				},
 			},
 		},
@@ -159,6 +159,7 @@ This only needs to be done once.
 
 	elseif event.type == 'show_all' then
 		config.showTrusted = false
+		self.grid:setValues(network)
 		Config.update('network', config)
 
 	elseif event.type == 'show_trusted' then
@@ -177,7 +178,7 @@ function page.menuBar:getActive(menuItem)
 		local trustList = Util.readTable('usr/.known_hosts') or { }
 		return t and trustList[t.id]
 	end
-	return not not t
+	return menuItem.noCheck or not not t
 end
 
 function page.grid:getRowTextColor(row, selected)

@@ -173,6 +173,9 @@ end
 -- initialize drivers
 for _,v in pairs(device) do
 	if drivers[v.type] then
-		drivers[v.type](v)
+		local s, m = pcall(drivers[v.type], v)
+		if not s and m then
+			_G.printError(m)
+		end
 	end
 end
