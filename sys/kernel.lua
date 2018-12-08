@@ -28,10 +28,16 @@ local focusedRoutineEvents = Util.transpose {
 	'paste', 'terminate',
 }
 
-_G.debug = function(pattern, ...)
+_G._debug = function(pattern, ...)
 	local oldTerm = term.redirect(kernel.window)
 	Util.print(pattern, ...)
 	term.redirect(oldTerm)
+end
+
+if not _G.debug then -- don't clobber lua debugger
+	function _G.debug(...)
+		_G._debug(...)
+	end
 end
 
 -- any function that runs in a kernel hook does not run in

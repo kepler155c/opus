@@ -7,7 +7,7 @@ _G.requireInjector(_ENV)
 local Pathing      = require('turtle.pathfind')
 local GPS          = require('gps')
 local Point        = require('point')
-local synchronized = require('sync')
+local synchronized = require('sync').sync
 local Util         = require('util')
 
 local os         = _G.os
@@ -458,6 +458,7 @@ function turtle.back()
 end
 
 local function moveTowardsX(dx)
+	if not tonumber(dx) then error('moveTowardsX: Invalid arguments') end
 	local direction = dx - turtle.point.x
 	local move
 
@@ -662,11 +663,11 @@ function turtle._goto(pt)
 	local dx, dy, dz, dh = pt.x, pt.y, pt.z, pt.heading
 	if not turtle.gotoSingleTurn(dx, dy, dz, dh) then
 		if not gotoMultiTurn(dx, dy, dz) then
-			return false
+			return false, 'Failed to reach location'
 		end
 	end
 	turtle.setHeading(dh)
-	return true
+	return pt
 end
 
 -- avoid lint errors
@@ -738,6 +739,8 @@ function turtle.getSlot(indexOrId, slots)
 		}
 	end
 
+	-- inconsistent return value
+	-- null is returned if indexOrId is a string and no item is present
 	return {
 		qty = 0,  -- deprecate
 		count = 0,
@@ -794,8 +797,12 @@ function turtle.getSummedInventory()
 end
 
 function turtle.has(item, count)
-	local slot = turtle.getSummedInventory()[item]
-	return slot and slot.count >= (count or 1)
+	if item:match('.*:%d') then
+		local slot = turtle.getSummedInventory()[item]
+		return slot and slot.count >= (count or 1)
+	end
+	local slot = turtle.getSlot(item)
+	return slot and slot.count > 0
 end
 
 function turtle.getFilledSlots(startSlot)
@@ -966,6 +973,18 @@ function turtle.addWorldBlock(pt)
 	Pathing.addBlock(pt)
 end
 
+local movementStrategy = turtle.pathfind
+
+function turtle.setMovementStrategy(strategy)
+	if strategy == 'pathing' then
+		movementStrategy = turtle.pathfind
+	elseif strategy == 'goto' then
+		movementStrategy = turtle._goto
+	else
+		error('Invalid movement strategy')
+	end
+end
+
 function turtle.faceAgainst(pt, options) -- 4 sided
 	options = options or { }
 	options.dest = { }
@@ -980,7 +999,7 @@ function turtle.faceAgainst(pt, options) -- 4 sided
 		})
 	end
 
-	return turtle.pathfind(Point.closest(turtle.point, options.dest), options)
+	return movementStrategy(Point.closest(turtle.point, options.dest), options)
 end
 
 -- move against this point
@@ -1012,7 +1031,7 @@ function turtle.moveAgainst(pt, options) -- 6 sided
 		})
 	end
 
-	return turtle.pathfind(Point.closest(turtle.point, options.dest), options)
+	return movementStrategy(Point.closest(turtle.point, options.dest), options)
 end
 
 local actionsAt = {
@@ -1097,7 +1116,7 @@ local function _actionAt(action, pt, ...)
 		direction = 'up'
 	end
 
-	if turtle.pathfind(apt) then
+	if movementStrategy(apt) then
 		return action[direction](...)
 	end
 end

@@ -1,5 +1,5 @@
 local Socket       = require('socket')
-local synchronized = require('sync')
+local synchronized = require('sync').sync
 
 local fs = _G.fs
 

@@ -11,10 +11,10 @@ end
 if not fs.exists('usr/autorun') then
 	fs.makeDir('usr/autorun')
 end
-if not fs.exists('usr/config/fstab') then
-	Util.writeFile('usr/config/fstab',
-		'usr gitfs kepler155c/opus-apps/' .. _G.OPUS_BRANCH)
-end
+--if not fs.exists('usr/config/fstab') then
+--	Util.writeFile('usr/config/fstab',
+--		'usr gitfs kepler155c/opus-apps/' .. _G.OPUS_BRANCH)
+--end
 
 if not fs.exists('usr/config/shell') then
 	Util.writeTable('usr/config/shell', {
@@ -22,6 +22,17 @@ if not fs.exists('usr/config/shell') then
 		path     = 'usr/apps:sys/apps:' .. shell.path(),
 		lua_path = 'sys/apis:usr/apis',
 	})
+end
+
+if not fs.exists('usr/config/packages') then
+	local packages = {
+		[ 'develop-1.8' ] = 'https://pastebin.com/raw/WhEiNGZE',
+		[ 'master-1.8' ] = 'https://pastebin.com/raw/pexZpAxt',
+	}
+
+	if packages[_G.OPUS_BRANCH] then
+		Util.download(packages[_G.OPUS_BRANCH], 'usr/config/packages')
+	end
 end
 
 local config = Util.readTable('usr/config/shell')

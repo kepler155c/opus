@@ -1,5 +1,6 @@
 _G.requireInjector(_ENV)
 
+local Config = require('config')
 local Event  = require('event')
 local Socket = require('socket')
 local UI     = require('ui')
@@ -20,6 +21,9 @@ local gridColumns = {
 	{ heading = 'Status', key = 'status'   },
 }
 
+local trusted = Util.readTable('usr/.known_hosts')
+local config = Config.load('network', { })
+
 if UI.term.width >= 30 then
 	table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5 })
 	table.insert(gridColumns, { heading = 'Uptime', key = 'uptime' })
@@ -39,7 +43,16 @@ local page = UI.Page {
 				{ text = 'Establish', event = 'trust'   },
 				{ text = 'Remove',    event = 'untrust' },
 			} },
-			{ text = 'Help', event = 'help' },
+			{ text = 'Help', event = 'help', noCheck = true },
+			{
+				text = '\206',
+				x = -3,
+				dropdown = {
+					{ text = 'Show all', event = 'show_all', noCheck = true },
+					UI.MenuBar.spacer,
+					{ text = 'Show trusted', event = 'show_trusted', noCheck = true },
+				},
+			},
 		},
 	},
 	grid = UI.ScrollingGrid {
@@ -143,6 +156,16 @@ This only needs to be done once.
 				q = 'cancel',
 			}
 		})
+
+	elseif event.type == 'show_all' then
+		config.showTrusted = false
+		self.grid:setValues(network)
+		Config.update('network', config)
+
+	elseif event.type == 'show_trusted' then
+		config.showTrusted = true
+		Config.update('network', config)
+
 	elseif event.type == 'quit' then
 		Event.exitPullEvents()
 	end
@@ -155,7 +178,7 @@ function page.menuBar:getActive(menuItem)
 		local trustList = Util.readTable('usr/.known_hosts') or { }
 		return t and trustList[t.id]
 	end
-	return not not t
+	return menuItem.noCheck or not not t
 end
 
 function page.grid:getRowTextColor(row, selected)
@@ -184,7 +207,17 @@ function page.grid:getDisplayValues(row)
 end
 
 Event.onInterval(1, function()
-	page.grid:update()
+	local t = { }
+	if config.showTrusted then
+		for k,v in pairs(network) do
+			if trusted[k] then
+				t[k] = v
+			end
+		end
+		page.grid:setValues(t)
+	else
+		page.grid:update()
+	end
 	page.grid:draw()
 	page:sync()
 end)

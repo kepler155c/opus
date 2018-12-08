@@ -172,6 +172,20 @@ function Util.deepMerge(obj, args)
 	end
 end
 
+-- remove table entries if passed function returns false
+function Util.prune(t, fn)
+	for _,k in pairs(Util.keys(t)) do
+		local v = t[k]
+		if type(v) == 'table' then
+			t[k] = Util.prune(v, fn)
+		end
+		if not fn(t[k]) then
+			t[k] = nil
+		end
+	end
+	return t
+end
+
 function Util.transpose(t)
 	local tt = { }
 	for k,v in pairs(t) do
@@ -207,6 +221,7 @@ function Util.findAll(t, name, value)
 end
 
 function Util.shallowCopy(t)
+	if not t then error('Util.shallowCopy: invalid table', 2) end
 	local t2 = { }
 	for k,v in pairs(t) do
 		t2[k] = v
@@ -342,6 +357,7 @@ function Util.readFile(fname)
 end
 
 function Util.writeFile(fname, data)
+	if not fname or not data then error('Util.writeFile: invalid parameters', 2) end
 	local file = io.open(fname, "w")
 	if not file then
 		error('Unable to open ' .. fname, 2)
@@ -415,7 +431,7 @@ end
 function Util.download(url, filename)
 	local contents, msg = Util.httpGet(url)
 	if not contents then
-		error(string.format('Failed to download %s\n%s', url, msg))
+		error(string.format('Failed to download %s\n%s', url, msg), 2)
 	end
 
 	if filename then
@@ -475,6 +491,7 @@ function Util.insertString(str, istr, pos)
 end
 
 function Util.split(str, pattern)
+	if not str then error('Util.split: Invalid parameters', 2) end
 	pattern = pattern or "(.-)\n"
 	local t = {}
 	local function helper(line) table.insert(t, line) return "" end
@@ -491,7 +508,7 @@ function Util.matches(str, pattern)
 	return t
 end
 
-function Util.startsWidth(s, match)
+function Util.startsWith(s, match)
 	return string.sub(s, 1, #match) == match
 end
 
@@ -653,7 +670,6 @@ function Util.getOptions(options, args, ignoreInvalid)
 		end
 	end
 	return true, Util.size(rawOptions)
-
 end
 
 return Util

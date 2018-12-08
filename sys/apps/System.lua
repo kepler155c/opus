@@ -141,61 +141,63 @@ local systemPage = UI.Page {
 }
 
 if turtle then
-	local Home = require('turtle.home')
+	pcall(function()
+		local Home = require('turtle.home')
+-- TODO: dont rely on turtle.home
+		local values = { }
+		Config.load('gps', values.home and { values.home } or { })
 
-	local values = { }
-	Config.load('gps', values.home and { values.home } or { })
-
-	systemPage.tabs:add({
-		gpsTab = UI.Window {
-			tabTitle = 'GPS',
-			labelText = UI.Text {
-				x = 3, y = 2,
-				value = 'On restart, return to this location'
-			},
-			grid = UI.Grid {
-				x = 3, ex = -3, y = 4,
-				height = 2,
-				values = values,
-				inactive = true,
-				columns = {
-					{ heading = 'x', key = 'x' },
-					{ heading = 'y', key = 'y' },
-					{ heading = 'z', key = 'z' },
+		systemPage.tabs:add({
+			gpsTab = UI.Window {
+				tabTitle = 'GPS',
+				labelText = UI.Text {
+					x = 3, y = 2,
+					value = 'On restart, return to this location'
+				},
+				grid = UI.Grid {
+					x = 3, ex = -3, y = 4,
+					height = 2,
+					values = values,
+					inactive = true,
+					columns = {
+						{ heading = 'x', key = 'x' },
+						{ heading = 'y', key = 'y' },
+						{ heading = 'z', key = 'z' },
+					},
+				},
+				button1 = UI.Button {
+					x = 3, y = 7,
+					text = 'Set home',
+					event = 'gps_set',
+				},
+				button2 = UI.Button {
+					ex = -3, y = 7, width = 7,
+					text = 'Clear',
+					event = 'gps_clear',
 				},
 			},
-			button1 = UI.Button {
-				x = 3, y = 7,
-				text = 'Set home',
-				event = 'gps_set',
-			},
-			button2 = UI.Button {
-				ex = -3, y = 7, width = 7,
-				text = 'Clear',
-				event = 'gps_clear',
-			},
-		},
-	})
-	function systemPage.tabs.gpsTab:eventHandler(event)
-		if event.type == 'gps_set' then
-			systemPage.notification:info('Determining location', 10)
-			systemPage:sync()
-			if Home.set() then
-				Config.load('gps', values)
-				self.grid:setValues(values.home and { values.home } or { })
+		})
+		function systemPage.tabs.gpsTab:eventHandler(event)
+			if event.type == 'gps_set' then
+				systemPage.notification:info('Determining location', 10)
+				systemPage:sync()
+				if Home.set() then
+					Config.load('gps', values)
+					self.grid:setValues(values.home and { values.home } or { })
+					self.grid:draw()
+					systemPage.notification:success('Location set')
+				else
+					systemPage.notification:error('Unable to determine location')
+				end
+				return true
+			elseif event.type == 'gps_clear' then
+				fs.delete('usr/config/gps')
+				self.grid:setValues({ })
 				self.grid:draw()
-				systemPage.notification:success('Location set')
-			else
-				systemPage.notification:error('Unable to determine location')
+				return true
 			end
-			return true
-		elseif event.type == 'gps_clear' then
-			fs.delete('usr/config/gps')
-			self.grid:setValues({ })
-			self.grid:draw()
-			return true
 		end
-	end
+	end)
 end
 
 if settings then

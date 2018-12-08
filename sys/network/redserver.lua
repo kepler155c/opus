@@ -83,11 +83,15 @@ Event.on('modem_message', function(_, _, dport, dhost, request)
 	if dport == 80 and dhost == computerId and type(request) == 'table' then
 		if request.method == 'GET' then
 			local query
+			if not request.path or type(request.path) ~= 'string' then
+				return
+			end
 			local path = request.path:gsub('%?(.*)', function(v)
 				query = parseQuery(v)
 				return ''
 			end)
 			if fs.isDir(path) then
+			-- TODO: more validation
 				modem.transmit(request.replyPort, request.replyAddress, {
 					statusCode = 200,
 					contentType = 'table/directory',

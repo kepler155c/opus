@@ -81,7 +81,8 @@ local function loopback(port, sport, msg)
 end
 
 local function newSocket(isLoopback)
-	for i = 16384, 32767 do
+	for _ = 16384, 32767 do
+		local i = math.random(16384, 32767)
 		if not device.wireless_modem.isOpen(i) then
 			local socket = {
 				shost = os.getComputerID(),
@@ -128,6 +129,7 @@ function Socket.connect(host, port)
 		local e, id, sport, dport, msg = os.pullEvent()
 		if e == 'modem_message' and
 			 sport == socket.sport and
+			 type(msg) == 'table' and
 			 msg.dhost == socket.shost then
 
 			os.cancelTimer(timerId)
@@ -171,7 +173,7 @@ local function trusted(msg, port)
 		local data = Crypto.decrypt(msg.t or '', pubKey)
 
 		--local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
-		return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 1
+		return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 24
 	end
 end
 
@@ -184,6 +186,7 @@ function Socket.server(port)
 
 		if sport == port and
 			 msg and
+			 type(msg) == 'table' and
 			 msg.dhost == os.getComputerID() and
 			 msg.type == 'OPEN' then
 

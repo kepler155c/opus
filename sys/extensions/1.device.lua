@@ -33,12 +33,25 @@ local keyboard = _G.device.keyboard
 local mouse    = _G.device.mouse
 local os       = _G.os
 
+local drivers = { }
+
 kernel.hook('peripheral', function(_, eventData)
 	local side = eventData[1]
 	if side then
 		local dev = Peripheral.addDevice(device, side)
 		if dev then
-			os.queueEvent('device_attach', dev.name)
+			if drivers[dev.type] then
+				local e = drivers[dev.type](dev)
+				if type(e) == 'table' then
+					for _, v in pairs(e) do
+						os.queueEvent('device_attach', v.name)
+					end
+				elseif e then
+					os.queueEvent('device_attach', e.name)
+				end
+			end
+
+			os.queueEvent('device_attach', dev.name, dev)
 		end
 	end
 end)
@@ -48,7 +61,12 @@ kernel.hook('peripheral_detach', function(_, eventData)
 	if side then
 		local dev = Util.find(device, 'side', side)
 		if dev then
-			os.queueEvent('device_detach', dev.name)
+			os.queueEvent('device_detach', dev.name, dev)
+			if dev._children then
+				for _,v in pairs(dev._children) do
+					os.queueEvent('peripheral_detach', v.name)
+				end
+			end
 			device[dev.name] = nil
 		end
 	end
@@ -109,3 +127,60 @@ kernel.hook('monitor_touch', function(event, eventData)
 		return true -- stop propagation
 	end
 end)
+
+local function createDevice(name, devType, method, manipulator)
+	local dev = {
+		name = name,
+		side = name,
+		type = devType,
+	}
+	local methods = {
+		'drop', 'getDocs', 'getItem', 'getItemMeta', 'getTransferLocations',
+		'list', 'pullItems', 'pushItems', 'size', 'suck',
+	}
+	if manipulator[method] then
+		for _,k in pairs(methods) do
+			dev[k] = function(...)
+				return manipulator[method]()[k](...)
+			end
+		end
+		if not manipulator._children then
+			manipulator._children = { dev }
+		else
+			table.insert(manipulator._children, dev)
+		end
+		device[name] = dev
+	end
+end
+
+drivers['manipulator'] = function(dev)
+	if dev.getName then
+		local name
+		pcall(function()
+			name = dev.getName()
+		end)
+		if name then
+			if dev.getInventory then
+				createDevice(name .. ':inventory', 'inventory', 'getInventory', dev)
+			end
+			if dev.getEquipment then
+				createDevice(name .. ':equipment', 'equipment', 'getEquipment', dev)
+			end
+			if dev.getEnder then
+				createDevice(name .. ':enderChest', 'enderChest', 'getEnder', dev)
+			end
+
+			return dev._children
+		end
+	end
+end
+
+-- initialize drivers
+for _,v in pairs(device) do
+	if drivers[v.type] then
+		local s, m = pcall(drivers[v.type], v)
+		if not s and m then
+			_G.printError(m)
+		end
+	end
+end

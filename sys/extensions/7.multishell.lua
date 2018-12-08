@@ -1,7 +1,8 @@
 _G.requireInjector(_ENV)
 
-local Config = require('config')
-local Util   = require('util')
+local Config   = require('config')
+local Packages = require('packages')
+local Util     = require('util')
 
 local colors     = _G.colors
 local fs         = _G.fs
@@ -32,6 +33,7 @@ local config = {
 		backgroundColor = colors.gray,
 		tabBarBackgroundColor = colors.gray,
 		focusBackgroundColor = colors.gray,
+		errorColor = colors.black,
 	},
 	color = {
 		textColor  = colors.lightGray,
@@ -40,6 +42,7 @@ local config = {
 		backgroundColor = colors.gray,
 		tabBarBackgroundColor = colors.gray,
 		focusBackgroundColor = colors.gray,
+		errorColor = colors.red,
 	},
 }
 Config.load('multishell', config)
@@ -129,6 +132,7 @@ function multishell.openTab(tab)
 			print('\nPress enter to close')
 			routine.isDead = true
 			routine.hidden = false
+			redrawMenu()
 			while true do
 				local e, code = os.pullEventRaw('key')
 				if e == 'terminate' or e == 'key' and code == keys.enter then
@@ -252,8 +256,9 @@ kernel.hook('multishell_redraw', function()
 			tab.ex = tabX + tab.width
 			tabX = tabX + tab.width
 			if tab ~= currentTab then
+				local textColor = tab.isDead and _colors.errorColor or _colors.textColor
 				write(tab.sx, tab.title:sub(1, tab.width - 1),
-					_colors.backgroundColor, _colors.textColor)
+					_colors.backgroundColor, textColor)
 			end
 		end
 	end
@@ -371,6 +376,10 @@ local function startup()
 	end
 
 	runDir('sys/autorun', shell.run)
+	for name in pairs(Packages:installed()) do
+		local packageDir = 'packages/' .. name .. '/autorun'
+		runDir(packageDir, shell.run)
+	end
 	runDir('usr/autorun', shell.run)
 
 	if not success then

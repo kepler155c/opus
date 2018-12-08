@@ -3,6 +3,7 @@ local class      = require('class')
 local Event      = require('event')
 local Input      = require('input')
 local Peripheral = require('peripheral')
+local Sound      = require('sound')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
@@ -306,6 +307,9 @@ function Manager:setDefaultDevice(dev)
 end
 
 function Manager:addPage(name, page)
+	if not self.pages then
+		self.pages = { }
+	end
 	self.pages[name] = page
 end
 
@@ -940,6 +944,7 @@ function UI.Device:postInit()
 end
 
 function UI.Device:resize()
+	self.device.setTextScale(self.textScale)
 	self.width, self.height = self.device.getSize()
 	self.lines = { }
 	self.canvas:resize(self.width, self.height)
@@ -1053,6 +1058,17 @@ function UI.StringBuffer:insert(s, width)
 	if len < width then
 		table.insert(self.buffer, _rep(' ', width - len))
 	end
+end
+
+function UI.StringBuffer:insertRight(s, width)
+	local len = #tostring(s or '')
+	if len > width then
+		s = _sub(s, 1, width)
+	end
+	if len < width then
+		table.insert(self.buffer, _rep(' ', width - len))
+	end
+	table.insert(self.buffer, s)
 end
 
 function UI.StringBuffer:get(sep)
@@ -1205,7 +1221,7 @@ function UI.Page:focusNext()
 end
 
 function UI.Page:setFocus(child)
-	if not child.focus then
+	if not child or not child.focus then
 		return
 	end
 
@@ -1218,7 +1234,8 @@ function UI.Page:setFocus(child)
 	self.focused = child
 	if not child.focused then
 		child.focused = true
-		self:emit({ type = 'focus_change', focused = child })
+		child:emit({ type = 'focus_change', focused = child })
+		--self:emit({ type = 'focus_change', focused = child })
 	end
 
 	child:focus()
@@ -1250,6 +1267,7 @@ UI.Grid.defaults = {
 	backgroundSelectedColor = colors.gray,
 	headerBackgroundColor = colors.cyan,
 	headerTextColor = colors.white,
+	headerSortColor = colors.yellow,
 	unfocusedTextSelectedColor = colors.white,
 	unfocusedBackgroundSelectedColor = colors.gray,
 	focusIndicator = '>',
@@ -1407,6 +1425,18 @@ function UI.Grid:getSelected()
 	end
 end
 
+function UI.Grid:setSelected(name, value)
+	if self.sorted then
+		for k,v in pairs(self.sorted) do
+			if self.values[v][name] == value then
+				self:setIndex(k)
+				return
+			end
+		end
+	end
+	self:setIndex(1)
+end
+
 function UI.Grid:focus()
 	self:drawRows()
 end
@@ -1459,7 +1489,7 @@ function UI.Grid:update()
 end
 
 function UI.Grid:drawHeadings()
-	local sb = UI.StringBuffer(self.width)
+	local x = 1
 	for _,col in ipairs(self.columns) do
 		local ind = ' '
 		if col.key == self.sortColumn then
@@ -1469,9 +1499,13 @@ function UI.Grid:drawHeadings()
 				ind = self.sortIndicator
 			end
 		end
-		sb:insert(ind .. col.heading, col.cw + 1)
+		self:write(x,
+			1,
+			Util.widthify(ind .. col.heading, col.cw + 1),
+			self.headerBackgroundColor,
+			col.key == self.sortColumn and self.headerSortColor or self.headerTextColor)
+		x = x + col.cw + 1
 	end
-	self:write(1, 1, sb:get(), self.headerBackgroundColor, self.headerTextColor)
 end
 
 function UI.Grid:sortCompare(a, b)
@@ -1508,7 +1542,11 @@ function UI.Grid:drawRows()
 		end
 
 		for _,col in pairs(self.columns) do
-			sb:insert(ind .. safeValue(row[col.key] or ''), col.cw + 1)
+			if col.justify == 'right' then
+				sb:insertRight(ind .. safeValue(row[col.key] or ''), col.cw + 1)
+			else
+				sb:insert(ind .. safeValue(row[col.key] or ''), col.cw + 1)
+			end
 			ind = ' '
 		end
 
@@ -1603,13 +1641,12 @@ function UI.Grid:eventHandler(event)
 				local col = 2
 				for _,c in ipairs(self.columns) do
 					if event.x < col + c.cw then
-						if self.sortColumn == c.key then
-							self:setInverseSort(not self.inverseSort)
-						else
-							self.sortColumn = c.key
-							self:setInverseSort(false)
-						end
-						self:draw()
+						self:emit({
+							type = 'grid_sort',
+							sortColumn = c.key,
+							inverseSort = self.sortColumn == c.key and not self.inverseSort,
+							element = self,
+						})
 						break
 					end
 					col = col + c.cw + 1
@@ -1632,6 +1669,10 @@ function UI.Grid:eventHandler(event)
 		end
 		return false
 
+	elseif event.type == 'grid_sort' then
+		self.sortColumn = event.sortColumn
+		self:setInverseSort(event.inverseSort)
+		self:draw()
 	elseif event.type == 'scroll_down' then
 		self:setIndex(self.index + 1)
 	elseif event.type == 'scroll_up' then
@@ -1854,6 +1895,8 @@ function UI.TitleBar:draw()
 	sb:center(string.format(' %s ', self.title))
 	if self.previousPage or self.event then
 		sb:insert(-1, self.closeInd)
+	else
+		sb:insert(-2, self.frameChar)
 	end
 	self:write(1, 1, sb:get())
 end
@@ -2286,55 +2329,51 @@ function UI.Wizard:add(pages)
 	end
 end
 
-function UI.Wizard:enable()
+function UI.Wizard:getPage(index)
+	return Util.find(self.pages, 'index', index)
+end
+
+function UI.Wizard:enable(...)
 	self.enabled = true
-	for _,child in ipairs(self.children) do
-		if not child.index then
-			child:enable()
-		elseif child.index == 1 then
-			child:enable()
+	self.index = 1
+	local initial = self:getPage(1)
+	for _,child in pairs(self.children) do
+		if child == initial or not child.index then
+			child:enable(...)
 		else
 			child:disable()
 		end
 	end
-	self:emit({ type = 'enable_view', next = Util.find(self.pages, 'index', 1) })
+	self:emit({ type = 'enable_view', next = initial })
 end
 
-function UI.Wizard:nextView()
-	local currentView = Util.find(self.pages, 'enabled', true)
-	local nextView = Util.find(self.pages, 'index', currentView.index + 1)
-
-	if nextView then
-		self:emit({ type = 'enable_view', view = nextView })
-		self:addTransition('slideLeft')
-		currentView:disable()
-		nextView:enable()
-	end
-end
-
-function UI.Wizard:prevView()
-	local currentView = Util.find(self.pages, 'enabled', true)
-	local nextView = Util.find(self.pages, 'index', currentView.index - 1)
-
-	if nextView then
-		self:emit({ type = 'enable_view', view = nextView })
-		self:addTransition('slideRight')
-		currentView:disable()
-		nextView:enable()
-	end
+function UI.Wizard:isViewValid()
+	local currentView = self:getPage(self.index)
+	return not currentView.validate and true or currentView:validate()
 end
 
 function UI.Wizard:eventHandler(event)
 	if event.type == 'nextView' then
-		local currentView = Util.find(self.pages, 'enabled', true)
-		local nextView = Util.find(self.pages, 'index', currentView.index + 1)
-		currentView:emit({ type = 'enable_view', next = nextView, current = currentView })
+		local currentView = self:getPage(self.index)
+		if self:isViewValid() then
+			self.index = self.index + 1
+			local nextView = self:getPage(self.index)
+			currentView:emit({ type = 'enable_view', next = nextView, current = currentView })
+		end
 
 	elseif event.type == 'previousView' then
-		local currentView = Util.find(self.pages, 'enabled', true)
-		local nextView = Util.find(self.pages, 'index', currentView.index - 1)
-		currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
+		local currentView = self:getPage(self.index)
+		local nextView = self:getPage(self.index - 1)
+		if nextView then
+			self.index = self.index - 1
+			currentView:emit({ type = 'enable_view', prev = nextView, current = currentView })
+		end
 		return true
+
+	elseif event.type == 'wizard_complete' then
+		if self:isViewValid() then
+			self:emit({ type = 'accept' })
+		end
 
 	elseif event.type == 'enable_view' then
 		if event.current then
@@ -2347,18 +2386,20 @@ function UI.Wizard:eventHandler(event)
 		end
 
 		local current = event.next or event.prev
-		if Util.find(self.pages, 'index', current.index - 1) then
+		if not current then error('property "index" is required on wizard pages') end
+
+		if self:getPage(self.index - 1) then
 			self.previousButton:enable()
 		else
 			self.previousButton:disable()
 		end
 
-		if Util.find(self.pages, 'index', current.index + 1) then
+		if self:getPage(self.index + 1) then
 			self.nextButton.text = 'Next >'
 			self.nextButton.event = 'nextView'
 		else
 			self.nextButton.text = 'Accept'
-			self.nextButton.event = 'accept'
+			self.nextButton.event = 'wizard_complete'
 		end
 		-- a new current view
 		current:enable()
@@ -2381,12 +2422,12 @@ function UI.SlideOut:enable()
 	self.enabled = false
 end
 
-function UI.SlideOut:show()
+function UI.SlideOut:show(...)
 	self:addTransition('expandUp')
 	self.canvas:setVisible(true)
 	self.enabled = true
 	for _,child in pairs(self.children) do
-		child:enable()
+		child:enable(...)
 	end
 	self:draw()
 	self:capture(self)
@@ -2494,6 +2535,7 @@ end
 
 function UI.Notification:error(value, timeout)
 	self.backgroundColor = colors.red
+	Sound.play('entity.villager.no', .5)
 	self:display(value, timeout)
 end
 
@@ -2544,9 +2586,10 @@ UI.Throttle = class(UI.Window)
 UI.Throttle.defaults = {
 	UIElement = 'Throttle',
 	backgroundColor = colors.gray,
-	height = 6,
+	bordercolor = colors.cyan,
+	height = 4,
 	width = 10,
-	timeout = .095,
+	timeout = .075,
 	ctr = 0,
 	image = {
 		'  //)    (O )~@ &~&-( ?Q        ',
@@ -2562,6 +2605,7 @@ function UI.Throttle:setParent()
 end
 
 function UI.Throttle:enable()
+	self.c = os.clock()
 	self.enabled = false
 end
 
@@ -2570,27 +2614,26 @@ function UI.Throttle:disable()
 		self.enabled = false
 		self.canvas:removeLayer()
 		self.canvas = nil
-		self.c = nil
+		self.ctr = 0
 	end
 end
 
 function UI.Throttle:update()
 	local cc = os.clock()
-	if not self.c then
-		self.c = cc
-	elseif cc > self.c + self.timeout then
+	if cc > self.c + self.timeout then
 		os.sleep(0)
 		self.c = os.clock()
 		self.enabled = true
 		if not self.canvas then
-			self.canvas = self:addLayer(self.backgroundColor, colors.cyan)
+			self.canvas = self:addLayer(self.backgroundColor, self.borderColor)
 			self.canvas:setVisible(true)
-			self:clear(colors.cyan)
+			self:clear(self.borderColor)
 		end
 		local image = self.image[self.ctr + 1]
 		local width = self.width - 2
 		for i = 0, #self.image do
-			self:write(2, i + 2, image:sub(width * i + 1, width * i + width), colors.black, colors.white)
+			self:write(2, i + 1, image:sub(width * i + 1, width * i + width),
+				self.backgroundColor, self.textColor)
 		end
 
 		self.ctr = (self.ctr + 1) % #self.image
@@ -2913,6 +2956,9 @@ UI.Chooser.defaults = {
 	choices = { },
 	nochoice = 'Select',
 	backgroundFocusColor = colors.lightGray,
+	textInactiveColor = colors.gray,
+	leftIndicator = '<',
+	rightIndicator = '>',
 	height = 1,
 }
 function UI.Chooser:setParent()
@@ -2933,14 +2979,15 @@ function UI.Chooser:draw()
 	if self.focused then
 		bg = self.backgroundFocusColor
 	end
+	local fg = self.inactive and self.textInactiveColor or self.textColor
 	local choice = Util.find(self.choices, 'value', self.value)
 	local value = self.nochoice
 	if choice then
 		value = choice.name
 	end
-	self:write(1, 1, '<', bg, colors.black)
-	self:write(2, 1, ' ' .. Util.widthify(value, self.width-4) .. ' ', bg)
-	self:write(self.width, 1, '>', bg, colors.black)
+	self:write(1, 1, self.leftIndicator, self.backgroundColor, colors.black)
+	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg, fg)
+	self:write(self.width, 1, self.rightIndicator, self.backgroundColor, colors.black)
 end
 
 function UI.Chooser:focus()
@@ -2951,22 +2998,26 @@ function UI.Chooser:eventHandler(event)
 	if event.type == 'key' then
 		if event.key == 'right' or event.key == 'space' then
 			local _,k = Util.find(self.choices, 'value', self.value)
+			local choice
 			if k and k < #self.choices then
-				self.value = self.choices[k+1].value
+				choice = self.choices[k+1]
 			else
-				self.value = self.choices[1].value
+				choice = self.choices[1]
 			end
-			self:emit({ type = 'choice_change', value = self.value })
+			self.value = choice.value
+			self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
 			self:draw()
 			return true
 		elseif event.key == 'left' then
 			local _,k = Util.find(self.choices, 'value', self.value)
+			local choice
 			if k and k > 1 then
-				self.value = self.choices[k-1].value
+				choice = self.choices[k-1]
 			else
-				self.value = self.choices[#self.choices].value
+				choice = self.choices[#self.choices]
 			end
-			self:emit({ type = 'choice_change', value = self.value })
+			self.value = choice.value
+			self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
 			self:draw()
 			return true
 		end
@@ -2978,6 +3029,57 @@ function UI.Chooser:eventHandler(event)
 			self:emit({ type = 'key', key = 'right' })
 			return true
 		end
+	end
+end
+
+--[[-- Chooser --]]--
+UI.Checkbox = class(UI.Window)
+UI.Checkbox.defaults = {
+	UIElement = 'Checkbox',
+	nochoice = 'Select',
+	checkedIndicator = 'X',
+	leftMarker = '[',
+	rightMarker = ']',
+	value = false,
+	textColor = colors.white,
+	backgroundColor = colors.black,
+	backgroundFocusColor = colors.lightGray,
+	height = 1,
+	width = 3,
+	accelerators = {
+		space = 'checkbox_toggle',
+		mouse_click = 'checkbox_toggle',
+	}
+}
+function UI.Checkbox:draw()
+	local bg = self.backgroundColor
+	if self.focused then
+		bg = self.backgroundFocusColor
+	end
+	if type(self.value) == 'string' then
+		self.value = nil  -- TODO: fix form
+	end
+	local text = string.format('[%s]', not self.value and ' ' or self.checkedIndicator)
+	self:write(1, 1, text, bg)
+	self:write(1, 1, self.leftMarker, self.backgroundColor, self.textColor)
+	self:write(2, 1, not self.value and ' ' or self.checkedIndicator, bg)
+	self:write(3, 1, self.rightMarker, self.backgroundColor, self.textColor)
+end
+
+function UI.Checkbox:focus()
+	self:draw()
+end
+
+function UI.Checkbox:reset()
+	self.value = false
+end
+
+function UI.Checkbox:eventHandler(event)
+	if event.type == 'checkbox_toggle' then
+		self.value = not self.value
+		self:emit({ type = 'checkbox_change', checked = self.value, element = self })
+		self:draw()
+		return true
 	end
 end
 
@@ -3180,16 +3282,18 @@ function UI.Form:createForm()
 		end
 	end
 
-	table.insert(self.children, UI.Button {
-		y = -self.margin, x = -12 - self.margin,
-		text = 'Ok',
-		event = 'form_ok',
-	})
-	table.insert(self.children, UI.Button {
-		y = -self.margin, x = -7 - self.margin,
-		text = 'Cancel',
-		event = 'form_cancel',
-	})
+	if not self.manualControls then
+		table.insert(self.children, UI.Button {
+			y = -self.margin, x = -12 - self.margin,
+			text = 'Ok',
+			event = 'form_ok',
+		})
+		table.insert(self.children, UI.Button {
+			y = -self.margin, x = -7 - self.margin,
+			text = 'Cancel',
+			event = 'form_cancel',
+		})
+	end
 end
 
 function UI.Form:validateField(field)
@@ -3198,25 +3302,47 @@ function UI.Form:validateField(field)
 			return false, 'Field is required'
 		end
 	end
+	if field.validate == 'numeric' then
+		if #tostring(field.value) > 0 then
+			if not tonumber(field.value) then
+				return false, 'Invalid number'
+			end
+		end
+	end
+	return true
+end
+
+function UI.Form:save()
+	for _,child in pairs(self.children) do
+		if child.formKey then
+			local s, m = self:validateField(child)
+			if not s then
+				self:setFocus(child)
+				self:emit({ type = 'form_invalid', message = m, field = child })
+				return false
+			end
+		end
+	end
+	for _,child in pairs(self.children) do
+		if child.formKey then
+			if (child.pruneEmpty and type(child.value) == 'string' and #child.value == 0) or
+				 (child.pruneEmpty and type(child.value) == 'boolean' and not child.value) then
+				self.values[child.formKey] = nil
+			elseif child.validate == 'numeric' then
+				self.values[child.formKey] = tonumber(child.value)
+			else
+				self.values[child.formKey] = child.value
+			end
+		end
+	end
+
 	return true
 end
 
 function UI.Form:eventHandler(event)
 	if event.type == 'form_ok' then
-		for _,child in pairs(self.children) do
-			if child.formKey  then
-				local s, m = self:validateField(child)
-				if not s then
-					self:setFocus(child)
-					self:emit({ type = 'form_invalid', message = m, field = child })
-					return false
-				end
-			end
-		end
-		for _,child in pairs(self.children) do
-			if child.formKey then
-				self.values[child.formKey] = child.value
-			end
+		if not self:save() then
+			return false
 		end
 		self:emit({ type = self.event, UIElement = self })
 	else
