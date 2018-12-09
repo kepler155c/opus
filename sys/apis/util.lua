@@ -135,9 +135,9 @@ function Util.round(num, idp)
 	return util.signum(num) * math.floor(math.abs(num) * mult + 0.5) / mult
 end
 
-function Util.random(max, min)
+function Util.randomFloat(max, min)
 	min = min or 0
-	return math.random(0, max-min) + min
+	return (max-min) * math.random() + min
 end
 
 --[[ Table functions ]] --
