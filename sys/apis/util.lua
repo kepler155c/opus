@@ -132,12 +132,13 @@ end
 -- http://lua-users.org/wiki/SimpleRound
 function Util.round(num, idp)
 	local mult = 10^(idp or 0)
-	return util.signum(num) * math.floor(math.abs(num) * mult + 0.5) / mult
+	return Util.signum(num) * math.floor(math.abs(num) * mult + 0.5) / mult
 end
 
-function Util.random(max, min)
+function Util.randomFloat(max, min)
 	min = min or 0
-	return math.random(0, max-min) + min
+	max = max or 1
+	return (max-min) * math.random() + min
 end
 
 --[[ Table functions ]] --
