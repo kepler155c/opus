@@ -137,7 +137,7 @@ end
 
 function Util.randomFloat(max, min)
 	min = min or 0
-	max = max or 0
+	max = max or 1
 	return (max-min) * math.random() + min
 end
 
