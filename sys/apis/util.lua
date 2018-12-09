@@ -109,10 +109,30 @@ function Util.checkMinecraftVersion(minVersion)
 	return convert(version) >= convert(tostring(minVersion))
 end
 
+function Util.signum(num)
+	if num > 0 then
+		return 1
+	elseif num < 0 then
+		return -1
+	else
+		return 0
+	end
+end
+
+function Util.clamp(lo, n, hi)
+	if num <= lo then
+		return lo
+	elseif num >= hi then
+		return hi
+	else
+		return n
+	end
+end
+
 -- http://lua-users.org/wiki/SimpleRound
 function Util.round(num, idp)
 	local mult = 10^(idp or 0)
-	return math.floor(num * mult + 0.5) / mult
+	return util.signum(num) * math.floor(math.abs(num) * mult + 0.5) / mult
 end
 
 function Util.random(max, min)
