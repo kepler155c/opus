@@ -108,6 +108,14 @@ function page:eventHandler(event)
 				args = { t.id },
 				title = t.label,
 			})
+			os.queueEvent('overview_shortcut', {
+				title = t.label,
+				category = "VNC",
+				icon = "\
+		\031e\\\031   \031e/\031dn\
+		 \031e\\/\031  \0319c",
+				run = "vnc.lua " .. t.id,
+			})
 		elseif event.type == 'clear' then
 			Util.clear(network)
 			page.grid:update()

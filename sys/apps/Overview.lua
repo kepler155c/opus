@@ -23,6 +23,9 @@ if not _ENV.multishell then
 end
 
 local REGISTRY_DIR = 'usr/.registry'
+local DEFAULT_ICON = NFT.parse("\03180\031711\03180\
+\031800\03171\03180\
+\03171\031800\03171")
 
 UI:configure('Overview', ...)
 
@@ -32,8 +35,85 @@ local config = {
 }
 Config.load('Overview', config)
 
-local applications = { }
 local extSupport = Util.getVersion() >= 1.76
+
+local applications = { }
+local buttons = { }
+
+local sx, sy = term.current().getSize()
+local maxRecent = math.ceil(sx * sy / 62)
+
+local function elipse(s, len)
+	if #s > len then
+		s = s:sub(1, len - 2) .. '..'
+	end
+	return s
+end
+
+local function parseIcon(iconText)
+	local icon
+
+	local s, m = pcall(function()
+		icon = NFT.parse(iconText)
+		if icon then
+			if icon.height > 3 or icon.width > 8 then
+				error('Must be an NFT image - 3 rows, 8 cols max')
+			end
+		end
+		return icon
+	end)
+
+	if s then
+		return icon
+	end
+
+	return s, m
+end
+
+UI.VerticalTabBar = class(UI.TabBar)
+function UI.VerticalTabBar:setParent()
+	self.x = 1
+	self.width = 8
+	self.height = nil
+	self.ey = -1
+	UI.TabBar.setParent(self)
+	for k,c in pairs(self.children) do
+		c.x = 1
+		c.y = k + 1
+		c.ox, c.oy = c.x, c.y
+		c.ow = 8
+		c.width = 8
+	end
+end
+
+local cx = 9
+local cy = 1
+if sx < 30 then
+	UI.VerticalTabBar = UI.TabBar
+	cx = 1
+	cy = 2
+end
+
+local page = UI.Page {
+	container = UI.Viewport {
+		x = cx,
+		y = cy,
+	},
+	notification = UI.Notification(),
+	accelerators = {
+		r = 'refresh',
+		e = 'edit',
+		f = 'files',
+		s = 'shell',
+		l = 'lua',
+		[ 'control-n' ] = 'new',
+		delete = 'delete',
+	},
+}
+
+if extSupport then
+	page.container.backgroundColor = colors.black
+end
 
 local function loadApplications()
 	local requirements = {
@@ -81,102 +161,32 @@ local function loadApplications()
 
 		return true -- Util.startsWith(a.run, 'http') or shell.resolveProgram(a.run)
 	end)
-end
 
-loadApplications()
-
-local defaultIcon = NFT.parse("\03180\031711\03180\
-\031800\03171\03180\
-\03171\031800\03171")
-
-local sx, sy = term.current().getSize()
-local maxRecent = math.ceil(sx * sy / 62)
-
-local function elipse(s, len)
-	if #s > len then
-		s = s:sub(1, len - 2) .. '..'
-	end
-	return s
-end
-
-local buttons = { }
-local categories = { }
-for _,f in pairs(applications) do
-	if not categories[f.category] then
-		categories[f.category] = true
-		table.insert(buttons, { text = f.category })
-	end
-end
-table.sort(buttons, function(a, b) return a.text < b.text end)
-table.insert(buttons, 1, { text = 'Recent' })
-table.insert(buttons, { text = '+', event = 'new' })
-
-local function parseIcon(iconText)
-	local icon
-
-	local s, m = pcall(function()
-		icon = NFT.parse(iconText)
-		if icon then
-			if icon.height > 3 or icon.width > 8 then
-				error('Must be an NFT image - 3 rows, 8 cols max')
-			end
+	local categories = { }
+	buttons = { }
+	for _,f in pairs(applications) do
+		if not categories[f.category] then
+			categories[f.category] = true
+			table.insert(buttons, {
+				text = f.category,
+				selected = config.currentCategory == f.category
+			})
 		end
-		return icon
-	end)
-
-	if s then
-		return icon
 	end
+	table.sort(buttons, function(a, b) return a.text < b.text end)
+	table.insert(buttons, 1, { text = 'Recent' })
+	table.insert(buttons, { text = '+', event = 'new' })
 
-	return s, m
-end
+	Util.removeByValue(page.children, page.tabBar)
 
-UI.VerticalTabBar = class(UI.TabBar)
-function UI.VerticalTabBar:setParent()
-	self.x = 1
-	self.width = 8
-	self.height = nil
-	self.ey = -1
-	UI.TabBar.setParent(self)
-	for k,c in pairs(self.children) do
-		c.x = 1
-		c.y = k + 1
-		c.ox, c.oy = c.x, c.y
-		c.ow = 8
-		c.width = 8
-	end
-end
+	page:add {
+		tabBar = UI.VerticalTabBar {
+			buttons = buttons,
+		},
+	}
 
-local cx = 9
-local cy = 1
-if sx < 30 then
-	UI.VerticalTabBar = UI.TabBar
-	cx = 1
-	cy = 2
-end
-
-local page = UI.Page {
-	tabBar = UI.VerticalTabBar {
-		buttons = buttons,
-	},
-	container = UI.Viewport {
-		x = cx,
-		y = cy,
-	},
-	notification = UI.Notification(),
-	accelerators = {
-		r = 'refresh',
-		e = 'edit',
-		f = 'files',
-		s = 'shell',
-		l = 'lua',
-		[ 'control-n' ] = 'new',
-		delete = 'delete',
-	},
-}
-
-if extSupport then
-	page.container.backgroundColor = colors.black
+	--page.tabBar:selectTab(config.currentCategory or 'Apps')
+	page.container:setCategory(config.currentCategory or 'Apps')
 end
 
 UI.Icon = class(UI.Window)
@@ -242,7 +252,7 @@ function page.container:setCategory(categoryName, animate)
 			icon = parseIcon(program.icon)
 		end
 		if not icon then
-			icon = defaultIcon
+			icon = DEFAULT_ICON
 		end
 
 		local title = elipse(program.title, 8)
@@ -537,8 +547,11 @@ function editor:eventHandler(event)
 		local values = self.form.values
 		UI:setPreviousPage()
 		self:updateApplications(values)
-		page:refresh()
-		page:draw()
+		--page:refresh()
+		--page:draw()
+		config.currentCategory = values.category
+		Config.update('Overview', config)
+		os.queueEvent('overview_refresh')
 	else
 		return UI.Dialog.eventHandler(self, event)
 	end
@@ -550,15 +563,30 @@ UI:setPages({
 	main = page,
 })
 
-Event.on('os_register_app', function()
+local function reload()
 	loadApplications()
 	page:refresh()
 	page:draw()
 	page:sync()
+end
+
+Event.on('overview_shortcut', function(_, app)
+	if not app.key then
+		app.key = SHA1.sha1(app.title)
+	end
+	local filename = app.filename or fs.combine(REGISTRY_DIR, app.key)
+	if not fs.exists(filename) then
+		Util.writeTable(filename, app)
+		reload()
+	end
 end)
 
-page.tabBar:selectTab(config.currentCategory or 'Apps')
-page.container:setCategory(config.currentCategory or 'Apps')
+Event.on('overview_refresh', function()
+	reload()
+end)
+
+loadApplications()
+
 UI:setPage(page)
 
 UI:pullEvents()
