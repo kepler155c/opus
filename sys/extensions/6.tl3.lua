@@ -883,6 +883,9 @@ function turtle.condense()
 						slots[j].count = slots[j].count - transferred
 						slots[i].count = slots[i].count + transferred
 						slots[i].key = slots[j].key
+						if slots[j].count == 0 then
+							slots[j].key = nil
+						end
 						if slots[i].count == 64 then
 							break
 						end
