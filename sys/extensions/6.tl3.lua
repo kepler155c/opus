@@ -873,23 +873,27 @@ end
 function turtle.condense()
 	local slots = turtle.getInventory()
 
-	for i = 16, 1, -1 do
-		if slots[i].count > 0 then
-			for j = 1, i - 1 do
-				if slots[j].count == 0 or slots[i].key == slots[j].key then
-					turtle.select(i)
-					turtle.transferTo(j, 64)
-					local transferred = slots[i].qty - turtle.getItemCount(i)
-					slots[j].count = slots[j].count + transferred
-					slots[i].count = slots[i].count - transferred
-					slots[j].key = slots[i].key
-					if slots[i].count == 0 then
+	for i = 1, 16 do
+		if slots[i].count < 64 then
+			for j = 16, i + 1, -1 do
+				if slots[j].count > 0 and (slots[i].count == 0 or slots[i].key == slots[j].key) then
+					turtle.select(j)
+					if turtle.transferTo(i) then
+						local transferred = turtle.getItemCount(i) - slots[i].qty
+						slots[j].count = slots[j].count - transferred
+						slots[i].count = slots[i].count + transferred
+						slots[i].key = slots[j].key
+						if slots[i].count == 64 then
+							break
+						end
+					else
 						break
 					end
 				end
 			end
 		end
 	end
+	turtle.select(1)
 	return true
 end
 
