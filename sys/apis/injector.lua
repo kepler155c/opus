@@ -1,6 +1,6 @@
 local PASTEBIN_URL   = 'http://pastebin.com/raw'
 local GIT_URL        = 'https://raw.githubusercontent.com'
-local DEFAULT_PATH   = 'sys/apis'
+local DEFAULT_PATH   = '/sys/apis/?;/sys/apis/?.lua'
 local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'master'
 local DEFAULT_UPATH  = GIT_URL .. '/kepler155c/opus/' .. DEFAULT_BRANCH .. '/sys/apis'
 
@@ -80,14 +80,25 @@ local function requireWrapper(env)
 	end
 
 	local function pathSearcher(modname)
-		local fname = modname:gsub('%.', '/') .. '.lua'
+		local fname = modname:gsub('%.', '/')
 
+		for pattern in string.gmatch(env.package.path, "[^;]+") do
+			local sPath = string.gsub(pattern, "%?", fname)
+			if env.shell and env.shell.dir and sPath:sub(1, 1) ~= "/" then
+				sPath = fs.combine(env.shell.dir(), sPath)
+			end
+			if fs.exists(sPath) and not fs.isDir(sPath) then
+				return loadfile(sPath, env)
+			end
+		end
+		--[[
 		for dir in string.gmatch(env.package.path, "[^:]+") do
 			local path = fs.combine(dir, fname)
 			if fs.exists(path) and not fs.isDir(path) then
 				return loadfile(path, env)
 			end
 		end
+		]]
 	end
 
 	-- require('BniCQPVf')

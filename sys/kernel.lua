@@ -115,6 +115,10 @@ function kernel.getCurrent()
 	return kernel.running
 end
 
+function kernel.getShell()
+	return shell
+end
+
 function kernel.newRoutine(args)
 	kernel.UID = kernel.UID + 1
 

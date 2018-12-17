@@ -16,11 +16,21 @@ end
 --		'usr gitfs kepler155c/opus-apps/' .. _G.OPUS_BRANCH)
 --end
 
+local lua_path = '?;?.lua;?/init.lua'
+lua_path = lua_path .. ';/usr/apis/?;/usr/apis/?.lua'
+lua_path = lua_path .. ';/sys/apis/?;/sys/apis/?.lua'
+lua_path = lua_path .. ';/rom/modules/main/?;/rom/modules/main/?.lua;/rom/modules/main/?/init.lua;'
+if _G.turtle then
+	lua_path = lua_path..';/rom/modules/turtle/?;/rom/modules/turtle/?.lua;/rom/modules/turtle/?/init.lua'
+elseif _G.command then
+	lua_path = lua_path..';/rom/modules/command/?;/rom/modules/command/?.lua;/rom/modules/command/?/init.lua'
+end
+
 if not fs.exists('usr/config/shell') then
 	Util.writeTable('usr/config/shell', {
 		aliases  = shell.aliases(),
 		path     = 'usr/apps:sys/apps:' .. shell.path(),
-		lua_path = 'sys/apis:usr/apis',
+		lua_path = lua_path,
 	})
 end
 
@@ -45,6 +55,7 @@ if config.aliases then
 	end
 end
 shell.setPath(config.path)
-_G.LUA_PATH = config.lua_path
+--_G.LUA_PATH = config.lua_path
+_G.LUA_PATH = lua_path
 
 fs.loadTab('usr/config/fstab')
