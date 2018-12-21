@@ -296,6 +296,13 @@ function Util.filter(it, f)
 	return ot
 end
 
+function Util.reduce(t, fn, acc)
+	for _, v in pairs(t) do
+		fn(acc, v)
+	end
+	return acc
+end
+
 function Util.size(list)
 	if type(list) == 'table' then
 		local length = 0

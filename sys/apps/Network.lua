@@ -206,7 +206,7 @@ function page.grid:getDisplayValues(row)
 		end
 	end
 	if row.fuel then
-		row.fuel = Util.toBytes(row.fuel)
+		row.fuel = row.fuel > 0 and Util.toBytes(row.fuel) or ''
 	end
 	if row.distance then
 		row.distance = Util.round(row.distance, 1)

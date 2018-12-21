@@ -80,15 +80,6 @@ end
 local function createShellEnv(sDir)
 	local tEnv = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
 
-	--[[
-	package.path = "?;?.lua;?/init.lua;/rom/modules/main/?;/rom/modules/main/?.lua;/rom/modules/main/?/init.lua"
-	if turtle then
-			package.path = package.path..";/rom/modules/turtle/?;/rom/modules/turtle/?.lua;/rom/modules/turtle/?/init.lua"
-	elseif command then
-			package.path = package.path..";/rom/modules/command/?;/rom/modules/command/?.lua;/rom/modules/command/?/init.lua"
-	end
-	]]
-
 	local package
 
 	package = {
@@ -106,7 +97,6 @@ local function createShellEnv(sDir)
 		preload = { },
 		loaders = {
 			function( name )
-_G._p = _ENV
 				if package.preload[name] then
 					return package.preload[name]
 				else

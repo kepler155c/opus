@@ -79,6 +79,7 @@ local function getListing(path, recursive)
 	return list
 end
 
+--[[
 Event.on('modem_message', function(_, _, dport, dhost, request)
 	if dport == 80 and dhost == computerId and type(request) == 'table' then
 		if request.method == 'GET' then
@@ -111,3 +112,4 @@ Event.on('modem_message', function(_, _, dport, dhost, request)
 		end
 	end
 end)
+]]
