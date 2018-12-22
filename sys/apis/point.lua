@@ -189,6 +189,8 @@ function Point.closest(reference, pts)
 end
 
 function Point.eachClosest(spt, ipts, fn)
+	if not ipts then error('Point.eachClosest: invalid points', 2) end
+
 	local pts = Util.shallowCopy(ipts)
 	while #pts > 0 do
 		local pt = Point.closest(spt, pts)
@@ -197,6 +199,17 @@ function Point.eachClosest(spt, ipts, fn)
 			return r
 		end
 		Util.removeByValue(pts, pt)
+	end
+end
+
+function Point.iterateClosest(spt, ipts)
+	local pts = Util.shallowCopy(ipts)
+	return function()
+		local pt = Point.closest(spt, pts)
+		if pt then
+			Util.removeByValue(pts, pt)
+			return pt
+		end
 	end
 end
 
