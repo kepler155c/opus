@@ -7,6 +7,7 @@ local Config = { }
 
 function Config.load(fname, data)
 	local filename = 'usr/config/' .. fname
+	data = data or { }
 
 	if not fs.exists('usr/config') then
 		fs.makeDir('usr/config')

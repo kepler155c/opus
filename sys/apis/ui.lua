@@ -2250,6 +2250,13 @@ function UI.Tabs:add(children)
 	end
 end
 
+function UI.Tabs:selectTab(tab)
+	local menuItem = Util.find(self.tabBar:getFocusables(), 'tabUid', tab.uid)
+	if menuItem then
+		self.tabBar:emit({ type = 'tab_select', button = { uid = menuItem.uid } })
+	end
+end
+
 function UI.Tabs:enable()
 	self.enabled = true
 	self.tabBar:enable()
@@ -2999,6 +3006,7 @@ function UI.Chooser:eventHandler(event)
 		if event.key == 'right' or event.key == 'space' then
 			local _,k = Util.find(self.choices, 'value', self.value)
 			local choice
+			if not k then k = 1 end
 			if k and k < #self.choices then
 				choice = self.choices[k+1]
 			else
@@ -3021,7 +3029,7 @@ function UI.Chooser:eventHandler(event)
 			self:draw()
 			return true
 		end
-	elseif event.type == 'mouse_click' then
+	elseif event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
 		if event.x == 1 then
 			self:emit({ type = 'key', key = 'left' })
 			return true

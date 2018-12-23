@@ -18,8 +18,12 @@ end
 
 local function setModem(dev)
 	if not device.wireless_modem and dev.isWireless() then
-		local config = Config.load('os', { })
-		if not config.wirelessModem or dev.name == config.wirelessModem then
+		local config = Config.load('os')
+
+		if not config.wirelessModem or
+			config.wirelessModem == 'auto' or
+			dev.name == config.wirelessModem then
+
 			device.wireless_modem = dev
 			os.queueEvent('device_attach', 'wireless_modem')
 			return dev

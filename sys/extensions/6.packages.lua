@@ -3,8 +3,9 @@ _G.requireInjector(_ENV)
 local Packages = require('packages')
 local Util     = require('util')
 
+local fs    = _G.fs
+local help  = _G.help
 local shell = _ENV.shell
-local fs = _G.fs
 
 local appPaths = Util.split(shell.path(), '(.-);')
 local luaPaths = Util.split(_G.LUA_PATH, '(.-);')
@@ -26,6 +27,9 @@ end
 -- dependency graph
 -- https://github.com/mpeterv/depgraph/blob/master/src/depgraph/init.lua
 
+local helpPaths = Util.split(help.path(), '(.-):')
+table.insert(helpPaths, '/sys/help')
+
 for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
 	if fs.exists(fs.combine(packageDir, '.install')) then
@@ -40,7 +44,14 @@ for name in pairs(Packages:installed()) do
 	if fs.exists(apiPath) then
 		addPath(luaPaths, apiPath)
 	end
+
+	local helpPath = fs.combine(fs.combine('packages', name), 'help')
+	if fs.exists(helpPath) then
+		table.insert(helpPaths, helpPath)
+	end
 end
+
+help.setPath(table.concat(helpPaths, ':'))
 
 shell.setPath(table.concat(appPaths, ':'))
 _G.LUA_PATH = table.concat(luaPaths, ';')
