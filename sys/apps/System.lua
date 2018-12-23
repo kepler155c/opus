@@ -1,4 +1,3 @@
-local Config = require('config')
 local UI     = require('ui')
 local Util   = require('util')
 
@@ -6,13 +5,6 @@ local fs     = _G.fs
 local shell  = _ENV.shell
 
 UI:configure('System', ...)
-
-local env = {
-	path = shell.path(),
-	aliases = shell.aliases(),
-	lua_path = _ENV.LUA_PATH,
-}
-Config.load('shell', env)
 
 local systemPage = UI.Page {
 	tabs = UI.Tabs {

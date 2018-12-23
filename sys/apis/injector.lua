@@ -4,9 +4,10 @@ local DEFAULT_PATH   = '/sys/apis/?;/sys/apis/?.lua'
 local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'master'
 local DEFAULT_UPATH  = GIT_URL .. '/kepler155c/opus/' .. DEFAULT_BRANCH .. '/sys/apis'
 
-local fs   = _G.fs
-local http = _G.http
-local os   = _G.os
+local fs     = _G.fs
+local http   = _G.http
+local os     = _G.os
+local string = _G.string
 
 if not http._patched then
 	-- fix broken http get
@@ -58,7 +59,7 @@ local function loadUrl(url)
 end
 
 -- Add require and package to the environment
-local function requireWrapper(env)
+return function(env)
 
 	local function standardSearcher(modname)
 		if env.package.loaded[modname] then
@@ -71,10 +72,13 @@ local function requireWrapper(env)
 	local function shellSearcher(modname)
 		local fname = modname:gsub('%.', '/') .. '.lua'
 
-		if env.shell and type(env.shell.dir) == 'function' then
-			local path = env.shell.resolve(fname)
-			if fs.exists(path) and not fs.isDir(path) then
-				return loadfile(path, env)
+		if env.shell and type(env.shell.getRunningProgram) == 'function' then
+			local running = env.shell.getRunningProgram()
+			if running then
+				local path = fs.combine(fs.getDir(running), fname)
+				if fs.exists(path) and not fs.isDir(path) then
+					return loadfile(path, env)
+				end
 			end
 		end
 	end
@@ -145,11 +149,12 @@ local function requireWrapper(env)
 		upath  = env.LUA_UPATH or _G.LUA_UPATH or DEFAULT_UPATH,
 		config = '/\n:\n?\n!\n-',
 		loaded = {
+			coroutine = coroutine,
+			io     = io,
 			math   = math,
+			os     = os,
 			string = string,
 			table  = table,
-			io     = io,
-			os     = os,
 		},
 		loaders = {
 			standardSearcher,
@@ -180,10 +185,4 @@ local function requireWrapper(env)
 	end
 
 	return env.require -- backwards compatible
-end
-
-return function(env)
-	env = env or getfenv(2)
-	--setfenv(requireWrapper, env)
-	return requireWrapper(env)
 end

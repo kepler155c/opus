@@ -9,26 +9,24 @@ local shell = _ENV.shell
 
 local appPaths = Util.split(shell.path(), '(.-);')
 local luaPaths = Util.split(_G.LUA_PATH, '(.-);')
+local helpPaths = Util.split(help.path(), '(.-):')
 
-local function addPath(t, path)
-	local function addEntry(e)
-		for _,v in ipairs(t) do
-			if v == e then
-				return true
-			end
+table.insert(helpPaths, '/sys/help')
+
+local function addEntry(t, e)
+	for _,v in ipairs(t) do
+		if v == e then
+			return true
 		end
-		table.insert(t, 1, e)
 	end
-	addEntry(string.format('/%s/?', path))
-	addEntry(string.format('/%s/?.lua', path))
-	addEntry(string.format('/%s/?/init.lua', path))
+	table.insert(t, 1, e)
 end
 
--- dependency graph
--- https://github.com/mpeterv/depgraph/blob/master/src/depgraph/init.lua
-
-local helpPaths = Util.split(help.path(), '(.-):')
-table.insert(helpPaths, '/sys/help')
+local function addRequirePath(t, path)
+	addEntry(t, string.format('/%s/?', path))
+	addEntry(t, string.format('/%s/?.lua', path))
+	addEntry(t, string.format('/%s/?/init.lua', path))
+end
 
 for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
@@ -39,13 +37,13 @@ for name in pairs(Packages:installed()) do
 		end
 	end
 
-	addPath(appPaths, packageDir)
+	addEntry(appPaths, packageDir)
 	local apiPath = fs.combine(fs.combine('packages', name), 'apis')
 	if fs.exists(apiPath) then
-		addPath(luaPaths, apiPath)
+		addRequirePath(luaPaths, apiPath)
 	end
 
-	local helpPath = fs.combine(fs.combine('packages', name), 'help')
+	local helpPath = '/' .. fs.combine(fs.combine('packages', name), 'help')
 	if fs.exists(helpPath) then
 		table.insert(helpPaths, helpPath)
 	end
