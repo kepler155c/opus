@@ -119,13 +119,13 @@ function Util.signum(num)
 	end
 end
 
-function Util.clamp(lo, n, hi)
+function Util.clamp(lo, num, hi)
 	if num <= lo then
 		return lo
 	elseif num >= hi then
 		return hi
 	else
-		return n
+		return num
 	end
 end
 
@@ -314,13 +314,31 @@ function Util.size(list)
 	return 0
 end
 
+local function isArray(value)
+	-- dubious
+	return type(value) == "table" and (value[1] or next(value) == nil)
+end
+
 function Util.removeByValue(t, e)
 	for k,v in pairs(t) do
 		if v == e then
-			table.remove(t, k)
+			if isArray(t) then
+				table.remove(t, k)
+			else
+				t[k] = nil
+			end
 			break
 		end
 	end
+end
+
+function Util.every(t, fn)
+	for _,v in pairs(t) do
+		if not fn(v) then
+			return false
+		end
+	end
+	return true
 end
 
 function Util.each(list, func)
