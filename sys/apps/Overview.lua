@@ -128,13 +128,10 @@ local function loadApplications()
 	applications = Util.readTable('sys/etc/app.db')
 
 	for dir in pairs(Packages:installed()) do
-		local path = fs.combine('packages/' .. dir, 'etc/apps')
+		local path = fs.combine('packages/' .. dir, 'etc/apps.db')
 		if fs.exists(path) then
-			local dbs = fs.list(path)
-			for _, db in pairs(dbs) do
-				local apps = Util.readTable(fs.combine(path, db)) or { }
-				Util.merge(applications, apps)
-			end
+			local apps = Util.readTable(path) or { }
+			Util.merge(applications, apps)
 		end
 	end
 
