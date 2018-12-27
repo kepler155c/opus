@@ -1,7 +1,7 @@
 local PASTEBIN_URL   = 'http://pastebin.com/raw'
 local GIT_URL        = 'https://raw.githubusercontent.com'
-local DEFAULT_PATH   = '/sys/apis/?;/sys/apis/?.lua'
-local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'master'
+local DEFAULT_PATH   = (package and (package.path .. ':') or '') .. '/sys/apis/?;/sys/apis/?.lua'
+local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'develop-1.8'
 local DEFAULT_UPATH  = GIT_URL .. '/kepler155c/opus/' .. DEFAULT_BRANCH .. '/sys/apis'
 
 local fs     = _G.fs

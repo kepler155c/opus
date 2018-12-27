@@ -879,7 +879,7 @@ function turtle.condense()
 				if slots[j].count > 0 and (slots[i].count == 0 or slots[i].key == slots[j].key) then
 					turtle.select(j)
 					if turtle.transferTo(i) then
-						local transferred = turtle.getItemCount(i) - slots[i].qty
+						local transferred = turtle.getItemCount(i) - slots[i].count
 						slots[j].count = slots[j].count - transferred
 						slots[i].count = slots[i].count + transferred
 						slots[i].key = slots[j].key

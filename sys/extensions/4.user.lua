@@ -11,25 +11,13 @@ end
 if not fs.exists('usr/autorun') then
 	fs.makeDir('usr/autorun')
 end
---if not fs.exists('usr/config/fstab') then
---	Util.writeFile('usr/config/fstab',
---		'usr gitfs kepler155c/opus-apps/' .. _G.OPUS_BRANCH)
---end
 
-local lua_path = '?;?.lua;?/init.lua'
-lua_path = lua_path .. ';/usr/apis/?;/usr/apis/?.lua'
-lua_path = lua_path .. ';/sys/apis/?;/sys/apis/?.lua'
-lua_path = lua_path .. ';/rom/modules/main/?;/rom/modules/main/?.lua;/rom/modules/main/?/init.lua;'
-if _G.turtle then
-	lua_path = lua_path..';/rom/modules/turtle/?;/rom/modules/turtle/?.lua;/rom/modules/turtle/?/init.lua'
-elseif _G.command then
-	lua_path = lua_path..';/rom/modules/command/?;/rom/modules/command/?.lua;/rom/modules/command/?/init.lua'
-end
+local lua_path = package.path
 
 if not fs.exists('usr/config/shell') then
 	Util.writeTable('usr/config/shell', {
 		aliases  = shell.aliases(),
-		path     = 'usr/apps:sys/apps:' .. shell.path(),
+		path     = 'usr/apps',
 		lua_path = lua_path,
 	})
 end
@@ -54,8 +42,14 @@ if config.aliases then
 		shell.setAlias(k, v)
 	end
 end
-shell.setPath(config.path)
---_G.LUA_PATH = config.lua_path
-_G.LUA_PATH = lua_path
+
+local path = config.path and Util.split(config.path, '(.-):') or { }
+table.insert(path, 'sys/apps')
+for _, v in pairs(Util.split(shell.path(), '(.-):')) do
+	table.insert(path, v)
+end
+
+shell.setPath(table.concat(path, ':'))
+_G.LUA_PATH = config.lua_path
 
 fs.loadTab('usr/config/fstab')

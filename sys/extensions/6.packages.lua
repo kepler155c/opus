@@ -7,7 +7,7 @@ local fs    = _G.fs
 local help  = _G.help
 local shell = _ENV.shell
 
-local appPaths = Util.split(shell.path(), '(.-);')
+local appPaths = Util.split(shell.path(), '(.-):')
 local luaPaths = Util.split(_G.LUA_PATH, '(.-);')
 local helpPaths = Util.split(help.path(), '(.-):')
 

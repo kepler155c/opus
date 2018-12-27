@@ -2,8 +2,6 @@ local Config = require('config')
 local UI     = require('ui')
 local Util   = require('util')
 
-local shell  = _ENV.shell
-
 local pathTab = UI.Window {
 	tabTitle = 'Path',
 	description = 'Set the shell path',
@@ -11,7 +9,7 @@ local pathTab = UI.Window {
 	entry = UI.TextEntry {
 		x = 2, y = 2, ex = -2,
 		limit = 256,
-		value = shell.path(),
+		value = Config.load('shell').path,
 		shadowText = 'enter system path',
 		accelerators = {
 			enter = 'update_path',
@@ -39,9 +37,9 @@ function pathTab:eventHandler(event)
 	if event.type == 'update_path' then
 		local env = Config.load('shell')
 		env.path = self.entry.value
+		Config.update('shell', env)
 		self.grid:setIndex(self.grid:getIndex())
 		self.grid:draw()
-		Config.update('shell', env)
 		self:emit({ type = 'success_message', message = 'reboot to take effect' })
 		return true
 	end
