@@ -935,6 +935,13 @@ function turtle.isEquipped(item)
 	end
 end
 
+function turtle.unequip(side)
+	if not turtle.selectSlotWithQuantity(0) then
+		return false, 'No slots available'
+	end
+	return turtle.equip(side)
+end
+
 -- [[  ]] --
 function turtle.run(fn, ...)
 	local args = { ... }
@@ -978,6 +985,12 @@ end
 
 function turtle.addWorldBlock(pt)
 	Pathing.addBlock(pt)
+end
+
+function turtle.addWorldBlocks(pts)
+	Util.each(pts, function(pt)
+		Pathing.addBlock(pt)
+	end)
 end
 
 local movementStrategy = turtle.pathfind

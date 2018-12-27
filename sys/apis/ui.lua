@@ -1490,6 +1490,7 @@ end
 
 function UI.Grid:drawHeadings()
 	local x = 1
+	local sb = UI.StringBuffer(self.width)
 	for _,col in ipairs(self.columns) do
 		local ind = ' '
 		if col.key == self.sortColumn then
@@ -1499,13 +1500,17 @@ function UI.Grid:drawHeadings()
 				ind = self.sortIndicator
 			end
 		end
+		sb:insert(ind .. col.heading, col.cw + 1)
+		--[[
 		self:write(x,
 			1,
 			Util.widthify(ind .. col.heading, col.cw + 1),
 			self.headerBackgroundColor,
 			col.key == self.sortColumn and self.headerSortColor or self.headerTextColor)
 		x = x + col.cw + 1
+		]]
 	end
+	self:write(1, 1, sb:get(), self.headerBackgroundColor, self.headerTextColor)
 end
 
 function UI.Grid:sortCompare(a, b)
