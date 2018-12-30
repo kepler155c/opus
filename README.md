@@ -14,6 +14,6 @@
 
 ## Install
 ```
-pastebin run sj4VMVJj
+pastebin run uzghlbnc
 reboot
 ```
