@@ -3212,7 +3212,7 @@ function UI.TextArea:draw()
 --  self:setCursorPos(1, 1)
 	self.cursorX, self.cursorY = 1, 1
 	self:print(self.value)
-	self.ymax = self.cursorY + 1
+	self.ymax = self.cursorY
 
 	for _,child in pairs(self.children) do
 		if child.enabled then
