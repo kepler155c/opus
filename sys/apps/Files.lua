@@ -115,14 +115,14 @@ local Browser = UI.Page {
         formLabel = 'Extension', formKey = 'name',
         shadowText = 'extension',
         required = true,
-        limit = 20,
+        limit = 64,
       },
       [2] = UI.TextEntry {
-        width = 16,
+        width = 20,
         formLabel = 'Program', formKey = 'value',
         shadowText = 'program',
         required = true,
-        limit = 64,
+        limit = 128,
       },
       add = UI.Button {
         x = -11, y = 1,
