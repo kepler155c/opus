@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Config = require('config')
 local Event  = require('event')
 local UI     = require('ui')
@@ -13,12 +11,13 @@ local shell      = _ENV.shell
 
 UI:configure('Files', ...)
 
-local config = {
+local config = Config.load('Files', {
   showHidden = false,
   showDirSizes = false,
+})
+config.associations = config.associations or {
+  nft = 'pain',
 }
-
-Config.load('Files', config)
 
 local copied = { }
 local marked = { }
@@ -61,6 +60,11 @@ local Browser = UI.Page {
           { text = 'Hidden     ^h',   event = 'toggle_hidden' },
           { text = 'Dir Size   ^s',   event = 'toggle_dirSize' },
       } },
+      { text = '\206',
+        x = -3,
+        dropdown = {
+          { text = 'Associations', event = 'associate' },
+      } },
     },
   },
   grid = UI.ScrollingGrid {
@@ -76,6 +80,56 @@ local Browser = UI.Page {
     columns = {
       { key = 'status'               },
       { key = 'totalSize', width = 6 },
+    },
+  },
+  associations = UI.SlideOut {
+    backgroundColor = colors.cyan,
+    menuBar = UI.MenuBar {
+      buttons = {
+        { text = 'Save',    event = 'save'    },
+        { text = 'Cancel',  event = 'cancel'  },
+      },
+    },
+    grid = UI.ScrollingGrid {
+      x = 2, ex = -6, y = 3, ey = -5,
+      columns = {
+        { heading = 'Name',  key = 'name'  },
+        { heading = 'Value', key = 'value' },
+      },
+      sortColumn = 'name',
+      accelerators = {
+        delete = 'remove_entry',
+      },
+    },
+    remove = UI.Button {
+      x = -4, y = 6,
+      text = '-', event = 'remove_entry', help = 'Remove',
+    },
+    form = UI.Form {
+      x = 3, y = -3, ey = -2,
+      margin = 1,
+      manualControls = true,
+      [1] = UI.TextEntry {
+        width = 20,
+        formLabel = 'Name', formKey = 'name',
+        shadowText = 'extension',
+        required = true,
+        limit = 64,
+      },
+      [2] = UI.TextEntry {
+        width = 20,
+        formLabel = 'Name', formKey = 'value',
+        shadowText = 'program',
+        required = true,
+        limit = 64,
+      },
+      add = UI.Button {
+        x = -11, y = 1,
+        text = 'Add', event = 'add_association',
+      },
+    },
+    statusBar = UI.StatusBar {
+      backgroundColor = colors.cyan,
     },
   },
   accelerators = {
@@ -294,6 +348,9 @@ function Browser:eventHandler(event)
     self.grid:draw()
     self:setStatus('Refreshed')
 
+  elseif event.type == 'associate' then
+    self.associations:show()
+
   elseif event.type == 'toggle_hidden' then
     config.showHidden = not config.showHidden
     Config.update('Files', config)
@@ -336,7 +393,12 @@ function Browser:eventHandler(event)
       if file.isDir then
         self:setDir(file.fullName)
       else
-        self:run(file.name)
+        local ext = file.name:match('%.(%w+)$')
+        if ext and config.associations[ext] then
+          self:run(config.associations[ext], '/' .. file.fullName)
+        else
+          self:run(file.name)
+        end
       end
     end
 
@@ -402,6 +464,58 @@ function Browser:eventHandler(event)
     return UI.Page.eventHandler(self, event)
   end
   self:setFocus(self.grid)
+  return true
+end
+
+--[[ Associations slide out ]] --
+function Browser.associations:show()
+  self.grid.values = { }
+  for k, v in pairs(config.associations) do
+    table.insert(self.grid.values, {
+      name = k,
+      value = v,
+    })
+  end
+  self.grid:update()
+  UI.SlideOut.show(self)
+  self:setFocus(self.form[1])
+end
+
+function Browser.associations:eventHandler(event)
+  if event.type == 'remove_entry' then
+    local row = self.grid:getSelected()
+    if row then
+      Util.removeByValue(self.grid.values, row)
+      self.grid:update()
+      self.grid:draw()
+    end
+
+  elseif event.type == 'add_association' then
+    if self.form:save() then
+      local entry = Util.find(self.grid.values, 'name', self.form[1].value) or { }
+      entry.name = self.form[1].value
+      entry.value = self.form[2].value
+      table.insert(self.grid.values, entry)
+      self.form[1]:reset()
+      self.form[2]:reset()
+      self.grid:update()
+      self.grid:draw()
+    end
+
+  elseif event.type == 'cancel' then
+    self:hide()
+
+  elseif event.type == 'save' then
+    config.associations = { }
+    for _, v in pairs(self.grid.values) do
+      config.associations[v.name] = v.value
+    end
+    Config.update('Files', config)
+    self:hide()
+
+  else
+    return UI.SlideOut.eventHandler(self, event)
+  end
   return true
 end
 
