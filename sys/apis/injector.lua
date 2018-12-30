@@ -1,6 +1,28 @@
 local PASTEBIN_URL   = 'http://pastebin.com/raw'
 local GIT_URL        = 'https://raw.githubusercontent.com'
-local DEFAULT_PATH   = (package and (package.path .. ';') or '?;?.lua;?/init.lua;') .. '/sys/apis/?;/sys/apis/?.lua'
+
+local function split(str, pattern)
+	local t = { }
+	local function helper(line) table.insert(t, line) return "" end
+	helper((str:gsub(pattern, helper)))
+	return t
+end
+
+local luaPaths = package and package.path and split(package.path, '(.-);') or { }
+for i = 1, #luaPaths do
+	if luaPaths[i] == '?' or luaPaths[i] == '?.lua' then
+		luaPaths[i] = nil
+	end
+end
+
+table.insert(luaPaths, 1, '?')
+table.insert(luaPaths, 2, '?.lua')
+table.insert(luaPaths, 3, '/usr/apis/?')
+table.insert(luaPaths, 4, '/usr/apis/?.lua')
+table.insert(luaPaths, 5, '/sys/apis/?')
+table.insert(luaPaths, 6, '/sys/apis/?.lua')
+
+local DEFAULT_PATH   = table.concat(luaPaths, ';')
 local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'develop-1.8'
 local DEFAULT_UPATH  = GIT_URL .. '/kepler155c/opus/' .. DEFAULT_BRANCH .. '/sys/apis'
 

@@ -13,19 +13,19 @@ local helpPaths = Util.split(help.path(), '(.-):')
 
 table.insert(helpPaths, '/sys/help')
 
-local function addEntry(t, e)
+local function addEntry(t, e, n)
 	for _,v in ipairs(t) do
 		if v == e then
 			return true
 		end
 	end
-	table.insert(t, 1, e)
+	table.insert(t, n or 1, e)
 end
 
 local function addRequirePath(t, path)
-	addEntry(t, string.format('/%s/?', path))
-	addEntry(t, string.format('/%s/?.lua', path))
-	addEntry(t, string.format('/%s/?/init.lua', path))
+	addEntry(t, string.format('/%s/?/init.lua', path), 7)
+	addEntry(t, string.format('/%s/?.lua', path), 7)
+	addEntry(t, string.format('/%s/?', path), 7)
 end
 
 for name in pairs(Packages:installed()) do
