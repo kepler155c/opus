@@ -93,9 +93,10 @@ local Browser = UI.Page {
     grid = UI.ScrollingGrid {
       x = 2, ex = -6, y = 3, ey = -5,
       columns = {
-        { heading = 'Name',  key = 'name'  },
-        { heading = 'Value', key = 'value' },
+        { heading = 'Extension', key = 'name'  },
+        { heading = 'Program',   key = 'value' },
       },
+      autospace = true,
       sortColumn = 'name',
       accelerators = {
         delete = 'remove_entry',
@@ -111,14 +112,14 @@ local Browser = UI.Page {
       manualControls = true,
       [1] = UI.TextEntry {
         width = 20,
-        formLabel = 'Name', formKey = 'name',
+        formLabel = 'Extension', formKey = 'name',
         shadowText = 'extension',
         required = true,
-        limit = 64,
+        limit = 20,
       },
       [2] = UI.TextEntry {
-        width = 20,
-        formLabel = 'Name', formKey = 'value',
+        width = 16,
+        formLabel = 'Program', formKey = 'value',
         shadowText = 'program',
         required = true,
         limit = 64,
