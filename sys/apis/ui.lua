@@ -2262,6 +2262,13 @@ function UI.Tabs:selectTab(tab)
 	end
 end
 
+function UI.Tabs:setActive(tab, active)
+	local menuItem = Util.find(self.tabBar.children, 'tabUid', tab.uid)
+	if menuItem then
+		menuItem.inactive = not active
+	end
+end
+
 function UI.Tabs:enable()
 	self.enabled = true
 	self.tabBar:enable()
