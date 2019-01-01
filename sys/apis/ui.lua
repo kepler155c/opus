@@ -1152,6 +1152,7 @@ function UI.Page:disable()
 	if self.z then
 		self.canvas.visible = false
 	end
+	UI.Window.disable(self)
 end
 
 function UI.Page:capture(child)
