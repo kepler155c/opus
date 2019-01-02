@@ -332,6 +332,14 @@ function Util.removeByValue(t, e)
 	end
 end
 
+function Util.any(t, fn)
+	for _,v in pairs(t) do
+		if fn(v) then
+			return true
+		end
+	end
+end
+
 function Util.every(t, fn)
 	for _,v in pairs(t) do
 		if not fn(v) then
