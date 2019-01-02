@@ -45,14 +45,31 @@ end
 --[[-- Top Level Manager --]]--
 local Manager = class()
 function Manager:init()
+	self.devices = { }
+_G._pp = self
 	local function keyFunction(event, code, held)
 		local ie = Input:translate(event, code, held)
 
-		if ie and self.currentPage then
-			local target = self.currentPage.focused or self.currentPage
+		local currentPage = self:getActivePage()
+		if ie and currentPage then
+			local target = currentPage.focused or currentPage
 			self:inputEvent(target,
 				{ type = 'key', key = ie.code == 'char' and ie.ch or ie.code, element = target })
-			self.currentPage:sync()
+			currentPage:sync()
+		end
+	end
+
+	local function resize(_, side)
+		local dev = self.devices[side or 'terminal']
+		if dev and dev.currentPage then
+			-- the parent doesn't have any children set...
+			-- that's why we have to resize both the parent and the current page
+			-- kinda makes sense
+			dev.currentPage.parent:resize()
+
+			dev.currentPage:resize()
+			dev.currentPage:draw()
+			dev.currentPage:sync()
 		end
 	end
 
@@ -60,25 +77,13 @@ function Manager:init()
 		char = keyFunction,
 		key_up = keyFunction,
 		key = keyFunction,
-
-		term_resize = function(_, side)
-			if self.currentPage then
-				-- the parent doesn't have any children set...
-				-- that's why we have to resize both the parent and the current page
-				-- kinda makes sense
-				if self.currentPage.parent.device.side == side then
-					self.currentPage.parent:resize()
-
-					self.currentPage:resize()
-					self.currentPage:draw()
-					self.currentPage:sync()
-				end
-			end
-		end,
+		term_resize = resize,
+		monitor_resize = resize,
 
 		mouse_scroll = function(_, direction, x, y)
-			if self.currentPage then
-				local event = self.currentPage:pointToChild(x, y)
+			local currentPage = self:getActivePage()
+			if currentPage then
+				local event = currentPage:pointToChild(x, y)
 				local directions = {
 					[ -1 ] = 'up',
 					[  1 ] = 'down'
@@ -87,30 +92,29 @@ function Manager:init()
 				-- let the element convert them to up / down
 				self:inputEvent(event.element,
 					{ type = 'key', key = directions[direction] })
-				self.currentPage:sync()
+				currentPage:sync()
 			end
 		end,
 
-		-- this should be moved to the device !
 		monitor_touch = function(_, side, x, y)
 			Input:translate('mouse_click', 1, x, y)
 			local ie = Input:translate('mouse_up', 1, x, y)
-			if self.currentPage then
-				if self.currentPage.parent.device.side == side then
-					self:click(ie.code, 1, x, y)
-				end
+			local dev = self.devices[side]
+			if dev and dev.currentPage then
+				self:click(dev.currentPage, ie.code, 1, x, y)
 			end
 		end,
 
 		mouse_click = function(_, button, x, y)
 			Input:translate('mouse_click', button, x, y)
 
-			if self.currentPage then
-				if not self.currentPage.parent.device.side then
-					local event = self.currentPage:pointToChild(x, y)
+			local currentPage = self:getActivePage()
+			if currentPage then
+				if not currentPage.parent.device.side then
+					local event = currentPage:pointToChild(x, y)
 					if event.element.focus and not event.element.inactive then
-						self.currentPage:setFocus(event.element)
-						self.currentPage:sync()
+						currentPage:setFocus(event.element)
+						currentPage:sync()
 					end
 				end
 			end
@@ -119,40 +123,43 @@ function Manager:init()
 		mouse_up = function(_, button, x, y)
 			local ie = Input:translate('mouse_up', button, x, y)
 
+			local currentPage = self:getActivePage()
+
 			if ie.code == 'control-shift-mouse_click' then -- hack
-				local event = self.currentPage:pointToChild(x, y)
+				local event = currentPage:pointToChild(x, y)
 				_ENV.multishell.openTab({
 					path = 'sys/apps/Lua.lua',
 					args = { event.element },
 					focused = true })
 
-			elseif ie and self.currentPage then
+			elseif ie and currentPage then
 				--if not self.currentPage.parent.device.side then
-					self:click(ie.code, button, x, y)
+					self:click(currentPage, ie.code, button, x, y)
 				--end
 			end
 		end,
 
 		mouse_drag = function(_, button, x, y)
 			local ie = Input:translate('mouse_drag', button, x, y)
-			if ie and self.currentPage then
-				local event = self.currentPage:pointToChild(x, y)
+			local currentPage = self:getActivePage()
+			if ie and currentPage then
+				local event = currentPage:pointToChild(x, y)
 				event.type = ie.code
 				self:inputEvent(event.element, event)
-				self.currentPage:sync()
+				currentPage:sync()
 			end
 		end,
 
 		paste = function(_, text)
 			Input:translate('paste')
 			self:emitEvent({ type = 'paste', text = text })
-			self.currentPage:sync()
+			self:getActivePage():sync()
 		end,
 	}
 
 	-- use 1 handler to single thread all events
 	Event.on({
-		'char', 'key_up', 'key', 'term_resize',
+		'char', 'key_up', 'key', 'term_resize', 'monitor_resize',
 		'mouse_scroll', 'monitor_touch', 'mouse_click',
 		'mouse_up', 'mouse_drag', 'paste' },
 		function(event, ...)
@@ -227,8 +234,9 @@ function Manager:loadTheme(filename)
 end
 
 function Manager:emitEvent(event)
-	if self.currentPage and self.currentPage.focused then
-		return self.currentPage.focused:emit(event)
+	local currentPage = self:getActivePage()
+	if currentPage and currentPage.focused then
+		return currentPage.focused:emit(event)
 	end
 end
 
@@ -251,54 +259,27 @@ function Manager:inputEvent(parent, event)
 	end
 end
 
-function Manager:click(code, button, x, y)
-	if self.currentPage then
+function Manager:click(target, code, button, x, y)
+	local clickEvent = target:pointToChild(x, y)
 
-		local target = self.currentPage
-
-		-- need to add offsets into this check
-		--[[
-		if x < target.x or y < target.y or
-			x > target.x + target.width - 1 or
-			y > target.y + target.height - 1 then
-			target:emit({ type = 'mouse_out' })
-
-			target = self.currentPage
+	if code == 'mouse_doubleclick' then
+		if self.doubleClickElement ~= clickEvent.element then
+			return
 		end
-		--]]
-
-		local clickEvent = target:pointToChild(x, y)
-
-		if code == 'mouse_doubleclick' then
-			if self.doubleClickElement ~= clickEvent.element then
-				return
-			end
-		else
-			self.doubleClickElement = clickEvent.element
-		end
-
-		clickEvent.button = button
-		clickEvent.type = code
-		clickEvent.key = code
-
-		if clickEvent.element.focus then
-			self.currentPage:setFocus(clickEvent.element)
-		end
-		if not self:inputEvent(clickEvent.element, clickEvent) then
-			--[[
-			if button == 3 then
-				-- if the double-click was not captured
-				-- send through a single-click
-				clickEvent.button = 1
-				clickEvent.type = events[1]
-				clickEvent.key = events[1]
-				self:inputEvent(clickEvent.element, clickEvent)
-			end
-			]]
-		end
-
-		self.currentPage:sync()
+	else
+		self.doubleClickElement = clickEvent.element
 	end
+
+	clickEvent.button = button
+	clickEvent.type = code
+	clickEvent.key = code
+
+	if clickEvent.element.focus then
+		target:setFocus(clickEvent.element)
+	end
+	self:inputEvent(clickEvent.element, clickEvent)
+
+	target:sync()
 end
 
 function Manager:setDefaultDevice(dev)
@@ -327,6 +308,17 @@ function Manager:getPage(pageName)
 	return page
 end
 
+function Manager:getActivePage(page)
+	if page then
+		return page.parent.currentPage
+	end
+	return self.defaultDevice.currentPage
+end
+
+function Manager:setActivePage(page)
+	page.parent.currentPage = page
+end
+
 function Manager:setPage(pageOrName, ...)
 	local page = pageOrName
 
@@ -334,27 +326,28 @@ function Manager:setPage(pageOrName, ...)
 		page = self.pages[pageOrName] or error('Invalid page: ' .. pageOrName)
 	end
 
-	if page == self.currentPage then
+	local currentPage = self:getActivePage(page)
+	if page == currentPage then
 		page:draw()
 	else
 		local needSync
-		if self.currentPage then
-			if self.currentPage.focused then
-				self.currentPage.focused.focused = false
-				self.currentPage.focused:focus()
+		if currentPage then
+			if currentPage.focused then
+				currentPage.focused.focused = false
+				currentPage.focused:focus()
 			end
-			self.currentPage:disable()
-			page.previousPage = self.currentPage
+			currentPage:disable()
+			page.previousPage = currentPage
 		else
 			needSync = true
 		end
-		self.currentPage = page
-		self.currentPage:clear(page.backgroundColor)
+		self:setActivePage(page)
+		page:clear(page.backgroundColor)
 		page:enable(...)
 		page:draw()
-		if self.currentPage.focused then
-			self.currentPage.focused.focused = true
-			self.currentPage.focused:focus()
+		if page.focused then
+			page.focused.focused = true
+			page.focused:focus()
 		end
 		if needSync then
 			page:sync() -- first time a page has been set
@@ -363,14 +356,14 @@ function Manager:setPage(pageOrName, ...)
 end
 
 function Manager:getCurrentPage()
-	return self.currentPage
+	return self.defaultDevice.currentPage
 end
 
 function Manager:setPreviousPage()
-	if self.currentPage.previousPage then
-		local previousPage = self.currentPage.previousPage.previousPage
-		self:setPage(self.currentPage.previousPage)
-		self.currentPage.previousPage = previousPage
+	if self.defaultDevice.currentPage.previousPage then
+		local previousPage = self.defaultDevice.currentPage.previousPage.previousPage
+		self:setPage(self.defaultDevice.currentPage.previousPage)
+		self.defaultDevice.currentPage.previousPage = previousPage
 	end
 end
 
@@ -941,6 +934,8 @@ function UI.Device:postInit()
 		isColor = self.isColor,
 	})
 	self.canvas:clear(self.backgroundColor, self.textColor)
+
+	UI.devices[self.device.side or 'terminal'] = self
 end
 
 function UI.Device:resize()
