@@ -2196,13 +2196,15 @@ end
 
 function UI.TabBar:eventHandler(event)
 	if event.type == 'tab_select' then
-		local selected, si = Util.find(self:getFocusables(), 'uid', event.button.uid)
-		local previous, pi = Util.find(self:getFocusables(), 'selected', true)
+		local selected, si = Util.find(self.children, 'uid', event.button.uid)
+		local previous, pi = Util.find(self.children, 'selected', true)
 
 		if si ~= pi then
 			selected.selected = true
-			previous.selected = false
-			self:emit({ type = 'tab_change', current = si, last = pi, tab = selected })
+			if previous then
+				previous.selected = false
+				self:emit({ type = 'tab_change', current = si, last = pi, tab = selected })
+			end
 		end
 		UI.MenuBar.draw(self)
 	end
@@ -2252,7 +2254,7 @@ function UI.Tabs:add(children)
 end
 
 function UI.Tabs:selectTab(tab)
-	local menuItem = Util.find(self.tabBar:getFocusables(), 'tabUid', tab.uid)
+	local menuItem = Util.find(self.tabBar.children, 'tabUid', tab.uid)
 	if menuItem then
 		self.tabBar:emit({ type = 'tab_select', button = { uid = menuItem.uid } })
 	end

@@ -1,19 +1,9 @@
 local json = require('json')
 local Util = require('util')
 
--- Limit queries to once per minecraft day
--- TODO: will not work if time is stopped
-
 local TREE_URL = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1'
 local FILE_URL = 'https://raw.githubusercontent.com/%s/%s/%s/%s'
 local git = { }
-
-local fs = _G.fs
-local os = _G.os
-
-if not _G.GIT then
-	_G.GIT = { }
-end
 
 function git.list(repository)
 	local t = Util.split(repository, '(.-)/')
@@ -27,17 +17,7 @@ function git.list(repository)
 		path = table.concat(t, '/') .. '/'
 	end
 
-	local cacheKey = table.concat({ user, repo, branch }, '-')
-	local fname = fs.combine('.git', cacheKey)
-
 	local function getContents()
-		if fs.exists(fname) then
-			local contents = Util.readTable(fname)
-			if contents and contents.data == os.day() then
-				return contents.data
-			end
-			fs.delete(fname)
-		end
 		local dataUrl = string.format(TREE_URL, user, repo, branch)
 		local contents = Util.download(dataUrl)
 		if contents then
@@ -53,10 +33,6 @@ function git.list(repository)
 
 	if data.message and data.message == "Not found" then
 		error("Invalid repository")
-	end
-
-	if not fs.exists(fname) then
-		Util.writeTable('.git/' .. cacheKey, { day = os.day(), data = data })
 	end
 
 	local list = { }
