@@ -46,7 +46,7 @@ end
 local Manager = class()
 function Manager:init()
 	self.devices = { }
-_G._pp = self
+
 	local function keyFunction(event, code, held)
 		local ie = Input:translate(event, code, held)
 

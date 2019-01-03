@@ -5,10 +5,9 @@ local Sound = {
 }
 
 function Sound.play(sound, vol)
-	local speaker = peripheral.find('speaker')
-	if speaker then
-		speaker.playSound('minecraft:' .. sound, vol or Sound._volume)
-	end
+	peripheral.find('speaker', function(_, s)
+		s.playSound('minecraft:' .. sound, vol or Sound._volume)
+	end)
 end
 
 function Sound.setVolume(volume)
