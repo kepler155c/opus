@@ -802,7 +802,7 @@ function turtle.has(item, count)
 		return slot and slot.count >= (count or 1)
 	end
 	local slot = turtle.getSlot(item)
-	return slot and slot.count > 0
+	return slot and slot.count >= (count or 1)
 end
 
 function turtle.getFilledSlots(startSlot)

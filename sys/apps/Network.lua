@@ -45,7 +45,7 @@ local page = UI.Page {
 			} },
 			{ text = 'Help', event = 'help', noCheck = true },
 			{
-				text = '\206',
+				text = '\187',
 				x = -3,
 				dropdown = {
 					{ text = 'Show all', event = 'show_all', noCheck = true },

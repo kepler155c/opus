@@ -60,7 +60,7 @@ local Browser = UI.Page {
           { text = 'Hidden     ^h',   event = 'toggle_hidden' },
           { text = 'Dir Size   ^s',   event = 'toggle_dirSize' },
       } },
-      { text = '\206',
+      { text = '\187',
         x = -3,
         dropdown = {
           { text = 'Associations', event = 'associate' },
