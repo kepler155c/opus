@@ -177,7 +177,12 @@ function Point.closest(reference, pts)
 	local lm, lpt = math.huge
 	for _,pt in pairs(pts) do
 		local distance = Point.turtleDistance(reference, pt)
-		if distance < lm then
+		if not reference.heading then
+			if distance < lm then
+				lpt = pt
+				lm = distance
+			end
+		elseif distance < lm then
 			local _, _, m = Point.calculateMoves(reference, pt, distance)
 			if m < lm then
 				lpt = pt
