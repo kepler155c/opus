@@ -1,18 +1,16 @@
-_G.requireInjector(_ENV)
-
 local Ansi     = require('ansi')
 local Packages = require('packages')
 local UI       = require('ui')
+local Util     = require('util')
 
 local colors   = _G.colors
-local shell    = _ENV.shell
 local term     = _G.term
 
 UI:configure('PackageManager', ...)
 
 local page = UI.Page {
 	grid = UI.ScrollingGrid {
-		y = 2, ey = 7, x = 2, ex = -6,
+		y = 2, ey = 7, x = 2, ex = -12,
 		values = { },
 		columns = {
 			{ heading = 'Package', key = 'name' },
@@ -22,14 +20,14 @@ local page = UI.Page {
 		help = 'Select a package',
 	},
 	add = UI.Button {
-		x = -4, y = 4,
-		text = '+',
+		x = -10, y = 4,
+		text = 'Install',
 		event = 'action',
 		help = 'Install or update',
 	},
 	remove = UI.Button {
-		x = -4, y = 6,
-		text = '-',
+		x = -10, y = 6,
+		text = 'Remove ',
 		event = 'action',
 		operation = 'uninstall',
 		operationText = 'Remove',
@@ -46,8 +44,8 @@ local page = UI.Page {
 			event = 'hide-action',
 		},
 		button = UI.Button {
-			ex = -4, y = 4, width = 7,
-			text = 'Begin', event = 'begin',
+			x = -10, y = 4,
+			text = ' Begin ', event = 'begin',
 		},
 		output = UI.Embedded {
 			y = 6, ey = -2, x = 2, ex = -2,
@@ -75,16 +73,15 @@ function page:run(operation, name)
 	local oterm = term.redirect(self.action.output.win)
 	self.action.output:clear()
 	local cmd = string.format('package %s %s', operation, name)
-	--for _ = 1, 3 do
-	--	print(cmd .. '\n')
-	--	os.sleep(1)
-	--end
 	term.setCursorPos(1, 1)
 	term.clear()
 	term.setTextColor(colors.yellow)
 	print(cmd .. '\n')
 	term.setTextColor(colors.white)
-	shell.run(cmd)
+	local s, m = Util.run(_ENV, '/sys/apps/package.lua', operation, name)
+	if not s and m then
+		_G.printError(m)
+	end
 	term.redirect(oterm)
 	self.action.output:draw()
 end
@@ -92,6 +89,10 @@ end
 function page:updateSelection(selected)
 	self.add.operation = selected.installed and 'update' or 'install'
 	self.add.operationText = selected.installed and 'Update' or 'Install'
+	self.add.text = selected.installed and 'Update' or 'Install'
+	self.remove.inactive = not selected.installed
+	self.add:draw()
+	self.remove:draw()
 end
 
 function page:eventHandler(event)
@@ -113,7 +114,7 @@ function page:eventHandler(event)
 			self.operation = event.button.operation
 			self.action.button.text = event.button.operationText
 			self.action.titleBar.title = selected.manifest.title
-			self.action.button.text = 'Begin'
+			self.action.button.text = ' Begin '
 			self.action.button.event = 'begin'
 			self.action:show()
 		end
@@ -127,7 +128,7 @@ function page:eventHandler(event)
 		selected.installed = Packages:isInstalled(selected.name)
 
 		self:updateSelection(selected)
-		self.action.button.text = 'Done'
+		self.action.button.text = ' Done  '
 		self.action.button.event = 'hide-action'
 		self.action.button:draw()
 
@@ -153,6 +154,11 @@ for k in pairs(Packages:list()) do
 	})
 end
 page.grid:update()
+page.grid:emit({
+	type = 'grid_focus_row',
+	selected = page.grid:getSelected(),
+	element = page.grid,
+})
 
 UI:setPage(page)
 UI:pullEvents()

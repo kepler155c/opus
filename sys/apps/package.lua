@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Git      = require('git')
 local Packages = require('packages')
 local Util     = require('util')
@@ -36,8 +34,21 @@ local function progress(max)
 	end
 end
 
-local function install(name)
+local function install(name, isUpdate)
 	local manifest = Packages:getManifest(name) or error('Invalid package')
+
+	if manifest.required then
+		for _, v in pairs(manifest.required) do
+			if isUpdate or not Packages:isInstalled(v) then
+				install(v, isUpdate)
+			end
+		end
+	end
+
+	print(string.format('%s: %s',
+		isUpdate and 'Updating' or 'Installing',
+		name))
+
 	local packageDir = fs.combine('packages', name)
 	local method = args[2] or 'local'
 	if method == 'remote' then
@@ -69,7 +80,8 @@ if action == 'install' then
 		error('Package is already installed')
 	end
 	install(name)
-	print('installation complete')
+	print('installation complete\n')
+	_G.printError('Reboot is required')
 	return
 end
 
@@ -78,7 +90,7 @@ if action == 'update' then
 	if not Packages:isInstalled(name) then
 		error('Package is not installed')
 	end
-	install(name)
+	install(name, true)
 	print('update complete')
 	return
 end
