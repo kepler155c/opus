@@ -97,10 +97,10 @@ function Manager:init()
 		end,
 
 		monitor_touch = function(_, side, x, y)
-			Input:translate('mouse_click', 1, x, y)
-			local ie = Input:translate('mouse_up', 1, x, y)
 			local dev = self.devices[side]
 			if dev and dev.currentPage then
+				Input:translate('mouse_click', 1, x, y)
+				local ie = Input:translate('mouse_up', 1, x, y)
 				self:click(dev.currentPage, ie.code, 1, x, y)
 			end
 		end,
