@@ -33,6 +33,17 @@ function Packages:isInstalled(package)
 	return self:installed()[package]
 end
 
+function Packages:downloadList()
+	local packages = {
+		[ 'develop-1.8' ] = 'https://pastebin.com/raw/WhEiNGZE',
+		[ 'master-1.8' ] = 'https://pastebin.com/raw/pexZpAxt',
+	}
+
+	if packages[_G.OPUS_BRANCH] then
+		Util.download(packages[_G.OPUS_BRANCH], 'usr/config/packages')
+	end
+end
+
 function Packages:getManifest(package)
 	local fname = 'packages/' .. package .. '/.package'
 	if fs.exists(fname) then

@@ -1,11 +1,13 @@
-_G.requireInjector(_ENV)
-
 local Packages = require('packages')
 local Util     = require('util')
 
 local fs    = _G.fs
 local help  = _G.help
 local shell = _ENV.shell
+
+if not fs.exists('usr/config/packages') then
+	Packages:downloadList()
+end
 
 local appPaths = Util.split(shell.path(), '(.-):')
 local luaPaths = Util.split(_G.LUA_PATH, '(.-);')
@@ -50,6 +52,5 @@ for name in pairs(Packages:installed()) do
 end
 
 help.setPath(table.concat(helpPaths, ':'))
-
 shell.setPath(table.concat(appPaths, ':'))
 _G.LUA_PATH = table.concat(luaPaths, ';')

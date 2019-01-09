@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Util = require('util')
 
 local fs    = _G.fs
@@ -27,17 +25,6 @@ if not fs.exists('usr/config/shell') then
 		lua_path = lua_path,
 		upgraded = true,
 	})
-end
-
-if not fs.exists('usr/config/packages') then
-	local packages = {
-		[ 'develop-1.8' ] = 'https://pastebin.com/raw/WhEiNGZE',
-		[ 'master-1.8' ] = 'https://pastebin.com/raw/pexZpAxt',
-	}
-
-	if packages[_G.OPUS_BRANCH] then
-		Util.download(packages[_G.OPUS_BRANCH], 'usr/config/packages')
-	end
 end
 
 local config = Util.readTable('usr/config/shell')

@@ -10,7 +10,7 @@ UI:configure('PackageManager', ...)
 
 local page = UI.Page {
 	grid = UI.ScrollingGrid {
-		y = 2, ey = 7, x = 2, ex = -12,
+		x = 2, ex = -12, y = 2, ey = 7,
 		values = { },
 		columns = {
 			{ heading = 'Package', key = 'name' },
@@ -34,10 +34,15 @@ local page = UI.Page {
 		help = 'Remove',
 	},
 	description = UI.TextArea {
-		x = 2, y = 9, ey = -2,
+		x = 2, y = 9, ey = -4,
 		--backgroundColor = colors.white,
 	},
-	statusBar = UI.StatusBar { },
+	load = UI.Button {
+		x = 2, y = -3,
+		text = 'Update package list',
+		event = 'reload',
+		help = 'Download the latest package list',
+	},
 	action = UI.SlideOut {
 		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
@@ -54,7 +59,38 @@ local page = UI.Page {
 			backgroundColor = colors.cyan,
 		},
 	},
+	statusBar = UI.StatusBar { },
 }
+
+function page:loadPackages()
+	self.grid.values = { }
+	self.statusBar:setStatus('Downloading...')
+	self:sync()
+
+	for k in pairs(Packages:list()) do
+		local manifest = Packages:getManifest(k)
+		if not manifest then
+			manifest = {
+				invalid = true,
+				description = 'Unable to download manifest',
+				title = '',
+			}
+		end
+		table.insert(self.grid.values, {
+			installed = not not Packages:isInstalled(k),
+			name = k,
+			manifest = manifest,
+		})
+	end
+	self.grid:update()
+	self.grid:setIndex(1)
+	self.grid:emit({
+		type = 'grid_focus_row',
+		selected = self.grid:getSelected(),
+		element = self.grid,
+	})
+	self.statusBar:setStatus('Updated packages')
+end
 
 function page.grid:getRowTextColor(row, selected)
 	if row.installed then
@@ -108,6 +144,10 @@ function page:eventHandler(event)
 		self.description:draw()
 		self:updateSelection(event.selected)
 
+	elseif event.type == 'reload' then
+		Packages:downloadList()
+		self:loadPackages()
+
 	elseif event.type == 'action' then
 		local selected = self.grid:getSelected()
 		if selected then
@@ -138,27 +178,7 @@ function page:eventHandler(event)
 	UI.Page.eventHandler(self, event)
 end
 
-for k in pairs(Packages:list()) do
-	local manifest = Packages:getManifest(k)
-	if not manifest then
-		manifest = {
-			invalid = true,
-			description = 'Unable to download manifest',
-			title = '',
-		}
-	end
-	table.insert(page.grid.values, {
-		installed = not not Packages:isInstalled(k),
-		name = k,
-		manifest = manifest,
-	})
-end
-page.grid:update()
-page.grid:emit({
-	type = 'grid_focus_row',
-	selected = page.grid:getSelected(),
-	element = page.grid,
-})
+page:loadPackages()
 
 UI:setPage(page)
 UI:pullEvents()
