@@ -1,17 +1,16 @@
 local os         = _G.os
 local parallel   = _G.parallel
 local peripheral = _G.peripheral
-local settings = _G.settings
+local settings   = _G.settings
 local term       = _G.term
-
 
 local mon = peripheral.find('monitor')
 if mon then
 	term.redirect(mon)
-	if not settings.get('opus.kiosk.textscale') then
-		settings.set('opus.kiosk.textscale', .5)
+	if not settings.get('kiosk.textscale') then
+		settings.set('kiosk.textscale', .5)
 	end
-	mon.setTextScale(settings.get('opus.kiosk.textscale') or .5)
+	mon.setTextScale(settings.get('kiosk.textscale') or .5)
 
 	parallel.waitForAny(
 		function()
