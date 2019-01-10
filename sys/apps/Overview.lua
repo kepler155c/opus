@@ -194,7 +194,7 @@ UI.Icon.defaults = {
 }
 function UI.Icon:eventHandler(event)
 	if event.type == 'mouse_click' then
-		--self:setFocus(self.button)
+		self:setFocus(self.button)
 		self:emit({ type = self.button.event, button = self.button })
 		return true
 	elseif event.type == 'mouse_doubleclick' then
