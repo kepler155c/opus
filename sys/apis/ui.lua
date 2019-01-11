@@ -1256,6 +1256,7 @@ UI.Grid.defaults = {
 	index = 1,
 	inverseSort = false,
 	disableHeader = false,
+	headerHeight = 1,
 	marginRight = 0,
 	textColor = colors.white,
 	textSelectedColor = colors.white,
@@ -1300,7 +1301,7 @@ function UI.Grid:setParent()
 		if self.disableHeader then
 			self.pageSize = self.height
 		else
-			self.pageSize = self.height - 1
+			self.pageSize = self.height - self.headerHeight
 		end
 	end
 end
@@ -1311,7 +1312,7 @@ function UI.Grid:resize()
 	if self.disableHeader then
 		self.pageSize = self.height
 	else
-		self.pageSize = self.height - 1
+		self.pageSize = self.height - self.headerHeight
 	end
 	self:adjustWidth()
 end
@@ -1506,7 +1507,11 @@ function UI.Grid:drawHeadings()
 		x = x + col.cw + 1
 		]]
 	end
-	self:write(1, 1, sb:get(), self.headerBackgroundColor, self.headerTextColor)
+	local y = math.ceil(self.headerHeight / 2)
+	if self.headerHeight > 1 then
+		self:clear(self.headerBackgroundColor)
+	end
+	self:write(1, y, sb:get(), self.headerBackgroundColor, self.headerTextColor)
 end
 
 function UI.Grid:sortCompare(a, b)
@@ -1524,7 +1529,7 @@ function UI.Grid:drawRows()
 	local sb = UI.StringBuffer(self.width)
 
 	if not self.disableHeader then
-		y = y + 1
+		y = y + self.headerHeight
 	end
 
 	local lastRow = math.min(startRow + self.pageSize - 1, #self.sorted)
@@ -1638,7 +1643,7 @@ function UI.Grid:eventHandler(event)
 		 event.type == 'mouse_rightclick' or
 		 event.type == 'mouse_doubleclick' then
 		if not self.disableHeader then
-			if event.y == 1 then
+			if event.y <= self.headerHeight then
 				local col = 2
 				for _,c in ipairs(self.columns) do
 					if event.x < col + c.cw then
@@ -1657,7 +1662,7 @@ function UI.Grid:eventHandler(event)
 		end
 		local row = self:getStartRow() + event.y - 1
 		if not self.disableHeader then
-			row = row - 1
+			row = row - self.headerHeight
 		end
 		if row > 0 and row <= Util.size(self.values) then
 			self:setIndex(row)
@@ -1719,7 +1724,7 @@ end
 function UI.ScrollingGrid:getViewArea()
 	local y = 1
 	if not self.disableHeader then
-		y = 2
+		y = y + self.headerHeight
 	end
 	return {
 		static      = true,                    -- the container doesn't scroll

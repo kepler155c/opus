@@ -50,11 +50,11 @@ local page = UI.Page {
 			event = 'hide-action',
 		},
 		button = UI.Button {
-			x = -10, y = 4,
+			x = -10, y = 3,
 			text = ' Begin ', event = 'begin',
 		},
 		output = UI.Embedded {
-			y = 6, ey = -2, x = 2, ex = -2,
+			y = 5, ey = -2, x = 2, ex = -2,
 		},
 		statusBar = UI.StatusBar {
 			backgroundColor = colors.cyan,
