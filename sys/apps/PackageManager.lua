@@ -10,7 +10,7 @@ UI:configure('PackageManager', ...)
 
 local page = UI.Page {
 	grid = UI.ScrollingGrid {
-		x = 2, ex = -12, y = 2, ey = 7,
+		x = 2, ex = 14, y = 2, ey = -5,
 		values = { },
 		columns = {
 			{ heading = 'Package', key = 'name' },
@@ -20,13 +20,13 @@ local page = UI.Page {
 		help = 'Select a package',
 	},
 	add = UI.Button {
-		x = -10, y = 4,
+		x = 2, y = -3,
 		text = 'Install',
 		event = 'action',
 		help = 'Install or update',
 	},
 	remove = UI.Button {
-		x = -10, y = 6,
+		x = 12, y = -3,
 		text = 'Remove ',
 		event = 'action',
 		operation = 'uninstall',
@@ -34,12 +34,13 @@ local page = UI.Page {
 		help = 'Remove',
 	},
 	description = UI.TextArea {
-		x = 2, y = 9, ey = -4,
+		x = 16, y = 3, ey = -5,
+		marginRight = 0, marginLeft = 0,
 		--backgroundColor = colors.white,
 	},
 	load = UI.Button {
-		x = 2, y = -3,
-		text = 'Update package list',
+		x = 22, y = -3,
+		text = 'Update packages',
 		event = 'reload',
 		help = 'Download the latest package list',
 	},
