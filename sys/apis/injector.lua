@@ -82,8 +82,13 @@ end
 
 -- Add require and package to the environment
 return function(env)
-
 	local function standardSearcher(modname)
+		-- Should this be 2 diff searchers ? if yes, installer would need an update
+		if env.package.preload[modname] then
+			return function()
+				return env.package.preload[modname](modname, env)
+			end
+		end
 		if env.package.loaded[modname] then
 			return function()
 				return env.package.loaded[modname]
@@ -170,6 +175,7 @@ return function(env)
 		path   = env.LUA_PATH  or _G.LUA_PATH  or DEFAULT_PATH,
 		upath  = env.LUA_UPATH or _G.LUA_UPATH or DEFAULT_UPATH,
 		config = '/\n:\n?\n!\n-',
+		preload = { },
 		loaded = {
 			coroutine = coroutine,
 			io     = io,
