@@ -71,10 +71,32 @@ end
 
 turtle.reset()
 
+local function _dig(name, inspect, dig)
+	if name then
+		local s, b = inspect()
+		if not s or b.name ~= name then
+			return false
+		end
+	end
+	return dig()
+end
+
+function turtle.dig(s)
+	return _dig(s, turtle.inspect, turtle.native.dig)
+end
+
+function turtle.digUp(s)
+	return _dig(s, turtle.inspectUp, turtle.native.digUp)
+end
+
+function turtle.digDown(s)
+	return _dig(s, turtle.inspectDown, turtle.native.digDown)
+end
+
 local actions = {
 	up = {
 		detect = turtle.native.detectUp,
-		dig = turtle.native.digUp,
+		dig = turtle.digUp,
 		move = turtle.native.up,
 		attack = turtle.native.attackUp,
 		place = turtle.native.placeUp,
@@ -86,7 +108,7 @@ local actions = {
 	},
 	down = {
 		detect = turtle.native.detectDown,
-		dig = turtle.native.digDown,
+		dig = turtle.digDown,
 		move = turtle.native.down,
 		attack = turtle.native.attackDown,
 		place = turtle.native.placeDown,
@@ -98,7 +120,7 @@ local actions = {
 	},
 	forward = {
 		detect = turtle.native.detect,
-		dig = turtle.native.dig,
+		dig = turtle.dig,
 		move = turtle.native.forward,
 		attack = turtle.native.attack,
 		place = turtle.native.place,
@@ -1164,10 +1186,10 @@ function turtle.detectDownAt(pt)         return _actionDownAt(actionsAt.detect, 
 function turtle.detectForwardAt(pt)      return _actionForwardAt(actionsAt.detect, pt) end
 function turtle.detectUpAt(pt)           return _actionUpAt(actionsAt.detect, pt) end
 
-function turtle.digAt(pt)                return _actionAt(actionsAt.dig, pt) end
-function turtle.digDownAt(pt)            return _actionDownAt(actionsAt.dig, pt) end
-function turtle.digForwardAt(pt)         return _actionForwardAt(actionsAt.dig, pt) end
-function turtle.digUpAt(pt)              return _actionUpAt(actionsAt.dig, pt) end
+function turtle.digAt(pt, ...)           return _actionAt(actionsAt.dig, pt, ...) end
+function turtle.digDownAt(pt, ...)       return _actionDownAt(actionsAt.dig, pt, ...) end
+function turtle.digForwardAt(pt, ...)    return _actionForwardAt(actionsAt.dig, pt, ...) end
+function turtle.digUpAt(pt, ...)         return _actionUpAt(actionsAt.dig, pt, ...) end
 
 function turtle.attackAt(pt)             return _actionAt(actionsAt.attack, pt) end
 function turtle.attackDownAt(pt)         return _actionDownAt(actionsAt.attack, pt) end

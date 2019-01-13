@@ -135,6 +135,7 @@ local Browser = UI.Page {
   },
   accelerators = {
     q               = 'quit',
+    c               = 'cedit',
     e               = 'edit',
     s               = 'shell',
     r               = 'refresh',
@@ -340,6 +341,9 @@ function Browser:eventHandler(event)
 
   elseif event.type == 'edit' and file then
     self:run('edit', file.name)
+
+  elseif event.type == 'cedit' and file then
+    self:run('cedit', file.name)
 
   elseif event.type == 'shell' then
     self:run('sys/apps/shell')
