@@ -2,8 +2,6 @@ if not _G.turtle then
 	return
 end
 
-_G.requireInjector(_ENV)
-
 local Pathing      = require('turtle.pathfind')
 local GPS          = require('gps')
 local Point        = require('point')
@@ -68,8 +66,6 @@ function turtle.reset()
 	turtle.resetState()
 	return true
 end
-
-turtle.reset()
 
 local function _dig(name, inspect, dig)
 	if name then
@@ -158,6 +154,24 @@ if type(turtle.getFuelLevel()) ~= 'number' then
 	end
 end
 
+-- [[ Policies ]] --
+turtle.policies = { }
+
+function turtle.addPolicy(name, policy)
+	turtle.policies[name] = policy
+end
+
+function turtle.getPolicy(policy)
+	if type(policy) == 'function' then
+		return policy
+	end
+	local p = turtle.policies[policy]
+	if not p then
+		error('Invalid policy: ' .. tostring(policy))
+	end
+	return p
+end
+
 -- [[ Basic turtle actions ]] --
 local function inventoryAction(fn, name, qty)
 	local slots = turtle.getFilledSlots()
@@ -191,17 +205,14 @@ local function _attack(action)
 	return false
 end
 
-turtle.attackPolicies = {
-	none = noop,
-
-	attack = function(action)
-		return _attack(action)
-	end,
-}
-
 function turtle.attack()        return _attack(actions.forward) end
 function turtle.attackUp()      return _attack(actions.up)      end
 function turtle.attackDown()    return _attack(actions.down)    end
+
+turtle.addPolicy('attackNone', noop)
+turtle.addPolicy('attack', function(action)
+	return _attack(action)
+end)
 
 function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
 
@@ -240,6 +251,7 @@ function turtle.place(slot)     return _place(actions.forward, slot) end
 function turtle.placeUp(slot)   return _place(actions.up, slot)      end
 function turtle.placeDown(slot) return _place(actions.down, slot)    end
 
+-- [[ Drop ]] --
 local function _drop(action, qtyOrName, qty)
 	if not qtyOrName or type(qtyOrName) == 'number' then
 		return action.drop(qtyOrName or 64)
@@ -250,6 +262,64 @@ end
 function turtle.drop(count, slot)     return _drop(actions.forward, count, slot) end
 function turtle.dropUp(count, slot)   return _drop(actions.up, count, slot)      end
 function turtle.dropDown(count, slot) return _drop(actions.down, count, slot)    end
+
+-- [[ Dig ]] --
+turtle.addPolicy('digNone', noop)
+
+turtle.addPolicy('dig', function(action)
+	return action.dig()
+end)
+
+turtle.addPolicy('turtleSafe', function(action)
+	if action.side == 'back' then
+		return false
+	end
+	if not turtle.isTurtleAtSide(action.side) then
+		return action.dig()
+	end
+	return Util.tryTimes(6, function()
+		os.sleep(.25)
+		if not action.detect() then
+			return true
+		end
+	end)
+end)
+
+turtle.addPolicy('digAndDrop', function(action)
+	if action.detect() then
+		local slots = turtle.getInventory()
+		if action.dig() then
+			turtle.reconcileInventory(slots)
+			return true
+		end
+	end
+	return false
+end)
+
+function turtle.setDigPolicy(policy)     state.digPolicy = policy    end
+
+-- [[ Move ]] --
+turtle.addPolicy('moveNone', noop)
+turtle.addPolicy('moveDefault', _defaultMove)
+turtle.addPolicy('moveAssured', function(action)
+	if not _defaultMove(action) then
+		if action.side == 'back' then
+			return false
+		end
+		local oldStatus = state.status
+		print('assured move: stuck')
+		state.status = 'stuck'
+		repeat
+			os.sleep(1)
+		until _defaultMove(action)
+		state.status = oldStatus
+	end
+	return true
+end)
+
+function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
+function turtle.clearMoveCallback()      state.moveCallback = noop   end
+function turtle.getMoveCallback()        return state.moveCallback   end
 
 function turtle.refuel(qtyOrName, qty)
 	if not qtyOrName or type(qtyOrName) == 'number' then
@@ -263,103 +333,35 @@ function turtle.isTurtleAtSide(side)
 	return sideType and sideType == 'turtle'
 end
 
-turtle.digPolicies = {
-	none = noop,
+function turtle.set(args)
+	for k,v in pairs(args) do
 
-	dig = function(action)
-		return action.dig()
-	end,
+		if k == 'attackPolicy' then
+			turtle.setAttackPolicy(turtle.getPolicy(v))
 
-	turtleSafe = function(action)
-		if action.side == 'back' then
-			return false
-		end
-		if not turtle.isTurtleAtSide(action.side) then
-			return action.dig()
-		end
-		return Util.tryTimes(6, function()
---      if not turtle.isTurtleAtSide(action.side) then
---        return true --action.dig()
---      end
-			os.sleep(.25)
-			if not action.detect() then
-				return true
-			end
-		end)
-	end,
+		elseif k == 'digPolicy' then
+			turtle.setDigPolicy(turtle.getPolicy(v))
 
-	digAndDrop = function(action)
-		if action.detect() then
-			local slots = turtle.getInventory()
-			if action.dig() then
-				turtle.reconcileInventory(slots)
-				return true
-			end
-		end
-		return false
-	end
-}
+		elseif k == 'movePolicy' then
+			turtle.setMovePolicy(turtle.getPolicy(v))
 
-turtle.movePolicies = {
-	none = noop,
-	default = _defaultMove,
-	assured = function(action)
-		if not _defaultMove(action) then
-			if action.side == 'back' then
-				return false
-			end
-			local oldStatus = state.status
-			print('assured move: stuck')
-			state.status = 'stuck'
-			repeat
-				os.sleep(1)
-			until _defaultMove(action)
-			state.status = oldStatus
-		end
-		return true
-	end,
-}
+		elseif k == 'movementStrategy' then
+			turtle.setMovementStrategy(v)
 
-turtle.policies = {
-	none        = { dig = turtle.digPolicies.none,        attack = turtle.attackPolicies.none },
-	digOnly     = { dig = turtle.digPolicies.dig,         attack = turtle.attackPolicies.none },
-	attackOnly  = { dig = turtle.digPolicies.none,        attack = turtle.attackPolicies.attack },
-	digAttack   = { dig = turtle.digPolicies.dig,         attack = turtle.attackPolicies.attack },
-	turtleSafe  = { dig = turtle.digPolicies.turtleSafe,  attack = turtle.attackPolicies.attack },
+		elseif k == 'pathingBox' then
+			turtle.setPathingBox(v)
 
-	attack      = { attack = turtle.attackPolicies.attack },
+		elseif k == 'point' then
+			turtle.setPoint(v)
 
-	defaultMove = { move = turtle.movePolicies.default },
-	assuredMove = { move = turtle.movePolicies.assured },
-}
+		elseif k == 'moveCallback' then
+			turtle.setMoveCallback(v)
 
-function turtle.setPolicy(...)
-	local args = { ... }
-	for _, policy in pairs(args) do
-		if type(policy) == 'string' then
-			policy = turtle.policies[policy]
-		end
-		if not policy then
-			error('Invalid policy')
-			-- return false, 'Invalid policy'
-		end
-		if policy.dig then
-			state.digPolicy = policy.dig
-		end
-		if policy.attack then
-			state.attackPolicy = policy.attack
-		end
-		if policy.move then
-			state.movePolicy = policy.move
+		else
+			error('Invalid turle.set: ' .. tostring(k))
 		end
 	end
-	return true
 end
-
-function turtle.setDigPolicy(policy)     state.digPolicy = policy    end
-function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
-function turtle.clearMoveCallback()      state.moveCallback = noop   end
-function turtle.getMoveCallback()        return state.moveCallback   end
 
 -- [[ Heading ]] --
 function turtle.getHeading()
@@ -732,7 +734,7 @@ function turtle.gotoY(dy)
 	return true
 end
 
--- [[ Slot management ]] --
+-- [[ Inventory ]] --
 function turtle.getSlot(indexOrId, slots)
 	if type(indexOrId) == 'string' then
 		slots = slots or turtle.getInventory()
@@ -936,6 +938,7 @@ function turtle.getItemCount(idOrName)
 	return count
 end
 
+-- [[ Equipment ]] --
 function turtle.equip(side, item)
 	if item then
 		if not turtle.select(item) then
@@ -1235,3 +1238,5 @@ function turtle.addFeatures(...)
 		require('turtle.' .. feature)
 	end
 end
+
+turtle.reset()

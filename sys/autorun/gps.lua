@@ -19,7 +19,7 @@ if turtle and modem then
 				s = turtle.enableGPS(2)
 			end
 			if not s and config.destructive then
-				turtle.setPolicy('turtleSafe')
+				turtle.set({ attackPolicy = 'attack', digPolicy = 'turtleSafe' })
 				s = turtle.enableGPS(2)
 			end
 
@@ -28,7 +28,7 @@ if turtle and modem then
 			end
 
 			if config.destructive then
-				turtle.setPolicy('turtleSafe')
+				turtle.set({ attackPolicy = 'attack', digPolicy = 'turtleSafe' })
 			end
 
 			if not turtle.pathfind(config.home) then
