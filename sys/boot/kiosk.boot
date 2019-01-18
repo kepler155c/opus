@@ -4,7 +4,10 @@ local peripheral = _G.peripheral
 local settings   = _G.settings
 local term       = _G.term
 
-local mon = peripheral.find('monitor')
+local preferred = settings.get('kiosk.monitor')
+local mon = preferred and peripheral.wrap(preferred) or
+	peripheral.find('monitor')
+
 if mon then
 	term.redirect(mon)
 	mon.setTextScale(tonumber(settings.get('kiosk.textscale')) or 1)
