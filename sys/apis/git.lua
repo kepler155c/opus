@@ -8,6 +8,10 @@ local TREE_URL = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1'
 local FILE_URL = 'https://raw.githubusercontent.com/%s/%s/%s/%s'
 local git = { }
 
+if _G._GIT_API_KEY then
+	TREE_URL = TREE_URL .. '&access_token=' .. _G._GIT_API_KEY
+end
+
 local fs = _G.fs
 local os = _G.os
 
