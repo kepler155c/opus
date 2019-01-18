@@ -195,7 +195,7 @@ UI.Icon.defaults = {
 function UI.Icon:eventHandler(event)
 	if event.type == 'mouse_click' then
 		self:setFocus(self.button)
-		self:emit({ type = self.button.event, button = self.button })
+		--self:emit({ type = self.button.event, button = self.button })
 		return true
 	elseif event.type == 'mouse_doubleclick' then
 		self:emit({ type = self.button.event, button = self.button })
@@ -403,9 +403,13 @@ function page:eventHandler(event)
 	elseif event.type == 'delete' then
 		local focused = page:getFocused()
 		if focused.app then
-			focused.app.disabled = true
-			local filename = focused.app.filename or fs.combine(REGISTRY_DIR, focused.app.key)
-			Util.writeTable(filename, focused.app)
+			if focused.app.filename then
+				fs.delete(focused.app.filename)
+			else
+				focused.app.disabled = true
+				local filename = focused.app.filename or fs.combine(REGISTRY_DIR, focused.app.key)
+				Util.writeTable(filename, focused.app)
+			end
 			loadApplications()
 			page:refresh()
 			page:draw()

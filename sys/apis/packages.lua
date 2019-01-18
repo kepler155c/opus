@@ -8,25 +8,20 @@ local PACKAGE_DIR = 'packages'
 local Packages = { }
 
 function Packages:installed()
-	self.cache = { }
+	local list = { }
 
 	if fs.exists(PACKAGE_DIR) then
 		for _, dir in pairs(fs.list(PACKAGE_DIR)) do
 			local path = fs.combine(fs.combine(PACKAGE_DIR, dir), '.package')
-			self.cache[dir] = Util.readTable(path)
+			list[dir] = Util.readTable(path)
 		end
 	end
 
-	return self.cache
+	return list
 end
 
 function Packages:list()
-	if self.packageList then
-		return self.packageList
-	end
-	self.packageList = Util.readTable('usr/config/packages') or { }
-
-	return self.packageList
+	return Util.readTable('usr/config/packages') or { }
 end
 
 function Packages:isInstalled(package)

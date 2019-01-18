@@ -103,11 +103,6 @@
 \030 \031f\030f\0310\136\140\140\030     ",
 		run = "https://gist.github.com/LDDestroier/c7528d95bc0103545c2a/raw",
 	},
-	[ "785af2a4ad3c4ee912623c6e0b6d4299ea305bf6" ] = {
-		title = "Pipes",
-		category = "Games",
-		run = "https://pastebin.com/raw/skcs9x1s",
-	},
 	[ "53a5d150062b1e03206b9e15854b81060e3c7552" ] = {
 		title = "Minesweeper",
 		category = "Games",

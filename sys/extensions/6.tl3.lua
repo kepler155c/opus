@@ -19,7 +19,6 @@ local state = { }
 turtle.pathfind = Pathing.pathfind
 turtle.point = { x = 0, y = 0, z = 0, heading = 0 }
 
-function turtle.getPoint()   return turtle.point end
 function turtle.getState()   return state end
 function turtle.isAborted()  return state.abort end
 function turtle.getStatus()  return state.status end
@@ -34,6 +33,7 @@ local function _defaultMove(action)
 	return true
 end
 
+function turtle.getPoint()   return turtle.point end
 function turtle.setPoint(pt, isGPS)
 	turtle.point.x = pt.x
 	turtle.point.y = pt.y
@@ -77,6 +77,8 @@ local function _dig(name, inspect, dig)
 	return dig()
 end
 
+-- override dig
+-- optionally check that the block is a certain type
 function turtle.dig(s)
 	return _dig(s, turtle.inspect, turtle.native.dig)
 end
@@ -147,11 +149,9 @@ function turtle.getHeadingInfo(heading)
 	return headings[heading]
 end
 
--- hackish way to support unlimited fuel
-if type(turtle.getFuelLevel()) ~= 'number' then
-	function turtle.getFuelLevel()
-		return 10000000
-	end
+function turtle.isTurtleAtSide(side)
+	local sideType = peripheral.getType(side)
+	return sideType and sideType == 'turtle'
 end
 
 -- [[ Policies ]] --
@@ -228,7 +228,7 @@ local function _place(action, indexOrId)
 		end
 	end
 
-	if slot and slot.qty == 0 then
+	if slot and slot.count == 0 then
 		return false, 'No items to place'
 	end
 
@@ -321,18 +321,7 @@ function turtle.setMoveCallback(cb)      state.moveCallback = cb     end
 function turtle.clearMoveCallback()      state.moveCallback = noop   end
 function turtle.getMoveCallback()        return state.moveCallback   end
 
-function turtle.refuel(qtyOrName, qty)
-	if not qtyOrName or type(qtyOrName) == 'number' then
-		return turtle.native.refuel(qtyOrName or 64)
-	end
-	return inventoryAction(turtle.native.refuel, qtyOrName, qty or 64)
-end
-
-function turtle.isTurtleAtSide(side)
-	local sideType = peripheral.getType(side)
-	return sideType and sideType == 'turtle'
-end
-
+-- convenience method for setting multiple values
 function turtle.set(args)
 	for k,v in pairs(args) do
 
@@ -361,6 +350,22 @@ function turtle.set(args)
 			error('Invalid turle.set: ' .. tostring(k))
 		end
 	end
+end
+
+-- [[ Fuel ]] --
+if type(turtle.getFuelLevel()) ~= 'number' then
+	-- Support unlimited fuel
+	function turtle.getFuelLevel()
+		return 10000000
+	end
+end
+
+-- override to optionally specify a fuel
+function turtle.refuel(qtyOrName, qty)
+	if not qtyOrName or type(qtyOrName) == 'number' then
+		return turtle.native.refuel(qtyOrName or 64)
+	end
+	return inventoryAction(turtle.native.refuel, qtyOrName, qty or 64)
 end
 
 -- [[ Heading ]] --
@@ -740,9 +745,9 @@ function turtle.getSlot(indexOrId, slots)
 		slots = slots or turtle.getInventory()
 		local _,c = string.gsub(indexOrId, ':', '')
 		if c == 2 then -- combined id and dmg .. ie. minecraft:coal:0
-			return Util.find(slots, 'iddmg', indexOrId)
+			return Util.find(slots, 'key', indexOrId)
 		end
-		return Util.find(slots, 'id', indexOrId)
+		return Util.find(slots, 'name', indexOrId)
 	end
 
 	local detail = turtle.getItemDetail(indexOrId)
@@ -759,7 +764,6 @@ function turtle.getSlot(indexOrId, slots)
 			qty = detail.count,
 			dmg = detail.damage,
 			id = detail.name,
-			iddmg = detail.name .. ':' .. detail.damage,
 		}
 	end
 
@@ -798,7 +802,7 @@ function turtle.getSummedInventory()
 	local slots = turtle.getFilledSlots()
 	local t = { }
 	for _,slot in pairs(slots) do
-		local entry = t[slot.iddmg]
+		local entry = t[slot.key]
 		if not entry then
 			entry = {
 				count = 0,
@@ -810,9 +814,8 @@ function turtle.getSummedInventory()
 				qty = 0,
 				dmg = slot.dmg,
 				id = slot.id,
-				iddmg = slot.iddmg,
 			}
-			t[slot.iddmg] = entry
+			t[slot.key] = entry
 		end
 		entry.qty = entry.qty + slot.qty
 		entry.count = entry.qty
@@ -931,8 +934,8 @@ function turtle.getItemCount(idOrName)
 	local slots = turtle.getFilledSlots()
 	local count = 0
 	for _,slot in pairs(slots) do
-		if slot.iddmg == idOrName or slot.name == idOrName then
-			count = count + slot.qty
+		if slot.key == idOrName or slot.name == idOrName then
+			count = count + slot.count
 		end
 	end
 	return count
@@ -967,7 +970,7 @@ function turtle.unequip(side)
 	return turtle.equip(side)
 end
 
--- [[  ]] --
+-- deprecate
 function turtle.run(fn, ...)
 	local args = { ... }
 	local s, m
@@ -1233,6 +1236,7 @@ function turtle.enableGPS(timeout)
 	end
 end
 
+-- deprecate
 function turtle.addFeatures(...)
 	for _,feature in pairs({ ... }) do
 		require('turtle.' .. feature)
