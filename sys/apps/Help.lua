@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local UI    = require('ui')
 local Util  = require('util')
 

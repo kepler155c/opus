@@ -2425,6 +2425,7 @@ function UI.Wizard:eventHandler(event)
 		end
 		-- a new current view
 		current:enable()
+		current:emit({ type = 'view_enabled', view = current })
 		self:draw()
 	end
 end

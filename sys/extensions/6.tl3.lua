@@ -218,7 +218,6 @@ function turtle.setAttackPolicy(policy)  state.attackPolicy = policy end
 
 -- [[ Place ]] --
 local function _place(action, indexOrId)
-
 	local slot
 
 	if indexOrId then
@@ -356,7 +355,7 @@ end
 if type(turtle.getFuelLevel()) ~= 'number' then
 	-- Support unlimited fuel
 	function turtle.getFuelLevel()
-		return 10000000
+		return 100000
 	end
 end
 

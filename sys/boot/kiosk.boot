@@ -4,9 +4,15 @@ local peripheral = _G.peripheral
 local settings   = _G.settings
 local term       = _G.term
 
-local preferred = settings.get('kiosk.monitor')
-local mon = preferred and peripheral.wrap(preferred) or
-	peripheral.find('monitor')
+local name = settings.get('kiosk.monitor')
+
+if not name then
+	peripheral.find('monitor', function(s)
+		name = s
+	end)
+end
+
+local mon = name and peripheral.wrap(name)
 
 if mon then
 	term.redirect(mon)
@@ -19,9 +25,9 @@ if mon then
 
 		function()
 			while true do
-				local event, _, x, y = os.pullEventRaw('monitor_touch')
+				local event, side, x, y = os.pullEventRaw('monitor_touch')
 
-				if event == 'monitor_touch' then
+				if event == 'monitor_touch' and side == name then
 					os.queueEvent('mouse_click', 1, x, y)
 					os.queueEvent('mouse_up',    1, x, y)
 				end
