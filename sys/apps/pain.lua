@@ -1,1 +1,0 @@
-require('util').runUrl(_ENV, 'http://pastebin.com/raw/wJQ7jav0', ...)
