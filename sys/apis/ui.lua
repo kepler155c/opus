@@ -3069,12 +3069,18 @@ UI.Checkbox.defaults = {
 	backgroundColor = colors.black,
 	backgroundFocusColor = colors.lightGray,
 	height = 1,
-	width = 3,
 	accelerators = {
 		space = 'checkbox_toggle',
 		mouse_click = 'checkbox_toggle',
 	}
 }
+function UI.Checkbox:setParent()
+	if not self.width and not self.ex then
+		self.width = (self.label and #self.label or 0) + 3
+	end
+	UI.Window.setParent(self)
+end
+
 function UI.Checkbox:draw()
 	local bg = self.backgroundColor
 	if self.focused then
@@ -3084,10 +3090,15 @@ function UI.Checkbox:draw()
 		self.value = nil  -- TODO: fix form
 	end
 	local text = string.format('[%s]', not self.value and ' ' or self.checkedIndicator)
-	self:write(1, 1, text, bg)
-	self:write(1, 1, self.leftMarker, self.backgroundColor, self.textColor)
-	self:write(2, 1, not self.value and ' ' or self.checkedIndicator, bg)
-	self:write(3, 1, self.rightMarker, self.backgroundColor, self.textColor)
+	local x = 1
+	if self.label then
+		self:write(1, 1, self.label)
+		x = #self.label + 2
+	end
+	self:write(x,     1, text, bg)
+	self:write(x,     1, self.leftMarker, self.backgroundColor, self.textColor)
+	self:write(x + 1, 1, not self.value and ' ' or self.checkedIndicator, bg)
+	self:write(x + 2, 1, self.rightMarker, self.backgroundColor, self.textColor)
 end
 
 function UI.Checkbox:focus()
