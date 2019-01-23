@@ -40,6 +40,7 @@ local Browser = UI.Page {
       { text = 'File', dropdown = {
           { text = 'Run',             event = 'run'    },
           { text = 'Edit       e',    event = 'edit'   },
+          { text = 'Cloud edit c',    event = 'cedit'   },
           { text = 'Shell      s',    event = 'shell'  },
           UI.MenuBar.spacer,
           { text = 'Quit       q',    event = 'quit'   },
