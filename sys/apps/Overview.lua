@@ -43,7 +43,7 @@ local buttons = { }
 local sx, sy = term.current().getSize()
 local maxRecent = math.ceil(sx * sy / 62)
 
-local function elipse(s, len)
+local function ellipsis(s, len)
 	if #s > len then
 		s = s:sub(1, len - 2) .. '..'
 	end
@@ -253,7 +253,7 @@ function page.container:setCategory(categoryName, animate)
 			icon = DEFAULT_ICON
 		end
 
-		local title = elipse(program.title, 8)
+		local title = ellipsis(program.title, 8)
 
 		local width = math.max(icon.width + 2, #title + 2)
 		table.insert(self.children, UI.Icon({

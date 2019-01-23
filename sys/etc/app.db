@@ -7,6 +7,11 @@
 \030c\0317\151\131\0310\143\0317\131\0307\031c\148\
 \0307\031c\138\030f\0317\151\131\131\131",
 	},
+	[ "b2efeaa1a7d6d2185ea02473cf758203dfcea3fe" ] = {
+		title = "Cloud",
+		category = "Apps",
+		run = "cshell.lua",
+	},
 	[ "53ebc572b4a44802ba114729f07bdaaf5409a9d7" ] = {
 		title = "Network",
 		category = "Apps",

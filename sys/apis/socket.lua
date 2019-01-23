@@ -1,5 +1,4 @@
 local Crypto   = require('crypto')
-local Logger   = require('logger')
 local Security = require('security')
 local Util     = require('util')
 
@@ -15,7 +14,6 @@ function socketClass:read(timeout)
 	end
 
 	if not self.connected then
-		Logger.log('socket', 'read: No connection')
 		return
 	end
 
@@ -64,7 +62,6 @@ end
 
 function socketClass:close()
 	if self.connected then
-		Logger.log('socket', 'closing socket ' .. self.sport)
 		self.transmit(self.dport, self.dhost, {
 			type = 'DISC',
 		})
@@ -113,7 +110,6 @@ function Socket.connect(host, port)
 
 	local socket = newSocket(host == os.getComputerID())
 	socket.dhost = tonumber(host)
-	Logger.log('socket', 'connecting to ' .. port)
 
 	socket.transmit(port, socket.sport, {
 		type = 'OPEN',
@@ -138,8 +134,8 @@ function Socket.connect(host, port)
 
 				socket.dport = dport
 				socket.connected = true
-				Logger.log('socket', 'connection established to %d %d->%d',
-															host, socket.sport, socket.dport)
+				-- Logger.log('socket', 'connection established to %d %d->%d',
+				--											host, socket.sport, socket.dport)
 
 				_G.transport.open(socket)
 
@@ -179,7 +175,7 @@ end
 
 function Socket.server(port)
 	device.wireless_modem.open(port)
-	Logger.log('socket', 'Waiting for connections on port ' .. port)
+	-- Logger.log('socket', 'Waiting for connections on port ' .. port)
 
 	while true do
 		local _, _, sport, dport, msg = os.pullEvent('modem_message')
@@ -203,7 +199,7 @@ function Socket.server(port)
 					dhost = socket.dhost,
 					shost = socket.shost,
 				})
-				Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
+				-- Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
 				_G.transport.open(socket)
 				return socket
