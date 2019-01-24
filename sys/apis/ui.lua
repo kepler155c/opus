@@ -3077,6 +3077,8 @@ UI.Checkbox.defaults = {
 function UI.Checkbox:setParent()
 	if not self.width and not self.ex then
 		self.width = (self.label and #self.label or 0) + 3
+	else
+		self.widthh = 3
 	end
 	UI.Window.setParent(self)
 end
