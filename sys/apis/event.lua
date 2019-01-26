@@ -243,6 +243,21 @@ local function processRoutines(...)
 	end
 end
 
+-- invoke the handlers registered for this event
+function Event.trigger(event, ...)
+	local handlers = Event.types[event]
+	if handlers then
+		for _,h in pairs(handlers) do
+			if not h.co then
+				-- callbacks are single threaded (only 1 co per handler)
+				h.co = createCoroutine(h)
+				Event.routines[h.uid] = h
+				h:resume(event, ...)
+			end
+		end
+	end
+end
+
 function Event.processEvent(e)
 	processHandlers(e[1])
 	processRoutines(table.unpack(e))
