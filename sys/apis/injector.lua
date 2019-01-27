@@ -15,12 +15,12 @@ for i = 1, #luaPaths do
 	end
 end
 
-table.insert(luaPaths, 1, '?')
-table.insert(luaPaths, 2, '?.lua')
-table.insert(luaPaths, 3, '/usr/apis/?')
-table.insert(luaPaths, 4, '/usr/apis/?.lua')
-table.insert(luaPaths, 5, '/sys/apis/?')
-table.insert(luaPaths, 6, '/sys/apis/?.lua')
+table.insert(luaPaths, 1, '?.lua')
+table.insert(luaPaths, 2, '?/init.lua')
+table.insert(luaPaths, 3, '/usr/apis/?.lua')
+table.insert(luaPaths, 4, '/usr/apis/?/init.lua')
+table.insert(luaPaths, 5, '/sys/apis/?.lua')
+table.insert(luaPaths, 6, '/sys/apis/?/init.lua')
 
 local DEFAULT_PATH   = table.concat(luaPaths, ';')
 local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'develop-1.8'
@@ -82,30 +82,18 @@ end
 
 -- Add require and package to the environment
 return function(env)
-	local function standardSearcher(modname)
-		-- Should this be 2 diff searchers ? if yes, installer would need an update
+	local function preloadSearcher(modname)
 		if env.package.preload[modname] then
 			return function()
 				return env.package.preload[modname](modname, env)
 			end
 		end
-		if env.package.loaded[modname] then
-			return function()
-				return env.package.loaded[modname]
-			end
-		end
 	end
 
-	local function shellSearcher(modname)
-		local fname = modname:gsub('%.', '/') .. '.lua'
-
-		if env.shell and type(env.shell.getRunningProgram) == 'function' then
-			local running = env.shell.getRunningProgram()
-			if running then
-				local path = fs.combine(fs.getDir(running), fname)
-				if fs.exists(path) and not fs.isDir(path) then
-					return loadfile(path, env)
-				end
+	local function loadedSearcher(modname)
+			if env.package.loaded[modname] then
+			return function()
+				return env.package.loaded[modname]
 			end
 		end
 	end
@@ -115,21 +103,15 @@ return function(env)
 
 		for pattern in string.gmatch(env.package.path, "[^;]+") do
 			local sPath = string.gsub(pattern, "%?", fname)
-			if env.shell and env.shell.dir and sPath:sub(1, 1) ~= "/" then
-				sPath = fs.combine(env.shell.dir(), sPath)
+			-- TODO: if there's no shell, we should not be checking relative paths below
+			-- as they will resolve to root directory
+			if env.shell and type(env.shell.getRunningProgram) == 'function' and sPath:sub(1, 1) ~= "/" then
+				sPath = fs.combine(fs.getDir(env.shell.getRunningProgram()), sPath)
 			end
 			if fs.exists(sPath) and not fs.isDir(sPath) then
 				return loadfile(sPath, env)
 			end
 		end
-		--[[
-		for dir in string.gmatch(env.package.path, "[^:]+") do
-			local path = fs.combine(dir, fname)
-			if fs.exists(path) and not fs.isDir(path) then
-				return loadfile(path, env)
-			end
-		end
-		]]
 	end
 
 	-- require('BniCQPVf')
@@ -185,8 +167,8 @@ return function(env)
 			table  = table,
 		},
 		loaders = {
-			standardSearcher,
-			shellSearcher,
+			preloadSearcher,
+			loadedSearcher,
 			pathSearcher,
 			pastebinSearcher,
 			gitSearcher,

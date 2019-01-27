@@ -41,9 +41,10 @@ local page = UI.Page {
 			--{ text = 'Chat', event = 'chat' },
 			{ text = 'Trust', dropdown = {
 				{ text = 'Establish', event = 'trust'   },
-				{ text = 'Remove',    event = 'untrust' },
+--				{ text = 'Remove',    event = 'untrust' },
 			} },
 			{ text = 'Help', event = 'help', noCheck = true },
+--[[
 			{
 				text = '\187',
 				x = -3,
@@ -53,6 +54,7 @@ local page = UI.Page {
 					{ text = 'Show trusted', event = 'show_trusted', noCheck = true },
 				},
 			},
+]]
 		},
 	},
 	grid = UI.ScrollingGrid {

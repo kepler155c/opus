@@ -24,12 +24,6 @@ local function addEntry(t, e, n)
 	table.insert(t, n or 1, e)
 end
 
-local function addRequirePath(t, path)
-	addEntry(t, string.format('/%s/?/init.lua', path), 7)
-	addEntry(t, string.format('/%s/?.lua', path), 7)
-	addEntry(t, string.format('/%s/?', path), 7)
-end
-
 for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
 	if fs.exists(fs.combine(packageDir, '.install')) then
@@ -42,7 +36,7 @@ for name in pairs(Packages:installed()) do
 	addEntry(appPaths, packageDir)
 	local apiPath = fs.combine(fs.combine('packages', name), 'apis')
 	if fs.exists(apiPath) then
-		addRequirePath(luaPaths, apiPath)
+		fs.mount(fs.combine('sys/apis', name), 'linkfs', apiPath)
 	end
 
 	local helpPath = '/' .. fs.combine(fs.combine('packages', name), 'help')

@@ -44,6 +44,8 @@ for _, v in pairs(Util.split(shell.path(), '(.-):')) do
 end
 
 shell.setPath(table.concat(path, ':'))
-_G.LUA_PATH = config.lua_path
+-- TODO: replace when stable (old lua path is now incorrect)
+-- _G.LUA_PATH = config.lua_path
+_G.LUA_PATH = package.path
 
 fs.loadTab('usr/config/fstab')
