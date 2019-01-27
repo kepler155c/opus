@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Config = require('config')
 local Event  = require('event')
 local Socket = require('socket')
@@ -44,17 +42,16 @@ local page = UI.Page {
 --				{ text = 'Remove',    event = 'untrust' },
 			} },
 			{ text = 'Help', event = 'help', noCheck = true },
---[[
 			{
 				text = '\187',
 				x = -3,
 				dropdown = {
-					{ text = 'Show all', event = 'show_all', noCheck = true },
-					UI.MenuBar.spacer,
-					{ text = 'Show trusted', event = 'show_trusted', noCheck = true },
+					{ text = 'Ports', event = 'ports', noCheck = true },
+					-- { text = 'Show all', event = 'show_all', noCheck = true },
+					-- UI.MenuBar.spacer,
+					-- { text = 'Show trusted', event = 'show_trusted', noCheck = true },
 				},
 			},
-]]
 		},
 	},
 	grid = UI.ScrollingGrid {
@@ -63,6 +60,22 @@ local page = UI.Page {
 		columns = gridColumns,
 		sortColumn = 'label',
 		autospace = true,
+	},
+	ports = UI.SlideOut {
+		titleBar = UI.TitleBar {
+			title = 'Ports',
+			event = 'ports_hide',
+		},
+		grid = UI.ScrollingGrid {
+			y = 2,
+			columns = {
+				{ heading = 'Port',       key = 'port'       },
+				{ heading = 'State',      key = 'state'      },
+				{ heading = 'Connection', key = 'connection' },
+			},
+			sortColumn = 'port',
+			autospace = true,
+		},
 	},
 	notification = UI.Notification { },
 	accelerators = {
@@ -91,6 +104,40 @@ local function sendCommand(host, command)
 	else
 		page.notification:error('Failed to connect')
 	end
+end
+
+function page.ports.grid:update()
+	local function findConnection(port)
+		for _,socket in pairs(_G.transport.sockets) do
+			if socket.sport == port then
+				return socket
+			end
+		end
+	end
+
+	local connections = { }
+
+	for i = 0, 65535 do
+		if device.wireless_modem.isOpen(i) then
+			local conn = {
+				port = i
+			}
+			local socket = findConnection(i)
+			if socket then
+				conn.state = 'CONNECTED'
+				local host = socket.dhost
+				if network[host] then
+					host = network[host].label
+				end
+				conn.connection = host .. ':' .. socket.dport
+			else
+				conn.state = 'LISTEN'
+			end
+			table.insert(connections, conn)
+		end
+	end
+	self.values = connections
+	UI.Grid.update(self)
 end
 
 function page:eventHandler(event)
@@ -166,6 +213,20 @@ This only needs to be done once.
 				q = 'cancel',
 			}
 		})
+
+	elseif event.type == 'ports' then
+		self.ports.grid:update()
+		self.ports:show()
+
+		self.portsHandler = Event.onInterval(3, function()
+			self.ports.grid:update()
+			self.ports.grid:draw()
+			self:sync()
+		end)
+
+	elseif event.type == 'ports_hide' then
+		Event.off(self.portsHandler)
+		self.ports:hide()
 
 	elseif event.type == 'show_all' then
 		config.showTrusted = false

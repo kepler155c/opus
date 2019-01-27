@@ -106,7 +106,7 @@ return function(env)
 			-- TODO: if there's no shell, we should not be checking relative paths below
 			-- as they will resolve to root directory
 			if env.shell and type(env.shell.getRunningProgram) == 'function' and sPath:sub(1, 1) ~= "/" then
-				sPath = fs.combine(fs.getDir(env.shell.getRunningProgram()), sPath)
+				sPath = fs.combine(fs.getDir(env.shell.getRunningProgram() or ''), sPath)
 			end
 			if fs.exists(sPath) and not fs.isDir(sPath) then
 				return loadfile(sPath, env)

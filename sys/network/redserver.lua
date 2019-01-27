@@ -7,7 +7,7 @@ local os    = _G.os
 
 local computerId = os.getComputerID()
 
-modem.open(80)
+--modem.open(80)
 
 -- https://github.com/golgote/neturl/blob/master/lib/net/url.lua
 local function parseQuery(str)
