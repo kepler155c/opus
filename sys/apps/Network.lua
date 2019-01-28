@@ -19,7 +19,6 @@ local gridColumns = {
 	{ heading = 'Status', key = 'status'   },
 }
 
-local trusted = Util.readTable('usr/.known_hosts')
 local config = Config.load('network', { })
 
 if UI.term.width >= 30 then
@@ -36,20 +35,16 @@ local page = UI.Page {
 				UI.MenuBar.spacer,
 				{ text = 'Reboot      r', event = 'reboot' },
 			} },
-			--{ text = 'Chat', event = 'chat' },
 			{ text = 'Trust', dropdown = {
 				{ text = 'Establish', event = 'trust'   },
---				{ text = 'Remove',    event = 'untrust' },
 			} },
-			{ text = 'Help', event = 'help', noCheck = true },
 			{
 				text = '\187',
 				x = -3,
 				dropdown = {
-					{ text = 'Ports', event = 'ports', noCheck = true },
-					-- { text = 'Show all', event = 'show_all', noCheck = true },
-					-- UI.MenuBar.spacer,
-					-- { text = 'Show trusted', event = 'show_trusted', noCheck = true },
+					{ text = 'Port Status', event = 'ports', modem = true },
+					UI.MenuBar.spacer,
+					{ text = 'Help', event = 'help', noCheck = true },
 				},
 			},
 		},
@@ -117,25 +112,30 @@ function page.ports.grid:update()
 
 	local connections = { }
 
-	for i = 0, 65535 do
-		if device.wireless_modem.isOpen(i) then
-			local conn = {
-				port = i
-			}
-			local socket = findConnection(i)
-			if socket then
-				conn.state = 'CONNECTED'
-				local host = socket.dhost
-				if network[host] then
-					host = network[host].label
+	pcall(function() -- guard against modem removal
+		if device.wireless_modem then
+			for i = 0, 65535 do
+				if device.wireless_modem.isOpen(i) then
+					local conn = {
+						port = i
+					}
+					local socket = findConnection(i)
+					if socket then
+						conn.state = 'CONNECTED'
+						local host = socket.dhost
+						if network[host] then
+							host = network[host].label
+						end
+						conn.connection = host .. ':' .. socket.dport
+					else
+						conn.state = 'LISTEN'
+					end
+					table.insert(connections, conn)
 				end
-				conn.connection = host .. ':' .. socket.dport
-			else
-				conn.state = 'LISTEN'
 			end
-			table.insert(connections, conn)
 		end
-	end
+	end)
+
 	self.values = connections
 	UI.Grid.update(self)
 end
@@ -173,18 +173,6 @@ function page:eventHandler(event)
 		elseif event.type == 'trust' then
 			shell.openForegroundTab('trust ' .. t.id)
 
-		elseif event.type == 'untrust' then
-			local trustList = Util.readTable('usr/.known_hosts') or { }
-			trustList[t.id] = nil
-			Util.writeTable('usr/.known_hosts', trustList)
-
-		elseif event.type == 'chat' then
-			multishell.openTab({
-				path    = 'sys/apps/shell',
-				args    = { 'chat join opusChat-' .. t.id .. ' guest-' .. os.getComputerID() },
-				title   = 'Chatroom',
-				focused = true,
-			})
 		elseif event.type == 'reboot' then
 			sendCommand(t.id, 'reboot')
 
@@ -228,11 +216,6 @@ This only needs to be done once.
 		Event.off(self.portsHandler)
 		self.ports:hide()
 
-	elseif event.type == 'show_all' then
-		config.showTrusted = false
-		self.grid:setValues(network)
-		Config.update('network', config)
-
 	elseif event.type == 'show_trusted' then
 		config.showTrusted = true
 		Config.update('network', config)
@@ -245,16 +228,15 @@ end
 
 function page.menuBar:getActive(menuItem)
 	local t = page.grid:getSelected()
-	if menuItem.event == 'untrust' then
-		local trustList = Util.readTable('usr/.known_hosts') or { }
-		return t and trustList[t.id]
+	if menuItem.modem then
+		return not not device.wireless_modem
 	end
 	return menuItem.noCheck or not not t
 end
 
 function page.grid:getRowTextColor(row, selected)
 	if not row.active then
-		return colors.orange
+		return colors.lightGray
 	end
 	return UI.Grid.getRowTextColor(self, row, selected)
 end
@@ -278,17 +260,7 @@ function page.grid:getDisplayValues(row)
 end
 
 Event.onInterval(1, function()
-	local t = { }
-	if config.showTrusted then
-		for k,v in pairs(network) do
-			if trusted[k] then
-				t[k] = v
-			end
-		end
-		page.grid:setValues(t)
-	else
-		page.grid:update()
-	end
+	page.grid:update()
 	page.grid:draw()
 	page:sync()
 end)

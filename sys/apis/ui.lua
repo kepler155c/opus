@@ -583,11 +583,11 @@ function UI.Window:sync()
 	end
 end
 
-function UI.Window:enable()
+function UI.Window:enable(...)
 	self.enabled = true
 	if self.children then
 		for _,child in pairs(self.children) do
-			child:enable()
+			child:enable(...)
 		end
 	end
 end
@@ -607,10 +607,12 @@ function UI.Window:setTextScale(textScale)
 end
 
 function UI.Window:clear(bg, fg)
-	if self.canvas then
-		self.canvas:clear(bg or self.backgroundColor, fg or self.textColor)
-	else
-		self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
+	if self.enabled then
+		if self.canvas then
+			self.canvas:clear(bg or self.backgroundColor, fg or self.textColor)
+		else
+			self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
+		end
 	end
 end
 
@@ -628,16 +630,18 @@ function UI.Window:clearArea(x, y, width, height, bg)
 end
 
 function UI.Window:write(x, y, text, bg, tc)
-	bg = bg or self.backgroundColor
-	tc = tc or self.textColor
-	x = x - self.offx
-	y = y - self.offy
-	if y <= self.height and y > 0 then
-		if self.canvas then
-			self.canvas:write(x, y, text, bg, tc)
-		else
-			self.parent:write(
-				self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
+	if self.enabled then
+		bg = bg or self.backgroundColor
+		tc = tc or self.textColor
+		x = x - self.offx
+		y = y - self.offy
+		if y <= self.height and y > 0 then
+			if self.canvas then
+				self.canvas:write(x, y, text, bg, tc)
+			else
+				self.parent:write(
+					self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
+			end
 		end
 	end
 end
@@ -2056,6 +2060,7 @@ function UI.MenuBar:eventHandler(event)
 	if event.type == 'button_press' and event.button.dropmenu then
 		if event.button.dropmenu.enabled then
 			event.button.dropmenu:hide()
+			self:refocus()
 			return true
 		else
 			local x, y = getPosition(event.button)
@@ -2123,7 +2128,6 @@ function UI.DropMenu:setParent()
 end
 
 function UI.DropMenu:enable()
-	self.enabled = false
 end
 
 function UI.DropMenu:show(x, y)
@@ -2131,10 +2135,7 @@ function UI.DropMenu:show(x, y)
 	self.canvas:move(x, y)
 	self.canvas:setVisible(true)
 
-	self.enabled = true
-	for _,child in pairs(self.children) do
-		child:enable()
-	end
+	UI.Window.enable(self)
 
 	self:draw()
 	self:capture(self)
@@ -2442,16 +2443,12 @@ function UI.SlideOut:setParent()
 end
 
 function UI.SlideOut:enable()
-	self.enabled = false
 end
 
 function UI.SlideOut:show(...)
 	self:addTransition('expandUp')
 	self.canvas:setVisible(true)
-	self.enabled = true
-	for _,child in pairs(self.children) do
-		child:enable(...)
-	end
+	UI.Window.enable(self, ...)
 	self:draw()
 	self:capture(self)
 	self:focusFirst()
@@ -2459,12 +2456,7 @@ end
 
 function UI.SlideOut:disable()
 	self.canvas:setVisible(false)
-	self.enabled = false
-	if self.children then
-		for _,child in pairs(self.children) do
-			child:disable()
-		end
-	end
+	UI.Window.disable(self)
 end
 
 function UI.SlideOut:hide()
@@ -2553,7 +2545,6 @@ function UI.Notification:draw()
 end
 
 function UI.Notification:enable()
-	self.enabled = false
 end
 
 function UI.Notification:error(value, timeout)

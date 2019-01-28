@@ -3,7 +3,6 @@ _G.requireInjector(_ENV)
 local class    = require('class')
 local Config   = require('config')
 local Event    = require('event')
-local FileUI   = require('ui.fileui')
 local NFT      = require('nft')
 local Packages = require('packages')
 local SHA1     = require('sha1')
@@ -13,6 +12,7 @@ local Util     = require('util')
 
 local colors     = _G.colors
 local fs         = _G.fs
+local os         = _G.os
 local pocket     = _G.pocket
 local shell      = _ENV.shell
 local term       = _G.term
@@ -75,7 +75,7 @@ function UI.VerticalTabBar:setParent()
 	self.x = 1
 	self.width = 8
 	self.height = nil
-	self.ey = -1
+	self.ey = -2
 	UI.TabBar.setParent(self)
 	for k,c in pairs(self.children) do
 		c.x = 1
@@ -88,16 +88,59 @@ end
 
 local cx = 9
 local cy = 1
-if sx < 30 then
-	UI.VerticalTabBar = UI.TabBar
-	cx = 1
-	cy = 2
-end
 
 local page = UI.Page {
 	container = UI.Viewport {
 		x = cx,
 		y = cy,
+	},
+	tray = UI.Window {
+		y = -1, width = 8,
+		backgroundColor = colors.lightGray,
+		newApp = UI.Button {
+			text = '+', event = 'new',
+		},
+		volume = UI.Button {
+			x = 3,
+			text = '\15', event = 'volume',
+		}
+	},
+	editor = UI.SlideOut {
+		backgroundColor = colors.cyan,
+		titleBar = UI.TitleBar {
+			title = 'Edit Application',
+			event = 'slide_hide',
+		},
+		form = UI.Form {
+			y = 2, ey = -2,
+			[1] = UI.TextEntry {
+				formLabel = 'Title', formKey = 'title', limit = 11, help = 'Application title',
+				required = true,
+			},
+			[2] = UI.TextEntry {
+				formLabel = 'Run', formKey = 'run', limit = 100, help = 'Full path to application',
+				required = true,
+			},
+			[3] = UI.TextEntry {
+				formLabel = 'Category', formKey = 'category', limit = 11, help = 'Category of application',
+				required = true,
+			},
+			iconFile = UI.TextEntry {
+				x = 11, ex = -12, y = 7,
+				limit = 128, help = 'Path to icon file',
+				shadowText = 'Path to icon file',
+			},
+			loadIcon = UI.Button {
+				x = 11, y = 9,
+				text = 'Load', event = 'loadIcon', help = 'Load icon file',
+			},
+			image = UI.NftImage {
+				backgroundColor = colors.black,
+				y = 7, x = 2, height = 3, width = 8,
+			},
+		},
+		notification = UI.Notification(),
+		statusBar = UI.StatusBar(),
 	},
 	notification = UI.Notification(),
 	accelerators = {
@@ -172,7 +215,6 @@ local function loadApplications()
 	end
 	table.sort(buttons, function(a, b) return a.text < b.text end)
 	table.insert(buttons, 1, { text = 'Recent' })
-	table.insert(buttons, { text = '+', event = 'new' })
 
 	Util.removeByValue(page.children, page.tabBar)
 
@@ -421,12 +463,12 @@ function page:eventHandler(event)
 		if config.currentCategory ~= 'Recent' then
 			category = config.currentCategory or 'Apps'
 		end
-		UI:setPage('editor', { category = category })
+		self.editor:show({ category = category })
 
 	elseif event.type == 'edit' then
 		local focused = page:getFocused()
 		if focused.app then
-			UI:setPage('editor', focused.app)
+			self.editor:show(focused.app)
 		end
 
 	else
@@ -435,40 +477,7 @@ function page:eventHandler(event)
 	return true
 end
 
-local formWidth = math.max(UI.term.width - 8, 26)
-
-local editor = UI.Dialog {
-	height = 11,
-	width = formWidth,
-	title = 'Edit Application',
-	form = UI.Form {
-		y = 2,
-		height = 9,
-		title = UI.TextEntry {
-			formLabel = 'Title', formKey = 'title', limit = 11, help = 'Application title',
-			required = true,
-		},
-		run = UI.TextEntry {
-			formLabel = 'Run', formKey = 'run', limit = 100, help = 'Full path to application',
-			required = true,
-		},
-		category = UI.TextEntry {
-			formLabel = 'Category', formKey = 'category', limit = 11, help = 'Category of application',
-			required = true,
-		},
-		loadIcon = UI.Button {
-			x = 11, y = 6,
-			text = 'Icon', event = 'loadIcon', help = 'Select icon'
-		},
-		image = UI.NftImage {
-			y = 6, x = 2, height = 3, width = 8,
-		},
-	},
-	statusBar = UI.StatusBar(),
-	iconFile = '',
-}
-
-function editor:enable(app)
+function page.editor:show(app)
 	if app then
 		self.form:setValues(app)
 
@@ -481,16 +490,16 @@ function editor:enable(app)
 		end
 		self.form.image:setImage(icon)
 	end
-	UI.Dialog.enable(self)
+	UI.SlideOut.show(self)
 	self:focusFirst()
 end
 
-function editor.form.image:draw()
+function page.editor.form.image:draw()
 	self:clear()
 	UI.NftImage.draw(self)
 end
 
-function editor:updateApplications(app)
+function page.editor:updateApplications(app)
 	if not app.key then
 		app.key = SHA1.sha1(app.title)
 	end
@@ -499,51 +508,39 @@ function editor:updateApplications(app)
 	loadApplications()
 end
 
-function editor:eventHandler(event)
+function page.editor:eventHandler(event)
 	if event.type == 'form_cancel' or event.type == 'cancel' then
-		UI:setPreviousPage()
+		self:hide()
 
 	elseif event.type == 'focus_change' then
 		self.statusBar:setStatus(event.focused.help or '')
 		self.statusBar:draw()
 
 	elseif event.type == 'loadIcon' then
-		local fileui = FileUI({
-			x = self.x,
-			y = self.y,
-			z = 2,
-			width = self.width,
-			height = self.height,
-		})
-		UI:setPage(fileui, fs.getDir(self.iconFile), function(fileName)
-			if fileName then
-				self.iconFile = fileName
-				local s, m = pcall(function()
-					local iconLines = Util.readFile(fileName)
-					if not iconLines then
-						error('Must be an NFT image - 3 rows, 8 cols max')
-					end
-					local icon, m = parseIcon(iconLines)
-					if not icon then
-						error(m)
-					end
-					if extSupport then
-						self.form.values.iconExt = iconLines
-					else
-						self.form.values.icon = iconLines
-					end
-					self.form.image:setImage(icon)
-					self.form.image:draw()
-				end)
-				if not s and m then
-					local msg = m:gsub('.*: (.*)', '%1')
-					page.notification:error(msg)
-				end
+		local s, m = pcall(function()
+			local iconLines = Util.readFile(self.form.iconFile.value)
+			if not iconLines then
+				error('Must be an NFT image - 3 rows, 8 cols max')
 			end
+			local icon, m = parseIcon(iconLines)
+			if not icon then
+				error(m)
+			end
+			if extSupport then
+				self.form.values.iconExt = iconLines
+			else
+				self.form.values.icon = iconLines
+			end
+			self.form.image:setImage(icon)
+			self.form.image:draw()
 		end)
+		if not s and m then
+			local msg = m:gsub('.*: (.*)', '%1')
+			self.notification:error(msg)
+		end
 
 	elseif event.type == 'form_invalid' then
-		page.notification:error(event.message)
+		self.notification:error(event.message)
 
 	elseif event.type == 'form_complete' then
 		local values = self.form.values
@@ -555,13 +552,12 @@ function editor:eventHandler(event)
 		Config.update('Overview', config)
 		os.queueEvent('overview_refresh')
 	else
-		return UI.Dialog.eventHandler(self, event)
+		return UI.SlideOut.eventHandler(self, event)
 	end
 	return true
 end
 
 UI:setPages({
-	editor = editor,
 	main = page,
 })
 
