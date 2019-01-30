@@ -1122,18 +1122,6 @@ function UI.Page:postInit()
 	self.canvas:clear(self.backgroundColor, self.textColor)
 end
 
-function UI.Page:setParent()
-	UI.Window.setParent(self)
-	--[[
-	if self.z then
-		self.canvas = self:addLayer(self.backgroundColor, self.textColor)
-		self.canvas:clear(self.backgroundColor, self.textColor)
-	else
-		self.canvas = self.parent.canvas
-	end
-	]]
-end
-
 function UI.Page:enable()
 	self.canvas.visible = true
 	UI.Window.enable(self)
@@ -1144,9 +1132,7 @@ function UI.Page:enable()
 end
 
 function UI.Page:disable()
-	if self.z then
-		self.canvas.visible = false
-	end
+	self.canvas.visible = false
 	UI.Window.disable(self)
 end
 
@@ -2318,21 +2304,22 @@ UI.Tab.defaults = {
 	UIElement = 'Tab',
 	tabTitle = 'tab',
 	backgroundColor = colors.cyan,
+	y = 2,
 }
 function UI.Tab:setParent()
 	UI.Window.setParent(self)
-	self.canvas = self:addLayer()
+	--self.canvas = self:addLayer()
 end
 
 function UI.Tab:enable(...)
-	self.canvas:setVisible(true)
+	--self.canvas:setVisible(true)
 	UI.Window.enable(self, ...)
-	self:addTransition(self.parent.transitionHint or 'slideLeft')
+	--self:addTransition(self.parent.transitionHint or 'slideLeft')
 	self:focusFirst()
 end
 
 function UI.Tab:disable()
-	self.canvas:setVisible(false)
+	--self.canvas:setVisible(false)
 	UI.Window.disable(self)
 end
 
