@@ -545,7 +545,7 @@ function page.editor:eventHandler(event)
 
 	elseif event.type == 'form_complete' then
 		local values = self.form.values
-		UI:setPreviousPage()
+		self:hide()
 		self:updateApplications(values)
 		--page:refresh()
 		--page:draw()

@@ -111,9 +111,9 @@ end
 
 function Canvas:setVisible(visible)
 	self.visible = visible
-	if not visible then
+	if not visible and self.parent then
 		self.parent:dirty()
-		-- set parent's lines to dirty for each line in self
+		-- TODO: set parent's lines to dirty for each line in self
 	end
 end
 
@@ -243,6 +243,11 @@ end
 function Canvas:dirty()
 	for _, line in pairs(self.lines) do
 		line.dirty = true
+	end
+	if self.layers then
+		for _, canvas in pairs(self.layers) do
+			canvas:dirty()
+		end
 	end
 end
 

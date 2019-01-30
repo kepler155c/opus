@@ -860,7 +860,17 @@ end
 
 function UI.Window:addLayer(bg, fg)
 	local canvas = self:getCanvas()
-	canvas = canvas:addLayer(self, bg, fg)
+	local x, y = self.x, self.y
+	local parent = self.parent
+	while parent and not parent.canvas do
+		x = x + parent.x - 1
+		y = y + parent.y - 1
+		parent = parent.parent
+	end
+	canvas = canvas:addLayer({
+		x = x, y = y, height = self.height, width = self.width
+	}, bg, fg)
+
 	canvas:clear(bg or self.backgroundColor, fg or self.textColor)
 	return canvas
 end
@@ -2263,6 +2273,7 @@ end
 
 function UI.Tabs:enable()
 	self.enabled = true
+	self.transitionHint = nil
 	self.tabBar:enable()
 
 	local menuItem = Util.find(self.tabBar.children, 'selected', true)
@@ -2308,18 +2319,20 @@ UI.Tab.defaults = {
 }
 function UI.Tab:setParent()
 	UI.Window.setParent(self)
-	--self.canvas = self:addLayer()
+	self.canvas = self:addLayer()
 end
 
 function UI.Tab:enable(...)
-	--self.canvas:setVisible(true)
+	self.canvas:setVisible(true)
 	UI.Window.enable(self, ...)
-	--self:addTransition(self.parent.transitionHint or 'slideLeft')
+	if self.parent.transitionHint then
+		self:addTransition(self.parent.transitionHint)
+	end
 	self:focusFirst()
 end
 
 function UI.Tab:disable()
-	--self.canvas:setVisible(false)
+	self.canvas:setVisible(false)
 	UI.Window.disable(self)
 end
 
