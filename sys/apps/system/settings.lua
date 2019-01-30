@@ -3,7 +3,6 @@ local UI = require('ui')
 local settings = _G.settings
 
 if settings then
-
 	local values = { }
 	for _,v in pairs(settings.getNames()) do
 		local value = settings.get(v)
@@ -16,11 +15,11 @@ if settings then
 		})
 	end
 
-	local settingsTab = UI.Window {
+	local settingsTab = UI.Tab {
 		tabTitle = 'Settings',
 		description = 'Computercraft configurable settings',
 		grid = UI.Grid {
-			y = 1,
+			y = 2,
 			values = values,
 			autospace = true,
 			sortColumn = 'name',

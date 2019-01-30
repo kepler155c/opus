@@ -106,6 +106,7 @@ local page = UI.Page {
 		}
 	},
 	editor = UI.SlideOut {
+		y = -12, height = 12,
 		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
 			title = 'Edit Application',

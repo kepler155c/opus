@@ -3,7 +3,7 @@ local UI     = require('ui')
 
 local device = _G.device
 
-local tab = UI.Window {
+local tab = UI.Tab {
 	tabTitle = 'Network',
 	description = 'Networking options',
 	form = UI.Form {
@@ -40,7 +40,7 @@ function tab:enable()
 	local config = Config.load('os')
 	self.form.modem.value = config.wirelessModem or 'auto'
 
-	UI.Window.enable(self)
+	UI.Tab.enable(self)
 end
 
 function tab:eventHandler(event)

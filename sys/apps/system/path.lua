@@ -2,7 +2,7 @@ local Config = require('config')
 local UI     = require('ui')
 local Util   = require('util')
 
-local pathTab = UI.Window {
+local pathTab = UI.Tab {
 	tabTitle = 'Path',
 	description = 'Set the shell path',
 	tabClose = true,

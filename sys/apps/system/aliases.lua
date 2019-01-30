@@ -1,7 +1,7 @@
 local Config = require('config')
 local UI     = require('ui')
 
-local aliasTab = UI.Window {
+local aliasTab = UI.Tab {
 	tabTitle = 'Aliases',
 	description = 'Shell aliases',
 	alias = UI.TextEntry {

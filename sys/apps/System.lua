@@ -8,7 +8,7 @@ UI:configure('System', ...)
 
 local systemPage = UI.Page {
 	tabs = UI.Tabs {
-		settings = UI.Window {
+		settings = UI.Tab {
 			tabTitle = 'Category',
 			grid = UI.Grid {
 				y = 2,

@@ -4,7 +4,7 @@ local Util = require('util')
 local fs   = _G.fs
 local os   = _G.os
 
-local labelTab = UI.Window {
+local labelTab = UI.Tab {
 	tabTitle = 'Label',
 	description = 'Set the computer label',
 	labelText = UI.Text {

@@ -72,6 +72,31 @@ local page = UI.Page {
 			autospace = true,
 		},
 	},
+	help = UI.SlideOut {
+		backgroundColor = colors.cyan,
+		x = 5, ex = -5, height = 8, y = -8,
+		titleBar = UI.TitleBar {
+			title = 'Network Help',
+			event = 'slide_hide',
+		},
+		text = UI.TextArea {
+			x = 2, y = 2,
+			backgroundColor = colors.cyan,
+			value = [[
+
+In order to connect to another computer:
+
+1. The target computer must have a password set (run 'password' from the shell prompt).
+
+2. From this computer, click trust and enter the password for that computer.
+
+This only needs to be done once.
+			]],
+		},
+		accelerators = {
+			q = 'slide_hide',
+		}
+	},
 	notification = UI.Notification { },
 	accelerators = {
 		t = 'telnet',
@@ -180,27 +205,9 @@ function page:eventHandler(event)
 			sendCommand(t.id, 'shutdown')
 		end
 	end
+
 	if event.type == 'help' then
-		UI:setPage(UI.Dialog {
-			title = 'Network Help',
-			height = 10,
-			backgroundColor = colors.white,
-			text = UI.TextArea {
-				x = 2, y = 2,
-				backgroundColor = colors.white,
-				value = [[
-In order to connect to another computer:
-
-	1. The target computer must have a password set (run 'password' from the shell prompt).
-	2. From this computer, click trust and enter the password for that computer.
-
-This only needs to be done once.
-				]],
-			},
-			accelerators = {
-				q = 'cancel',
-			}
-		})
+		self.help:show()
 
 	elseif event.type == 'ports' then
 		self.ports.grid:update()

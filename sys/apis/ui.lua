@@ -317,6 +317,7 @@ end
 
 function Manager:setActivePage(page)
 	page.parent.currentPage = page
+	page.parent.canvas = page.canvas
 end
 
 function Manager:setPage(pageOrName, ...)
@@ -330,7 +331,6 @@ function Manager:setPage(pageOrName, ...)
 	if page == currentPage then
 		page:draw()
 	else
-		local needSync
 		if currentPage then
 			if currentPage.focused then
 				currentPage.focused.focused = false
@@ -338,20 +338,16 @@ function Manager:setPage(pageOrName, ...)
 			end
 			currentPage:disable()
 			page.previousPage = currentPage
-		else
-			needSync = true
 		end
 		self:setActivePage(page)
-		page:clear(page.backgroundColor)
+		--page:clear(page.backgroundColor)
 		page:enable(...)
 		page:draw()
 		if page.focused then
 			page.focused.focused = true
 			page.focused:focus()
 		end
-		if needSync then
-			page:sync() -- first time a page has been set
-		end
+		page:sync()
 	end
 end
 
@@ -607,12 +603,10 @@ function UI.Window:setTextScale(textScale)
 end
 
 function UI.Window:clear(bg, fg)
-	if self.enabled then
-		if self.canvas then
-			self.canvas:clear(bg or self.backgroundColor, fg or self.textColor)
-		else
-			self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
-		end
+	if self.canvas then
+		self.canvas:clear(bg or self.backgroundColor, fg or self.textColor)
+	else
+		self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
 	end
 end
 
@@ -630,18 +624,17 @@ function UI.Window:clearArea(x, y, width, height, bg)
 end
 
 function UI.Window:write(x, y, text, bg, tc)
-	if self.enabled then
-		bg = bg or self.backgroundColor
-		tc = tc or self.textColor
-		x = x - self.offx
-		y = y - self.offy
-		if y <= self.height and y > 0 then
-			if self.canvas then
-				self.canvas:write(x, y, text, bg, tc)
-			else
-				self.parent:write(
-					self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
-			end
+	bg = bg or self.backgroundColor
+	tc = tc or self.textColor
+	-- TODO: get rid of offx/y - scroll canvas instead
+	x = x - self.offx
+	y = y - self.offy
+	if y <= self.height and y > 0 then
+		if self.canvas then
+			self.canvas:write(x, y, text, bg, tc)
+		else
+			self.parent:write(
+				self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
 		end
 	end
 end
@@ -933,12 +926,6 @@ function UI.Device:postInit()
 
 	self.isColor = self.device.isColor()
 
-	self.canvas = Canvas({
-		x = 1, y = 1, width = self.width, height = self.height,
-		isColor = self.isColor,
-	})
-	self.canvas:clear(self.backgroundColor, self.textColor)
-
 	UI.devices[self.device.side or 'terminal'] = self
 end
 
@@ -946,6 +933,7 @@ function UI.Device:resize()
 	self.device.setTextScale(self.textScale)
 	self.width, self.height = self.device.getSize()
 	self.lines = { }
+	-- TODO: resize all pages added to this device
 	self.canvas:resize(self.width, self.height)
 	self.canvas:clear(self.backgroundColor, self.textColor)
 end
@@ -997,11 +985,13 @@ function UI.Device:addTransition(effect, args)
 end
 
 function UI.Device:runTransitions(transitions, canvas)
+	--[[
 	for _,t in ipairs(transitions) do
 		canvas:punch(t.args)               -- punch out the effect areas
 	end
 	canvas:blitClipped(self.device) -- and blit the remainder
 	canvas:reset()
+	]]
 
 	while true do
 		for _,k in ipairs(Util.keys(transitions)) do
@@ -1028,10 +1018,9 @@ function UI.Device:sync()
 		self.device.setCursorBlink(false)
 	end
 
+	self.canvas:render(self.device)
 	if transitions then
 		self:runTransitions(transitions, self.canvas)
-	else
-		self.canvas:render(self.device)
 	end
 
 	if self:getCursorBlink() then
@@ -1126,16 +1115,23 @@ UI.Page.defaults = {
 function UI.Page:postInit()
 	self.parent = self.parent or UI.defaultDevice
 	self.__target = self
+	self.canvas = Canvas({
+		x = 1, y = 1, width = self.parent.width, height = self.parent.height,
+		isColor = self.parent.isColor,
+	})
+	self.canvas:clear(self.backgroundColor, self.textColor)
 end
 
 function UI.Page:setParent()
 	UI.Window.setParent(self)
+	--[[
 	if self.z then
 		self.canvas = self:addLayer(self.backgroundColor, self.textColor)
 		self.canvas:clear(self.backgroundColor, self.textColor)
 	else
 		self.canvas = self.parent.canvas
 	end
+	]]
 end
 
 function UI.Page:enable()
@@ -1152,6 +1148,12 @@ function UI.Page:disable()
 		self.canvas.visible = false
 	end
 	UI.Window.disable(self)
+end
+
+function UI.Page:sync()
+	if self.enabled then
+		self.parent:sync()
+	end
 end
 
 function UI.Page:capture(child)
@@ -2293,9 +2295,9 @@ function UI.Tabs:eventHandler(event)
 	if event.type == 'tab_change' then
 		local tab = self:find(event.tab.tabUid)
 		if event.current > event.last then
-			tab:addTransition('slideLeft')
+			self.transitionHint = 'slideLeft'
 		else
-			tab:addTransition('slideRight')
+			self.transitionHint = 'slideRight'
 		end
 
 		for _,child in pairs(self.children) do
@@ -2308,6 +2310,30 @@ function UI.Tabs:eventHandler(event)
 		self:emit({ type = 'tab_activate', activated = tab })
 		tab:draw()
 	end
+end
+
+--[[-- Tab --]]--
+UI.Tab = class(UI.Window)
+UI.Tab.defaults = {
+	UIElement = 'Tab',
+	tabTitle = 'tab',
+	backgroundColor = colors.cyan,
+}
+function UI.Tab:setParent()
+	UI.Window.setParent(self)
+	self.canvas = self:addLayer()
+end
+
+function UI.Tab:enable(...)
+	self.canvas:setVisible(true)
+	UI.Window.enable(self, ...)
+	self:addTransition(self.parent.transitionHint or 'slideLeft')
+	self:focusFirst()
+end
+
+function UI.Tab:disable()
+	self.canvas:setVisible(false)
+	UI.Window.disable(self)
 end
 
 --[[-- Wizard --]]--
@@ -3047,7 +3073,7 @@ function UI.Chooser:eventHandler(event)
 	end
 end
 
---[[-- Chooser --]]--
+--[[-- Checkbox --]]--
 UI.Checkbox = class(UI.Window)
 UI.Checkbox.defaults = {
 	UIElement = 'Checkbox',
@@ -3243,6 +3269,7 @@ UI.Form.defaults = {
 	values = { },
 	margin = 2,
 	event = 'form_complete',
+	cancelEvent = 'form_cancel',
 }
 function UI.Form:postInit()
 	self:createForm()
@@ -3319,7 +3346,7 @@ function UI.Form:createForm()
 		table.insert(self.children, UI.Button {
 			y = -self.margin, x = -7 - self.margin,
 			text = 'Cancel',
-			event = 'form_cancel',
+			event = self.cancelEvent,
 		})
 	end
 end
@@ -3346,6 +3373,7 @@ function UI.Form:save()
 			local s, m = self:validateField(child)
 			if not s then
 				self:setFocus(child)
+				Sound.play('entity.villager.no', .5)
 				self:emit({ type = 'form_invalid', message = m, field = child })
 				return false
 			end
@@ -3372,7 +3400,7 @@ function UI.Form:eventHandler(event)
 		if not self:save() then
 			return false
 		end
-		self:emit({ type = self.event, UIElement = self })
+		self:emit({ type = self.event, UIElement = self, values = self.values })
 	else
 		return UI.Window.eventHandler(self, event)
 	end
@@ -3380,49 +3408,38 @@ function UI.Form:eventHandler(event)
 end
 
 --[[-- Dialog --]]--
-UI.Dialog = class(UI.Page)
+UI.Dialog = class(UI.SlideOut)
 UI.Dialog.defaults = {
 	UIElement = 'Dialog',
-	x = 7,
-	y = 4,
-	z = 2,
 	height = 7,
 	textColor = colors.black,
 	backgroundColor = colors.white,
+	okEvent ='dialog_ok',
+	cancelEvent = 'dialog_cancel',
 }
 function UI.Dialog:postInit()
-	self.titleBar = UI.TitleBar({ previousPage = true, title = self.title })
+	self.y = -self.height
+	self.titleBar = UI.TitleBar({ event = self.cancelEvent, title = self.title })
 end
 
-function UI.Dialog:setParent()
-	if not self.width then
-		self.width = self.parent.width - 11
-	end
-	if self.width > self.parent.width then
-		self.width = self.parent.width
-	end
-	self.x = math.floor((self.parent.width - self.width) / 2) + 1
-	self.y = math.floor((self.parent.height - self.height) / 2) + 1
-	UI.Page.setParent(self)
+function UI.Dialog:show(...)
+	local canvas = self.parent:getCanvas()
+	self.oldPalette = canvas.palette
+	canvas:applyPalette(Canvas.darkPalette)
+	UI.SlideOut.show(self, ...)
 end
 
-function UI.Dialog:disable()
-	self.previousPage.canvas.palette = self.oldPalette
-	UI.Page.disable(self)
-end
-
-function UI.Dialog:enable(...)
-	self.oldPalette = self.previousPage.canvas.palette
-	self.previousPage.canvas:applyPalette(Canvas.darkPalette)
-	self:addTransition('grow')
-	UI.Page.enable(self, ...)
+function UI.Dialog:hide(...)
+	self.parent:getCanvas().palette = self.oldPalette
+	UI.SlideOut.hide(self, ...)
+	self.parent:draw()
 end
 
 function UI.Dialog:eventHandler(event)
-	if event.type == 'cancel' then
-		UI:setPreviousPage()
+	if event.type == 'dialog_cancel' then
+		self:hide()
 	end
-	return UI.Page.eventHandler(self, event)
+	return UI.SlideOut.eventHandler(self, event)
 end
 
 --[[-- Image --]]--

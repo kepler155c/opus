@@ -2,7 +2,7 @@ local Security = require('security')
 local SHA1     = require('sha1')
 local UI       = require('ui')
 
-local passwordTab = UI.Window {
+local passwordTab = UI.Tab {
 	tabTitle = 'Password',
 	description = 'Wireless network password',
 	oldPass = UI.TextEntry {
