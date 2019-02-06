@@ -361,16 +361,21 @@ local Config   = require('config')
 local Entry    = require('entry')
 local History  = require('history')
 local Input    = require('input')
-local Terminal = require('terminal')
 
 local colors    = _G.colors
 local os        = _G.os
 local term      = _G.term
 local textutils = _G.textutils
 
+local oldTerm
 local terminal = term.current()
---Terminal.scrollable(terminal, 100)
-terminal.noAutoScroll = true
+
+if not terminal.scrollUp then
+	local Terminal = require('terminal')
+	terminal = Terminal.window(term.current())
+	terminal.setMaxScroll(200)
+	oldTerm = term.redirect(terminal)
+end
 
 local config = {
 	standard = {
@@ -555,6 +560,9 @@ local function shellRead(history)
 	term.setCursorBlink(true)
 
 	local function redraw()
+		if terminal.scrollBottom then
+			terminal.scrollBottom()
+		end
 		local _,cy = term.getCursorPos()
 		term.setCursorPos(3, cy)
 		local filler = #entry.value < lastLen
@@ -571,11 +579,11 @@ local function shellRead(history)
 
 		local ie = Input:translate(event, p1, p2, p3)
 		if ie then
-			if ie.code == 'scroll_up' then
-				--terminal.scrollUp()
+			if ie.code == 'scroll_up' and terminal.scrollUp then
+				terminal.scrollUp()
 
-			elseif ie.code == 'scroll_down' then
-				--terminal.scrollDown()
+			elseif ie.code == 'scroll_down' and terminal.scrollDown then
+				terminal.scrollDown()
 
 			elseif ie.code == 'terminate' then
 				bExit = true
@@ -651,4 +659,8 @@ while not bExit do
 			_G.printError(err)
 		end
 	end
+end
+
+if oldTerm then
+	term.redirect(oldTerm)
 end

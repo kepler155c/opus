@@ -24,7 +24,7 @@ local page = UI.Page {
 	wizard = UI.Wizard {
     ey = -2,
 		pages = {
-			splash = UI.Window {
+			splash = UI.WizardPage {
         index = 1,
         intro = UI.TextArea {
           textColor = colors.yellow,
@@ -33,7 +33,7 @@ local page = UI.Page {
           value = string.format(splashIntro, Ansi.white),
         },
       },
-			label = UI.Window {
+			label = UI.WizardPage {
         index = 2,
         labelText = UI.Text {
           x = 3, y = 2,
@@ -51,7 +51,7 @@ local page = UI.Page {
           value = string.format(labelIntro, Ansi.white),
         },
       },
-			password = UI.Window {
+			password = UI.WizardPage {
 				index = 3,
         labelText = UI.Text {
           x = 3, y = 2,
@@ -73,7 +73,7 @@ local page = UI.Page {
           value = string.format(passwordIntro, Ansi.white),
         },
 			},
-			packages = UI.Window {
+			packages = UI.WizardPage {
 				index = 4,
         button = UI.Button {
           x = 3, y = -3,

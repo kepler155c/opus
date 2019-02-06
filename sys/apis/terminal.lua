@@ -1,205 +1,202 @@
+local Canvas = require('ui.canvas')
+
 local colors = _G.colors
 local term   = _G.term
 local _gsub  = string.gsub
-local _rep = string.rep
-local _sub = string.sub
 
 local Terminal = { }
 
--- add scrolling functions to a window
-function Terminal.scrollable(win, maxScroll)
-	local lines = { }
-	local scrollPos = 0
-	local oblit, oreposition = win.blit, win.reposition
-
-	local palette = { }
-	for n = 1, 16 do
-		palette[2 ^ (n - 1)] = _sub("0123456789abcdef", n, n)
+-- Replacement for window api with scrolling and buffering
+function Terminal.window(parent, sx, sy, w, h, isVisible)
+	isVisible = isVisible ~= false
+	if not w or not h then
+		w, h = parent.getSize()
 	end
 
-	maxScroll = maxScroll or 100
+	local win = { }
+	local maxScroll = 100
+	local cx, cy = 1, 1
+	local blink = false
+	local bg, fg = parent.getBackgroundColor(), parent.getTextColor()
 
-	-- should only do if window is visible...
-	local function redraw()
-		local _, h = win.getSize()
-		local x, y = win.getCursorPos()
-		for i = 1, h do
-			local line = lines[i + scrollPos]
-			if line and line.dirty then
-				win.setCursorPos(1, i)
-				oblit(line.text, line.fg, line.bg)
-				line.dirty = false
-			end
-		end
-		win.setCursorPos(x, y)
-	end
+	local canvas = Canvas({
+		x       = sx,
+		y       = sy,
+		width   = w,
+		height  = h,
+		isColor = parent.isColor(),
+	})
+	canvas.offy = 0
 
-	local function scrollTo(p, forceRedraw)
-		local _, h = win.getSize()
-		local ms = #lines - h            -- max scroll
-		p = math.min(math.max(p, 0), ms) -- normalize
-
-		if p ~= scrollPos or forceRedraw then
-			scrollPos = p
-			for _, line in pairs(lines) do
-				line.dirty = true
-			end
+	local function update()
+		if isVisible then
+			canvas:render(parent)
+			win.setCursorPos(cx, cy)
 		end
 	end
 
-	function win.write(text)
-		local _, h = win.getSize()
+	local function scrollTo(y)
+		y = math.max(0, y)
+		y = math.min(#canvas.lines - canvas.height, y)
 
-		text = tostring(text) or ''
-		scrollTo(#lines - h)
-		win.blit(text,
-			_rep(palette[win.getTextColor()], #text),
-			_rep(palette[win.getBackgroundColor()], #text))
-		local x, y = win.getCursorPos()
-		win.setCursorPos(x + #text, y)
-	end
-
-	function win.clearLine()
-		local w, h = win.getSize()
-		local _, y = win.getCursorPos()
-
-		scrollTo(#lines - h)
-		lines[y + scrollPos] = {
-			text = _rep(' ', w),
-			fg = _rep(palette[win.getTextColor()], w),
-			bg = _rep(palette[win.getBackgroundColor()], w),
-			dirty = true,
-		}
-		redraw()
-	end
-
-	function win.blit(text, fg, bg)
-		local x, y = win.getCursorPos()
-		local w, h = win.getSize()
-
-		if y > 0 and y <= h and x <= w then
-			local width = #text
-
-			-- fix ffs
-			if x < 1 then
-				text = _sub(text, 2 - x)
-				if bg then
-					bg = _sub(bg, 2 - x)
-				end
-				if bg then
-					fg = _sub(fg, 2 - x)
-				end
-				width = width + x - 1
-				x = 1
-			end
-
-			if x + width - 1 > w then
-				text = _sub(text, 1, w - x + 1)
-				if bg then
-					bg = _sub(bg, 1, w - x + 1)
-				end
-				if bg then
-					fg = _sub(fg, 1, w - x + 1)
-				end
-				width = #text
-			end
-
-			if width > 0 then
-				local function replace(sstr, pos, rstr)
-					if pos == 1 and width == w then
-						return rstr
-					elseif pos == 1 then
-						return rstr .. _sub(sstr, pos+width)
-					elseif pos + width > w then
-						return _sub(sstr, 1, pos-1) .. rstr
-					end
-					return _sub(sstr, 1, pos-1) .. rstr .. _sub(sstr, pos+width)
-				end
-
-				local line = lines[y + scrollPos]
-				line.dirty = true
-				line.text = replace(line.text, x, text, width)
-				if fg then
-					line.fg = replace(line.fg, x, fg, width)
-				end
-				if bg then
-					line.bg = replace(line.bg, x, bg, width)
-				end
-			end
+		if y ~= canvas.offy then
+			canvas.offy = y
+			canvas:dirty()
+			update()
 		end
-		redraw()
+	end
+
+	function win.write(str)
+		str = tostring(str) or ''
+		canvas:write(cx, cy + canvas.offy, str, bg, fg)
+		win.setCursorPos(cx + #str, cy)
+		update()
+	end
+
+	function win.blit(str, fg, bg)
+		canvas:blit(cx, cy + canvas.offy, str, bg, fg)
+		win.setCursorPos(cx + #str, cy)
+		update()
 	end
 
 	function win.clear()
-		local w, h = win.getSize()
-
-		local text = _rep(' ', w)
-		local fg = _rep(palette[win.getTextColor()], w)
-		local bg = _rep(palette[win.getBackgroundColor()], w)
-		lines = { }
-		for y = 1, h do
-			lines[y] = {
-				dirty = true,
-				text = text,
-				fg = fg,
-				bg = bg,
-			}
+		canvas.offy = 0
+		canvas:clear(bg, fg)
+		for i = #canvas.lines, canvas.height + 1, -1 do
+			canvas.lines[i] = nil
 		end
-		scrollPos = 0
-		redraw()
+		update()
 	end
 
-	-- doesn't support negative scrolling...
+	function win.clearLine()
+		canvas:clearLine(cy, bg, fg)
+		win.setCursorPos(cx, cy)
+		update()
+	end
+
+	function win.getCursorPos()
+		return cx, cy
+	end
+
+	function win.setCursorPos(x, y)
+		cx, cy = x, y
+		parent.setCursorPos(x + canvas.x - 1, y + canvas.y - 1)
+	end
+
+	function win.setCursorBlink(b)
+		blink = b
+		parent.setCursorBlink(b)
+	end
+
+	function win.isColor()
+		return canvas.isColor
+	end
+	win.isColour = win.isColor
+
+	function win.setTextColor(c)
+		fg = c
+	end
+	win.setTextColour = win.setTextColor
+
+	function win.setBackgroundColor(c)
+		bg = c
+	end
+	win.setBackgroundColour = win.setBackgroundColor
+
+	function win.getSize()
+		return canvas.width, canvas.height
+	end
+
 	function win.scroll(n)
-		local w = win.getSize()
-
-		for _ = 1, n do
-			lines[#lines + 1] = {
-				text = _rep(' ', w),
-				fg = _rep(palette[win.getTextColor()], w),
-				bg = _rep(palette[win.getBackgroundColor()], w),
-			}
+		n = n or 1
+		if n > 0 then
+			for _ = 1, n do
+				canvas.lines[#canvas.lines + 1] = { }
+				canvas:clearLine(#canvas.lines, bg, fg)
+			end
+			while #canvas.lines > maxScroll do
+				table.remove(canvas.lines, 1)
+			end
+			scrollTo(#canvas.lines - canvas.height)
+			canvas.offy = #canvas.lines - canvas.height
+			canvas:dirty()
+			update()
 		end
+	end
 
-		while #lines > maxScroll do
-			table.remove(lines, 1)
+	function win.getTextColor()
+		return fg
+	end
+	win.getTextColour = win.getTextColor
+
+	function win.getBackgroundColor()
+		return bg
+	end
+	win.getBackgroundColour = win.getBackgroundColor
+
+	function win.setVisible(visible)
+		if visible ~= isVisible then
+			isVisible = visible
+			if isVisible then
+				canvas:dirty()
+				update()
+			end
 		end
+	end
 
-		scrollTo(maxScroll, true)
-		redraw()
+	function win.redraw()
+		if isVisible then
+			canvas:dirty()
+			canvas:render(parent)
+		end
+	end
+
+	function win.restoreCursor()
+		win.setCursorPos(cx, cy)
+		win.setCursorBlink(blink)
+	end
+
+	function win.getPosition()
+		return canvas.x, canvas.y
+	end
+
+	function win.reposition(x, y, width, height)
+		canvas.x, canvas.y = x, y
+		canvas:resize(width or canvas.width, height or canvas.height)
+	end
+
+	--[[ Additional methods ]]--
+	function win.scrollDown()
+		scrollTo(canvas.offy + 1)
 	end
 
 	function win.scrollUp()
-		scrollTo(scrollPos - 1)
-		redraw()
+		scrollTo(canvas.offy - 1)
 	end
 
-	function win.scrollDown()
-		scrollTo(scrollPos + 1)
-		redraw()
+	function win.scrollTop()
+		scrollTo(0)
 	end
 
-	function win.reposition(x, y, nw, nh)
-		local w, h = win.getSize()
-		local D = (nh or h) - h
-
-		if D > 0 then
-			for _ = 1, D do
-				lines[#lines + 1] = {
-					text = _rep(' ', w),
-					fg = _rep(palette[win.getTextColor()], w),
-					bg = _rep(palette[win.getBackgroundColor()], w),
-				}
-			end
-		elseif D < 0 then
-			for _ = D, -1 do
-				lines[#lines] = nil
-			end
-		end
-		return oreposition(x, y, nw, nh)
+	function win.scrollBottom()
+		scrollTo(#canvas.lines)
 	end
 
-	win.clear()
+	function win.setMaxScroll(ms)
+		maxScroll = ms
+	end
+
+	function win.getCanvas()
+		return canvas
+	end
+
+	function win.getParent()
+		return parent
+	end
+
+	canvas:clear()
+
+	return win
 end
 
 -- get windows contents

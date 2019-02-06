@@ -252,7 +252,7 @@ end
 function page.container:setCategory(categoryName, animate)
 	-- reset the viewport window
 	self.children = { }
-	self.offy = 0
+	self:reset()
 
 	local function filter(it, f)
 		local ot = { }
@@ -334,10 +334,10 @@ function page.container:setCategory(categoryName, animate)
 	for k,child in ipairs(self.children) do
 		if r == 1 then
 			child.x = math.random(1, self.width)
-			child.y = math.random(1, self.height)
+			child.y = math.random(1, self.height - 3)
 		elseif r == 2 then
 			child.x = self.width
-			child.y = self.height
+			child.y = self.height - 3
 		elseif r == 3 then
 			child.x = math.floor(self.width / 2)
 			child.y = math.floor(self.height / 2)
@@ -349,7 +349,7 @@ function page.container:setCategory(categoryName, animate)
 			child.y = row
 			if k == #self.children then
 				child.x = self.width
-				child.y = self.height
+				child.y = self.height - 3
 			end
 		end
 		child.tween = Tween.new(6, child, { x = col, y = row }, 'linear')
@@ -369,10 +369,10 @@ function page.container:setCategory(categoryName, animate)
 	end
 
 	self:initChildren()
-	if animate then                      -- need to fix transitions under layers
-		local function transition(args)
+	if animate then
+		local function transition()
 			local i = 1
-			return function(device)
+			return function()
 				self:clear()
 				for _,child in pairs(self.children) do
 					child.tween:update(1)
@@ -380,7 +380,6 @@ function page.container:setCategory(categoryName, animate)
 					child.y = math.floor(child.y)
 					child:draw()
 				end
-				args.canvas:blit(device, args, args)
 				i = i + 1
 				return i < 7
 			end

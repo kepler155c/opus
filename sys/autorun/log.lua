@@ -25,11 +25,13 @@ local function systemLog()
 
 		if y > 1 then
 			local currentTab = kernel.getFocused()
-			if currentTab.terminal.scrollUp and not currentTab.terminal.noAutoScroll then
-				if dir == -1 then
-					currentTab.terminal.scrollUp()
-				else
-					currentTab.terminal.scrollDown()
+			if currentTab == routine then
+				if currentTab.terminal.scrollUp and not currentTab.terminal.noAutoScroll then
+					if dir == -1 then
+						currentTab.terminal.scrollUp()
+					else
+						currentTab.terminal.scrollDown()
+					end
 				end
 			end
 		end

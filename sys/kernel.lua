@@ -14,13 +14,12 @@ local kernel = _G.kernel
 local os     = _G.os
 local shell  = _ENV.shell
 local term   = _G.term
-local window = _G.window
 
 local w, h = term.getSize()
 kernel.terminal = term.current()
-kernel.window = window.create(kernel.terminal, 1, 1, w, h, false)
 
-Terminal.scrollable(kernel.window)
+kernel.window = Terminal.window(kernel.terminal, 1, 1, w, h, false)
+kernel.window.setMaxScroll(100)
 
 local focusedRoutineEvents = Util.transpose {
 	'char', 'key', 'key_up',
@@ -30,6 +29,7 @@ local focusedRoutineEvents = Util.transpose {
 
 _G._debug = function(pattern, ...)
 	local oldTerm = term.redirect(kernel.window)
+	kernel.window.scrollBottom()
 	Util.print(pattern, ...)
 	term.redirect(oldTerm)
 end

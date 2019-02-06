@@ -45,8 +45,10 @@ local page = UI.Page {
 		help = 'Download the latest package list',
 	},
 	action = UI.SlideOut {
-		backgroundColor = colors.cyan,
+		backgroundColor = colors.brown,
+		y = 3,
 		titleBar = UI.TitleBar {
+			backgroundColor = colors.brown,
 			event = 'hide-action',
 		},
 		button = UI.Button {
@@ -55,9 +57,6 @@ local page = UI.Page {
 		},
 		output = UI.Embedded {
 			y = 5, ey = -2, x = 2, ex = -2,
-		},
-		statusBar = UI.StatusBar {
-			backgroundColor = colors.cyan,
 		},
 	},
 	statusBar = UI.StatusBar { },
@@ -101,9 +100,10 @@ function page.grid:getRowTextColor(row, selected)
 end
 
 function page.action:show()
+	self.output.win:clear()
 	UI.SlideOut.show(self)
-	self.output:draw()
-	self.output.win.redraw()
+	--self.output:draw()
+	--self.output.win.redraw()
 end
 
 function page:run(operation, name)
@@ -116,6 +116,7 @@ function page:run(operation, name)
 	print(cmd .. '\n')
 	term.setTextColor(colors.white)
 	local s, m = Util.run(_ENV, '/sys/apps/package.lua', operation, name)
+
 	if not s and m then
 		_G.printError(m)
 	end

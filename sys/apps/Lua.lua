@@ -58,6 +58,7 @@ local page = UI.Page {
 	},
 	output = UI.Embedded {
 		y = -6,
+		visible = true,
 		backgroundColor = colors.gray,
 	},
 }
@@ -328,6 +329,7 @@ function page:executeStatement(statement)
 
 	local s, m
 	local oterm = term.redirect(self.output.win)
+	self.output.win.scrollBottom()
 	pcall(function()
 		s, m = self:rawExecute(command)
 	end)

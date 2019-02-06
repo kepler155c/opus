@@ -7,6 +7,9 @@ return function(base)
 	local c = { }    -- a new class instance
 	if type(base) == 'table' then
 		-- our new class is a shallow copy of the base class!
+		if base._preload then
+			base = base._preload(base)
+		end
 		for i,v in pairs(base) do
 			c[i] = v
 		end
