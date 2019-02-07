@@ -12,7 +12,7 @@ end
 
 -- TODO: Temporary
 local upgrade = Util.readTable('usr/config/shell')
-if upgrade and not upgrade.upgraded or upgrade.upgraded ~= 1 then
+if upgrade and (not upgrade.upgraded or upgrade.upgraded ~= 1) then
 	fs.delete('usr/config/shell')
 end
 
