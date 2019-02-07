@@ -220,45 +220,6 @@ function Canvas:clear(bg, fg)
 	end
 end
 
-function Canvas:punch(rect)
-	local offset = { x = 0, y = 0 }
-
-
-	self.regions:subRect(rect.x + offset.x, rect.y + offset.y, rect.ex + offset.x, rect.ey + offset.y)
-end
-
-function Canvas:blitClipped(device, offset)
-	offset = { x = self.x, y = self.y }
-	local parent = self.parent
-	while parent do
-		offset.x = offset.x + parent.x - 1
-		offset.y = offset.y + parent.y - 1
-		parent = parent.parent
-	end
-	for _,region in ipairs(self.regions.region) do
-		self:blitRect(device,
-			{ x = region[1],
-				y = region[2],
-				ex = region[3],
-				ey = region[4] },
-			{ x = region[1] + offset.x - 1, y = region[2] + offset.y - 1 })
-	end
-end
-
-function Canvas:redraw(device)
---	self:dirty()
---	self:render(device)
-	if #self.layers > 0 then
-		for _,layer in pairs(self.layers) do
-			self:punch(layer)
-		end
-		self:blitClipped(device)
-	else
-		self:renderLayers(device)
-	end
-	self:clean()
-end
-
 function Canvas:isDirty()
 	for i = 1, #self.lines do
 		if self.lines[i].dirty then
@@ -284,46 +245,75 @@ function Canvas:clean()
 	end
 end
 
-function Canvas:renderLayers(device, offset)
-	if not offset then
-		offset = { x = self.x, y = self.y }
+function Canvas:applyPalette(palette)
+	local lookup = { }
+	for n = 1, 16 do
+		lookup[self.palette[2 ^ (n - 1)]] = palette[2 ^ (n - 1)]
 	end
+
+	for _, l in pairs(self.lines) do
+		l.fg = _gsub(l.fg, '%w', lookup)
+		l.bg = _gsub(l.bg, '%w', lookup)
+		l.dirty = true
+	end
+
+	self.palette = palette
+end
+
+function Canvas:render(device)
 	if #self.layers > 0 then
-		self.regions = Region.new(1, 1, self.ex, self.ey)
+		self:__renderLayers(device, { x = 0, y = 0 })
+	else
+		self:__blitRect(device)
+		self:clean()
+	end
+end
+
+-- regions are comprised of absolute values that coorespond to the output device.
+-- canvases have coordinates relative to their parent.
+-- canvas layer's stacking order is determined by the position within the array.
+-- layers in the beginning of the array are overlayed by layers further down in
+-- the array.
+function Canvas:__renderLayers(device, offset)
+	if #self.layers > 0 then
+		self.regions = self.regions or Region.new(self.x, self.y, self.ex, self.ey)
 
 		for i = 1, #self.layers do
 			local canvas = self.layers[i]
 			if canvas.visible then
 
 				-- punch out this area from the parent's canvas
-				self:punch(canvas)
+				self:__punch(canvas, offset)
 
 				-- get the area to render for this layer
-				canvas.regions = Region.new(canvas.x, canvas.y, canvas.ex, canvas.ey)
+				canvas.regions = Region.new(
+					canvas.x + offset.x,
+					canvas.y + offset.y,
+					canvas.ex + offset.x,
+					canvas.ey + offset.y)
 
-				-- determine if we should render this layer by punching
-				-- out any layers that overlap this one
+				-- punch out any layers that overlap this one
 				for j  = i + 1, #self.layers do
 					if self.layers[j].visible then
-						canvas:punch(self.layers[j])
+						canvas:__punch(self.layers[j], offset)
 					end
 				end
+				if #canvas.regions.region > 0 then
+					canvas:__renderLayers(device, {
+						x = canvas.x + offset.x - 1,
+						y = canvas.y + offset.y - 1,
+					})
+				end
+				canvas.regions = nil
 			end
 		end
 
-		for _, canvas in ipairs(self.layers) do
-			if canvas.visible and #canvas.regions.region > 0 then
-				canvas:renderLayers(device, {
-					x = canvas.x, --offset.x + self.x - 1,
-					y = canvas.y,
-				})
-			end
-		end
+		self:__blitClipped(device, offset)
+		self.regions = nil
 
-		self:blitClipped(device, offset)
-
-	--elseif #self.regions.region > 0 then
-	--	self:blitClipped(device, offset)
+	elseif self.regions and #self.regions.region > 0 then
+		self:__blitClipped(device, offset)
+		self.regions = nil
 
 	else
 		offset = { x = self.x, y = self.y }
@@ -333,25 +323,56 @@ function Canvas:renderLayers(device, offset)
 			offset.y = offset.y + parent.y - 1
 			parent = parent.parent
 		end
-		self:blitRect(device, nil, offset)
+		self:__blitRect(device, nil, offset)
+		self.regions = nil
 	end
 	self:clean()
 end
 
-function Canvas:render(device)
-	--_G._p = self
-	if #self.layers > 0 then
-		self:renderLayers(device)
-	else
-		self:blitRect(device)
-		self:clean()
+function Canvas:__blitClipped(device, offset)
+	for _,region in ipairs(self.regions.region) do
+		self:__blitRect(device,
+			{ x = region[1] - offset.x,
+				y = region[2] - offset.y,
+				ex = region[3] - offset.x,
+				ey = region[4] - offset.y},
+			{ x = region[1], y = region[2] })
 	end
 end
 
-function Canvas:blitRect(device, src, tgt)
+function Canvas:__punch(rect, offset)
+	self.regions:subRect(
+		rect.x + offset.x,
+		rect.y + offset.y,
+		rect.ex + offset.x,
+		rect.ey + offset.y)
+end
+
+function Canvas:__blitRect(device, src, tgt)
 	src = src or { x = 1, y = 1, ex = self.ex - self.x + 1, ey = self.ey - self.y + 1 }
 	tgt = tgt or self
 
+	--[[
+		-- for visualizing updates on the screen
+	local drew
+	for i = 0, src.ey - src.y do
+		local line = self.lines[src.y + i + (self.offy or 0)]
+		if line and line.dirty then
+			drew = true
+			local t, fg, bg = line.text, line.fg, line.bg
+			if src.x > 1 or src.ex < self.ex then
+				t  = _sub(t, src.x, src.ex)
+				fg = _rep(1, src.ex-src.x + 1)
+				bg = _rep(2, src.ex-src.x + 1)
+			end
+			device.setCursorPos(tgt.x, tgt.y + i)
+			device.blit(t, fg, bg)
+		end
+	end
+	if drew then
+		os.sleep(.3)
+	end
+	]]
 	for i = 0, src.ey - src.y do
 		local line = self.lines[src.y + i + (self.offy or 0)]
 		if line and line.dirty then
@@ -365,23 +386,6 @@ function Canvas:blitRect(device, src, tgt)
 			device.blit(t, fg, bg)
 		end
 	end
-	--os.sleep(.1)
-end
-
-function Canvas:applyPalette(palette)
-
-	local lookup = { }
-	for n = 1, 16 do
-		lookup[self.palette[2 ^ (n - 1)]] = palette[2 ^ (n - 1)]
-	end
-
-	for _, l in pairs(self.lines) do
-		l.fg = _gsub(l.fg, '%w', lookup)
-		l.bg = _gsub(l.bg, '%w', lookup)
-		l.dirty = true
-	end
-
-	self.palette = palette
 end
 
 return Canvas
