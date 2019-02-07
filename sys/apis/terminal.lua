@@ -28,6 +28,8 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	})
 	canvas.offy = 0
 
+	win.canvas = canvas
+
 	local function update()
 		if isVisible then
 			canvas:render(parent)
@@ -97,6 +99,16 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		fg = c
 	end
 	win.setTextColour = win.setTextColor
+
+	function win.getPaletteColor(n)
+		return parent.getPaletteColor(n)
+	end
+	win.getPaletteColour = win.getPaletteColor
+
+	function win.setPaletteColor(n, r, g, b)
+		return parent.setPaletteColor(n, r, g, b)
+	end
+	win.setPaletteColour = win.setPaletteColor
 
 	function win.setBackgroundColor(c)
 		bg = c

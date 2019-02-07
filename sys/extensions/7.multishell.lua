@@ -2,6 +2,7 @@ _G.requireInjector(_ENV)
 
 local Config   = require('config')
 local Packages = require('packages')
+local trace    = require('trace')
 local Util     = require('util')
 
 local colors     = _G.colors
@@ -104,6 +105,15 @@ function multishell.launch( tProgramEnv, sProgramPath, ... )
 	})
 end
 
+local function xprun(env, path, ...)
+	setmetatable(env, { __index = _G })
+	local fn, m = loadfile(path, env)
+	if fn then
+		return trace(fn, ...)
+	end
+	return fn, m
+end
+
 function multishell.openTab(tab)
 	if not tab.title and tab.path then
 		tab.title = fs.getName(tab.path):match('([^%.]+)')
@@ -120,7 +130,7 @@ function multishell.openTab(tab)
 		if tab.fn then
 			result, err = Util.runFunction(routine.env, tab.fn, table.unpack(tab.args or { } ))
 		elseif tab.path then
-			result, err = Util.run(routine.env, tab.path, table.unpack(tab.args or { } ))
+			result, err = xprun(routine.env, tab.path, table.unpack(tab.args or { } ))
 		else
 			err = 'multishell: invalid tab'
 		end

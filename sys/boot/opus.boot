@@ -48,7 +48,16 @@ if fs.exists('sys/apis/injector.lua') then
 	_G.requireInjector = run('sys/apis/injector.lua')
 else
 	-- not local, run the file system directly from git
+	if package and package.path then
+		package.path = package.path .. ';' .. BASE .. '/sys/apis'
+	else
+		sandboxEnv.package = {
+			path = BASE .. '/sys/apis'
+		}
+	end
+
 	_G.requireInjector = runUrl('sys/apis/injector.lua')
+
 	runUrl('sys/extensions/2.vfs.lua')
 
 	-- install file system

@@ -3,13 +3,13 @@ local UI     = require('ui')
 local Util   = require('util')
 
 local tab = UI.Tab {
-	tabTitle = 'Path',
-	description = 'Set the shell path',
+	tabTitle = 'Requires',
+	description = 'Require path',
 	tabClose = true,
 	entry = UI.TextEntry {
 		x = 2, y = 2, ex = -2,
 		limit = 256,
-		shadowText = 'enter new path',
+		shadowText = 'Enter new require path',
 		accelerators = {
 			enter = 'update_path',
 		},
@@ -19,13 +19,13 @@ local tab = UI.Tab {
 		y = 4, ey = -3,
 		disableHeader = true,
 		columns = { { key = 'value' } },
-		autospace = true,
+    autospace = true,
     sort = 'index',
     help = 'double-click to remove, shift-arrow to move',
     accelerators = {
       delete = 'remove',
     },
-	},
+  },
   statusBar = UI.StatusBar { },
   accelerators = {
     [ 'shift-up' ] = 'move_up',
@@ -33,9 +33,9 @@ local tab = UI.Tab {
   },
 }
 
-function tab:updateList(path)
+function tab:updateList(lua_path)
 	self.grid.values = { }
-	for k,v in ipairs(Util.split(path, '(.-):')) do
+	for k,v in ipairs(Util.split(lua_path, '(.-);')) do
 		table.insert(self.grid.values, { index = k, value = v })
   end
   self.grid:update()
@@ -43,7 +43,7 @@ end
 
 function tab:enable()
   local env = Config.load('shell')
-  self:updateList(env.path)
+  self:updateList(env.lua_path)
 	UI.Tab.enable(self)
 end
 
@@ -53,8 +53,8 @@ function tab:save()
     table.insert(t, v.value)
   end
   local env = Config.load('shell')
-  env.path = table.concat(t, ':')
-  self:updateList(env.path)
+  env.lua_path = table.concat(t, ';')
+  self:updateList(env.lua_path)
   Config.update('shell', env)
 end
 
@@ -63,7 +63,7 @@ function tab:eventHandler(event)
     table.insert(self.grid.values, {
       value = self.entry.value,
     })
-		self:save()
+    self:save()
 		self.entry:reset()
     self.entry:draw()
     self.grid:draw()

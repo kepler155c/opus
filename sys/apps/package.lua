@@ -50,21 +50,13 @@ local function install(name, isUpdate)
 		name))
 
 	local packageDir = fs.combine('packages', name)
-	local method = args[2] or 'local'
-	if method == 'remote' then
-		Util.writeTable(packageDir .. '/.install', {
-			mount = string.format('%s gitfs %s', packageDir, manifest.repository),
-		})
-		Util.writeTable(fs.combine(packageDir, '.package'), manifest)
-	else
-		local list = Git.list(manifest.repository)
-		local showProgress = progress(Util.size(list))
-		for path, entry in pairs(list) do
-			Util.download(entry.url, fs.combine(packageDir, path))
-			showProgress()
-		end
+
+	local list = Git.list(manifest.repository)
+	local showProgress = progress(Util.size(list))
+	for path, entry in pairs(list) do
+		Util.download(entry.url, fs.combine(packageDir, path))
+		showProgress()
 	end
-	return
 end
 
 if action == 'list' then

@@ -10,11 +10,9 @@ if not fs.exists('usr/autorun') then
 	fs.makeDir('usr/autorun')
 end
 
-local lua_path = package.path
-
 -- TODO: Temporary
 local upgrade = Util.readTable('usr/config/shell')
-if upgrade and not upgrade.upgraded then
+if upgrade and not upgrade.upgraded or upgrade.upgraded ~= 1 then
 	fs.delete('usr/config/shell')
 end
 
@@ -22,8 +20,8 @@ if not fs.exists('usr/config/shell') then
 	Util.writeTable('usr/config/shell', {
 		aliases  = shell.aliases(),
 		path     = 'usr/apps',
-		lua_path = lua_path,
-		upgraded = true,
+		lua_path = package.path,
+		upgraded = 1,
 	})
 end
 
@@ -44,8 +42,7 @@ for _, v in pairs(Util.split(shell.path(), '(.-):')) do
 end
 
 shell.setPath(table.concat(path, ':'))
--- TODO: replace when stable (old lua path is now incorrect)
--- _G.LUA_PATH = config.lua_path
-_G.LUA_PATH = package.path
+
+_G.LUA_PATH = config.lua_path
 
 fs.loadTab('usr/config/fstab')

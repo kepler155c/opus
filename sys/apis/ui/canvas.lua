@@ -246,17 +246,17 @@ function Canvas:blitClipped(device, offset)
 end
 
 function Canvas:redraw(device)
---[[
+--	self:dirty()
+--	self:render(device)
 	if #self.layers > 0 then
 		for _,layer in pairs(self.layers) do
 			self:punch(layer)
 		end
 		self:blitClipped(device)
 	else
-		self:blit(device)
+		self:renderLayers(device)
 	end
 	self:clean()
-]]
 end
 
 function Canvas:isDirty()
@@ -382,63 +382,6 @@ function Canvas:applyPalette(palette)
 	end
 
 	self.palette = palette
-end
-
-function Canvas.convertWindow(win, parent, wx, wy)
-	local w, h = win.getSize()
-
-	win.canvas = Canvas({
-		x       = wx,
-		y       = wy,
-		width   = w,
-		height  = h,
-		isColor = win.isColor(),
-	})
-
-	function win.clear()
-		win.canvas:clear(win.getBackgroundColor(), win.getTextColor())
-	end
-
-	function win.clearLine()
-		local _, y = win.getCursorPos()
-		win.canvas:write(1,
-			y,
-			_rep(' ', win.canvas.width),
-			win.getBackgroundColor(),
-			win.getTextColor())
-	end
-
-	function win.write(str)
-		local x, y = win.getCursorPos()
-		win.canvas:write(x,
-			y,
-			str,
-			win.getBackgroundColor(),
-			win.getTextColor())
-		win.setCursorPos(x + #str, y)
-	end
-
-	function win.blit(text, fg, bg)
-		local x, y = win.getCursorPos()
-		win.canvas:blit(x, y, text, bg, fg)
-	end
-
-	function win.redraw()
-		win.canvas:redraw(parent)
-	end
-
-	function win.scroll(n)
-		table.insert(win.canvas.lines, table.remove(win.canvas.lines, 1))
-		win.canvas.lines[#win.canvas.lines].text = _rep(' ', win.canvas.width)
-		win.canvas:dirty()
-	end
-
-	function win.reposition(x, y, width, height)
-		win.canvas.x, win.canvas.y = x, y
-		win.canvas:resize(width or win.canvas.width, height or win.canvas.height)
-	end
-
-	win.clear()
 end
 
 return Canvas

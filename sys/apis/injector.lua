@@ -23,8 +23,6 @@ table.insert(luaPaths, 5, '/sys/apis/?.lua')
 table.insert(luaPaths, 6, '/sys/apis/?/init.lua')
 
 local DEFAULT_PATH   = table.concat(luaPaths, ';')
-local DEFAULT_BRANCH = _ENV.OPUS_BRANCH or _G.OPUS_BRANCH or 'develop-1.8'
-local DEFAULT_UPATH  = GIT_URL .. '/kepler155c/opus/' .. DEFAULT_BRANCH .. '/sys/apis'
 
 local fs     = _G.fs
 local http   = _G.http
@@ -32,7 +30,7 @@ local os     = _G.os
 local string = _G.string
 
 if not http._patched then
-	-- fix broken http get
+	-- fix broken http get (http.get is not coroutine safe)
 	local syncLocks = { }
 
 	local function sync(obj, fn)
@@ -110,6 +108,12 @@ return function(env)
 			end
 			if fs.exists(sPath) and not fs.isDir(sPath) then
 				return loadfile(sPath, env)
+			elseif sPath:match("^(https?:)") then
+				print('loading ' .. sPath)
+				local c = loadUrl(sPath)
+				if c then
+					return load(c, modname, nil, env)
+				end
 			end
 		end
 	end
@@ -138,24 +142,9 @@ return function(env)
 		end
 	end
 
-	local function urlSearcher(modname)
-		local fname = modname:gsub('%.', '/') .. '.lua'
-
-		if fname:sub(1, 1) ~= '/' then
-			for entry in string.gmatch(env.package.upath, "[^;]+") do
-				local url = entry .. '/' .. fname
-				local c = loadUrl(url)
-				if c then
-					return load(c, modname, nil, env)
-				end
-			end
-		end
-	end
-
 	-- place package and require function into env
 	env.package = {
 		path   = env.LUA_PATH  or _G.LUA_PATH  or DEFAULT_PATH,
-		upath  = env.LUA_UPATH or _G.LUA_UPATH or DEFAULT_UPATH,
 		config = '/\n:\n?\n!\n-',
 		preload = { },
 		loaded = {
@@ -172,7 +161,6 @@ return function(env)
 			pathSearcher,
 			pastebinSearcher,
 			gitSearcher,
-			urlSearcher,
 		}
 	}
 

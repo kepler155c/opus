@@ -8,6 +8,10 @@ if not args[1] then
   error('Syntax: cedit <filename>')
 end
 
+if not _G.http.websocket then
+  error('Requires CC: Tweaked')
+end
+
 if not _G.cloud_catcher then
   print('Paste key: ')
   local key = read()
