@@ -101,12 +101,17 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	win.setTextColour = win.setTextColor
 
 	function win.getPaletteColor(n)
-		return parent.getPaletteColor(n)
+		if parent.getPaletteColor then
+			return parent.getPaletteColor(n)
+		end
+		return 0, 0, 0
 	end
 	win.getPaletteColour = win.getPaletteColor
 
 	function win.setPaletteColor(n, r, g, b)
-		return parent.setPaletteColor(n, r, g, b)
+		if parent.setPaletteColor then
+			return parent.setPaletteColor(n, r, g, b)
+		end
 	end
 	win.setPaletteColour = win.setPaletteColor
 

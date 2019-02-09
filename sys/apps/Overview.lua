@@ -100,10 +100,11 @@ local page = UI.Page {
 		newApp = UI.Button {
 			text = '+', event = 'new',
 		},
+		--[[
 		volume = UI.Button {
 			x = 3,
 			text = '\15', event = 'volume',
-		}
+		},]]
 	},
 	editor = UI.SlideOut {
 		y = -12, height = 12,

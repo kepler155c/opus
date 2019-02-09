@@ -19,9 +19,13 @@ UI.Viewport.defaults = {
 		[ 'control-f' ] = 'scroll_pageDown',
 	},
 }
-function UI.Viewport:setParent()
-	UI.Window.setParent(self)
-	self.canvas = self:addLayer()
+function UI.Viewport:layout()
+	UI.Window.layout(self)
+	if not self.canvas then
+		self.canvas = self:addLayer()
+	else
+		self.canvas:resize(self.width, self.height)
+	end
 end
 
 function UI.Viewport:enable()

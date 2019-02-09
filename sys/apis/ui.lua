@@ -504,9 +504,7 @@ function UI.Window:layout()
 	end
 end
 
--- bad name... should be called something like postInit
--- normally used to determine sizes since the parent is
--- only known at this point
+-- Called when the window's parent has be assigned
 function UI.Window:setParent()
 	self.oh, self.ow = self.height, self.width
 	self.ox, self.oy = self.x, self.y

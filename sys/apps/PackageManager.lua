@@ -57,6 +57,7 @@ local page = UI.Page {
 		},
 		output = UI.Embedded {
 			y = 5, ey = -2, x = 2, ex = -2,
+			visible = true,
 		},
 	},
 	statusBar = UI.StatusBar { },

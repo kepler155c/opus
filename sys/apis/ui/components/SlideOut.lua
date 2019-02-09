@@ -7,12 +7,13 @@ UI.SlideOut.defaults = {
 	UIElement = 'SlideOut',
 	pageType = 'modal',
 }
-function UI.SlideOut:setParent()
-	-- TODO: size should be set at this point
-	self:layout()
-	self.canvas = self:addLayer()
-
-	UI.Window.setParent(self)
+function UI.SlideOut:layout()
+	UI.Window.layout(self)
+	if not self.canvas then
+		self.canvas = self:addLayer()
+	else
+		self.canvas:resize(self.width, self.height)
+	end
 end
 
 function UI.SlideOut:enable()

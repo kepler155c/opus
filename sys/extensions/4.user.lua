@@ -44,5 +44,6 @@ end
 shell.setPath(table.concat(path, ':'))
 
 _G.LUA_PATH = config.lua_path
+_G.settings.set('require.path', config.lua_path)
 
 fs.loadTab('usr/config/fstab')

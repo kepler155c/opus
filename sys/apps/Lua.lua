@@ -1,4 +1,8 @@
-_G.requireInjector(_ENV)
+if not _G.requireInjector then
+	local BASE ='https://raw.githubusercontent.com/kepler155c/opus/develop-1.8/sys/apis'
+	_ENV.LUA_PATH=BASE .. '/?.lua'
+	load(_G.http.get(BASE .. '/injector.lua').readAll())()(_ENV)
+end
 
 local History    = require('history')
 local UI         = require('ui')

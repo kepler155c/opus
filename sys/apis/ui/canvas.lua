@@ -66,6 +66,7 @@ function Canvas:resize(w, h)
 		for i = 1, self.height do
 			self.lines[i] = { dirty = true }
 		end
+		self:clear()
 	end
 
 	self.ex = self.x + w - 1
@@ -261,10 +262,20 @@ function Canvas:applyPalette(palette)
 end
 
 function Canvas:render(device)
+	local offset = { x = 0, y = 0 }
+	local parent = self.parent
+	while parent do
+		offset.x = offset.x + parent.x - 1
+		offset.y = offset.y + parent.y - 1
+		parent = parent.parent
+	end
 	if #self.layers > 0 then
-		self:__renderLayers(device, { x = 0, y = 0 })
+		self:__renderLayers(device, offset)
 	else
-		self:__blitRect(device)
+		self:__blitRect(device, nil, {
+			x = self.x + offset.x,
+			y = self.y + offset.y
+		})
 		self:clean()
 	end
 end
@@ -316,14 +327,10 @@ function Canvas:__renderLayers(device, offset)
 		self.regions = nil
 
 	else
-		offset = { x = self.x, y = self.y }
-		local parent = self.parent
-		while parent do
-			offset.x = offset.x + parent.x - 1
-			offset.y = offset.y + parent.y - 1
-			parent = parent.parent
-		end
-		self:__blitRect(device, nil, offset)
+		self:__blitRect(device, nil, {
+			x = self.x + offset.x,
+			y = self.y + offset.y
+		})
 		self.regions = nil
 	end
 	self:clean()
