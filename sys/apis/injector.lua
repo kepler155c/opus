@@ -89,14 +89,21 @@ return function(env)
 	end
 
 	local function loadedSearcher(modname)
-			if env.package.loaded[modname] then
+		if env.package.loaded[modname] then
 			return function()
 				return env.package.loaded[modname]
 			end
 		end
 	end
 
+	local sentinel = { }
+
 	local function pathSearcher(modname)
+		if env.package.loaded[modname] == sentinel then
+			error("loop or previous error loading module '" .. modname .. "'", 0)
+		end
+		env.package.loaded[modname] = sentinel
+
 		local fname = modname:gsub('%.', '/')
 
 		for pattern in string.gmatch(env.package.path, "[^;]+") do

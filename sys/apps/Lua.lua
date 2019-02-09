@@ -45,27 +45,32 @@ local page = UI.Page {
 			[ 'control-space' ] = 'autocomplete',
 		},
 	},
-	grid = UI.ScrollingGrid {
-		y = 3, ey = -2,
-		columns = {
-			{ heading = 'Key',   key = 'name'  },
-			{ heading = 'Value', key = 'value' },
+	tabs = UI.Tabs {
+		y = 3,
+		[1] = UI.Tab {
+			tabTitle = 'Formatted',
+			grid = UI.ScrollingGrid {
+				columns = {
+					{ heading = 'Key',   key = 'name'  },
+					{ heading = 'Value', key = 'value' },
+				},
+				sortColumn = 'name',
+				autospace = true,
+			},
 		},
-		sortColumn = 'name',
-		autospace = true,
-	},
-	titleBar = UI.TitleBar {
-		title = 'Output',
-		y = -1,
-		event = 'show_output',
-		closeInd = '^'
-	},
-	output = UI.Embedded {
-		y = -6,
-		visible = true,
-		backgroundColor = colors.gray,
+		[2] = UI.Tab {
+			tabTitle = 'Output',
+			output = UI.Embedded {
+				visible = true,
+				maxScroll = 1000,
+				backgroundColor = colors.black,
+			},
+		},
 	},
 }
+
+page.grid = page.tabs[1].grid
+page.output = page.tabs[2].output
 
 function page:setPrompt(value, focus)
 	self.prompt:setValue(value)
@@ -84,9 +89,8 @@ function page:setPrompt(value, focus)
 end
 
 function page:enable()
-	self:setFocus(self.prompt)
 	UI.Page.enable(self)
-	self.output:disable()
+	self:setFocus(self.prompt)
 end
 
 local function autocomplete(env, oLine, x)
@@ -145,18 +149,11 @@ function page:eventHandler(event)
 
 		self:draw()
 
+	elseif event.type == 'tab_select' then
+		self:setFocus(self.prompt)
+
 	elseif event.type == 'show_output' then
-		self.output:enable()
-
-		self.titleBar.oy = -7
-		self.titleBar.event = 'hide_output'
-		self.titleBar.closeInd = 'v'
-		self.titleBar:resize()
-
-		self.grid.ey = -8
-		self.grid:resize()
-
-		self:draw()
+		self.tabs:selectTab(self.tabs[2])
 
 	elseif event.type == 'autocomplete' then
 		local sz = #self.prompt.value
@@ -186,8 +183,6 @@ function page:eventHandler(event)
 		local s = tostring(self.prompt.value)
 
 		if #s > 0 then
-			history:add(s)
-			history:back()
 			self:executeStatement(s)
 		else
 			local t = { }
@@ -331,9 +326,18 @@ end
 function page:executeStatement(statement)
 	command = statement
 
+	history:add(statement)
+	history:back()
+
 	local s, m
 	local oterm = term.redirect(self.output.win)
 	self.output.win.scrollBottom()
+	local bg, fg = term.getBackgroundColor(), term.getTextColor()
+	term.setBackgroundColor(colors.black)
+	term.setTextColor(colors.yellow)
+	print('> ' .. tostring(statement))
+	term.setBackgroundColor(bg)
+	term.setTextColor(fg)
 	pcall(function()
 		s, m = self:rawExecute(command)
 	end)

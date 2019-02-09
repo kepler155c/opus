@@ -13,7 +13,7 @@ local tab = UI.Tab {
 		accelerators = {
 			enter = 'update_path',
 		},
-    help = 'add a new path',
+    help = 'add a new path (reboot required)',
 	},
 	grid = UI.Grid {
 		y = 4, ey = -3,
