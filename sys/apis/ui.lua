@@ -824,12 +824,19 @@ function UI.Window:scrollIntoView()
 		parent:draw()
 	end
 
+	-- TODO: fix
+	local function setOffset(y)
+		parent.offy = y
+		if parent.canvas then
+			parent.canvas.offy = parent.offy
+		end
+		parent:draw()
+	end
+
 	if self.y <= parent.offy then
-		parent.offy = math.max(0, self.y - 1)
-		parent:draw()
+		setOffset(math.max(0, self.y - 1))
 	elseif self.y + self.height > parent.height + parent.offy then
-		parent.offy = self.y + self.height - parent.height - 1
-		parent:draw()
+		setOffset(self.y + self.height - parent.height - 1)
 	end
 end
 
