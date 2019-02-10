@@ -56,6 +56,7 @@ end
 function Canvas:resize(w, h)
 	for i = #self.lines, h do
 		self.lines[i] = { }
+		self:clearLine(i)
 	end
 
 	while #self.lines > h do
@@ -63,9 +64,6 @@ function Canvas:resize(w, h)
 	end
 
 	if w ~= self.width then
-		for i = 1, self.height do
-			self.lines[i] = { dirty = true }
-		end
 		self:clear()
 	end
 
