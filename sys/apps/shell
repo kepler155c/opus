@@ -371,10 +371,10 @@ local oldTerm
 local terminal = term.current()
 
 if not terminal.scrollUp then
-	local Terminal = require('terminal')
-	terminal = Terminal.window(term.current())
-	terminal.setMaxScroll(200)
-	oldTerm = term.redirect(terminal)
+--	local Terminal = require('terminal')
+--	terminal = Terminal.window(term.current())
+--	terminal.setMaxScroll(200)
+--	oldTerm = term.redirect(terminal)
 end
 
 local config = {
