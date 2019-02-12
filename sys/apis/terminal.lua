@@ -63,15 +63,15 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 
 	function win.clear()
 		canvas.offy = 0
-		canvas:clear(bg, fg)
 		for i = #canvas.lines, canvas.height + 1, -1 do
 			canvas.lines[i] = nil
 		end
+		canvas:clear(bg, fg)
 		update()
 	end
 
 	function win.clearLine()
-		canvas:clearLine(cy, bg, fg)
+		canvas:clearLine(cy + canvas.offy, bg, fg)
 		win.setCursorPos(cx, cy)
 		update()
 	end
@@ -127,15 +127,15 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	function win.scroll(n)
 		n = n or 1
 		if n > 0 then
-			for _ = 1, n do
-				canvas.lines[#canvas.lines + 1] = { }
-				canvas:clearLine(#canvas.lines, bg, fg)
+			local lines = #canvas.lines
+			for i = 1, n do
+				canvas.lines[lines + i] = { }
+				canvas:clearLine(lines + i, bg, fg)
 			end
 			while #canvas.lines > maxScroll do
 				table.remove(canvas.lines, 1)
 			end
-			scrollTo(#canvas.lines - canvas.height)
-			canvas.offy = #canvas.lines - canvas.height
+			scrollTo(#canvas.lines)
 			canvas:dirty()
 			update()
 		end
