@@ -314,9 +314,9 @@ function shell.newTab(tabInfo, ...)
 		tabInfo.args = args
 		tabInfo.title = fs.getName(path):match('([^%.]+)')
 
-		if path ~= 'sys/apps/shell' then
+		if path ~= 'sys/apps/shell.lua' then
 			table.insert(tabInfo.args, 1, tabInfo.path)
-			tabInfo.path = 'sys/apps/shell'
+			tabInfo.path = 'sys/apps/shell.lua'
 		end
 		return _ENV.multishell.openTab(tabInfo)
 	end
@@ -329,10 +329,10 @@ function shell.openTab( ... )
 	local sCommand = tWords[1]
 	if sCommand then
 		local sPath = shell.resolveProgram(sCommand)
-		if sPath == "sys/apps/shell" then
+		if sPath == "sys/apps/shell.lua" then
 			return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), sPath, table.unpack(tWords, 2))
 		else
-			return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), "sys/apps/shell", sCommand, table.unpack(tWords, 2))
+			return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), "sys/apps/shell.lua", sCommand, table.unpack(tWords, 2))
 		end
 	end
 end

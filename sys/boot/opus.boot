@@ -64,7 +64,7 @@ else
 	fs.mount('', 'gitfs', GIT_REPO)
 end
 
-local s, m = pcall(run, 'sys/apps/shell', 'sys/kernel.lua', ...)
+local s, m = pcall(run, 'sys/apps/shell.lua', 'sys/kernel.lua', ...)
 
 if not s then
 	print('\nError loading Opus OS\n')

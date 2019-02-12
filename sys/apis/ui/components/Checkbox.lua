@@ -15,20 +15,12 @@ UI.Checkbox.defaults = {
 	backgroundColor = colors.black,
 	backgroundFocusColor = colors.lightGray,
 	height = 1,
+	width = 3,
 	accelerators = {
 		space = 'checkbox_toggle',
 		mouse_click = 'checkbox_toggle',
 	}
 }
-function UI.Checkbox:setParent()
-	if not self.width and not self.ex then
-		self.width = (self.label and #self.label or 0) + 3
-	else
-		self.width = 3
-	end
-	UI.Window.setParent(self)
-end
-
 function UI.Checkbox:draw()
 	local bg = self.backgroundColor
 	if self.focused then

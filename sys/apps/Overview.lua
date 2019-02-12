@@ -424,7 +424,7 @@ function page:eventHandler(event)
 		shell.switchTab(shell.openTab(event.button.app.run))
 
 	elseif event.type == 'shell' then
-		shell.switchTab(shell.openTab('sys/apps/shell'))
+		shell.switchTab(shell.openTab('sys/apps/shell.lua'))
 
 	elseif event.type == 'lua' then
 		shell.switchTab(shell.openTab('sys/apps/Lua.lua'))

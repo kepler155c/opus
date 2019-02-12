@@ -46,7 +46,7 @@ local function telnetHost(socket)
 		title = 'Telnet client',
 		hidden = true,
 		co = coroutine.create(function()
-			Util.run(_ENV, 'sys/apps/shell', table.unpack(termInfo.program))
+			Util.run(_ENV, 'sys/apps/shell.lua', table.unpack(termInfo.program))
 			if socket.queue then
 				socket:write(socket.queue)
 			end

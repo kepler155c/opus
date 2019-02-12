@@ -278,7 +278,7 @@ local function init(...)
 		kernel.hook('kernel_ready', function()
 			local s, m = kernel.run({
 				title = args[1],
-				path = 'sys/apps/shell',
+				path = 'sys/apps/shell.lua',
 				args = args,
 				haltOnExit = true,
 				haltOnError = true,

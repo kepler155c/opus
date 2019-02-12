@@ -6,7 +6,7 @@ local term     = _G.term
 local bootOptions = {
 	{ prompt = os.version() },
 	{ prompt = 'Opus'         , args = { '/sys/boot/opus.boot' } },
-	{ prompt = 'Opus Shell'   , args = { '/sys/boot/opus.boot', 'sys/apps/shell' } },
+	{ prompt = 'Opus Shell'   , args = { '/sys/boot/opus.boot', 'sys/apps/shell.lua' } },
 	{ prompt = 'Opus Kiosk'   , args = { '/sys/boot/kiosk.boot' } },
 }
 local bootOption = 2

@@ -198,10 +198,12 @@ function Canvas:blit(x, y, text, bg, fg)
 end
 
 function Canvas:writeLine(y, text, fg, bg)
-	self.lines[y].dirty = true
-	self.lines[y].text = text
-	self.lines[y].fg = fg
-	self.lines[y].bg = bg
+	if y > 0 and y <= #self.lines then
+		self.lines[y].dirty = true
+		self.lines[y].text = text
+		self.lines[y].fg = fg
+		self.lines[y].bg = bg
+	end
 end
 
 function Canvas:clearLine(y, bg, fg)

@@ -36,7 +36,6 @@ local page = UI.Page {
 	description = UI.TextArea {
 		x = 16, y = 3, ey = -5,
 		marginRight = 0, marginLeft = 0,
-		--backgroundColor = colors.white,
 	},
 	load = UI.Button {
 		x = 22, y = -3,
@@ -45,10 +44,8 @@ local page = UI.Page {
 		help = 'Download the latest package list',
 	},
 	action = UI.SlideOut {
-		backgroundColor = colors.brown,
-		y = 3,
+		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
-			backgroundColor = colors.brown,
 			event = 'hide-action',
 		},
 		button = UI.Button {

@@ -25,8 +25,8 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		width   = w,
 		height  = h,
 		isColor = parent.isColor(),
+		offy    = 0,
 	})
-	canvas.offy = 0
 
 	win.canvas = canvas
 
@@ -164,7 +164,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	function win.redraw()
 		if isVisible then
 			canvas:dirty()
-			canvas:render(parent)
+			update()
 		end
 	end
 

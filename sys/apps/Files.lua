@@ -347,7 +347,7 @@ function Browser:eventHandler(event)
     self:run('cedit', file.name)
 
   elseif event.type == 'shell' then
-    self:run('sys/apps/shell')
+    self:run('sys/apps/shell.lua')
 
   elseif event.type == 'refresh' then
     self:updateDirectory(self.dir)
