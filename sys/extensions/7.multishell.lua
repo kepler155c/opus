@@ -109,7 +109,7 @@ local function xprun(env, path, ...)
 	setmetatable(env, { __index = _G })
 	local fn, m = loadfile(path, env)
 	if fn then
-		return trace(fn, ...)
+		return pcall(fn, ...)
 	end
 	return fn, m
 end
