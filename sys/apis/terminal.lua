@@ -82,12 +82,16 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 
 	function win.setCursorPos(x, y)
 		cx, cy = x, y
-		parent.setCursorPos(x + canvas.x - 1, y + canvas.y - 1)
+		if isVisible then
+			parent.setCursorPos(x + canvas.x - 1, y + canvas.y - 1)
+		end
 	end
 
 	function win.setCursorBlink(b)
 		blink = b
-		parent.setCursorBlink(b)
+		if isVisible then
+			parent.setCursorBlink(b)
+		end
 	end
 
 	function win.isColor()
