@@ -2,7 +2,7 @@ if not _G.turtle then
 	return
 end
 
-local Pathing      = require('turtle.pathfind')
+local Pathing      = require('pathfind')
 local GPS          = require('gps')
 local Point        = require('point')
 local synchronized = require('sync').sync
@@ -661,7 +661,7 @@ end
 -- go backwards - turning around if necessary to fight mobs / break blocks
 function turtle.goback()
 	local hi = headings[turtle.point.heading]
-	return turtle._goto({
+	return turtle.go({
 		x = turtle.point.x - hi.xd,
 		y = turtle.point.y,
 		z = turtle.point.z - hi.zd,
@@ -670,8 +670,8 @@ function turtle.goback()
 end
 
 function turtle.gotoYfirst(pt)
-	if turtle._gotoY(pt.y) then
-		if turtle._goto(pt) then
+	if turtle.gotoY(pt.y) then
+		if turtle.go(pt) then
 			turtle.setHeading(pt.heading)
 			return true
 		end
@@ -679,7 +679,7 @@ function turtle.gotoYfirst(pt)
 end
 
 function turtle.gotoYlast(pt)
-	if turtle._goto({ x = pt.x, z = pt.z, heading = pt.heading }) then
+	if turtle.go({ x = pt.x, z = pt.z, heading = pt.heading }) then
 		if turtle.gotoY(pt.y) then
 			turtle.setHeading(pt.heading)
 			return true
@@ -687,8 +687,18 @@ function turtle.gotoYlast(pt)
 	end
 end
 
-function turtle._goto(pt)
-	local dx, dy, dz, dh = pt.x, pt.y, pt.z, pt.heading
+function turtle.go(pt)
+	if not pt.x and not pt.z and pt.y then
+		if turtle.gotoY(pt.y) then
+			turtle.setHeading(pt.heading)
+			return true
+		end
+		return false, 'Failed to reach location'
+	end
+
+	local dx = pt.x or turtle.point.x
+	local dz = pt.z or turtle.point.z
+	local dy, dh = pt.y, pt.heading
 	if not turtle.gotoSingleTurn(dx, dy, dz, dh) then
 		if not gotoMultiTurn(dx, dy, dz) then
 			return false, 'Failed to reach location'
@@ -699,7 +709,9 @@ function turtle._goto(pt)
 end
 
 -- avoid lint errors
-turtle['goto'] = turtle._goto
+-- deprecated
+turtle['goto'] = turtle.go
+turtle['_goto'] = turtle.go
 
 function turtle.gotoX(dx)
 	turtle.headTowardsX(dx)
@@ -1026,7 +1038,7 @@ function turtle.setMovementStrategy(strategy)
 	if strategy == 'pathing' then
 		movementStrategy = turtle.pathfind
 	elseif strategy == 'goto' then
-		movementStrategy = turtle._goto
+		movementStrategy = turtle.go
 	else
 		error('Invalid movement strategy')
 	end

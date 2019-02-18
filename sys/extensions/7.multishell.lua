@@ -109,7 +109,7 @@ local function xprun(env, path, ...)
 	setmetatable(env, { __index = _G })
 	local fn, m = loadfile(path, env)
 	if fn then
-		return pcall(fn, ...)
+		return trace(fn, ...)
 	end
 	return fn, m
 end
@@ -125,12 +125,12 @@ function multishell.openTab(tab)
 	local routine = kernel.newRoutine(tab)
 
 	routine.co = coroutine.create(function()
-		local result, err
+		local result, err, stacktrace
 
 		if tab.fn then
 			result, err = Util.runFunction(routine.env, tab.fn, table.unpack(tab.args or { } ))
 		elseif tab.path then
-			result, err = xprun(routine.env, tab.path, table.unpack(tab.args or { } ))
+			result, err, stacktrace = xprun(routine.env, tab.path, table.unpack(tab.args or { } ))
 		else
 			err = 'multishell: invalid tab'
 		end
@@ -138,6 +138,9 @@ function multishell.openTab(tab)
 		if not result and err and err ~= 'Terminated' then
 			if err then
 				printError(tostring(err))
+				if stacktrace then -- alternatively log stack to _debug
+					print(stacktrace)
+				end
 			end
 			print('\nPress enter to close')
 			routine.isDead = true

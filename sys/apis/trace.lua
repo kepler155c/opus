@@ -51,6 +51,9 @@ local function trim_traceback(target, marker)
     t_len = t_len - 1
   end
 
+  ttarget[#ttarget] = nil -- remove 2 calls added by the added xpcall
+  ttarget[#ttarget] = nil
+
   return ttarget
 end
 
@@ -83,14 +86,14 @@ return function (fn, ...)
 
     -- If this traceback is more than 15 elements long, keep the first 9, last 5
     -- and put an ellipsis between the rest
-    local max = 12
+    local max = 10
     if trace_starts and #trace - trace_starts > max then
-      local keep_starts = trace_starts + 9
+      local keep_starts = trace_starts + 7
       for i = #trace - trace_starts - max, 0, -1 do table.remove(trace, keep_starts + i) end
       table.insert(trace, keep_starts, "  ...")
     end
 
-    return false, table.concat(trace, "\n")
+    return false, table.remove(trace, 1), table.concat(trace, "\n")
   end
 
   return table.unpack(res, 1, res.n)
