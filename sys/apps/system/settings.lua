@@ -3,24 +3,11 @@ local UI = require('ui')
 local settings = _G.settings
 
 if settings then
-	local values = { }
-	for _,v in pairs(settings.getNames()) do
-		local value = settings.get(v)
-		if not value then
-			value = false
-		end
-		table.insert(values, {
-			name = v,
-			value = value,
-		})
-	end
-
 	local settingsTab = UI.Tab {
 		tabTitle = 'Settings',
 		description = 'Computercraft configurable settings',
 		grid = UI.Grid {
 			y = 2,
-			values = values,
 			autospace = true,
 			sortColumn = 'name',
 			columns = {
@@ -29,6 +16,22 @@ if settings then
 			},
 		},
 	}
+
+	function settingsTab:enable()
+		local values = { }
+		for _,v in pairs(settings.getNames()) do
+			local value = settings.get(v)
+			if not value then
+				value = false
+			end
+			table.insert(values, {
+				name = v,
+				value = value,
+			})
+		end
+		self.grid:setValues(values)
+		UI.Tab.enable(self)
+	end
 
 	function settingsTab:eventHandler(event)
 		if event.type == 'grid_select' then
