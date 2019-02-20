@@ -84,13 +84,23 @@ return function (fn, ...)
       if trace[i] == "stack traceback:" then trace_starts = i; break end
     end
 
+    for _, line in pairs(trace) do
+      _G._debug(line)
+    end
+
     -- If this traceback is more than 15 elements long, keep the first 9, last 5
     -- and put an ellipsis between the rest
     local max = 10
     if trace_starts and #trace - trace_starts > max then
       local keep_starts = trace_starts + 7
-      for i = #trace - trace_starts - max, 0, -1 do table.remove(trace, keep_starts + i) end
+      for i = #trace - trace_starts - max, 0, -1 do
+        table.remove(trace, keep_starts + i)
+      end
       table.insert(trace, keep_starts, "  ...")
+    end
+
+    for k, line in pairs(trace) do
+      trace[k] = line:gsub("in function", " in")
     end
 
     return false, table.remove(trace, 1), table.concat(trace, "\n")

@@ -34,30 +34,37 @@ function GPS.getPoint(timeout, debug)
 	return pt
 end
 
-function GPS.getHeading(timeout)
-
+function GPS.getHeading(timeout, destructive)
 	if not turtle then
 		return
 	end
 
 	local apt = GPS.locate(timeout)
 	if not apt then
-		return
+		return false, 'GPS not available'
 	end
 
 	local heading = turtle.point.heading
 
-	while not turtle.forward() do
+	while true do
+		if not turtle.inspect() and turtle.forward() then
+			break
+		end
 		turtle.turnRight()
 		if turtle.getHeading() == heading then
-			_G.printError('GPS.getPoint: Unable to move forward')
-			return
+			if destructive then
+				turtle.dig()
+				if turtle.forward() then
+					break
+				end
+			end
+			return false, 'GPS.getPoint: Unable to move forward'
 		end
 	end
 
 	local bpt = GPS.locate()
 	if not bpt then
-		return
+		return false, 'GPS not available'
 	end
 
 	if apt.x < bpt.x then
@@ -70,8 +77,8 @@ function GPS.getHeading(timeout)
 	return 3
 end
 
-function GPS.getPointAndHeading(timeout)
-	local heading = GPS.getHeading(timeout)
+function GPS.getPointAndHeading(timeout, destructive)
+	local heading = GPS.getHeading(timeout, destructive)
 	if heading then
 		local pt = GPS.getPoint()
 		if pt then

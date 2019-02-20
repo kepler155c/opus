@@ -28,9 +28,9 @@ local tab = UI.Tab {
 function tab:enable()
 	local choices = {	}
 
-	for k,v in pairs(device) do
+	for _,v in pairs(device) do
 		if v.type == 'monitor' then
-			table.insert(choices, { name = k, value = v.side })
+			table.insert(choices, { name = v.side, value = v.side })
 		end
 	end
 

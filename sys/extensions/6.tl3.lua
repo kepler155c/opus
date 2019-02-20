@@ -1239,8 +1239,8 @@ function turtle.inspectForwardAt(pt)     return _actionForwardAt(actionsAt.inspe
 function turtle.inspectUpAt(pt)          return _actionUpAt(actionsAt.inspect, pt) end
 
 -- [[ GPS ]] --
-function turtle.enableGPS(timeout)
-	local pt = GPS.getPointAndHeading(timeout)
+function turtle.enableGPS(timeout, destructive)
+	local pt = GPS.getPointAndHeading(timeout, destructive)
 	if pt then
 		turtle.setPoint(pt, true)
 		return turtle.point
