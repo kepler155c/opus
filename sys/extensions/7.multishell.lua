@@ -139,7 +139,7 @@ function multishell.openTab(tab)
 			if err then
 				printError(tostring(err))
 				if stacktrace then -- alternatively log stack to _debug
-					print(stacktrace)
+					print('\n' .. stacktrace)
 				end
 			end
 			print('\nPress enter to close')

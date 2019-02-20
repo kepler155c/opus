@@ -132,7 +132,7 @@ function Entry:process(ie)
 
 	elseif ie.code == 'mouse_click' then
 		-- need starting x passed in instead of hardcoding 3
-		self.pos = math.min(ie.x - 3 + self.scroll, #self.value)
+		self.pos = math.max(0, math.min(ie.x - 3 + self.scroll, #self.value))
 		updated = true
 
 	elseif ie.code == 'mouse_rightclick' then

@@ -30,7 +30,7 @@ function tab:enable()
 
 	for k,v in pairs(device) do
 		if v.type == 'monitor' then
-			table.insert(choices, { name = k, value = v.name })
+			table.insert(choices, { name = k, value = v.side })
 		end
 	end
 
@@ -44,8 +44,12 @@ end
 
 function tab:eventHandler(event)
 	if event.type == 'choice_change' then
-		settings.set('kiosk.monitor', self.form.monitor.value)
-		settings.set('kiosk.textscale', self.form.textScale.value)
+		if self.form.monitor.value then
+			settings.set('kiosk.monitor', self.form.monitor.value)
+		end
+		if self.form.textScale.value then
+			settings.set('kiosk.textscale', self.form.textScale.value)
+		end
 		settings.save('.settings')
 	end
 end

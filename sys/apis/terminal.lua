@@ -323,8 +323,9 @@ function Terminal.copy(it, ot)
 end
 
 function Terminal.mirror(ct, dt)
+	local t = { }
 	for k,f in pairs(ct) do
-		ct[k] = function(...)
+		t[k] = function(...)
 			local ret = { f(...) }
 			if dt[k] then
 				dt[k](...)
@@ -332,6 +333,7 @@ function Terminal.mirror(ct, dt)
 			return table.unpack(ret)
 		end
 	end
+	return t
 end
 
 function Terminal.readPassword(prompt)
