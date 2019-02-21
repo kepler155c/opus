@@ -345,6 +345,9 @@ function turtle.set(args)
 		elseif k == 'moveCallback' then
 			turtle.setMoveCallback(v)
 
+		elseif k == 'status' then
+			turtle.setStatus(v)
+
 		else
 			error('Invalid turle.set: ' .. tostring(k))
 		end
