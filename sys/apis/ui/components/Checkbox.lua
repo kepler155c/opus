@@ -45,6 +45,10 @@ function UI.Checkbox:focus()
 	self:draw()
 end
 
+function UI.Checkbox:setValue(v)
+	self.value = v
+end
+
 function UI.Checkbox:reset()
 	self.value = false
 end

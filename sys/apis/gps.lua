@@ -2,7 +2,6 @@ local GPS = { }
 
 local device = _G.device
 local gps    = _G.gps
-local turtle = _G.turtle
 
 function GPS.locate(timeout, debug)
 	local pt = { }
@@ -32,60 +31,6 @@ function GPS.getPoint(timeout, debug)
 	end
 
 	return pt
-end
-
-function GPS.getHeading(timeout, destructive)
-	if not turtle then
-		return
-	end
-
-	local apt = GPS.locate(timeout)
-	if not apt then
-		return false, 'GPS not available'
-	end
-
-	local heading = turtle.point.heading
-
-	while true do
-		if not turtle.inspect() and turtle.forward() then
-			break
-		end
-		turtle.turnRight()
-		if turtle.getHeading() == heading then
-			if destructive then
-				turtle.dig()
-				if turtle.forward() then
-					break
-				end
-			end
-			return false, 'GPS.getPoint: Unable to move forward'
-		end
-	end
-
-	local bpt = GPS.locate()
-	if not bpt then
-		return false, 'GPS not available'
-	end
-
-	if apt.x < bpt.x then
-		return 0
-	elseif apt.z < bpt.z then
-		return 1
-	elseif apt.x > bpt.x then
-		return 2
-	end
-	return 3
-end
-
-function GPS.getPointAndHeading(timeout, destructive)
-	local heading = GPS.getHeading(timeout, destructive)
-	if heading then
-		local pt = GPS.getPoint()
-		if pt then
-			pt.heading = heading
-		end
-		return pt
-	end
 end
 
 -- from stock gps API

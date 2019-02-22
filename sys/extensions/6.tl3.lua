@@ -3,7 +3,6 @@ if not _G.turtle then
 end
 
 local Pathing      = require('pathfind')
-local GPS          = require('gps')
 local Point        = require('point')
 local synchronized = require('sync').sync
 local Util         = require('util')
@@ -1240,15 +1239,6 @@ function turtle.inspectAt(pt)            return _actionAt(actionsAt.inspect, pt)
 function turtle.inspectDownAt(pt)        return _actionDownAt(actionsAt.inspect, pt) end
 function turtle.inspectForwardAt(pt)     return _actionForwardAt(actionsAt.inspect, pt) end
 function turtle.inspectUpAt(pt)          return _actionUpAt(actionsAt.inspect, pt) end
-
--- [[ GPS ]] --
-function turtle.enableGPS(timeout, destructive)
-	local pt = GPS.getPointAndHeading(timeout, destructive)
-	if pt then
-		turtle.setPoint(pt, true)
-		return turtle.point
-	end
-end
 
 -- deprecate
 function turtle.addFeatures(...)
