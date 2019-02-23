@@ -83,7 +83,7 @@ local page = UI.Page {
         intro = UI.TextArea {
           textColor = colors.yellow,
           inactive = true,
-          x = 3, ex = -3, y = 2, ey = -3,
+          x = 3, ex = -3, y = 2, ey = -4,
           value = string.format(packagesIntro, Ansi.white),
         },
 			},

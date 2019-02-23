@@ -1240,11 +1240,4 @@ function turtle.inspectDownAt(pt)        return _actionDownAt(actionsAt.inspect,
 function turtle.inspectForwardAt(pt)     return _actionForwardAt(actionsAt.inspect, pt) end
 function turtle.inspectUpAt(pt)          return _actionUpAt(actionsAt.inspect, pt) end
 
--- deprecate
-function turtle.addFeatures(...)
-	for _,feature in pairs({ ... }) do
-		require('turtle.' .. feature)
-	end
-end
-
 turtle.reset()
