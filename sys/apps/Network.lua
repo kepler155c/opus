@@ -128,6 +128,13 @@ local function sendCommand(host, command)
 	end
 end
 
+function page.ports:eventHandler(event)
+	if event.type == 'grid_select' then
+		shell.openForegroundTab('sniff ' .. event.selected.port)
+	end
+	return UI.SlideOut.eventHandler(self, event)
+end
+
 function page.ports.grid:update()
 	local function findConnection(port)
 		for _,socket in pairs(_G.transport.sockets) do

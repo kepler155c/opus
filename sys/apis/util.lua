@@ -119,14 +119,8 @@ function Util.signum(num)
 	end
 end
 
-function Util.clamp(lo, num, hi)
-	if num <= lo then
-		return lo
-	elseif num >= hi then
-		return hi
-	else
-		return num
-	end
+function Util.clamp(num, low, high)
+	return num < low and low or num > high and high or num
 end
 
 -- http://lua-users.org/wiki/SimpleRound

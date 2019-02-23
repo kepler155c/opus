@@ -131,23 +131,21 @@ function Socket.connect(host, port)
 			os.cancelTimer(timerId)
 
 			if msg.type == 'CONN' then
-
 				socket.dport = dport
 				socket.connected = true
 				-- Logger.log('socket', 'connection established to %d %d->%d',
 				--											host, socket.sport, socket.dport)
-
 				_G.transport.open(socket)
-
 				return socket
+
 			elseif msg.type == 'REJE' then
+				socket:close()
 				return false, 'Password not set on target or not trusted'
 			end
 		end
 	until e == 'timer' and id == timerId
 
 	socket:close()
-
 	return false, 'Connection timed out'
 end
 

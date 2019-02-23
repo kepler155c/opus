@@ -32,7 +32,7 @@ Event.addRoutine(function()
 						print('proxy: lost connection from ' .. socket.dhost)
 						break
 					end
-					socket:write({ proxy[data.fn](table.unpack(data.args)) })
+					socket:write({ proxy[data[1]](table.unpack(data, 2)) })
 				end
 			end
 		end)
