@@ -62,10 +62,9 @@ function UI.StatusBar:getValue(name)
 end
 
 function UI.StatusBar:timedStatus(status, timeout)
-	timeout = timeout or 3
 	self:write(2, 1, Util.widthify(status, self.width-2), self.backgroundColor)
-	Event.addNamedTimer('statusTimer', timeout, false, function()
-		if self.parent.enabled then
+	Event.on(timeout or 3, function()
+		if self.enabled then
 			self:draw()
 			self:sync()
 		end

@@ -35,8 +35,12 @@ function UI.Notification:success(value, timeout)
 end
 
 function UI.Notification:cancel()
+	if self.timer then
+		Event.off(self.timer)
+		self.timer = nil
+	end
+
 	if self.canvas then
-		Event.cancelNamedTimer('notificationTimer')
 		self.enabled = false
 		self.canvas:removeLayer()
 		self.canvas = nil
@@ -60,7 +64,7 @@ function UI.Notification:display(value, timeout)
 		self:write(2, k, v)
 	end
 
-	Event.addNamedTimer('notificationTimer', timeout or 3, false, function()
+	self.timer = Event.onTimeout(timeout or 3, function()
 		self:cancel()
 		self:sync()
 	end)

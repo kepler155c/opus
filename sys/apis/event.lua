@@ -5,9 +5,8 @@ local Event = {
 	uid       = 1,       -- unique id for handlers
 	routines  = { },     -- coroutines
 	types     = { },     -- event handlers
-	timers    = { },     -- named timers
 	terminate = false,
-	free      = { },
+	free      = { },     -- allocated unused coroutines
 }
 
 -- Use a pool of coroutines for event handlers
@@ -118,24 +117,6 @@ function Event.off(h)
 	end
 end
 
-local function addTimer(interval, recurring, fn)
-	local timerId = os.startTimer(interval)
-	local handler
-
-	handler = Event.on('timer', function(t, id)
-		if timerId == id then
-			fn(t, id)
-			if recurring then
-				timerId = os.startTimer(interval)
-			else
-				Event.off(handler)
-			end
-		end
-	end)
-
-	return handler
-end
-
 function Event.onInterval(interval, fn)
 	return Event.addRoutine(function()
 		while true do
@@ -146,29 +127,17 @@ function Event.onInterval(interval, fn)
 end
 
 function Event.onTimeout(timeout, fn)
-	return addTimer(timeout, false, fn)
-end
-
-function Event.addNamedTimer(name, interval, recurring, fn)
-	Event.cancelNamedTimer(name)
-	Event.timers[name] = addTimer(interval, recurring, fn)
-end
-
-function Event.cancelNamedTimer(name)
-	local timer = Event.timers[name]
-	if timer then
-		Event.off(timer)
-	end
-end
-
-function Event.waitForEvent(event, timeout)
 	local timerId = os.startTimer(timeout)
-	repeat
-		local e = { os.pullEvent() }
-		if e[1] == event then
-			return table.unpack(e)
+	local handler
+
+	handler = Event.on('timer', function(t, id)
+		if timerId == id then
+			fn(t, id)
+			Event.off(handler)
 		end
-	until e[1] == 'timer' and e[2] == timerId
+	end)
+
+	return handler
 end
 
 -- Set a handler for the terminate event. Within the function, return
