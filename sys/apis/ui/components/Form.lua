@@ -122,10 +122,7 @@ function UI.Form:save()
 	end
 	for _,child in pairs(self.children) do
 		if child.formKey then
-			if (child.pruneEmpty and type(child.value) == 'string' and #child.value == 0) or
-				 (child.pruneEmpty and type(child.value) == 'boolean' and not child.value) then
-				self.values[child.formKey] = nil
-			elseif child.validate == 'numeric' then
+			if child.validate == 'numeric' then
 				self.values[child.formKey] = tonumber(child.value)
 			else
 				self.values[child.formKey] = child.value
