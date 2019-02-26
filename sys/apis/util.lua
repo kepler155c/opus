@@ -277,8 +277,9 @@ function Util.filter(it, f)
 end
 
 function Util.reduce(t, fn, acc)
+	acc = acc or 0
 	for _, v in pairs(t) do
-		fn(acc, v)
+		acc = fn(acc, v)
 	end
 	return acc
 end
