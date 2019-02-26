@@ -32,6 +32,13 @@ function UI.Embedded:setParent()
 	self.win.clear()
 end
 
+function UI.Embedded:layout()
+	UI.Window.layout(self)
+	if self.win then
+		self.win.reposition(self.x, self.y, self.width, self.height)
+	end
+end
+
 function UI.Embedded:draw()
 	self.canvas:dirty()
 end

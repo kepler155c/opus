@@ -263,6 +263,7 @@ function Manager:click(target, code, button, x, y)
 	if clickEvent.element.focus then
 		target:setFocus(clickEvent.element)
 	end
+_G._p = clickEvent
 	self:inputEvent(clickEvent.element, clickEvent)
 
 	target:sync()

@@ -5,11 +5,13 @@ UI.ActiveLayer = class(UI.Window)
 UI.ActiveLayer.defaults = {
 	UIElement = 'ActiveLayer',
 }
-function UI.ActiveLayer:setParent()
-	self:layout(self)
-	self.canvas = self:addLayer()
-
-	UI.Window.setParent(self)
+function UI.ActiveLayer:layout()
+	UI.Window.layout(self)
+	if not self.canvas then
+		self.canvas = self:addLayer()
+	else
+		self.canvas:resize(self.width, self.height)
+	end
 end
 
 function UI.ActiveLayer:enable(...)

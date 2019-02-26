@@ -1,3 +1,4 @@
+local Ansi   = require('ansi')
 local Config = require('config')
 local UI     = require('ui')
 
@@ -6,17 +7,20 @@ local device = _G.device
 local tab = UI.Tab {
 	tabTitle = 'Network',
 	description = 'Networking options',
-	form = UI.Form {
-		x = 2,
-		manualControls = true,
-		modem = UI.Chooser {
-			formLabel = 'Modem', formKey = 'modem',
-			nochoice = 'auto',
-		},
-		update = UI.Button {
-			x = 9, y = 4,
-			text = 'Update', event = 'form_complete',
-		},
+	info = UI.TextArea {
+		x = 3, y = 4,
+		value = string.format(
+[[%sSet the primary modem used for wireless communications.%s
+
+Reboot to take effect.]], Ansi.yellow, Ansi.reset)
+	},
+	label = UI.Text {
+		x = 3, y = 2,
+		value = 'Modem',
+	},
+	modem = UI.Chooser {
+		x = 10, ex = -3, y = 2,
+		nochoice = 'auto',
 	},
 }
 
@@ -34,19 +38,19 @@ function tab:enable()
 		end
 	end
 
-	self.form.modem.choices = choices
-	self.form.modem.width = width + 4
+	self.modem.choices = choices
+	--self.modem.width = width + 4
 
 	local config = Config.load('os')
-	self.form.modem.value = config.wirelessModem or 'auto'
+	self.modem.value = config.wirelessModem or 'auto'
 
 	UI.Tab.enable(self)
 end
 
 function tab:eventHandler(event)
-	if event.type == 'form_complete' then
+	if event.type == 'choice_change' then
 		local config = Config.load('os')
-		config.wirelessModem = self.form.modem.value
+		config.wirelessModem = self.modem.value
 		Config.update('os', config)
 		self:emit({ type = 'success_message', message = 'reboot to take effect' })
 		return true

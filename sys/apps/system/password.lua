@@ -2,18 +2,20 @@ local Security = require('security')
 local SHA1     = require('sha1')
 local UI       = require('ui')
 
+local colors   = _G.colors
+
 local passwordTab = UI.Tab {
 	tabTitle = 'Password',
 	description = 'Wireless network password',
 	oldPass = UI.TextEntry {
-		x = 2, y = 2, ex = -2,
+		x = 3, ex = -3, y = 2,
 		limit = 32,
 		mask = true,
 		shadowText = 'old password',
 		inactive = not Security.getPassword(),
 	},
 	newPass = UI.TextEntry {
-		y = 3, x = 2, ex = -2,
+		x = 3, ex = -3, y = 3,
 		limit = 32,
 		mask = true,
 		shadowText = 'new password',
@@ -22,13 +24,13 @@ local passwordTab = UI.Tab {
 		},
 	},
 	button = UI.Button {
-		x = 2, y = 5,
+		x = 3, y = 5,
 		text = 'Update',
 		event = 'update_password',
 	},
 	info = UI.TextArea {
-		x = 2, ex = -2,
-		y = 7,
+		x = 3, ex = -3, y = 7,
+		textColor = colors.yellow,
 		inactive = true,
 		value = 'Add a password to enable other computers to connect to this one.',
 	}

@@ -1,5 +1,6 @@
 local UI = require('ui')
 
+local colors     = _G.colors
 local device     = _G.device
 local peripheral = _G.peripheral
 local settings   = _G.settings
@@ -8,7 +9,7 @@ local tab = UI.Tab {
 	tabTitle = 'Kiosk',
 	description = 'Kiosk options',
 	form = UI.Form {
-		x = 2,
+		x = 2, ex = -2,
 		manualControls = true,
 		monitor = UI.Chooser {
 			formLabel = 'Monitor', formKey = 'monitor',
@@ -21,6 +22,11 @@ local tab = UI.Tab {
         { name = 'Large', value = '1'  },
       },
       help = 'Adjust text scaling',
+		},
+		labelText = UI.TextArea {
+			x = 2, ex = -2, y = 5,
+			textColor = colors.yellow,
+			value = 'Settings apply to kiosk mode selected during startup'
 		},
 	},
 }
