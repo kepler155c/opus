@@ -22,14 +22,14 @@ function Writer:init(element, y)
 	self.x = 1
 end
 
-function Writer:write(s, width, justify, bg, fg)
+function Writer:write(s, width, align, bg, fg)
 	local len = #tostring(s or '')
 	if len > width then
 		s = _sub(s, 1, width)
 	end
 	local padding = len < width and _rep(' ', width - len)
 	if padding then
-		if justify == 'right' then
+		if align == 'right' then
 			s = padding .. s
 		else
 			s = s .. padding
@@ -301,7 +301,7 @@ function UI.Grid:drawHeadings()
 		end
 		sb:write(ind .. col.heading,
 			col.cw + 1,
-			col.justify,
+			col.align,
 			self.headerBackgroundColor,
 			color)
 	end
@@ -341,7 +341,7 @@ function UI.Grid:drawRows()
 		for _,col in pairs(self.columns) do
 			sb:write(ind .. safeValue(row[col.key] or ''),
 				col.cw + 1,
-				col.justify,
+				col.align,
 				bg,
 				fg)
 			ind = ' '
