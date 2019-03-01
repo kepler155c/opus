@@ -27,6 +27,13 @@ function Util.tryTimes(attempts, f, ...)
 	return unpack(result)
 end
 
+function Util.Timer()
+  local ct = os.clock()
+  return function()
+    return os.clock() - ct
+  end
+end
+
 function Util.throttle(fn)
 	local ts = os.clock()
 	local timeout = .095
