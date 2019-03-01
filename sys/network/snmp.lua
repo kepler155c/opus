@@ -152,9 +152,28 @@ local function sendInfo()
 			info.status = device.neuralInterface.status
 			pcall(function()
 				if not info.status and device.neuralInterface.getMetaOwner then
-					info.status = 'health: ' ..
-						math.floor(device.neuralInterface.getMetaOwner().health /
-							device.neuralInterface.getMetaOwner().maxHealth * 100)
+					local meta = device.neuralInterface.getMetaOwner()
+					if meta.isWet then
+						info.status = 'Swimming'
+					elseif meta.isElytraFlying then
+						info.status = 'Flying'
+					elseif meta.isBurning then
+						info.status = 'Burning'
+					elseif meta.isDead then
+						info.status = 'Deceased'
+					elseif meta.isOnLadder then
+						info.status = 'Climbing'
+					elseif meta.isRiding then
+						info.status = 'Riding'
+					elseif meta.isSneaking then
+						info.status = 'Sneaking'
+					elseif meta.isSprinting then
+						info.status = 'Running'
+					else
+						info.status = 'health: ' ..
+							math.floor(meta.health /
+								meta.maxHealth * 100)
+					end
 				end
 			end)
 		end
