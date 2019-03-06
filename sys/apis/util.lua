@@ -6,6 +6,10 @@ local os        = _G.os
 local term      = _G.term
 local textutils = _G.textutils
 
+local _sformat  = string.format
+local _srep     = string.rep
+local _ssub     = string.sub
+
 function Util.tryTimed(timeout, f, ...)
 	local c = os.clock()
 	repeat
@@ -27,12 +31,14 @@ function Util.tryTimes(attempts, f, ...)
 	return unpack(result)
 end
 
-function Util.Timer()
+function Util.timer()
   local ct = os.clock()
   return function()
     return os.clock() - ct
   end
 end
+
+Util.Timer = Util.timer -- deprecate
 
 function Util.throttle(fn)
 	local ts = os.clock()
@@ -56,11 +62,11 @@ function Util.tostring(pattern, ...)
 		for k, v in pairs(tbl) do
 			local value
 			if type(v) == 'table' then
-				value = string.format('table: %d', Util.size(v))
+				value = _sformat('table: %d', Util.size(v))
 			else
 				value = tostring(v)
 			end
-			str = str .. string.format(' %s: %s\n', k, value)
+			str = str .. _sformat(' %s: %s\n', k, value)
 		end
 		--if #str < width then
 			--str = str:gsub('\n', '') .. ' }'
@@ -71,7 +77,7 @@ function Util.tostring(pattern, ...)
 	end
 
 	if type(pattern) == 'string' then
-		return string.format(pattern, ...)
+		return _sformat(pattern, ...)
 	elseif type(pattern) == 'table' then
 		return serialize(pattern, term.current().getSize())
 	end
@@ -473,7 +479,7 @@ end
 function Util.download(url, filename)
 	local contents, msg = Util.httpGet(url)
 	if not contents then
-		error(string.format('Failed to download %s\n%s', url, msg), 2)
+		error(_sformat('Failed to download %s\n%s', url, msg), 2)
 	end
 
 	if filename then
@@ -519,11 +525,11 @@ end
 function Util.toBytes(n)
 	if not tonumber(n) then error('Util.toBytes: n must be a number', 2) end
 	if n >= 1000000 or n <= -1000000 then
-		return string.format('%sM', math.floor(n/1000000 * 10) / 10)
+		return _sformat('%sM', math.floor(n/1000000 * 10) / 10)
 	elseif n >= 10000 or n <= -10000 then
-		return string.format('%sK', math.floor(n/1000))
+		return _sformat('%sK', math.floor(n/1000))
 	elseif n >= 1000 or n <= -1000 then
-		return string.format('%sK', math.floor(n/1000 * 10) / 10)
+		return _sformat('%sK', math.floor(n/1000 * 10) / 10)
 	end
 	return tostring(n)
 end
@@ -551,17 +557,33 @@ function Util.matches(str, pattern)
 end
 
 function Util.startsWith(s, match)
-	return string.sub(s, 1, #match) == match
+	return _ssub(s, 1, #match) == match
 end
 
-function Util.widthify(s, len)
+-- return a fixed length string using specified alignment
+function Util.widthify(s, len, align)
 	s = s or ''
 	local slen = #s
-	if slen < len then
-		s = s .. string.rep(' ', len - #s)
-	elseif slen > len then
-		s = s:sub(1, len)
+
+	if slen > len then
+		return _ssub(s, 1, len)
+	elseif slen == len then
+		return s
 	end
+
+	if align == 'center' then
+		local space = math.floor((len-slen) / 2)
+		local filler = _srep(' ', space + 1)
+		s = _ssub(filler, 1, space) .. s
+		s = s .. _srep(' ', len - #s)
+
+	elseif align == 'right' then
+		s = _srep(' ', len - #s) .. s
+
+	else -- 'left'
+		s = s .. _srep(' ', len - #s)
+	end
+
 	return s
 end
 
@@ -628,8 +650,8 @@ function Util.args(arg)
 	local k = 1
 	while k <= #arg do
 		local v = arg[k]
-		if string.sub(v, 1, 1) == '-' then
-			local opt = string.sub(v, 2)
+		if _ssub(v, 1, 1) == '-' then
+			local opt = _ssub(v, 2)
 			options[opt] = arg[k + 1]
 			k = k + 1
 		else
@@ -645,20 +667,20 @@ local function getopt( arg, options )
 	local tab = {}
 	for k, v in ipairs(arg) do
 		if type(v) == 'string' then
-			if string.sub( v, 1, 2) == "--" then
+			if _ssub( v, 1, 2) == "--" then
 				local x = string.find( v, "=", 1, true )
-				if x then tab[ string.sub( v, 3, x-1 ) ] = string.sub( v, x+1 )
-				else      tab[ string.sub( v, 3 ) ] = true
+				if x then tab[ _ssub( v, 3, x-1 ) ] = _ssub( v, x+1 )
+				else      tab[ _ssub( v, 3 ) ] = true
 				end
-			elseif string.sub( v, 1, 1 ) == "-" then
+			elseif _ssub( v, 1, 1 ) == "-" then
 				local y = 2
 				local l = string.len(v)
 				local jopt
 				while ( y <= l ) do
-					jopt = string.sub( v, y, y )
+					jopt = _ssub( v, y, y )
 					if string.find( options, jopt, 1, true ) then
 						if y < l then
-							tab[ jopt ] = string.sub( v, y+1 )
+							tab[ jopt ] = _ssub( v, y+1 )
 							y = l
 						else
 							tab[ jopt ] = arg[ k + 1 ]
@@ -677,7 +699,7 @@ end
 function Util.showOptions(options)
 	print('Arguments: ')
 	for _, v in pairs(options) do
-		print(string.format('-%s  %s', v.arg, v.desc))
+		print(_sformat('-%s  %s', v.arg, v.desc))
 	end
 end
 

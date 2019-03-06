@@ -18,12 +18,12 @@ for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
 
 	table.insert(appPaths, 1, packageDir)
-	local apiPath = fs.combine(fs.combine('packages', name), 'apis')
+	local apiPath = fs.combine(packageDir, 'apis')
 	if fs.exists(apiPath) then
 		fs.mount(fs.combine('sys/apis', name), 'linkfs', apiPath)
 	end
 
-	local helpPath = '/' .. fs.combine(fs.combine('packages', name), 'help')
+	local helpPath = '/' .. fs.combine(packageDir, 'help')
 	if fs.exists(helpPath) then
 		table.insert(helpPaths, helpPath)
 	end

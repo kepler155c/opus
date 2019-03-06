@@ -150,9 +150,10 @@ local function sendInfo()
 		end
 		if device.neuralInterface then
 			info.status = device.neuralInterface.status
-			pcall(function()
-				if not info.status and device.neuralInterface.getMetaOwner then
+			if not info.status and device.neuralInterface.getMetaOwner then
+				pcall(function()
 					local meta = device.neuralInterface.getMetaOwner()
+
 					if meta.isWet then
 						info.status = 'Swimming'
 					elseif meta.isElytraFlying then
@@ -174,8 +175,8 @@ local function sendInfo()
 							math.floor(meta.health /
 								meta.maxHealth * 100)
 					end
-				end
-			end)
+				end)
+			end
 		end
 		device.wireless_modem.transmit(999, os.getComputerID(), info)
 	end

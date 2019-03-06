@@ -16,10 +16,5 @@ function UI.Text:setParent()
 end
 
 function UI.Text:draw()
-	if self.align and self.align == 'center' then
-		self:clear()
-		self:centeredWrite(1, self.value or '')
-	else
-		self:write(1, 1, Util.widthify(self.value or '', self.width))
-	end
+	self:write(1, 1, Util.widthify(self.value, self.width, self.align))
 end
