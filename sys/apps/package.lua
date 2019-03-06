@@ -1,3 +1,4 @@
+local BulkGet  = require('bulkget')
 local Git      = require('git')
 local Packages = require('packages')
 local Util     = require('util')
@@ -53,10 +54,21 @@ local function install(name, isUpdate)
 
 	local list = Git.list(manifest.repository)
 	local showProgress = progress(Util.size(list))
+
+	local getList = { }
 	for path, entry in pairs(list) do
-		Util.download(entry.url, fs.combine(packageDir, path))
-		showProgress()
+		table.insert(getList, {
+			path = fs.combine(packageDir, path),
+			url = entry.url
+		})
 	end
+
+	BulkGet.download(getList, function(_, s, m)
+		if not s then
+			error(m)
+		end
+		showProgress()
+	end)
 end
 
 if action == 'list' then
