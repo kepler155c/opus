@@ -13,6 +13,7 @@ sandboxEnv.shell = shell
 
 _G.requireInjector(_ENV)
 
+local trace = require('trace')
 local Util = require('util')
 
 local DIR = (parentShell and parentShell.dir()) or ""
@@ -88,7 +89,7 @@ function shell.run(...)
 	local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
 	_G.requireInjector(env)
 
-	local r = { pcall(run, env, ...) }
+	local r = { trace(run, env, ...) }
 
 	if _ENV.multishell then
 		_ENV.multishell.setTitle(_ENV.multishell.getCurrent(), oldTitle or 'shell')

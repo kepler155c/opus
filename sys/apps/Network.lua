@@ -15,17 +15,17 @@ UI:configure('Network', ...)
 
 local gridColumns = {
 	{ heading = 'Label',  key = 'label'    },
-	{ heading = 'Dist',   key = 'distance' },
+	{ heading = 'Dist',   key = 'distance', align = 'right' },
 	{ heading = 'Status', key = 'status'   },
 }
 
 local config = Config.load('network', { })
 
 if UI.term.width >= 30 then
-	table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5 })
+	table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5, align = 'right' })
 end
 if UI.term.width >= 40 then
-	table.insert(gridColumns, { heading = 'Uptime', key = 'uptime' })
+	table.insert(gridColumns, { heading = 'Uptime', key = 'uptime', align = 'right' })
 end
 
 local page = UI.Page {
@@ -262,8 +262,10 @@ function page.grid:getDisplayValues(row)
 	if row.uptime then
 		if row.uptime < 60 then
 			row.uptime = string.format("%ds", math.floor(row.uptime))
+		elseif row.uptime < 3600 then
+			row.uptime = string.format("%sm", math.floor(row.uptime / 60))
 		else
-			row.uptime = string.format("%sm", math.floor(row.uptime/6)/10)
+			row.uptime = string.format("%sh", math.floor(row.uptime / 3600))
 		end
 	end
 	if row.fuel then

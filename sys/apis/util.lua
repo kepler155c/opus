@@ -567,24 +567,21 @@ function Util.widthify(s, len, align)
 
 	if slen > len then
 		return _ssub(s, 1, len)
+
 	elseif slen == len then
 		return s
-	end
 
-	if align == 'center' then
-		local space = math.floor((len-slen) / 2)
-		local filler = _srep(' ', space + 1)
-		s = _ssub(filler, 1, space) .. s
-		s = s .. _srep(' ', len - #s)
+	elseif align == 'center' then
+		local space = math.floor((len - slen) / 2)
+		s = _srep(' ', space) .. s
+		return s .. _srep(' ', len - #s)
 
 	elseif align == 'right' then
-		s = _srep(' ', len - #s) .. s
+		return _srep(' ', len - slen) .. s
 
-	else -- 'left'
-		s = s .. _srep(' ', len - #s)
 	end
 
-	return s
+	return s .. _srep(' ', len - slen)
 end
 
 -- http://snippets.luacode.org/?p=snippets/trim_whitespace_from_string_76
