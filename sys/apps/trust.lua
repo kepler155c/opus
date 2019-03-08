@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Crypto   = require('crypto')
 local Security = require('security')
 local SHA1     = require('sha1')

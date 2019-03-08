@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Event      = require('event')
 local Socket     = require('socket')
 local Terminal   = require('terminal')

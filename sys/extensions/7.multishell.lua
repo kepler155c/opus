@@ -24,7 +24,7 @@ local multishell = { }
 
 shell.setEnv('multishell', multishell)
 
-multishell.term = parentTerm --deprecated
+multishell.term = parentTerm --deprecated use device.terminal
 
 local config = {
 	standard = {

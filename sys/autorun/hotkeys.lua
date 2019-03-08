@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Util = require('util')
 
 local kernel     = _G.kernel
@@ -21,10 +19,12 @@ keyboard.addHotkey('control-backspace', function()
 	local tab = kernel.find(uid)
 	if not tab.isOverview then
 		multishell.terminate(uid)
-		tab = Util.shallowCopy(tab)
-		tab.isDead = false
-		tab.focused = true
-		multishell.openTab(tab)
+		multishell.openTab({
+			path = tab.path,
+			env = tab.env,
+			args = tab.args,
+			focused = true,
+		})
 	end
 end)
 

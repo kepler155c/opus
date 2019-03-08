@@ -2,7 +2,6 @@ local Canvas     = require('ui.canvas')
 local class      = require('class')
 local Event      = require('event')
 local Input      = require('input')
-local Peripheral = require('peripheral')
 local Transition = require('ui.transition')
 local Util       = require('util')
 
@@ -12,6 +11,7 @@ local colors     = _G.colors
 local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
+local peripheral = _G.peripheral
 local term       = _G.term
 
 --[[
@@ -178,13 +178,12 @@ function Manager:configure(appName, ...)
 	Util.merge(defaults.device, optionValues)
 
 	if defaults.device.name then
-
 		local dev
 
 		if defaults.device.name == 'terminal' then
 			dev = term.current()
 		else
-			dev = Peripheral.lookup(defaults.device.name) --- device[defaults.device.name]
+			dev = peripheral.wrap(defaults.device.name)
 		end
 
 		if not dev then
