@@ -11,6 +11,7 @@ local function getProxy(path)
 			break
 		end
 	end
+	return proxy
 end
 
 Event.addRoutine(function()
@@ -27,6 +28,7 @@ Event.addRoutine(function()
 
 				if not api then
 					print('proxy: invalid API')
+					socket:close()
 					return
 				end
 
@@ -52,6 +54,7 @@ Event.addRoutine(function()
 					_G.printError(m)
 				end
 			end
+			socket:close()
 		end)
 	end
 end)

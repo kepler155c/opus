@@ -12,7 +12,7 @@ function Proxy.create(remoteId, uri)
   socket.co = coroutine.running()
 
 	socket:write(uri)
-	local methods = socket:read() or error('Timed out')
+	local methods = socket:read(2) or error('Timed out')
 
 	local hijack = { }
 	for _,method in pairs(methods) do

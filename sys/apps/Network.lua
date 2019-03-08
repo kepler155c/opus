@@ -6,7 +6,6 @@ local Util   = require('util')
 
 local colors     = _G.colors
 local device     = _G.device
-local multishell = _ENV.multishell
 local network    = _G.network
 local os         = _G.os
 local shell      = _ENV.shell
@@ -178,19 +177,10 @@ function page:eventHandler(event)
 	local t = self.grid:getSelected()
 	if t then
 		if event.type == 'telnet' then
-			multishell.openTab({
-				path = 'sys/apps/telnet.lua',
-				focused = true,
-				args = { t.id },
-				title = t.label,
-			})
+			shell.openForegroundTab('telnet ' .. t.id)
+
 		elseif event.type == 'vnc' then
-			multishell.openTab({
-				path = 'sys/apps/vnc.lua',
-				focused = true,
-				args = { t.id },
-				title = t.label,
-			})
+			shell.openForegroundTab('vnc.lua ' .. t.id)
 			os.queueEvent('overview_shortcut', {
 				title = t.label,
 				category = "VNC",
@@ -199,6 +189,7 @@ function page:eventHandler(event)
 		 \031e\\/\031  \0319c",
 				run = "vnc.lua " .. t.id,
 			})
+
 		elseif event.type == 'clear' then
 			Util.clear(network)
 			page.grid:update()
