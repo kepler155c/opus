@@ -173,8 +173,8 @@ local function pathTo(dest, options)
 
 				-- use single turn method so the turtle doesn't turn around
 				-- when encountering obstacles
-				-- if not turtle.gotoSingleTurn(pt.x, pt.y, pt.z, pt.heading) then
-				if not turtle.goto(pt) then
+				if not turtle.gotoSingleTurn(pt.x, pt.y, pt.z, pt.heading) then
+				--if not turtle.goto(pt) then
 					local bpt = Point.nearestTo(turtle.point, pt)
 
 					table.insert(blocks, bpt)

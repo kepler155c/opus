@@ -680,15 +680,6 @@ function turtle.gotoYfirst(pt)
 	end
 end
 
-function turtle.gotoYlast(pt)
-	if turtle.go({ x = pt.x, z = pt.z, heading = pt.heading }) then
-		if turtle.gotoY(pt.y) then
-			turtle.setHeading(pt.heading)
-			return true
-		end
-	end
-end
-
 function turtle.go(pt)
 	if not pt.x and not pt.z and pt.y then
 		if turtle.gotoY(pt.y) then
@@ -715,6 +706,7 @@ end
 turtle['goto'] = turtle.go
 turtle['_goto'] = turtle.go
 
+-- TODO: localize these goto functions
 function turtle.gotoX(dx)
 	turtle.headTowardsX(dx)
 
