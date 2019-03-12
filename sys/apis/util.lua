@@ -405,7 +405,11 @@ function Util.readFile(fname)
 end
 
 function Util.backup(fname)
-	fs.copy(fname, fname .. '.bak')
+	local backup = fname .. '.bak'
+	if backup then
+		fs.delete(backup)
+	end
+	fs.copy(fname, backup)
 end
 
 function Util.writeFile(fname, data)
