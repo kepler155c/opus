@@ -404,7 +404,7 @@ function Util.readFile(fname)
 	end
 end
 
-function Util.backupFile(fname)
+function Util.backup(fname)
 	fs.copy(fname, fname .. '.bak')
 end
 
