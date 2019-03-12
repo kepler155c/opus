@@ -8,7 +8,6 @@ local Util       = require('util')
 local _rep       = string.rep
 local _sub       = string.sub
 local colors     = _G.colors
-local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
 local peripheral = _G.peripheral
@@ -914,9 +913,9 @@ UI.Device.defaults = {
 function UI.Device:postInit()
 	self.device = self.device or term.current()
 
-	if self.deviceType then
-		self.device = device[self.deviceType]
-	end
+	--if self.deviceType then
+	--	self.device = device[self.deviceType]
+	--end
 
 	if not self.device.setTextScale then
 		self.device.setTextScale = function() end
@@ -1197,6 +1196,7 @@ end
 
 loadComponents()
 
+UI.theme = { }
 UI:loadTheme('usr/config/ui.theme')
 if Util.getVersion() >= 1.76 then
 	UI:loadTheme('sys/etc/ext.theme')

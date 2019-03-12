@@ -404,6 +404,10 @@ function Util.readFile(fname)
 	end
 end
 
+function Util.backupFile(fname)
+	fs.copy(fname, fname .. '.bak')
+end
+
 function Util.writeFile(fname, data)
 	if not fname or not data then error('Util.writeFile: invalid parameters', 2) end
 	local file = io.open(fname, "w")

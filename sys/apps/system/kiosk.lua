@@ -1,7 +1,6 @@
 local UI = require('ui')
 
 local colors     = _G.colors
-local device     = _G.device
 local peripheral = _G.peripheral
 local settings   = _G.settings
 
@@ -34,11 +33,9 @@ local tab = UI.Tab {
 function tab:enable()
 	local choices = {	}
 
-	for _,v in pairs(device) do
-		if v.type == 'monitor' then
-			table.insert(choices, { name = v.side, value = v.side })
-		end
-	end
+	peripheral.find('monitor', function(side)
+		table.insert(choices, { name = side, value = side })
+	end)
 
 	self.form.monitor.choices = choices
 	self.form.monitor.value = settings.get('kiosk.monitor')
