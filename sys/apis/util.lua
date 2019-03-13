@@ -414,6 +414,16 @@ end
 
 function Util.writeFile(fname, data)
 	if not fname or not data then error('Util.writeFile: invalid parameters', 2) end
+
+	if fs.exists(fname) then
+		local diff = #data - fs.getSize(fname)
+		if diff > 0 then
+			if fs.getFreeSpace(fs.getDir(fname)) < diff then
+				error('Insufficient disk space for ' .. fname)
+			end
+		end
+	end
+
 	local file = io.open(fname, "w")
 	if not file then
 		error('Unable to open ' .. fname, 2)

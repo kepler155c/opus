@@ -6,6 +6,7 @@ if not _G.http.websocket then
 end
 
 if not _G.cloud_catcher then
+  print('Visit https://cloud-catcher.squiddev.cc')
   print('Paste key: ')
   local key = read()
   if #key == 0 then

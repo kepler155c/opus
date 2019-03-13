@@ -113,6 +113,7 @@ local function splitpath(path)
 end
 
 local function getNode(dir)
+	if not dir then error('Invalid directory', 2) end
 	local cd = fs.combine(dir, '')
 	local parts = splitpath(cd)
 	local node = fs.nodes
@@ -176,6 +177,8 @@ function fs.listEx(dir)
 end
 
 function fs.copy(s, t)
+	if not s then error('copy: bad argument #1') end
+	if not t then error('copy: bad argument #2') end
 	local sp = getNode(s)
 	local tp = getNode(t)
 	if sp == tp and sp.fs.copy then
