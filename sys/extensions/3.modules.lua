@@ -10,6 +10,8 @@ local containers = {
   neuralInterface = true,
 }
 
+if true then return end
+
 local function getModules(dev, side)
   local list = { }
 
