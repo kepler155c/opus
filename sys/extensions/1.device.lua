@@ -59,8 +59,7 @@ end)
 kernel.hook('peripheral_detach', function(_, eventData)
 	local side = eventData[1]
 	if side then
-		local dev = Util.find(device, 'side', side)
-		if dev then
+		for _, dev in pairs(Util.findAll(device, 'side', side)) do
 			os.queueEvent('device_detach', dev.name, dev)
 			if dev._children then
 				for _,v in pairs(dev._children) do
