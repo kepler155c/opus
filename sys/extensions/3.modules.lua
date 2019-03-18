@@ -10,8 +10,6 @@ local containers = {
   neuralInterface = true,
 }
 
-if true then return end
-
 local function getModules(dev, side)
   local list = { }
 
@@ -30,7 +28,10 @@ for _,v in pairs(device) do
   if containers[v.type] then
     local list = getModules(v, v.side)
     for k, dev in pairs(list) do
-      device[k] = dev
+      -- neural and attached modules have precedence over manipulator modules
+      if not device[k] or v.type ~= 'manipulator' then
+        device[k] = dev
+      end
     end
   end
 end
@@ -42,8 +43,10 @@ kernel.hook('device_attach', function(_, eventData)
   if dev and containers[dev.type] then
     local list = getModules(peripheral.wrap(dev.side), dev.side)
     for k,v in pairs(list) do
-      device[k] = v
-      os.queueEvent('device_attach', k, v)
+      if not device[k] or dev.type ~= 'manipulator' then
+        device[k] = v
+        os.queueEvent('device_attach', k, v)
+      end
     end
   end
 end)

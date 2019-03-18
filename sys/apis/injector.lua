@@ -29,6 +29,7 @@ local http   = _G.http
 local os     = _G.os
 local string = _G.string
 
+--[[
 if not http._patched then
 	-- fix broken http get (http.get is not coroutine safe)
 	local syncLocks = { }
@@ -65,6 +66,7 @@ if not http._patched then
 		return s, m
 	end
 end
+--]]
 
 local function loadUrl(url)
 	local c

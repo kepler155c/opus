@@ -92,7 +92,7 @@ function Routine:resume(event, ...)
 		term.redirect(previousTerm)
 
 		if not ok and self.haltOnError then
-			error(result)
+			error(result, -1)
 		end
 		if coroutine.status(self.co) == 'dead' then
 			Util.removeByValue(kernel.routines, self)

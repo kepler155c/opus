@@ -67,7 +67,7 @@ function Routine:resume(event, ...)
 		end
 
 		if not s and event ~= 'terminate' then
-			error('\n' .. (m or 'Error processing event'))
+			error(m or 'Error processing event', -1)
 		end
 
 		return s, m

@@ -20,6 +20,7 @@ _G.requireInjector(sandboxEnv)
 UI:configure('Lua', ...)
 
 local command = ''
+local counter = 1
 local history = History.load('usr/.lua_history', 25)
 
 local page = UI.Page {
@@ -209,10 +210,6 @@ end
 function page:setResult(result)
 	local t = { }
 
-	local oterm = term.redirect(self.output.win)
-	Util.print(result)
-	term.redirect(oterm)
-
 	local function safeValue(v)
 		if type(v) == 'string' or type(v) == 'number' then
 			return v
@@ -297,24 +294,39 @@ end
 
 function page:rawExecute(s)
 	local fn, m
+	local wrapped
 
 	fn = load('return (' ..s.. ')', 'lua', nil, sandboxEnv)
 
 	if fn then
 		fn = load('return {' ..s.. '}', 'lua', nil, sandboxEnv)
+		wrapped = true
 	end
 
 	if fn then
 		fn, m = pcall(fn)
-		if #m == 1 then
+		if #m <= 1 and wrapped then
 			m = m[1]
 		end
-		return fn, m
+	else
+		fn, m = load(s, 'lua', nil, sandboxEnv)
+		if fn then
+			fn, m = pcall(fn)
+		end
 	end
 
-	fn, m = load(s, 'lua', nil, sandboxEnv)
 	if fn then
-		fn, m = pcall(fn)
+		if m or wrapped then
+			local bg, fg = term.getBackgroundColor(), term.getTextColor()
+			term.setTextColor(colors.cyan)
+			term.setBackgroundColor(colors.black)
+			term.write(string.format('out [%d]: ', counter))
+			term.setBackgroundColor(bg)
+			term.setTextColor(fg)
+			Util.print(m or 'nil')
+		end
+	else
+		_G.printError(m)
 	end
 
 	return fn, m
@@ -331,17 +343,18 @@ function page:executeStatement(statement)
 	self.output.win.scrollBottom()
 	local bg, fg = term.getBackgroundColor(), term.getTextColor()
 	term.setBackgroundColor(colors.black)
-	term.setTextColor(colors.yellow)
-	print('> ' .. tostring(statement))
+	term.setTextColor(colors.green)
+	term.write(string.format('in [%d]: ', counter))
 	term.setBackgroundColor(bg)
 	term.setTextColor(fg)
+	print(tostring(statement))
+
 	pcall(function()
 		s, m = self:rawExecute(command)
 	end)
-	if not s then
-		_G.printError(m)
-	end
+
 	term.redirect(oterm)
+	counter = counter + 1
 
 	if s and m then
 		self:setResult(m)
