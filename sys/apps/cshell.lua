@@ -1,3 +1,5 @@
+local Config     = require('config')
+
 local read  = _G.read
 local shell = _ENV.shell
 
@@ -6,11 +8,15 @@ if not _G.http.websocket then
 end
 
 if not _G.cloud_catcher then
-  print('Visit https://cloud-catcher.squiddev.cc')
-  print('Paste key: ')
-  local key = read()
-  if #key == 0 then
-    return
+  local key = Config.load('cloud').key
+
+  if not key then
+    print('Visit https://cloud-catcher.squiddev.cc')
+    print('Paste key: ')
+    key = read()
+    if #key == 0 then
+      return
+    end
   end
   print('Connecting...')
   shell.run('cloud ' .. key)

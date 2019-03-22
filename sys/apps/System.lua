@@ -10,7 +10,7 @@ local systemPage = UI.Page {
 	tabs = UI.Tabs {
 		settings = UI.Tab {
 			tabTitle = 'Category',
-			grid = UI.Grid {
+			grid = UI.ScrollingGrid {
 				y = 2,
 				columns = {
 					{ heading = 'Name',        key = 'name'        },

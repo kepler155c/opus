@@ -1,3 +1,5 @@
+local Config     = require('config')
+
 local multishell = _ENV.multishell
 local os         = _G.os
 local read       = _G.read
@@ -13,12 +15,17 @@ if not _G.http.websocket then
 end
 
 if not _G.cloud_catcher then
-  print('Visit https://cloud-catcher.squiddev.cc')
-  print('Paste key: ')
-  local key = read()
-  if #key == 0 then
-    return
+  local key = Config.load('cloud').key
+
+  if not key then
+    print('Visit https://cloud-catcher.squiddev.cc')
+    print('Paste key: ')
+    key = read()
+    if #key == 0 then
+      return
+    end
   end
+
   -- open an unfocused tab
   local id = shell.openTab('cloud ' .. key)
   print('Connecting...')
