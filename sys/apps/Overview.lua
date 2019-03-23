@@ -11,6 +11,7 @@ local UI       = require('ui')
 local Util     = require('util')
 
 local colors     = _G.colors
+local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
 local pocket     = _G.pocket
@@ -168,9 +169,10 @@ local function loadApplications()
 		pocket = not not pocket,
 		advancedPocket = pocket and term.isColor(),
 		advancedComputer = not turtle and not pocket and term.isColor(),
+		neuralInterface = not not device.neuralInterface,
 	}
 
-	applications = Util.readTable('sys/etc/app.db')
+	applications = Util.readTable('sys/etc/apps.db')
 
 	for dir in pairs(Packages:installed()) do
 		local path = fs.combine('packages/' .. dir, 'etc/apps.db')
