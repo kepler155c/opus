@@ -30,6 +30,7 @@ local Util       = require('util')
 local device   = _G.device
 local kernel   = _G.kernel
 local keyboard = _G.device.keyboard
+local keys     = _G.keys
 local mouse    = _G.device.mouse
 local os       = _G.os
 
@@ -71,17 +72,25 @@ kernel.hook('peripheral_detach', function(_, eventData)
 	end
 end)
 
+local modifiers = Util.transpose {
+	keys.leftCtrl,  keys.rightCtrl,
+	keys.leftShift, keys.rightShift,
+	keys.leftAlt,   keys.rightAlt,
+}
+
 kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
 	local code = eventData[1]
 
 	-- maintain global keyboard state
-	if event == 'key' then
-		keyboard.state[code] = true
-	elseif event == 'key_up' then
-		if not keyboard.state[code] then
-			return true -- ensure key ups are only generated if a key down was sent
-		end
+	if modifiers[code] then
+		if event == 'key' then
+			keyboard.state[code] = true
+		elseif event == 'key_up' then
+--			if not keyboard.state[code] then
+--			return true -- ensure key ups are only generated if a key down was sent
+--		end
 		keyboard.state[code] = nil
+		end
 	end
 
 	-- and fire hotkeys
@@ -107,8 +116,8 @@ kernel.hook({ 'mouse_click', 'mouse_up', 'mouse_drag' }, function(event, eventDa
 end)
 
 kernel.hook('kernel_focus', function()
-	Util.clear(keyboard.state)
-	Util.clear(mouse.state)
+	--Util.clear(keyboard.state)
+	--Util.clear(mouse.state)
 end)
 
 function keyboard.addHotkey(code, fn)
