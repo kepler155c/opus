@@ -72,7 +72,7 @@ function UI.Form:createForm()
 					value = child.formLabel,
 				})
 			end
-			if child.formKey or child.formLabel then
+			if child.formLabel then
 				y = y + 1
 			end
 		end

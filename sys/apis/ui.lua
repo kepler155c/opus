@@ -213,7 +213,7 @@ function Manager:loadTheme(filename)
 		if not theme then
 			error(err)
 		end
-		self.theme = theme
+		Util.deepMerge(self.theme, theme)
 	end
 end
 
@@ -1197,10 +1197,34 @@ end
 loadComponents()
 
 UI.theme = { }
-UI:loadTheme('usr/config/ui.theme')
 if Util.getVersion() >= 1.76 then
-	UI:loadTheme('sys/etc/ext.theme')
+  UI.theme = {
+		ScrollBar = {
+			lineChar = '|',
+			sliderChar = '\127',
+			upArrowChar = '\30',
+			downArrowChar = '\31',
+		},
+		Checkbox = {
+			checkedIndicator = '\4',
+			leftMarker = '\124',
+			rightMarker = '\124',
+		},
+		Chooser = {
+			leftIndicator = '\17',
+			rightIndicator = '\16',
+		},
+		Grid = {
+			focusIndicator = '\183',
+			inverseSortIndicator = '\24',
+		},
+		TitleBar = {
+			frameChar = '\140',
+			closeInd = '\215',
+		},
+	}
 end
+UI:loadTheme('usr/config/ui.theme')
 
 UI:setDefaultDevice(UI.Device({ device = term.current() }))
 
