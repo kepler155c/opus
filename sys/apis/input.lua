@@ -89,9 +89,11 @@ function input:translate(event, code, p1, p2)
 		end
 
 	elseif event == 'char' then
-		if not self:modifierPressed() then
+		if not self.pressed[keys.leftAlt] and
+       not self.pressed[keys.rightAlt] then
 			self.fired = true
-			return { code = event, ch = input:toCode(code) }
+			return { code = event, ch = code }
+--		return { code = event, ch = input:toCode(code) }
 		end
 
 	elseif event == 'key_up' then
