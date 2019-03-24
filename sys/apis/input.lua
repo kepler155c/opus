@@ -39,11 +39,11 @@ function input:toCode(ch, code)
 
 	-- the key-up event for alt keys is not generated if the minecraft
 	-- window loses focus
-	--
-	-- if keyboard.state[keys.leftAlt] or keyboard.state[keys.rightAlt] or
-	--    code == keys.leftAlt or code == keys.rightAlt then
-	--   table.insert(result, 'alt')
-	-- end
+
+	 if keyboard.state[keys.leftAlt] or keyboard.state[keys.rightAlt] or
+	    code == keys.leftAlt or code == keys.rightAlt then
+	   table.insert(result, 'alt')
+	end
 
 	if keyboard.state[keys.leftShift] or keyboard.state[keys.rightShift] or
 		 code == keys.leftShift or code == keys.rightShift then

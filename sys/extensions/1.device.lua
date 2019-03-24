@@ -75,21 +75,18 @@ end)
 local modifiers = Util.transpose {
 	keys.leftCtrl,  keys.rightCtrl,
 	keys.leftShift, keys.rightShift,
-	keys.leftAlt,   keys.rightAlt,
+	--keys.leftAlt,   keys.rightAlt,
 }
 
 kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
 	local code = eventData[1]
 
-	-- maintain global keyboard state
+	-- maintain global keyboard modifier state
 	if modifiers[code] then
 		if event == 'key' then
 			keyboard.state[code] = true
 		elseif event == 'key_up' then
---			if not keyboard.state[code] then
---			return true -- ensure key ups are only generated if a key down was sent
---		end
-		keyboard.state[code] = nil
+			keyboard.state[code] = nil
 		end
 	end
 
@@ -98,6 +95,7 @@ kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
 
 	if hotkey and keyboard.hotkeys[hotkey.code] then
 		keyboard.hotkeys[hotkey.code](event, eventData)
+		return true
 	end
 end)
 
