@@ -13,6 +13,7 @@ UI.Notification.defaults = {
 	closeInd = '\215',
 	height = 3,
 	timeout = 3,
+	anchor = 'bottom',
 }
 function UI.Notification:draw()
 end
@@ -27,7 +28,7 @@ function UI.Notification:error(value, timeout)
 end
 
 function UI.Notification:info(value, timeout)
-	self.backgroundColor = colors.gray
+	self.backgroundColor = colors.lightGray
 	self:display(value, timeout)
 end
 
@@ -50,29 +51,34 @@ function UI.Notification:cancel()
 end
 
 function UI.Notification:display(value, timeout)
+	self:cancel()
 	self.enabled = true
 	local lines = Util.wordWrap(value, self.width - 3)
 	self.height = #lines
-	self.y = self.parent.height - self.height + 1
-	if self.canvas then
-		self.canvas:removeLayer()
-	end
 
-	self.canvas = self:addLayer(self.backgroundColor, self.textColor)
-	self:addTransition('expandUp', { ticks = self.height })
+	if self.anchor == 'bottom' then
+		self.y = self.parent.height - self.height + 1
+		self.canvas = self:addLayer(self.backgroundColor, self.textColor)
+		self:addTransition('expandUp', { ticks = self.height })
+	else
+		self.canvas = self:addLayer(self.backgroundColor, self.textColor)
+		self.y = 1
+	end
 	self.canvas:setVisible(true)
 	self:clear()
 	for k,v in pairs(lines) do
 		self:write(2, k, v)
 	end
-	self:write(self.width, 1, self.closeInd)
 
 	timeout = timeout or self.timeout
 	if timeout > 0 then
-		self.timer = Event.onTimeout(timeout or self.timeout, function()
+		self.timer = Event.onTimeout(timeout, function()
 			self:cancel()
 			self:sync()
 		end)
+	else
+		self:write(self.width, 1, self.closeInd)
+		self:sync()
 	end
 end
 

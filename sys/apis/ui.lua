@@ -374,8 +374,11 @@ function Manager:mergeProperties(obj, args)
 end
 
 function Manager:pullEvents(...)
-	Event.pullEvents(...)
+	local s, m = pcall(Event.pullEvents, ...)
 	self.term:reset()
+	if not s and m then
+		error(m, -1)
+	end
 end
 
 function Manager:exitPullEvents()
