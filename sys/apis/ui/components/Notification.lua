@@ -10,7 +10,9 @@ UI.Notification = class(UI.Window)
 UI.Notification.defaults = {
 	UIElement = 'Notification',
 	backgroundColor = colors.gray,
+	closeInd = '\215',
 	height = 3,
+	timeout = 3,
 }
 function UI.Notification:draw()
 end
@@ -49,8 +51,8 @@ end
 
 function UI.Notification:display(value, timeout)
 	self.enabled = true
-	local lines = Util.wordWrap(value, self.width - 2)
-	self.height = #lines + 1
+	local lines = Util.wordWrap(value, self.width - 3)
+	self.height = #lines
 	self.y = self.parent.height - self.height + 1
 	if self.canvas then
 		self.canvas:removeLayer()
@@ -63,9 +65,22 @@ function UI.Notification:display(value, timeout)
 	for k,v in pairs(lines) do
 		self:write(2, k, v)
 	end
+	self:write(self.width, 1, self.closeInd)
 
-	self.timer = Event.onTimeout(timeout or 3, function()
-		self:cancel()
-		self:sync()
-	end)
+	timeout = timeout or self.timeout
+	if timeout > 0 then
+		self.timer = Event.onTimeout(timeout or self.timeout, function()
+			self:cancel()
+			self:sync()
+		end)
+	end
+end
+
+function UI.Notification:eventHandler(event)
+	if event.type == 'mouse_click' then
+		if event.x == self.width then
+			self:cancel()
+			return true
+		end
+	end
 end

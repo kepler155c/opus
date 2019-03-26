@@ -39,15 +39,7 @@ function Packages:downloadList()
 	end
 end
 
-function Packages:getManifest(package)
-	local fname = 'packages/' .. package .. '/.package'
-	if fs.exists(fname) then
-		local c = Util.readTable(fname)
-		if c then
-			c.repository = c.repository:gsub('{{OPUS_BRANCH}}', _G.OPUS_BRANCH)
-			return c
-		end
-	end
+function Packages:downloadManifest(package)
 	local list = self:list()
 	local url = list and list[package]
 
@@ -61,6 +53,18 @@ function Packages:getManifest(package)
 			end
 		end
 	end
+end
+
+function Packages:getManifest(package)
+	local fname = 'packages/' .. package .. '/.package'
+	if fs.exists(fname) then
+		local c = Util.readTable(fname)
+		if c and c.repository then
+			c.repository = c.repository:gsub('{{OPUS_BRANCH}}', _G.OPUS_BRANCH)
+			return c
+		end
+	end
+	return self:downloadManifest(package)
 end
 
 return Packages

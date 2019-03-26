@@ -83,6 +83,7 @@ local Browser = UI.Page {
       { key = 'totalSize', width = 6 },
     },
   },
+  notification = UI.Notification { },
   associations = UI.SlideOut {
     backgroundColor = colors.cyan,
     menuBar = UI.MenuBar {
@@ -215,7 +216,7 @@ function Browser.statusBar:draw()
 end
 
 function Browser:setStatus(status, ...)
-  self.statusBar:timedStatus(string.format(status, ...))
+  self.notification:info(string.format(status, ...))
 end
 
 function Browser:unmarkAll()

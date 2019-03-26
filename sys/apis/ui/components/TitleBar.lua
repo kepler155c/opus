@@ -41,8 +41,8 @@ UI.TitleBar.defaults = {
 	textColor = colors.white,
 	backgroundColor = colors.cyan,
 	title = '',
-	frameChar = '-',
-	closeInd = '*',
+	frameChar = UI.extChars and '\140' or '-',
+	closeInd = UI.extChars and '\215' or '*',
 }
 function UI.TitleBar:draw()
 	local sb = SB(self.width)

@@ -35,6 +35,8 @@ end
 local Manager = class()
 function Manager:init()
 	self.devices = { }
+	self.theme = { }
+	self.extChars = Util.getVersion() >= 1.76
 
 	local function keyFunction(event, code, held)
 		local ie = Input:translate(event, code, held)
@@ -1195,37 +1197,7 @@ local function loadComponents()
 end
 
 loadComponents()
-
-UI.theme = { }
-if Util.getVersion() >= 1.76 then
-  UI.theme = {
-		ScrollBar = {
-			lineChar = '|',
-			sliderChar = '\127',
-			upArrowChar = '\30',
-			downArrowChar = '\31',
-		},
-		Checkbox = {
-			checkedIndicator = '\4',
-			leftMarker = '\124',
-			rightMarker = '\124',
-		},
-		Chooser = {
-			leftIndicator = '\17',
-			rightIndicator = '\16',
-		},
-		Grid = {
-			focusIndicator = '\183',
-			inverseSortIndicator = '\24',
-		},
-		TitleBar = {
-			frameChar = '\140',
-			closeInd = '\215',
-		},
-	}
-end
 UI:loadTheme('usr/config/ui.theme')
-
 UI:setDefaultDevice(UI.Device({ device = term.current() }))
 
 return UI

@@ -37,12 +37,6 @@ local page = UI.Page {
 		x = 16, y = 3, ey = -5,
 		marginRight = 0, marginLeft = 0,
 	},
-	load = UI.Button {
-		x = 22, y = -3,
-		text = 'Update packages',
-		event = 'reload',
-		help = 'Download the latest package list',
-	},
 	action = UI.SlideOut {
 		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
@@ -144,10 +138,6 @@ function page:eventHandler(event)
 		self.description:draw()
 		self:updateSelection(event.selected)
 
-	elseif event.type == 'reload' then
-		Packages:downloadList()
-		self:loadPackages()
-
 	elseif event.type == 'action' then
 		local selected = self.grid:getSelected()
 		if selected then
@@ -178,7 +168,11 @@ function page:eventHandler(event)
 	UI.Page.eventHandler(self, event)
 end
 
-page:loadPackages()
-
 UI:setPage(page)
+page.statusBar:setStatus('Downloading...')
+page:sync()
+Packages:downloadList()
+page:loadPackages()
+page:sync()
+
 UI:pullEvents()

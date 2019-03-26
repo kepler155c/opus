@@ -11,8 +11,8 @@ UI.Chooser.defaults = {
 	nochoice = 'Select',
 	backgroundFocusColor = colors.lightGray,
 	textInactiveColor = colors.gray,
-	leftIndicator = '<',
-	rightIndicator = '>',
+	leftIndicator = UI.extChars and '\17' or '<',
+	rightIndicator = UI.extChars and '\16' or '>',
 	height = 1,
 }
 function UI.Chooser:setParent()

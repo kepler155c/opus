@@ -36,7 +36,7 @@ local function progress(max)
 end
 
 local function install(name, isUpdate)
-	local manifest = Packages:getManifest(name) or error('Invalid package')
+	local manifest = Packages:downloadManifest(name) or error('Invalid package')
 
 	if manifest.required then
 		for _, v in pairs(manifest.required) do
