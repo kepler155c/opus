@@ -9,6 +9,8 @@ local multishell = _ENV.multishell
 local os         = _G.os
 local shell      = _ENV.shell
 
+local FILE    = 1
+
 UI:configure('Files', ...)
 
 local config = Config.load('Files', {
@@ -38,12 +40,13 @@ local Browser = UI.Page {
     buttons = {
       { text = '^-',   event = 'updir' },
       { text = 'File', dropdown = {
-          { text = 'Run',             event = 'run'    },
-          { text = 'Edit       e',    event = 'edit'   },
-          { text = 'Cloud edit c',    event = 'cedit'   },
-          { text = 'Shell      s',    event = 'shell'  },
+          { text = 'Run',               event = 'run',   flags = FILE },
+          { text = 'Edit         e',    event = 'edit',  flags = FILE },
+          { text = 'Cloud edit   c',    event = 'cedit', flags = FILE },
+          { text = 'Pastebin put p',    event = 'cedit', flags = FILE },
+          { text = 'Shell        s',    event = 'shell'  },
           UI.MenuBar.spacer,
-          { text = 'Quit       q',    event = 'quit'   },
+          { text = 'Quit         q',    event = 'quit'   },
       } },
       { text = 'Edit', dropdown = {
           { text = 'Cut          ^x', event = 'cut'    },
@@ -140,6 +143,7 @@ local Browser = UI.Page {
     c               = 'cedit',
     e               = 'edit',
     s               = 'shell',
+    p               = 'pastebin',
     r               = 'refresh',
     space           = 'mark',
     backspace       = 'updir',
@@ -162,10 +166,8 @@ end
 
 function Browser.menuBar:getActive(menuItem)
   local file = Browser.grid:getSelected()
-  if file then
-    if menuItem.event == 'edit' or menuItem.event == 'run' then
-      return not file.isDir
-    end
+  if menuItem.flags == FILE then
+    return file and not file.isDir
   end
   return true
 end
@@ -346,6 +348,7 @@ function Browser:eventHandler(event)
 
   elseif event.type == 'cedit' and file then
     self:run('cedit', file.name)
+    self:setStatus('Started cloud edit')
 
   elseif event.type == 'shell' then
     self:run('sys/apps/shell.lua')
@@ -357,6 +360,16 @@ function Browser:eventHandler(event)
 
   elseif event.type == 'associate' then
     self.associations:show()
+
+  elseif event.type == 'pastebin' then
+    if file and not file.isDir then
+      local s, m = pastebin.put(file.fullName)
+      if s then
+        self.notification:success(string.format('Uploaded as %s', m), 0)
+      else
+        self.notification:error(m)
+      end
+    end
 
   elseif event.type == 'toggle_hidden' then
     config.showHidden = not config.showHidden

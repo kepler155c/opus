@@ -4,6 +4,8 @@ local UI     = require('ui')
 
 local colors = _G.colors
 
+-- -t80x30
+
 if _G.http.websocket then
   local config = Config.load('cloud')
 
