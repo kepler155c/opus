@@ -113,11 +113,6 @@ kernel.hook({ 'mouse_click', 'mouse_up', 'mouse_drag' }, function(event, eventDa
 	end
 end)
 
-kernel.hook('kernel_focus', function()
-	--Util.clear(keyboard.state)
-	--Util.clear(mouse.state)
-end)
-
 function keyboard.addHotkey(code, fn)
 	keyboard.hotkeys[code] = fn
 end

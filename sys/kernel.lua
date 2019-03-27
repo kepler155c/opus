@@ -14,6 +14,7 @@ local kernel = _G.kernel
 local os     = _G.os
 local shell  = _ENV.shell
 local term   = _G.term
+local window = _G.window
 
 local w, h = term.getSize()
 kernel.terminal = term.current()
@@ -69,6 +70,23 @@ end
 
 local Routine = { }
 
+local function switch(routine, previous)
+	if routine then
+		if previous and previous.window then
+			previous.window.setVisible(false)
+			if previous.hidden then
+				kernel.lower(previous.uid)
+			end
+		end
+
+		if routine and routine.window then
+			routine.window.setVisible(true)
+		end
+
+		os.queueEvent('kernel_focus', routine.uid, previous and previous.uid)
+	end
+end
+
 function Routine:resume(event, ...)
 	if not self.co or coroutine.status(self.co) == 'dead' then
 		return
@@ -97,7 +115,7 @@ function Routine:resume(event, ...)
 		if coroutine.status(self.co) == 'dead' then
 			Util.removeByValue(kernel.routines, self)
 			if #kernel.routines > 0 then
-				os.queueEvent('kernel_focus', kernel.routines[1].uid)
+				switch(kernel.routines[1])
 			end
 			if self.haltOnExit then
 				kernel.halt()
@@ -174,7 +192,10 @@ function kernel.raise(uid)
 			Util.removeByValue(kernel.routines, routine)
 			table.insert(kernel.routines, 1, routine)
 		end
-		os.queueEvent('kernel_focus', routine.uid, previous and previous.uid)
+
+		switch(routine, previous)
+--		local previous = eventData[2]
+--			local routine = kernel.find(previous)
 		return true
 	end
 	return false
@@ -276,13 +297,19 @@ local function init(...)
 
 	if args[1] then
 		kernel.hook('kernel_ready', function()
+
+			term.redirect(kernel.window)
+			shell.run('sys/apps/autorun.lua')
+
+			local shellWindow = window.create(kernel.terminal, 1, 1, w, h, false)
 			local s, m = kernel.run({
 				title = args[1],
 				path = 'sys/apps/shell.lua',
 				args = args,
 				haltOnExit = true,
 				haltOnError = true,
-				terminal = kernel.terminal,
+				terminal = shellWindow,
+				window = shellWindow,
 			})
 			if s then
 				kernel.raise(s.uid)

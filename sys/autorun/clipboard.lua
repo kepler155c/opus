@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Util = require('util')
 
 local kernel    = _G.kernel

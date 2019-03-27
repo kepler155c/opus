@@ -1,7 +1,6 @@
 _G.requireInjector(_ENV)
 
 local Config   = require('config')
-local Packages = require('packages')
 local trace    = require('trace')
 local Util     = require('util')
 
@@ -12,7 +11,6 @@ local keys       = _G.keys
 local os         = _G.os
 local printError = _G.printError
 local shell      = _ENV.shell
-local term       = _G.term
 local window     = _G.window
 
 local parentTerm = _G.device.terminal
@@ -186,23 +184,7 @@ function multishell.getCount()
 	return #kernel.routines
 end
 
-kernel.hook('kernel_focus', function(_, eventData)
-	local previous = eventData[2]
-	if previous then
-		local routine = kernel.find(previous)
-		if routine and routine.window then
-			routine.window.setVisible(false)
-			if routine.hidden then
-				kernel.lower(previous)
-			end
-		end
-	end
-
-	local focused = kernel.find(eventData[1])
-	if focused and focused.window then
-		focused.window.setVisible(true)
-	end
-
+kernel.hook('kernel_focus', function()
 	redrawMenu()
 end)
 
@@ -349,59 +331,6 @@ kernel.hook('mouse_scroll', function(_, eventData)
 	eventData[3] = eventData[3] - 1
 end)
 
-local function startup()
-	local success = true
-
-	local function runDir(directory, open)
-		if not fs.exists(directory) then
-			return true
-		end
-
-		local files = fs.list(directory)
-		table.sort(files)
-
-		for _,file in ipairs(files) do
-			os.sleep(0)
-			local result, err = open(directory .. '/' .. file)
-
-			if result then
-				if term.isColor() then
-					term.setTextColor(colors.green)
-				end
-				term.write('[PASS] ')
-				term.setTextColor(colors.white)
-				term.write(fs.combine(directory, file))
-				print()
-			else
-				if term.isColor() then
-					term.setTextColor(colors.red)
-				end
-				term.write('[FAIL] ')
-				term.setTextColor(colors.white)
-				term.write(fs.combine(directory, file))
-				if err then
-					_G.printError('\n' .. err)
-				end
-				print()
-				success = false
-			end
-		end
-	end
-
-	runDir('sys/autorun', shell.run)
-	for name in pairs(Packages:installed()) do
-		local packageDir = 'packages/' .. name .. '/autorun'
-		runDir(packageDir, shell.run)
-	end
-	runDir('usr/autorun', shell.run)
-
-	if not success then
-		multishell.setFocus(multishell.getCurrent())
-		printError('\nA startup program has errored')
-		os.pullEvent('terminate')
-	end
-end
-
 kernel.hook('kernel_ready', function()
 	overviewId = multishell.openTab({
 		path = 'sys/apps/Overview.lua',
@@ -411,7 +340,8 @@ kernel.hook('kernel_ready', function()
 	})
 
 	multishell.openTab({
-		fn = startup,
+		path = 'sys/apps/shell.lua',
+		args = { 'sys/apps/autorun.lua' },
 		title = 'Autorun',
 	})
 end)

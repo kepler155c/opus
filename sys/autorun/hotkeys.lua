@@ -4,6 +4,10 @@ local kernel     = _G.kernel
 local keyboard   = _G.device.keyboard
 local multishell = _ENV.multishell
 
+if not multishell or not multishell.getTabs then
+	return
+end
+
 -- overview
 keyboard.addHotkey('control-o', function()
 	for _,tab in pairs(multishell.getTabs()) do
