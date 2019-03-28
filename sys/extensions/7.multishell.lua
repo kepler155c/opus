@@ -332,11 +332,15 @@ kernel.hook('mouse_scroll', function(_, eventData)
 end)
 
 kernel.hook('kernel_ready', function()
+	local env = Util.shallowCopy(shell.getEnv())
+	_G.requireInjector(env)
+
 	overviewId = multishell.openTab({
-		path = 'sys/apps/Overview.lua',
+		path = config.launcher or 'sys/apps/Overview.lua',
 		isOverview = true,
 		focused = true,
 		title = '+',
+		env = env,
 	})
 
 	multishell.openTab({

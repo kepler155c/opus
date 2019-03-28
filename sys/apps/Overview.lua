@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local class    = require('class')
 local Config   = require('config')
 local Event    = require('event')

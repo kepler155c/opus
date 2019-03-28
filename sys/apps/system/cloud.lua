@@ -27,16 +27,16 @@ if _G.http.websocket then
       event = 'update_key',
     },
     labelText = UI.TextArea {
-      x = 2, ex = -2, y = 6,
+      x = 3, ex = -3, y = 6,
       textColor = colors.yellow,
-      marginRight = 0,
+      marginLeft = 0, marginRight = 0,
       value = string.format(
-  [[Use a non-changing cloud key. Note that only a single computer can use this session at one time.
-  To obtain a key, visit:
-  %shttps://cloud-catcher.squiddev.cc%s then bookmark:
-  %shttps://cloud-catcher.squiddev.cc/?id=%sKEY
+[[Use a non-changing cloud key. Note that only a single computer can use this session at one time.
+To obtain a key, visit:
+%shttps://cloud-catcher.squiddev.cc%s then bookmark:
+%shttps://cloud-catcher.squiddev.cc/?id=KEY
     ]],
-      Ansi.white, Ansi.reset, Ansi.white, Ansi.white),
+      Ansi.white, Ansi.reset, Ansi.white),
     },
   }
 

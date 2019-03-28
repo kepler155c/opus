@@ -75,7 +75,7 @@ end)
 local modifiers = Util.transpose {
 	keys.leftCtrl,  keys.rightCtrl,
 	keys.leftShift, keys.rightShift,
-	--keys.leftAlt,   keys.rightAlt,
+	keys.leftAlt,   keys.rightAlt,
 }
 
 kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)

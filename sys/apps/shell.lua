@@ -362,6 +362,7 @@ local Config   = require('config')
 local Entry    = require('entry')
 local History  = require('history')
 local Input    = require('input')
+local Terminal = require('terminal')
 
 local colors    = _G.colors
 local os        = _G.os
@@ -372,22 +373,12 @@ local oldTerm
 local terminal = term.current()
 
 if not terminal.scrollUp then
-	local Terminal = require('terminal')
 	terminal = Terminal.window(term.current())
 	terminal.setMaxScroll(200)
 	oldTerm = term.redirect(terminal)
 end
 
 local config = {
-	standard = {
-		textColor  = colors.white,
-		commandTextColor = colors.lightGray,
-		directoryTextColor = colors.gray,
-		directoryBackgroundColor = colors.black,
-		promptTextColor = colors.gray,
-		promptBackgroundColor = colors.black,
-		directoryColor = colors.gray,
-	},
 	color = {
 		textColor = colors.white,
 		commandTextColor = colors.yellow,
@@ -396,15 +387,20 @@ local config = {
 		promptTextColor = colors.blue,
 		promptBackgroundColor = colors.black,
 		directoryColor = colors.green,
+		fileColor = colors.white,
+		backgroundColor = colors.black,
 	},
 	displayDirectory = true,
 }
 
 Config.load('shellprompt', config)
 
-local _colors = config.standard
-if term.isColor() then
-	_colors = config.color
+local _colors = config.color
+if not term.isColor() then
+	_colors = { }
+	for k, v in pairs(config.color) do
+		_colors[k] = Terminal.colorToGrayscale(v)
+	end
 end
 
 local function autocompleteArgument(program, words)
@@ -536,9 +532,9 @@ local function autocomplete(line)
 		end
 
 		if #tDirs > 0 then
-			textutils.tabulate(_colors.directoryColor, tDirs, colors.white, tFiles)
+			textutils.tabulate(_colors.directoryColor, tDirs, _colors.fileColor, tFiles)
 		else
-			textutils.tabulate(colors.white, tFiles)
+			textutils.tabulate(_colors.fileColor, tFiles)
 		end
 
 		term.setTextColour(_colors.promptTextColor)
@@ -546,7 +542,7 @@ local function autocomplete(line)
 		term.write("$ " )
 
 		term.setTextColour(_colors.commandTextColor)
-		term.setBackgroundColor(colors.black)
+		term.setBackgroundColor(_colors.backgroundColor)
 		return line
 	end
 end
@@ -593,8 +589,9 @@ local function shellRead(history)
 			elseif ie.code == 'enter' then
 				break
 
-			elseif ie.code == 'up' or ie.code == 'down' then
-				if ie.code == 'up' then
+			elseif ie.code == 'up'   or ie.code == 'control-p' or
+						 ie.code == 'down' or ie.code == 'control-n' then
+				if ie.code == 'up' or ie.code == 'control-p' then
 					entry.value = history:back() or ''
 				else
 					entry.value = history:forward() or ''
@@ -634,6 +631,9 @@ end
 
 local history = History.load('usr/.shell_history', 25)
 
+term.setBackgroundColor(_colors.backgroundColor)
+term.clear()
+
 while not bExit do
 	if config.displayDirectory then
 		term.setTextColour(_colors.directoryTextColor)
@@ -644,7 +644,7 @@ while not bExit do
 	term.setBackgroundColor(_colors.promptBackgroundColor)
 	term.write("$ " )
 	term.setTextColour(_colors.commandTextColor)
-	term.setBackgroundColor(colors.black)
+	term.setBackgroundColor(_colors.backgroundColor)
 	local sLine = shellRead(history)
 	if bExit then -- terminated
 		break

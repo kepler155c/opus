@@ -20,7 +20,7 @@ local tab = UI.Tab {
 		disableHeader = true,
 		columns = { { key = 'value' } },
 		autospace = true,
-    sort = 'index',
+    sortColumn = 'index',
     help = 'double-click to remove, shift-arrow to move',
     accelerators = {
       delete = 'remove',

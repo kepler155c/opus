@@ -6,6 +6,25 @@ local _gsub  = string.gsub
 
 local Terminal = { }
 
+local mapColorToGray = {
+	[ colors.white ] = colors.white,
+	[ colors.orange ] = colors.lightGray,
+	[ colors.magenta ] = colors.lightGray,
+	[ colors.lightBlue ] = colors.lightGray,
+	[ colors.yellow ] = colors.lightGray,
+	[ colors.lime ] = colors.lightGray,
+	[ colors.pink ] = colors.lightGray,
+	[ colors.gray ] = colors.gray,
+	[ colors.lightGray ] = colors.lightGray,
+	[ colors.cyan ] = colors.lightGray,
+	[ colors.purple ] = colors.gray,
+	[ colors.blue ] = colors.gray,
+	[ colors.brown ] = colors.gray,
+	[ colors.green ] = colors.lightGray,
+	[ colors.red ] = colors.gray,
+	[ colors.black ] = colors.black,
+}
+
 -- Replacement for window api with scrolling and buffering
 function Terminal.window(parent, sx, sy, w, h, isVisible)
 	isVisible = isVisible ~= false
@@ -243,32 +262,17 @@ function Terminal.getContents(win, parent)
 	return lines
 end
 
-function Terminal.toGrayscale(ct)
-	local scolors = {
-		[ colors.white ] = colors.white,
-		[ colors.orange ] = colors.lightGray,
-		[ colors.magenta ] = colors.lightGray,
-		[ colors.lightBlue ] = colors.lightGray,
-		[ colors.yellow ] = colors.lightGray,
-		[ colors.lime ] = colors.lightGray,
-		[ colors.pink ] = colors.lightGray,
-		[ colors.gray ] = colors.gray,
-		[ colors.lightGray ] = colors.lightGray,
-		[ colors.cyan ] = colors.lightGray,
-		[ colors.purple ] = colors.gray,
-		[ colors.blue ] = colors.gray,
-		[ colors.brown ] = colors.gray,
-		[ colors.green ] = colors.lightGray,
-		[ colors.red ] = colors.gray,
-		[ colors.black ] = colors.black,
-	}
+function Terminal.colorToGrayscale(c)
+	return mapColorToGray[c]
+end
 
+function Terminal.toGrayscale(ct)
 	local methods = { 'setBackgroundColor', 'setBackgroundColour',
 										'setTextColor', 'setTextColour' }
 	for _,v in pairs(methods) do
 		local fn = ct[v]
 		ct[v] = function(c)
-			fn(scolors[c])
+			fn(mapColorToGray[c])
 		end
 	end
 
