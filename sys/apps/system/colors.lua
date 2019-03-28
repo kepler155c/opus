@@ -32,6 +32,12 @@ for k, v in pairs(defaults) do
   table.insert(allSettings, { name = k })
 end
 
+-- temp
+if not _colors.backgroundColor then
+  _colors.backgroundColor = colors.black
+  _colors.fileColor = colors.white
+end
+
 local tab = UI.Tab {
 	tabTitle = 'Shell',
   description = 'Shell option',

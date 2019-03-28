@@ -396,6 +396,12 @@ local config = {
 Config.load('shellprompt', config)
 
 local _colors = config.color
+-- temp
+if not _colors.backgroundColor then
+  _colors.backgroundColor = colors.black
+  _colors.fileColor = colors.white
+end
+
 if not term.isColor() then
 	_colors = { }
 	for k, v in pairs(config.color) do
