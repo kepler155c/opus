@@ -40,7 +40,7 @@ end
 
 local tab = UI.Tab {
 	tabTitle = 'Shell',
-  description = 'Shell option',
+  description = 'Shell options',
   grid1 = UI.ScrollingGrid {
     y = 2, ey = -10, x = 3, ex = -16,
 		disableHeader = true,
