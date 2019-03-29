@@ -57,6 +57,9 @@ end
 function tab:eventHandler(event)
 	if event.type == 'choice_change' then
     self.custom.enabled = event.value == 'custom'
+    if self.custom.enabled then
+      self.custom.value = config.launcher
+    end
     self:draw()
 
   elseif event.type == 'update' then

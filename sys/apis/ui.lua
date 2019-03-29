@@ -45,7 +45,7 @@ function Manager:init()
 		if ie and currentPage then
 			local target = currentPage.focused or currentPage
 			self:inputEvent(target,
-				{ type = 'key', key = ie.code == 'char' and ie.ch or ie.code, element = target })
+				{ type = 'key', key = ie.code == 'char' and ie.ch or ie.code, element = target, ie = ie })
 			currentPage:sync()
 		end
 	end
@@ -97,7 +97,7 @@ function Manager:init()
 		end,
 
 		mouse_click = function(_, button, x, y)
-			Input:translate('mouse_click', button, x, y)
+			local ie = Input:translate('mouse_click', button, x, y)
 
 			local currentPage = self:getActivePage()
 			if currentPage then
@@ -107,6 +107,7 @@ function Manager:init()
 						currentPage:setFocus(event.element)
 						currentPage:sync()
 					end
+					self:click(currentPage, ie.code, button, x, y)
 				end
 			end
 		end,
@@ -136,14 +137,15 @@ function Manager:init()
 			if ie and currentPage then
 				local event = currentPage:pointToChild(x, y)
 				event.type = ie.code
+				event.ie = ie
 				self:inputEvent(event.element, event)
 				currentPage:sync()
 			end
 		end,
 
 		paste = function(_, text)
-			Input:translate('paste')
-			self:emitEvent({ type = 'paste', text = text })
+			local ie = Input:translate('paste', text)
+			self:emitEvent({ type = 'paste', text = text, ie = ie })
 			self:getActivePage():sync()
 		end,
 	}
@@ -259,6 +261,7 @@ function Manager:click(target, code, button, x, y)
 	clickEvent.button = button
 	clickEvent.type = code
 	clickEvent.key = code
+	clickEvent.ie = { code = code, x = x, y = y }
 
 	if clickEvent.element.focus then
 		target:setFocus(clickEvent.element)

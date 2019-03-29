@@ -34,7 +34,7 @@ local page = UI.Page {
 	prompt = UI.TextEntry {
 		y = 2,
 		shadowText = 'enter command',
-		limit = 256,
+		limit = 1024,
 		accelerators = {
 			enter               = 'command_enter',
 			up                  = 'history_back',
@@ -72,12 +72,11 @@ page.output = page.tabs[2].output
 
 function page:setPrompt(value, focus)
 	self.prompt:setValue(value)
-	self.prompt.scroll = 0
-	self.prompt:setPosition(#value)
-	self.prompt:updateScroll()
 
 	if value:sub(-1) == ')' then
 		self.prompt:setPosition(#value - 1)
+	else
+		self.prompt:setPosition(#value)
 	end
 
 	self.prompt:draw()
@@ -155,8 +154,8 @@ function page:eventHandler(event)
 
 	elseif event.type == 'autocomplete' then
 		local sz = #self.prompt.value
-		local pos = self.prompt.pos
-		self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.pos))
+		local pos = self.prompt.entry.pos
+		self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.entry.pos))
 		self.prompt:setPosition(pos + #self.prompt.value - sz)
 		self.prompt:updateCursor()
 

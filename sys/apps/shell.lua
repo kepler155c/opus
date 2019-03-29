@@ -370,7 +370,9 @@ local term      = _G.term
 local textutils = _G.textutils
 
 local oldTerm
-local terminal = term.current()
+local terminal  = term.current()
+local _rep      = string.rep
+local _sub      = string.sub
 
 if not terminal.scrollUp then
 	terminal = Terminal.window(term.current())
@@ -402,10 +404,18 @@ if not _colors.backgroundColor then
   _colors.fileColor = colors.white
 end
 
+local palette = { }
+for n = 1, 16 do
+	palette[2 ^ (n - 1)] = _sub("0123456789abcdef", n, n)
+end
+
 if not term.isColor() then
 	_colors = { }
 	for k, v in pairs(config.color) do
 		_colors[k] = Terminal.colorToGrayscale(v)
+	end
+	for n = 1, 16 do
+		palette[2 ^ (n - 1)] = _sub("088888878877787f", n, n)
 	end
 end
 
@@ -556,11 +566,16 @@ end
 local function shellRead(history)
 	local lastLen = 0
 	local entry = Entry({
-		width = term.getSize() - 3
+		width = term.getSize() - 3,
+		offset = 3,
 	})
 
 	history:reset()
 	term.setCursorBlink(true)
+
+	local function updateCursor()
+		term.setCursorPos(3 + entry.pos - entry.scroll, select(2, term.getCursorPos()))
+	end
 
 	local function redraw()
 		if terminal.scrollBottom then
@@ -571,9 +586,18 @@ local function shellRead(history)
 		local filler = #entry.value < lastLen
 			and string.rep(' ', lastLen - #entry.value)
 			or ''
-		local str = string.sub(entry.value, entry.scroll + 1)
-		term.write(string.sub(str, 1, entry.width) .. filler)
-		term.setCursorPos(3 + entry.pos - entry.scroll, cy)
+		local str = string.sub(entry.value, entry.scroll + 1, entry.width + entry.scroll) .. filler
+		local fg = _rep(palette[_colors.commandTextColor], #str)
+		local bg = _rep(palette[_colors.backgroundColor], #str)
+		if entry.mark.active then
+			local sx = entry.mark.x - entry.scroll + 1
+			local ex = entry.mark.ex - entry.scroll + 1
+			bg = string.rep('f', sx - 1) ..
+				string.rep('7', ex - sx) ..
+				string.rep('f', #str - ex + 1)
+		end
+		term.blit(str, fg, bg)
+		updateCursor()
 		lastLen = #entry.value
 	end
 
@@ -597,13 +621,13 @@ local function shellRead(history)
 
 			elseif ie.code == 'up'   or ie.code == 'control-p' or
 						 ie.code == 'down' or ie.code == 'control-n' then
+				entry:reset()
 				if ie.code == 'up' or ie.code == 'control-p' then
 					entry.value = history:back() or ''
 				else
 					entry.value = history:forward() or ''
 				end
-				entry.pos = string.len(entry.value)
-				entry.scroll = 0
+				entry.pos = #entry.value
 				entry:updateScroll()
 				redraw()
 
@@ -613,17 +637,24 @@ local function shellRead(history)
 					if cline then
 						entry.value = cline
 						entry.pos = #entry.value
+						entry:unmark()
 						entry:updateScroll()
 						redraw()
 					end
 				end
 
-			elseif entry:process(ie) then
-				redraw()
+			else
+				entry:process(ie)
+				if entry.textChanged then
+					redraw()
+				elseif entry.posChanged then
+					updateCursor()
+				end
 			end
 
 		elseif event == "term_resize" then
 			entry.width = term.getSize() - 3
+			entry:updateScroll()
 			redraw()
 		end
 	end
