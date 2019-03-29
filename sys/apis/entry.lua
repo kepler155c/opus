@@ -361,7 +361,7 @@ function Entry:process(ie)
 	local action = mappings[ie.code]
 
 	self.textChanged = false
-_debug(ie)
+
 	if action then
 		local pos = self.pos
 		local line = self.value
