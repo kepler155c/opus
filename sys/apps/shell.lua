@@ -662,8 +662,6 @@ local function shellRead(history)
 		end
 	end
 
-	--local _, cy = term.getCursorPos()
-	--term.setCursorPos( w + 1, cy )
 	print()
 	term.setCursorBlink( false )
 	return entry.value

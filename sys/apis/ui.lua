@@ -261,7 +261,7 @@ function Manager:click(target, code, button, x, y)
 	clickEvent.button = button
 	clickEvent.type = code
 	clickEvent.key = code
-	clickEvent.ie = { code = code, x = x, y = y }
+	clickEvent.ie = { code = code, x = clickEvent.x, y = clickEvent.y }
 
 	if clickEvent.element.focus then
 		target:setFocus(clickEvent.element)

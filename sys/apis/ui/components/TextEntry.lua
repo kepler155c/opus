@@ -35,13 +35,13 @@ end
 function UI.TextEntry:setValue(value)
 	self.value = value
 	self.entry:unmark()
-	self.entry.value = value
+	self.entry.value = tostring(value)
 	self.entry:updateScroll()
 end
 
 function UI.TextEntry:setPosition(pos)
 	self.entry.pos = pos
-	self.entry.value = self.value
+	self.entry.value = tostring(self.value)
 	self.entry:updateScroll()
 end
 
@@ -86,6 +86,7 @@ end
 
 function UI.TextEntry:reset()
 	self.entry:reset()
+	self.value = ''
 	self:draw()
 	self:updateCursor()
 end
@@ -105,7 +106,7 @@ end
 
 function UI.TextEntry:eventHandler(event)
 	local text = self.value
-	self.entry.value = text
+	self.entry.value = tostring(text)
 	if event.ie and self.entry:process(event.ie) then
 		if self.entry.textChanged then
 			self.value = self.entry.value
