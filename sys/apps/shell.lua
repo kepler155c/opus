@@ -362,6 +362,7 @@ local Config   = require('config')
 local Entry    = require('entry')
 local History  = require('history')
 local Input    = require('input')
+local Sound    = require('sound')
 local Terminal = require('terminal')
 
 local colors    = _G.colors
@@ -640,6 +641,8 @@ local function shellRead(history)
 						entry:unmark()
 						entry:updateScroll()
 						redraw()
+					else
+						Sound.play('entity.villager.no')
 					end
 				end
 

@@ -76,11 +76,18 @@ function input:translate(event, code, p1, p2)
 		if p1 then -- key is held down
 			if not modifiers[code] then
 				self.fired = true
-				return { code = input:toCode(keys.getName(code), code) }
+				local ch = input:toCode(keys.getName(code), code)
+				if #ch == 1 then
+					return {
+						code = 'char',
+						ch = ch,
+					}
+				end
+				return { code = ch }
 			end
 		else
 			self.state[code] = true
-			if self:modifierPressed() and not modifiers[code] or code == 57 then
+			if self:modifierPressed() and not modifiers[code] then --or code == 57 then
 				self.fired = true
 				return { code = input:toCode(keys.getName(code), code) }
 			else
@@ -89,8 +96,7 @@ function input:translate(event, code, p1, p2)
 		end
 
 	elseif event == 'char' then
-		if not keyboard.state[keys.leftAlt] and
-       not keyboard.state[keys.rightAlt] then
+		if not self.fired then
 			self.fired = true
 			return { code = event, ch = code }
 --		return { code = event, ch = input:toCode(code) }
