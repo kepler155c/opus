@@ -279,7 +279,7 @@ local function init(...)
 	local runLevel = #args > 0 and 6 or 7
 
 	print('Starting Opus OS')
-	local dir = 'sys/extensions'
+	local dir = 'sys/init'
 	local files = fs.list(dir)
 	table.sort(files)
 	for _,file in ipairs(files) do

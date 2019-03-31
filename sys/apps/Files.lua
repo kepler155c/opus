@@ -7,6 +7,7 @@ local colors     = _G.colors
 local fs         = _G.fs
 local multishell = _ENV.multishell
 local os         = _G.os
+local pastebin   = _G.pastebin
 local shell      = _ENV.shell
 
 local FILE    = 1
@@ -45,7 +46,7 @@ local Browser = UI.Page {
           { text = 'Cloud edit   c',    event = 'cedit', flags = FILE },
           { text = 'Pastebin put p',    event = 'cedit', flags = FILE },
           { text = 'Shell        s',    event = 'shell'  },
-          UI.MenuBar.spacer,
+          { spacer = true },
           { text = 'Quit         q',    event = 'quit'   },
       } },
       { text = 'Edit', dropdown = {
@@ -53,10 +54,10 @@ local Browser = UI.Page {
           { text = 'Copy         ^c', event = 'copy'   },
           { text = 'Copy path      ', event = 'copy_path' },
           { text = 'Paste        ^v', event = 'paste'  },
-          UI.MenuBar.spacer,
+          { spacer = true },
           { text = 'Mark          m', event = 'mark'   },
           { text = 'Unmark all    u', event = 'unmark' },
-          UI.MenuBar.spacer,
+          { spacer = true },
           { text = 'Delete      del', event = 'delete' },
       } },
       { text = 'View', dropdown = {
@@ -365,6 +366,7 @@ function Browser:eventHandler(event)
     if file and not file.isDir then
       local s, m = pastebin.put(file.fullName)
       if s then
+        os.queueEvent('clipboard_copy', s)
         self.notification:success(string.format('Uploaded as %s', m), 0)
       else
         self.notification:error(m)

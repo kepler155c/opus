@@ -58,7 +58,7 @@ else
 
 	_G.requireInjector = runUrl('sys/apis/injector.lua')
 
-	runUrl('sys/extensions/2.vfs.lua')
+	runUrl('sys/init/2.vfs.lua')
 
 	-- install file system
 	fs.mount('', 'gitfs', GIT_REPO)

@@ -24,6 +24,7 @@ function UI.DropMenu:setParent()
 	for _,child in ipairs(self.children) do
 		child.width = maxWidth + 2
 		if child.spacer then
+			child.inactive = true
 			child.text = string.rep('-', child.width - 2)
 		end
 	end

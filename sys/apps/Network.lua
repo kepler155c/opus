@@ -33,7 +33,7 @@ local page = UI.Page {
 			{ text = 'Connect', dropdown = {
 				{ text = 'Telnet      t', event = 'telnet' },
 				{ text = 'VNC         v', event = 'vnc'    },
-				UI.MenuBar.spacer,
+				{ spacer = true },
 				{ text = 'Reboot      r', event = 'reboot' },
 			} },
 			{ text = 'Trust', dropdown = {
@@ -44,7 +44,7 @@ local page = UI.Page {
 				x = -3,
 				dropdown = {
 					{ text = 'Port Status', event = 'ports', modem = true },
-					UI.MenuBar.spacer,
+          { spacer = true },
 					{ text = 'Help', event = 'help', noCheck = true },
 				},
 			},

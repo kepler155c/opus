@@ -25,8 +25,6 @@ UI.MenuBar.defaults = {
 	showBackButton = false,
 	buttonClass = 'MenuItem',
 }
-UI.MenuBar.spacer = { spacer = true, text = 'spacer', inactive = true }
-
 function UI.MenuBar:postInit()
 	self:addButtons(self.buttons)
 end
@@ -42,7 +40,7 @@ function UI.MenuBar:addButtons(buttons)
 		else
 			local buttonProperties = {
 				x = self.lastx,
-				width = #button.text + self.spacing,
+				width = #(button.text or 'button') + self.spacing,
 				centered = false,
 			}
 			self.lastx = self.lastx + buttonProperties.width

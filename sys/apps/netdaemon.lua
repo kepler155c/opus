@@ -15,8 +15,8 @@ end
 
 print('Net daemon starting')
 
-for _,file in pairs(fs.list('sys/network')) do
-	local fn, msg = Util.run(_ENV, 'sys/network/' .. file)
+for _,file in pairs(fs.list('sys/apps/network')) do
+	local fn, msg = Util.run(_ENV, 'sys/apps/network/' .. file)
 	if not fn then
 		printError(msg)
 	end
