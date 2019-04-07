@@ -123,23 +123,25 @@ function multishell.openTab(tab)
 	local routine = kernel.newRoutine(tab)
 
 	routine.co = coroutine.create(function()
-		local result, err, stacktrace
+		local result, err
 
 		if tab.fn then
 			result, err = Util.runFunction(routine.env, tab.fn, table.unpack(tab.args or { } ))
 		elseif tab.path then
-			result, err, stacktrace = xprun(routine.env, tab.path, table.unpack(tab.args or { } ))
+			result, err = xprun(routine.env, tab.path, table.unpack(tab.args or { } ))
 		else
 			err = 'multishell: invalid tab'
 		end
 
-		if not result and err and err ~= 'Terminated' then
-			if err then
+		if not result and err and err ~= 'Terminated' or (err and err ~= 0) then
+			tab.terminal.setBackgroundColor(colors.black)
+			if tonumber(err) then
+				tab.terminal.setTextColor(colors.orange)
+				print('Process exited with error code: ' .. err)
+			elseif err then
 				printError(tostring(err))
-				if stacktrace then -- alternatively log stack to _debug
-					--print('\n' .. stacktrace)
-				end
 			end
+			tab.terminal.setTextColor(colors.white)
 			print('\nPress enter to close')
 			routine.isDead = true
 			routine.hidden = false

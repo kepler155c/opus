@@ -1,0 +1,27 @@
+local device     = _G.device
+local kernel     = _G.kernel
+
+local function register(v)
+  if v and v.isWireless and v.getMetadata and v.getNamesRemote then
+    v.children = { }
+    for _, name in pairs(v.getNamesRemote()) do
+      local dev = v.getMethodsRemote(name)
+      if dev then
+        dev.name = name
+        dev.side = name
+        dev.type = v.getTypeRemote(name)
+        device[name] = dev
+        table.insert(v._children, dev)
+      end
+    end
+  end
+end
+
+for _,v in pairs(device) do
+  register(v)
+end
+
+-- register oc devices as peripherals
+kernel.hook('device_attach', function(_, eventData)
+  register(device[eventData[2]])
+end)

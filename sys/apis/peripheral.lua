@@ -17,53 +17,59 @@ end
 
 function Peripheral.addDevice(deviceList, side)
 	local name = side
-	local ptype = Peripheral.getType(side)
+	pcall(function()
+		local ptype = Peripheral.getType(side)
+		local dev = Peripheral.wrap(side)
 
-	if not ptype then
-		return
-	end
-
-	if ptype == 'modem' then
-		if not Peripheral.call(name, 'isWireless') then
---			ptype = 'wireless_modem'
---		else
-			ptype = 'wired_modem'
+		if not ptype or not dev then
+			return
 		end
-	end
 
-	local sides = {
-		front = true,
-		back = true,
-		top = true,
-		bottom = true,
-		left = true,
-		right = true
-	}
-
-	if sides[name] then
-		local i = 1
-		local uniqueName = ptype
-		while deviceList[uniqueName] do
-			uniqueName = ptype .. '_' .. i
-			i = i + 1
+		if ptype == 'modem' then
+			if not Peripheral.call(name, 'isWireless') then
+	--			ptype = 'wireless_modem'
+	--		else
+				ptype = 'wired_modem'
+				if dev.getMetadata then
+					-- avoid open computer relays being registered
+					-- as 'wired_modem'
+					ptype = dev.getMetadata().name or 'wired_modem'
+				end
+			end
 		end
-		name = uniqueName
-	end
 
-	-- this can randomly fail
-	if not deviceList[name] then
-		pcall(function()
-			deviceList[name] = Peripheral.wrap(side)
-		end)
+		local sides = {
+			front = true,
+			back = true,
+			top = true,
+			bottom = true,
+			left = true,
+			right = true
+		}
 
-		if deviceList[name] then
-			Util.merge(deviceList[name], {
-				name = name,
-				type = ptype,
-				side = side,
-			})
+		if sides[name] then
+			local i = 1
+			local uniqueName = ptype
+			while deviceList[uniqueName] do
+				uniqueName = ptype .. '_' .. i
+				i = i + 1
+			end
+			name = uniqueName
 		end
-	end
+
+		-- this can randomly fail
+		if not deviceList[name] then
+				deviceList[name] = dev
+
+			if deviceList[name] then
+				Util.merge(deviceList[name], {
+					name = name,
+					type = ptype,
+					side = side,
+				})
+			end
+		end
+	end)
 
 	return deviceList[name]
 end

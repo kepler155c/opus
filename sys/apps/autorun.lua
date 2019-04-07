@@ -55,7 +55,7 @@ runDir('usr/autorun')
 
 if not success then
   if multishell then
-    --multishell.setFocus(multishell.getCurrent())
+    multishell.setFocus(multishell.getCurrent())
   end
   _G.printError('A startup program has errored')
   print('Press enter to continue')

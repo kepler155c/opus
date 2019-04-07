@@ -287,6 +287,7 @@ function fs.mount(path, fstype, ...)
 			tp.nodes[targetName] = node
 		end
 	end
+_debug(node)
 	return node
 end
 

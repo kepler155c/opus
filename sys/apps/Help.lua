@@ -1,8 +1,8 @@
 local UI    = require('ui')
 local Util  = require('util')
 
-local colors     = _G.colors
-local help       = _G.help
+local colors = _G.colors
+local help   = _G.help
 
 UI:configure('Help', ...)
 
@@ -40,7 +40,7 @@ local topicPage = UI.Page {
 	backgroundColor = colors.black,
 	titleBar = UI.TitleBar {
 		title = 'text',
-		previousPage = true,
+		event = 'back',
 	},
 	helpText = UI.TextArea {
 		backgroundColor = colors.black,
@@ -52,9 +52,18 @@ local topicPage = UI.Page {
 	},
 }
 
+function topicPage:enable(name)
+	local f = help.lookup(name)
+
+	self.titleBar.title = name
+	self.helpText:setText(f and Util.readFile(f) or 'No help available for ' .. name)
+
+	return UI.Page.enable(self)
+end
+
 function topicPage:eventHandler(event)
 	if event.type == 'back' then
-		UI:setPreviousPage()
+		UI:setPage(page)
 	end
 	return UI.Page.eventHandler(self, event)
 end
@@ -66,12 +75,8 @@ function page:eventHandler(event)
 	elseif event.type == 'grid_select' then
 		if self.grid:getSelected() then
 			local name = self.grid:getSelected().name
-			local f = help.lookup(name)
 
-			topicPage.titleBar.title = name
-			topicPage.helpText:setText(Util.readFile(f))
-
-			UI:setPage(topicPage)
+			UI:setPage(topicPage, name)
 		end
 
 	elseif event.type == 'text_change' then
@@ -93,5 +98,6 @@ function page:eventHandler(event)
 	end
 end
 
-UI:setPage(page)
+local args = { ... }
+UI:setPage(#args[1] and topicPage or page, args[1])
 UI:pullEvents()

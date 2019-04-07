@@ -1,6 +1,8 @@
 local Config = require('config')
 local UI     = require('ui')
 
+local kernel = _G.kernel
+
 local aliasTab = UI.Tab {
 	tabTitle = 'Aliases',
 	description = 'Shell aliases',
@@ -33,8 +35,12 @@ local aliasTab = UI.Tab {
 function aliasTab.grid:draw()
 	self.values = { }
 	local env = Config.load('shell')
+	for k in pairs(kernel.getShell().aliases()) do
+		kernel.getShell().clearAlias(k)
+	end
 	for k,v in pairs(env.aliases) do
 		table.insert(self.values, { alias = k, path = v })
+		kernel.getShell().setAlias(k, v)
 	end
 	self:update()
 	UI.Grid.draw(self)
@@ -42,23 +48,23 @@ end
 
 function aliasTab:eventHandler(event)
 	if event.type == 'delete_alias' then
-		local env = Config.load('shell')
+		local env = Config.load('shell', { aliases = { } })
 		env.aliases[self.grid:getSelected().alias] = nil
+		Config.update('shell', env)
 		self.grid:setIndex(self.grid:getIndex())
 		self.grid:draw()
-		Config.update('shell', env)
-		self:emit({ type = 'success_message', message = 'reboot to take effect' })
+		self:emit({ type = 'success_message', message = 'Aliases updated' })
 		return true
 
 	elseif event.type == 'new_alias' then
-		local env = Config.load('shell')
+		local env = Config.load('shell', { aliases = { } })
 		env.aliases[self.alias.value] = self.path.value
+		Config.update('shell', env)
 		self.alias:reset()
 		self.path:reset()
 		self:draw()
 		self:setFocus(self.alias)
-		Config.update('shell', env)
-		self:emit({ type = 'success_message', message = 'reboot to take effect' })
+		self:emit({ type = 'success_message', message = 'Aliases updated' })
 		return true
 	end
 end

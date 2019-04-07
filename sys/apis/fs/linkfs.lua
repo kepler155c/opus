@@ -2,6 +2,8 @@ local fs = _G.fs
 
 local linkfs = { }
 
+-- TODO: implement broken links
+
 local methods = { 'exists', 'getFreeSpace', 'getSize',
 	'isDir', 'isReadOnly', 'list', 'listEx', 'makeDir', 'open', 'getDrive' }
 
