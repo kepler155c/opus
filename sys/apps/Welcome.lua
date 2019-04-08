@@ -110,11 +110,13 @@ function page.wizard.pages.password:validate()
   if #self.newPass.value > 0 then
     Security.updatePassword(SHA1.sha1(self.newPass.value))
   end
+  --[[
   if #self.group.value > 0 then
     local config = Config.load('os')
     config.group = self.group.value
     Config.update('os', config)
   end
+  ]]
   return true
 end
 
