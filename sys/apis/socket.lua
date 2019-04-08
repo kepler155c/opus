@@ -105,7 +105,7 @@ end
 
 function Socket.connect(host, port)
 	if not device.wireless_modem then
-		return false, 'Wireless modem not found'
+		return false, 'Wireless modem not found', 'NOMODEM'
 	end
 
 	local socket = newSocket(host == os.getComputerID())
@@ -138,15 +138,19 @@ function Socket.connect(host, port)
 				_G.transport.open(socket)
 				return socket
 
+			elseif msg.type == 'NOPASS' then
+				socket:close()
+				return false, 'Password not set on target', 'NOPASS'
+
 			elseif msg.type == 'REJE' then
 				socket:close()
-				return false, 'Password not set on target or not trusted'
+				return false, 'Trust not established', 'NOTRUST'
 			end
 		end
 	until e == 'timer' and id == timerId
 
 	socket:close()
-	return false, 'Connection timed out'
+	return false, 'Connection timed out', 'TIMEOUT'
 end
 
 local function trusted(msg, port)
@@ -190,7 +194,15 @@ function Socket.server(port)
 			socket.wseq = msg.wseq
 			socket.rseq = msg.rseq
 
-			if trusted(msg, port) then
+			if not Security.hasPassword() then
+				socket.transmit(socket.dport, socket.sport, {
+					type = 'NOPASS',
+					dhost = socket.dhost,
+					shost = socket.shost,
+				})
+				socket:close()
+
+			elseif trusted(msg, port) then
 				socket.connected = true
 				socket.transmit(socket.dport, socket.sport, {
 					type = 'CONN',
@@ -201,14 +213,15 @@ function Socket.server(port)
 
 				_G.transport.open(socket)
 				return socket
-			end
 
-			socket.transmit(socket.dport, socket.sport, {
-				type = 'REJE',
-				dhost = socket.dhost,
-				shost = socket.shost,
-			})
-			socket:close()
+			else
+				socket.transmit(socket.dport, socket.sport, {
+					type = 'REJE',
+					dhost = socket.dhost,
+					shost = socket.shost,
+				})
+				socket:close()
+			end
 		end
 	end
 end

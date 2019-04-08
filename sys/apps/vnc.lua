@@ -6,6 +6,7 @@ local Util       = require('util')
 local colors     = _G.colors
 local multishell = _ENV.multishell
 local os         = _G.os
+local shell      = _ENV.shell
 local term       = _G.term
 
 local remoteId
@@ -26,7 +27,15 @@ if multishell then
 end
 
 local function connect()
-	local socket, msg = Socket.connect(remoteId, 5900)
+	local socket, msg, reason = Socket.connect(remoteId, 5900)
+
+	if reason == 'NOTRUST' then
+		local s, m = shell.run('trust ' .. remoteId)
+		if not s then
+			return s, m
+		end
+		socket, msg = Socket.connect(remoteId, 5900)
+	end
 
 	if not socket then
 		return false, msg

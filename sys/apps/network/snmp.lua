@@ -141,6 +141,7 @@ local function sendInfo()
 		infoTimer = os.clock()
 		info.label = os.getComputerLabel()
 		info.uptime = math.floor(os.clock())
+		info.group = network.getGroup()
 		if turtle then
 			info.fuel = turtle.getFuelLevel()
 			info.status = turtle.getStatus()

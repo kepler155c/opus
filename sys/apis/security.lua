@@ -1,20 +1,18 @@
 local Config = require('config')
 
-local config = { }
-
 local Security = { }
 
 function Security.verifyPassword(password)
-	Config.load('os', config)
-	return config.password and password == config.password
+	local current = Security.getPassword()
+	return current and password == current
 end
 
 function Security.hasPassword()
-	return not not config.password
+	return not not Security.getPassword()
 end
 
 function Security.getSecretKey()
-	Config.load('os', config)
+	local config = Config.load('os')
 	if not config.secretKey then
 		config.secretKey = math.random(100000, 999999)
 		Config.update('os', config)
@@ -23,7 +21,6 @@ function Security.getSecretKey()
 end
 
 function Security.getPublicKey()
-
 	local exchange = {
 		base = 11,
 		primeMod = 625210769
@@ -47,14 +44,13 @@ function Security.getPublicKey()
 end
 
 function Security.updatePassword(password)
-	Config.load('os', config)
+	local config = Config.load('os')
 	config.password = password
 	Config.update('os', config)
 end
 
 function Security.getPassword()
-	Config.load('os', config)
-	return config.password
+	return Config.load('os').password
 end
 
 return Security

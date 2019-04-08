@@ -24,10 +24,21 @@ if multishell then
 	multishell.setTitle(multishell.getCurrent(), 'Telnet ' .. remoteId)
 end
 
-local socket, msg = Socket.connect(remoteId, 23)
+local socket, msg, reason
 
-if not socket then
-	error(msg)
+while true do
+	socket, msg, reason = Socket.connect(remoteId, 23)
+
+	if socket then
+		break
+	elseif reason ~= 'NOTRUST' then
+		error(msg)
+	end
+
+	local s, m = shell.run('trust ' .. remoteId)
+	if not s then
+		error(m)
+	end
 end
 
 local ct = Util.shallowCopy(term.current())

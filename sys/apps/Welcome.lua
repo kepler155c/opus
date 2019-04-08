@@ -1,4 +1,5 @@
 local Ansi     = require('ansi')
+local Config   = require('config')
 local Security = require('security')
 local SHA1     = require('sha1')
 local UI       = require('ui')
@@ -53,7 +54,7 @@ local page = UI.Page {
       },
 			password = UI.WizardPage {
 				index = 3,
-        labelText = UI.Text {
+        passwordLabel = UI.Text {
           x = 3, y = 2,
           value = 'Password'
         },
@@ -62,14 +63,22 @@ local page = UI.Page {
           limit = 32,
           mask = true,
           shadowText = 'password',
-          accelerators = {
-            enter = 'new_password',
-          },
         },
+--[[
+        groupLabel = UI.Text {
+          x = 3, y = 3,
+          value = 'Group'
+        },
+        group = UI.TextEntry {
+          x = 12, ex = -3, y = 3,
+          limit = 32,
+          shadowText = 'network group',
+        },
+]]
         intro = UI.TextArea {
           textColor = colors.yellow,
           inactive = true,
-          x = 3, ex = -3, y = 4, ey = -3,
+          x = 3, ex = -3, y = 5, ey = -3,
           value = string.format(passwordIntro, Ansi.white),
         },
 			},
@@ -100,6 +109,11 @@ end
 function page.wizard.pages.password:validate()
   if #self.newPass.value > 0 then
     Security.updatePassword(SHA1.sha1(self.newPass.value))
+  end
+  if #self.group.value > 0 then
+    local config = Config.load('os')
+    config.group = self.group.value
+    Config.update('os', config)
   end
   return true
 end

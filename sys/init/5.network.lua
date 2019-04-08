@@ -6,7 +6,15 @@ local device     = _G.device
 local kernel     = _G.kernel
 local os         = _G.os
 
-_G.network = { }
+do
+	local config = Config.load('os')
+	_G.network = setmetatable({ }, { __index = {
+		getGroup = function() return config.group end,
+		setGroup = function(name)
+			config.group = name
+		end
+	}})
+end
 
 local function startNetwork()
 	kernel.run({

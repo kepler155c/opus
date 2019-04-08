@@ -5,6 +5,8 @@ end
 _G.requireInjector(_ENV)
 local Util = require('util')
 
+-- TODO: support getDrive for virtual nodes
+
 local fs = _G.fs
 
 fs.native = Util.shallowCopy(fs)
@@ -86,6 +88,13 @@ function nativefs.exists(node, dir)
 		return true
 	end
 	return fs.native.exists(dir)
+end
+
+function nativefs.getDrive(node, dir)
+	if node.mountPoint == dir then
+		return fs.native.getDrive(dir) or 'virt'
+	end
+	return fs.native.getDrive(dir)
 end
 
 function nativefs.delete(node, dir)
