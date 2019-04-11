@@ -1,5 +1,6 @@
 local Config = require('config')
 local Event  = require('event')
+local pastebin = require('http.pastebin')
 local UI     = require('ui')
 local Util   = require('util')
 
@@ -7,7 +8,6 @@ local colors     = _G.colors
 local fs         = _G.fs
 local multishell = _ENV.multishell
 local os         = _G.os
-local pastebin   = _G.pastebin
 local shell      = _ENV.shell
 
 local FILE    = 1
@@ -41,10 +41,10 @@ local Browser = UI.Page {
     buttons = {
       { text = '^-',   event = 'updir' },
       { text = 'File', dropdown = {
-          { text = 'Run',               event = 'run',   flags = FILE },
-          { text = 'Edit         e',    event = 'edit',  flags = FILE },
-          { text = 'Cloud edit   c',    event = 'cedit', flags = FILE },
-          { text = 'Pastebin put p',    event = 'cedit', flags = FILE },
+          { text = 'Run',               event = 'run',      flags = FILE },
+          { text = 'Edit         e',    event = 'edit',     flags = FILE },
+          { text = 'Cloud edit   c',    event = 'cedit',    flags = FILE },
+          { text = 'Pastebin put p',    event = 'pastebin', flags = FILE },
           { text = 'Shell        s',    event = 'shell'  },
           { spacer = true },
           { text = 'Quit         q',    event = 'quit'   },
@@ -367,7 +367,7 @@ function Browser:eventHandler(event)
       local s, m = pastebin.put(file.fullName)
       if s then
         os.queueEvent('clipboard_copy', s)
-        self.notification:success(string.format('Uploaded as %s', m), 0)
+        self.notification:success(string.format('Uploaded as %s', s), 0)
       else
         self.notification:error(m)
       end

@@ -6,6 +6,7 @@ local Util     = require('util')
 local multishell = _ENV.multishell
 local os         = _G.os
 local read       = _G.read
+local shell      = _ENV.shell
 local term       = _G.term
 
 local args = { ... }
