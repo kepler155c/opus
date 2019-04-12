@@ -34,10 +34,10 @@ if sCommand == "put" then
 
     print( "Connecting to pastebin.com... " )
 
-    local resp, msg = pastebin.put(sFile)
+    local resp, msg = pastebin.put(sPath)
 
     if resp then
-        print( "Uploaded as "..msg )
+        print( "Uploaded as " .. resp )
         print( "Run \"pastebin get "..resp.."\" to download anywhere" )
 
     else

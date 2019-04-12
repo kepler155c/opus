@@ -19,9 +19,9 @@ local function parseCode(paste)
 end
 
 -- Download the contents of a paste
-local function download(url)
+local function download(code)
 	if type(url) ~= "string" then
-		error("bad argument #1 (expected string, got " .. type(url) .. ")", 2)
+		error("bad argument #1 (expected string, got " .. type(code) .. ")", 2)
 	end
 
 	if not http then
@@ -31,7 +31,7 @@ local function download(url)
 	-- Add a cache buster so that spam protection is re-checked
 	local cacheBuster = ("%x"):format(math.random(0, 2 ^ 30))
 	local response, err = http.get(
-		"https://pastebin.com/raw/" .. textutils.urlEncode(paste) .. "?cb=" .. cacheBuster
+		"https://pastebin.com/raw/" .. textutils.urlEncode(code) .. "?cb=" .. cacheBuster
 	)
 
 	if not response then
