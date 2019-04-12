@@ -20,7 +20,7 @@ end
 
 -- Download the contents of a paste
 local function download(code)
-	if type(url) ~= "string" then
+	if type(code) ~= "string" then
 		error("bad argument #1 (expected string, got " .. type(code) .. ")", 2)
 	end
 
