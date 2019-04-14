@@ -10,8 +10,8 @@ UI.DropMenu.defaults = {
 	backgroundColor = colors.white,
 	buttonClass = 'DropMenuItem',
 }
-function UI.DropMenu:setParent()
-	UI.MenuBar.setParent(self)
+function UI.DropMenu:layout()
+	UI.MenuBar.layout(self)
 
 	local maxWidth = 1
 	for y,child in ipairs(self.children) do
@@ -31,9 +31,12 @@ function UI.DropMenu:setParent()
 
 	self.height = #self.children + 1
 	self.width = maxWidth + 2
-	self.ow = self.width
 
-	self.canvas = self:addLayer()
+	if not self.canvas then
+		self.canvas = self:addLayer()
+	else
+		self.canvas:resize(self.width, self.height)
+	end
 end
 
 function UI.DropMenu:enable()
