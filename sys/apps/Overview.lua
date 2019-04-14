@@ -22,9 +22,9 @@ if not _ENV.multishell then
 end
 
 local REGISTRY_DIR = 'usr/.registry'
-local DEFAULT_ICON = NFT.parse("\03180\031711\03180\
-\031800\03171\03180\
-\03171\031800\03171")
+local DEFAULT_ICON = NFT.parse("\0308\0317\153\153\153\153\153\
+\0307\0318\153\153\153\153\153\
+\0308\0317\153\153\153\153\153")
 
 UI:configure('Overview', ...)
 
