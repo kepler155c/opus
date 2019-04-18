@@ -30,7 +30,7 @@ function Peripheral.addDevice(deviceList, side)
 	--			ptype = 'wireless_modem'
 	--		else
 				ptype = 'wired_modem'
-				if dev.getMetadata then
+				if dev.isAccessPoint then
 					-- avoid open computer relays being registered
 					-- as 'wired_modem'
 					ptype = dev.getMetadata().name or 'wired_modem'

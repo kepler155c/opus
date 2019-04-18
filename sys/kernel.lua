@@ -145,6 +145,7 @@ function kernel.newRoutine(args)
 		timestamp = os.clock(),
 		terminal = kernel.window,
 		window = kernel.window,
+		title = 'untitled',
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
