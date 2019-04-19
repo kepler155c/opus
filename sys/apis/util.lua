@@ -484,8 +484,8 @@ function Util.loadTable(fname)
 end
 
 --[[ loading and running functions ]] --
-function Util.httpGet(url, headers)
-	local h, msg = http.get(url, headers)
+function Util.httpGet(url, headers, isBinary)
+	local h, msg = http.get(url, headers, isBinary)
 	if h then
 		local contents = h.readAll()
 		h.close()

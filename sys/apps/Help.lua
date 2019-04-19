@@ -99,5 +99,5 @@ function page:eventHandler(event)
 end
 
 local args = { ... }
-UI:setPage(#args[1] and topicPage or page, args[1])
+UI:setPage(args[1] and topicPage or page, args[1])
 UI:pullEvents()
