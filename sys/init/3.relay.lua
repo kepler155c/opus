@@ -3,7 +3,7 @@ local kernel     = _G.kernel
 
 local function register(v)
   if v and v.isWireless and v.isAccessPoint and v.getNamesRemote then
-    v.children = { }
+    v._children = { }
     for _, name in pairs(v.getNamesRemote()) do
       local dev = v.getMethodsRemote(name)
       if dev then
