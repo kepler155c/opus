@@ -76,7 +76,11 @@ Event.addRoutine(function()
 		print('telnet: connection from ' .. socket.dhost)
 
 		Event.addRoutine(function()
-			telnetHost(socket)
+			local s, m = pcall(telnetHost, socket)
+			if not s and m then
+				print('Telnet error')
+				_G.printError(m)
+			end
 		end)
 	end
 end)

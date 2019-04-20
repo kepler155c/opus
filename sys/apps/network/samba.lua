@@ -67,8 +67,13 @@ Event.addRoutine(function()
 
 		Event.addRoutine(function()
 			print('samba: connection from ' .. socket.dhost)
-			sambaConnection(socket)
+			local s, m = pcall(sambaConnection, socket)
 			print('samba: closing connection to ' .. socket.dhost)
+			socket:close()
+			if not s and m then
+				print('Samba error')
+				_G.printError(m)
+			end
 		end)
 	end
 end)

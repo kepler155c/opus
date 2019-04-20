@@ -63,7 +63,11 @@ Event.addRoutine(function()
 
 		-- no new process - only 1 connection allowed
 		-- due to term size issues
-		vncHost(socket)
+		local s, m = pcall(vncHost, socket)
 		socket:close()
+		if not s and m then
+			print('vnc error')
+			_G.printError(m)
+		end
 	end
 end)

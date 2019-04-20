@@ -106,8 +106,12 @@ Event.addRoutine(function()
 
 		Event.addRoutine(function()
 			print('snmp: connection from ' .. socket.dhost)
-			snmpConnection(socket)
+			local s, m = pcall(snmpConnection, socket)
 			print('snmp: closing connection to ' .. socket.dhost)
+			if not s and m then
+				print('snmp error')
+				_G.printError(m)
+			end
 		end)
 	end
 end)
