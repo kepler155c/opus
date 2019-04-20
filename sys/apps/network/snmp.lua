@@ -124,6 +124,10 @@ Event.on('modem_message', function(_, _, sport, id, info, distance)
 		network[id].distance = distance
 		network[id].timestamp = os.clock()
 
+		if not network[id].label then
+			network[id].label = 'unknown'
+		end
+
 		if not network[id].active then
 			network[id].active = true
 			os.queueEvent('network_attach', network[id])
