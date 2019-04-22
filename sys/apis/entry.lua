@@ -344,7 +344,7 @@ local mappings = {
 	--[ 'control-d'           ] = Entry.cutNextWord,
 	[ 'control-x'           ] = Entry.cut,
 	[ 'paste'               ] = Entry.paste,
-	[ 'control-y'           ] = Entry.paste,
+--	[ 'control-y'           ] = Entry.paste,  -- well this won't work...
 
 	[ 'mouse_doubleclick'   ] = Entry.markWord,
   [ 'shift-left'          ] = Entry.markLeft,

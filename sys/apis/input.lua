@@ -88,8 +88,9 @@ function input:translate(event, code, p1, p2)
 		else
 			self.state[code] = true
 			if self:modifierPressed() and not modifiers[code] then --or code == 57 then
-				self.fired = true
-				return { code = input:toCode(keys.getName(code), code) }
+				-- why was i firing here ??
+				--self.fired = true
+				--return { code = input:toCode(keys.getName(code), code) }
 			else
 				self.fired = false
 			end
