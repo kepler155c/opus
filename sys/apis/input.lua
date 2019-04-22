@@ -71,6 +71,12 @@ function input:reset()
 	self.mfired = nil
 end
 
+local function isCombo()
+	-- allow control-alt combinations for certain keyboards
+	return (keyboard.state[keys.leftAlt] or keyboard.state[keys.rightAlt]) and
+				 (keyboard.state[keys.leftCtrl] or keyboard.state[keys.rightCtrl])
+end
+
 function input:translate(event, code, p1, p2)
 	if event == 'key' then
 		if p1 then -- key is held down
@@ -87,19 +93,16 @@ function input:translate(event, code, p1, p2)
 			end
 		else
 			self.state[code] = true
-			if self:modifierPressed() and not modifiers[code] then --or code == 57 then
-				-- why was i firing here ??
-				--self.fired = true
-				--return { code = input:toCode(keys.getName(code), code) }
-			else
-				self.fired = false
-			end
+			self.fired = false
 		end
 
 	elseif event == 'char' then
+		local combo = isCombo()
 		if not self.fired then
-			self.fired = true
-			return { code = event, ch = code }
+			if combo or not (keyboard.state[keys.leftCtrl] or keyboard.state[keys.rightCtrl]) then
+				self.fired = not combo
+				return { code = event, ch = code }
+			end
 --		return { code = event, ch = input:toCode(code) }
 		end
 
