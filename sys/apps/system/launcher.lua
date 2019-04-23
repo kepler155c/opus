@@ -17,7 +17,7 @@ local tab = UI.Tab {
     x = 13, y = 2, width = 12,
     choices = {
       { name = 'Overview', value = 'sys/apps/Overview.lua' },
-      { name = 'Shell',    value = 'sys/apps/shell.lua'    },
+      { name = 'Shell',    value = 'sys/apps/ShellLauncher.lua'    },
       { name = 'Custom',   value = 'custom'                },
     },
   },
