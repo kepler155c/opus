@@ -3,7 +3,7 @@ local Config   = require('config')
 local Event    = require('event')
 local NFT      = require('nft')
 local Packages = require('packages')
-local SHA1     = require('sha1')
+local SHA2     = require('sha2')
 local Tween    = require('ui.tween')
 local UI       = require('ui')
 local Util     = require('util')
@@ -502,7 +502,7 @@ end
 
 function page.editor:updateApplications(app)
 	if not app.key then
-		app.key = SHA1.sha1(app.title)
+		app.key = SHA2.digest(app.title):toHex()
 	end
 	local filename = app.filename or fs.combine(REGISTRY_DIR, app.key)
 	Util.writeTable(filename, app)
@@ -571,7 +571,7 @@ end
 
 Event.on('overview_shortcut', function(_, app)
 	if not app.key then
-		app.key = SHA1.sha1(app.title)
+		app.key = SHA2.digest(app.title):toHex()
 	end
 	local filename = app.filename or fs.combine(REGISTRY_DIR, app.key)
 	if not fs.exists(filename) then
