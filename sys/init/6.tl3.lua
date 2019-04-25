@@ -51,6 +51,7 @@ function turtle.resetState()
 	state.digPolicy = noop
 	state.movePolicy = _defaultMove
 	state.moveCallback = noop
+	state.blacklist = nil
 	Pathing.reset()
 	return true
 end
@@ -283,6 +284,34 @@ turtle.addPolicy('turtleSafe', function(action)
 	end)
 end)
 
+local function isBlacklisted(b)
+	if b and state.blacklist then
+		for k, v in pairs(state.blacklist) do
+			if b.name:find(v) then
+				return true
+			end
+		end
+	end
+end
+
+turtle.addPolicy('blacklist', function(action)
+	if action.side == 'back' then
+		return false
+	end
+	local s, m = action.inspect()
+  if not isBlacklisted(s and m) then
+		return action.dig()
+	end
+	if s and m and m.name:find('turtle') then
+		return Util.tryTimes(math.random(3, 6), function()
+			os.sleep(.25)
+			if not action.detect() then
+				return true
+			end
+		end)
+	end
+end)
+
 turtle.addPolicy('digAndDrop', function(action)
 	if action.detect() then
 		local slots = turtle.getInventory()
@@ -346,6 +375,9 @@ function turtle.set(args)
 
 		elseif k == 'status' then
 			turtle.setStatus(v)
+
+		elseif k == 'blacklist' then
+			state.blacklist = v
 
 		else
 			error('Invalid turle.set: ' .. tostring(k))
