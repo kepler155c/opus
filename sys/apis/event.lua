@@ -118,12 +118,16 @@ function Event.off(h)
 end
 
 function Event.onInterval(interval, fn)
-	return Event.addRoutine(function()
+	local h = Event.addRoutine(function()
 		while true do
 			os.sleep(interval)
 			fn()
 		end
 	end)
+	function h.updateInterval(i)
+		interval = i
+	end
+	return h
 end
 
 function Event.onTimeout(timeout, fn)

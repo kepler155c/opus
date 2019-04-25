@@ -286,7 +286,7 @@ end)
 
 local function isBlacklisted(b)
 	if b and state.blacklist then
-		for k, v in pairs(state.blacklist) do
+		for _, v in pairs(state.blacklist) do
 			if b.name:find(v) then
 				return true
 			end

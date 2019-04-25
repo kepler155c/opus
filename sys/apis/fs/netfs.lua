@@ -36,6 +36,7 @@ end
 local methods = { 'delete', 'exists', 'getFreeSpace', 'makeDir', 'list', 'listEx' }
 
 local function resolveDir(dir, node)
+	-- TODO: Wrong ! (does not support names with dashes)
 	dir = dir:gsub(node.mountPoint, '', 1)
 	return fs.combine(node.directory, dir)
 end
