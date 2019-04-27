@@ -192,8 +192,11 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.restoreCursor()
-		win.setCursorPos(cx, cy)
-		win.setCursorBlink(blink)
+		if isVisible then
+			win.setCursorPos(cx, cy)
+			win.setTextColor(fg)
+			win.setCursorBlink(blink)
+		end
 	end
 
 	function win.getPosition()

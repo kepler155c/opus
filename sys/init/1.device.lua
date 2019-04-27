@@ -121,14 +121,6 @@ function keyboard.removeHotkey(code)
 	keyboard.hotkeys[code] = nil
 end
 
-kernel.hook('monitor_touch', function(event, eventData)
-	local monitor = Peripheral.getBySide(eventData[1])
-	if monitor and monitor.eventChannel then
-		monitor.eventChannel(event, table.unpack(eventData))
-		return true -- stop propagation
-	end
-end)
-
 local function createDevice(name, devType, method, manipulator)
 	local dev = {
 		name = name,

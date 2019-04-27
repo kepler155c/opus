@@ -91,7 +91,7 @@ function input:translate(event, code, p1, p2)
 				end
 				return { code = ch }
 			end
-		else
+		elseif code then
 			self.state[code] = true
 			self.fired = false
 		end

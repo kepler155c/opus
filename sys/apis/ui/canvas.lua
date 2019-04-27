@@ -63,8 +63,22 @@ function Canvas:resize(w, h)
 		table.remove(self.lines, #self.lines)
 	end
 
-	if w ~= self.width then
-		self:clear()
+	if w < self.width then
+		for i = 1, h do
+			self.lines[i].text = _sub(self.lines[i].text, 1, w)
+			self.lines[i].fg = _sub(self.lines[i].fg, 1, w)
+			self.lines[i].bg = _sub(self.lines[i].bg, 1, w)
+		end
+	elseif w > self.width then
+		local d = w - self.width
+		local text = _rep(' ', d)
+		local fg = _rep(self.palette[self.fg or colors.white], d)
+		local bg = _rep(self.palette[self.bg or colors.black], d)
+		for i = 1, h do
+			self.lines[i].text = self.lines[i].text .. text
+			self.lines[i].fg = self.lines[i].fg .. fg
+			self.lines[i].bg = self.lines[i].bg .. bg
+		end
 	end
 
 	self.ex = self.x + w - 1
