@@ -85,7 +85,7 @@ return function (fn, ...)
     end
 
     for _, line in pairs(trace) do
-      _G._debug(line)
+      _G._syslog(line)
     end
 
     -- If this traceback is more than 15 elements long, keep the first 9, last 5

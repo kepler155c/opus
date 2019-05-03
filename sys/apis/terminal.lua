@@ -100,9 +100,9 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.setCursorPos(x, y)
-		cx, cy = x, y
+		cx, cy = math.floor(x), math.floor(y)
 		if isVisible then
-			parent.setCursorPos(x + canvas.x - 1, y + canvas.y - 1)
+			parent.setCursorPos(cx + canvas.x - 1, cy + canvas.y - 1)
 		end
 	end
 

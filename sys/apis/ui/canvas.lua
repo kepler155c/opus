@@ -199,13 +199,15 @@ function Canvas:blit(x, y, text, bg, fg)
 			end
 
 			local line = self.lines[y]
-			line.dirty = true
-			line.text = replace(line.text, x, text, width)
-			if fg then
-				line.fg = replace(line.fg, x, fg, width)
-			end
-			if bg then
-				line.bg = replace(line.bg, x, bg, width)
+			if line then
+				line.dirty = true
+				line.text = replace(line.text, x, text, width)
+				if fg then
+					line.fg = replace(line.fg, x, fg, width)
+				end
+				if bg then
+					line.bg = replace(line.bg, x, bg, width)
+				end
 			end
 		end
 	end

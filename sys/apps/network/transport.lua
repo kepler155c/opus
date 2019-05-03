@@ -33,7 +33,7 @@ function transport.read(socket)
 end
 
 function transport.write(socket, data)
-	--_debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
+	--_syslog('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
 	socket.transmit(socket.dport, socket.dhost, data)
 
 	--local timerId = os.startTimer(3)
@@ -45,7 +45,7 @@ function transport.write(socket, data)
 end
 
 function transport.ping(socket)
-	--_debug('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
+	--_syslog('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
 	if os.clock() - socket.activityTimer > 10 then
 		socket.activityTimer = os.clock()
 		socket.transmit(socket.dport, socket.dhost, {
@@ -78,9 +78,9 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 		local socket = transport.sockets[dport]
 		if socket and socket.connected then
 
-			--if msg.type then _debug('<< ' .. Util.tostring(msg)) end
+			--if msg.type then _syslog('<< ' .. Util.tostring(msg)) end
 			if socket.co and coroutine.status(socket.co) == 'dead' then
-				_G._debug('socket coroutine dead')
+				_G._syslog('socket coroutine dead')
 				socket:close()
 
 			elseif msg.type == 'DISC' then
@@ -111,9 +111,9 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 				socket.activityTimer = os.clock()
 				if msg.seq ~= socket.rseq then
 					print('transport seq error - closing socket ' .. socket.sport)
-					_debug(msg.data)
-					_debug('current ' .. socket.rseq)
-					_debug('expected ' .. msg.seq)
+					_syslog(msg.data)
+					_syslog('current ' .. socket.rseq)
+					_syslog('expected ' .. msg.seq)
 --					socket:close()
 --					os.queueEvent('transport_' .. socket.uid)
 				else
@@ -125,7 +125,7 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 						os.queueEvent('transport_' .. socket.uid)
 					end
 
-					--_debug('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))
+					--_syslog('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))
 					--socket.transmit(socket.dport, socket.dhost, {
 					--  type = 'ACK',
 					--  seq = msg.seq,
