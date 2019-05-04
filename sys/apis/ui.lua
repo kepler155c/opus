@@ -114,7 +114,6 @@ function Manager:init()
 
 		mouse_up = function(_, button, x, y)
 			local ie = Input:translate('mouse_up', button, x, y)
-
 			local currentPage = self:getActivePage()
 
 			if ie.code == 'control-shift-mouse_click' then -- hack
@@ -134,12 +133,9 @@ function Manager:init()
 		mouse_drag = function(_, button, x, y)
 			local ie = Input:translate('mouse_drag', button, x, y)
 			local currentPage = self:getActivePage()
+
 			if ie and currentPage then
-				local event = currentPage:pointToChild(x, y)
-				event.type = ie.code
-				event.ie = ie
-				self:inputEvent(event.element, event)
-				currentPage:sync()
+				self:click(currentPage, ie.code, button, x, y)
 			end
 		end,
 
