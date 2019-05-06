@@ -1,4 +1,4 @@
-local Crypto   = require('crypto')
+local Crypto   = require('crypto.chacha20')
 local Event    = require('event')
 local Security = require('security')
 local Socket   = require('socket')

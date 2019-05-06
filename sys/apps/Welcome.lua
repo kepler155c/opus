@@ -1,7 +1,7 @@
 local Ansi     = require('ansi')
 local Config   = require('config')
 local Security = require('security')
-local SHA2     = require('sha2')
+local SHA2     = require('crypto.sha2')
 local UI       = require('ui')
 
 local colors   = _G.colors

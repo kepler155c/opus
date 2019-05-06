@@ -1,6 +1,6 @@
-local Crypto   = require('crypto')
+local Crypto   = require('crypto.chacha20')
 local Security = require('security')
-local SHA2     = require('sha2')
+local SHA2     = require('crypto.sha2')
 local Socket   = require('socket')
 local Terminal = require('terminal')
 

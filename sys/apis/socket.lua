@@ -1,4 +1,4 @@
-local Crypto   = require('crypto')
+local Crypto   = require('crypto.chacha20')
 local Security = require('security')
 local Util     = require('util')
 

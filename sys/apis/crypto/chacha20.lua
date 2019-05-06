@@ -1,7 +1,7 @@
 -- Chacha20 cipher in ComputerCraft
 -- By Anavrins
 
-local sha2 = require("sha2")
+local sha2 = require("crypto.sha2")
 local util = require("util")
 
 local Crypto = {}

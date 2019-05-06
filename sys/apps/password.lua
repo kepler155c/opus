@@ -1,5 +1,5 @@
 local Security = require('security')
-local SHA2     = require('sha2')
+local SHA2     = require('crypto.sha2')
 local Terminal = require('terminal')
 
 local password = Terminal.readPassword('Enter new password: ')
