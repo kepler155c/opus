@@ -1,4 +1,4 @@
-local fq = require('crypto.ecc.fp')
+local fq = require('crypto.ecc.fq')
 local elliptic = require('crypto.ecc.elliptic')
 local sha256 = require('crypto.sha2')
 

@@ -1,8 +1,6 @@
 -- SHA-256, HMAC and PBKDF2 functions in ComputerCraft
 -- By Anavrins
 
-local sha2 = {}
-
 local mod32 = 2^32
 local band    = bit32 and bit32.band or bit.band
 local bnot    = bit32 and bit32.bnot or bit.bnot
@@ -121,7 +119,7 @@ local function toBytes(t, n)
 	return setmetatable(b, mt)
 end
 
-function sha2.digest(data)
+local function digest(data)
 	local data = data or ""
 	data = type(data) == "table" and {upack(data)} or {tostring(data):byte(1,-1)}
 
@@ -131,7 +129,7 @@ function sha2.digest(data)
 	return toBytes(C, 8)
 end
 
-function sha2.hmac(data, key)
+local function hmac(data, key)
 	local data = type(data) == "table" and {upack(data)} or {tostring(data):byte(1,-1)}
 	local key = type(key) == "table" and {upack(key)} or {tostring(key):byte(1,-1)}
 
@@ -162,7 +160,7 @@ function sha2.hmac(data, key)
 	return digest(padded_key)
 end
 
-function sha2.pbkdf2(pass, salt, iter, dklen)
+local function pbkdf2(pass, salt, iter, dklen)
 	local salt = type(salt) == "table" and salt or {tostring(salt):byte(1,-1)}
 	local hashlen = 32
 	local dklen = dklen or 32
@@ -192,4 +190,8 @@ function sha2.pbkdf2(pass, salt, iter, dklen)
 	return setmetatable(out, mt)
 end
 
-return sha2
+return {
+	digest = digest,
+	hmac = hmac,
+	pbkdf2 = pbkdf2,
+}

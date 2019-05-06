@@ -1,8 +1,8 @@
 -- Chacha20 cipher in ComputerCraft
 -- By Anavrins
 
-local sha2 = require("crypto.sha2")
-local util = require("util")
+local sha2 = require('crypto.sha2')
+local util = require('util')
 
 local Crypto = {}
 local ROUNDS = 20 -- Adjust this for speed tradeoff
