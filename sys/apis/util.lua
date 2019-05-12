@@ -77,6 +77,9 @@ function Util.tostring(pattern, ...)
 	end
 
 	if type(pattern) == 'string' then
+		if select('#', ...) == 0 then
+			return pattern
+		end
 		return _sformat(pattern, ...)
 	elseif type(pattern) == 'table' then
 		return serialize(pattern, term.current().getSize())

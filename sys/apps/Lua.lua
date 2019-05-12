@@ -294,6 +294,7 @@ end
 function page:rawExecute(s)
 	local fn, m
 	local wrapped
+	local t = os.clock()
 
 	fn = load('return (' ..s.. ')', 'lua', nil, sandboxEnv)
 
@@ -319,7 +320,7 @@ function page:rawExecute(s)
 			local bg, fg = term.getBackgroundColor(), term.getTextColor()
 			term.setTextColor(colors.cyan)
 			term.setBackgroundColor(colors.black)
-			term.write(string.format('out [%d]: ', counter))
+			term.write(string.format('out [%.2f]: ', os.clock() - t))
 			term.setBackgroundColor(bg)
 			term.setTextColor(fg)
 			Util.print(m or 'nil')

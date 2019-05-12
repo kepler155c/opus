@@ -6,6 +6,8 @@ local Map = { }
 -- TODO: refactor
 Map.merge = Util.merge
 Map.shallowCopy = Util.shallowCopy
+Map.find = Util.find
+Map.filter = Util.filter
 
 function Map.removeMatches(t, values)
 	local function matchAll(entry)
