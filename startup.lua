@@ -117,22 +117,33 @@ local function splash()
 	term.write(str)
 end
 
-term.clear()
-splash()
-
-local timerId = os.startTimer(1.5)
-while true do
-	local e, id = os.pullEvent()
-	if e == 'timer' and id == timerId then
-		break
+local doSplash = true
+if settings then
+	doSplash = settings.get('opus.show_splash')
+	if doSplash == nil then
+		doSplash = true
+		settings.set('opus.show_splash', true)
+		settings.save('.settings')
 	end
-	if e == 'char' then
-		bootOption = startupMenu()
-		if settings then
-			settings.set('opus.boot_option', bootOption)
-			settings.save('.settings')
+end
+if doSplash then
+	term.clear()
+	splash()
+
+	local timerId = os.startTimer(1.5)
+	while true do
+		local e, id = os.pullEvent()
+		if e == 'timer' and id == timerId then
+			break
 		end
-		break
+		if e == 'char' then
+			bootOption = startupMenu()
+			if settings then
+				settings.set('opus.boot_option', bootOption)
+				settings.save('.settings')
+			end
+			break
+		end
 	end
 end
 
