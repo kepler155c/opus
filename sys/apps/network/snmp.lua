@@ -121,20 +121,26 @@ print('discovery: listening on port 999')
 
 Event.on('modem_message', function(_, _, sport, id, info, distance)
 	if sport == 999 and tonumber(id) and type(info) == 'table' then
-		if not network[id] then
-			network[id] = { }
-		end
-		Util.merge(network[id], info)
-		network[id].distance = distance
-		network[id].timestamp = os.clock()
+		if info.label and info.id and
+			type(info.label) == 'string' and type(info.id) == 'number' then
 
-		if not network[id].label then
-			network[id].label = 'unknown'
-		end
+			if not network[id] then
+				network[id] = { }
+			end
+			Util.merge(network[id], info)
+			network[id].distance = type(distance) == 'number' and distance
+			network[id].timestamp = os.clock()
 
-		if not network[id].active then
-			network[id].active = true
-			os.queueEvent('network_attach', network[id])
+			if not network[id].label then
+				network[id].label = 'unknown'
+			end
+
+			if not network[id].active then
+				network[id].active = true
+				os.queueEvent('network_attach', network[id])
+			end
+		else
+			print('discovery: Invalid alive message ' .. id)
 		end
 	end
 end)
