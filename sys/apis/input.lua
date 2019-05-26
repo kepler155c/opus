@@ -92,28 +92,32 @@ function input:translate(event, code, p1, p2)
 				return { code = ch }
 			end
 		elseif code then
-			self.state[code] = true
-			self.fired = false
+			--self.fired = true
+				local ch = input:toCode(keys.getName(code), code)
+				if #ch ~= 1 then
+					return { code = ch }
+				end
+--			self.state[code] = true
 		end
 
 	elseif event == 'char' then
 		local combo = isCombo()
-		if not self.fired then
+		--if not self.fired then
 			if combo or not (keyboard.state[keys.leftCtrl] or keyboard.state[keys.rightCtrl]) then
 				self.fired = not combo
 				return { code = event, ch = code }
-			end
+			--end
 --		return { code = event, ch = input:toCode(code) }
 		end
 
-	elseif event == 'key_up' then
+	elseif event == 'key_upx' then
 		if not self.fired then
-			if self.state[code] then
+			--if self.state[code] then
 				self.fired = true
 				local ch = input:toCode(keys.getName(code), code)
 				self.state[code] = nil
 				return { code = ch }
-			end
+			--end
 		end
 		self.state[code] = nil
 
