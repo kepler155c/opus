@@ -329,28 +329,31 @@ function UI.Grid:drawRows()
 		local rawRow = self.values[key]
 		local row = self:getDisplayValues(rawRow, key)
 
-		local ind = ' '
-		if self.focused and index == self.index and not self.inactive then
-			ind = self.focusIndicator
-		end
-
 		local selected = index == self.index and not self.inactive
 		local bg = self:getRowBackgroundColor(rawRow, selected)
 		local fg = self:getRowTextColor(rawRow, selected)
+		local focused = self.focused and selected
 
-		for _,col in pairs(self.columns) do
-			sb:write(ind .. safeValue(row[col.key] or ''),
-				col.cw + 1,
-				col.align,
-				bg,
-				fg)
-			ind = ' '
-		end
+		self:drawRow(sb, row, focused, bg, fg)
+
 		sb:finish(bg)
 	end
 
 	if sb.y <= self.height then
 		self:clearArea(1, sb.y, self.width, self.height - sb.y + 1)
+	end
+end
+
+function UI.Grid:drawRow(sb, row, focused, bg, fg)
+	local ind = focused and self.focusIndicator or ' '
+
+	for _,col in pairs(self.columns) do
+		sb:write(ind .. safeValue(row[col.key] or ''),
+			col.cw + 1,
+			col.align,
+			bg,
+			fg)
+		ind = ' '
 	end
 end
 

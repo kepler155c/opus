@@ -14,13 +14,13 @@ local tab = UI.Tab {
 			formLabel = 'Monitor', formKey = 'monitor',
 		},
 		textScale = UI.Chooser {
-      formLabel = 'Font Size', formKey = 'textScale',
-      nochoice = 'Small',
-      choices = {
-        { name = 'Small', value = '.5' },
-        { name = 'Large', value = '1'  },
-      },
-      help = 'Adjust text scaling',
+			formLabel = 'Font Size', formKey = 'textScale',
+			nochoice = 'Small',
+			choices = {
+				{ name = 'Small', value = '.5' },
+				{ name = 'Large', value = '1'  },
+			},
+			help = 'Adjust text scaling',
 		},
 		labelText = UI.TextArea {
 			x = 2, ex = -2, y = 5,

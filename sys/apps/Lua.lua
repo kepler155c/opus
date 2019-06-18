@@ -294,7 +294,6 @@ end
 function page:rawExecute(s)
 	local fn, m
 	local wrapped
-	local t = os.clock()
 
 	fn = load('return (' ..s.. ')', 'lua', nil, sandboxEnv)
 
@@ -303,6 +302,7 @@ function page:rawExecute(s)
 		wrapped = true
 	end
 
+	local t = os.clock()
 	if fn then
 		fn, m = pcall(fn)
 		if #m <= 1 and wrapped then
@@ -311,19 +311,24 @@ function page:rawExecute(s)
 	else
 		fn, m = load(s, 'lua', nil, sandboxEnv)
 		if fn then
+			t = os.clock()
 			fn, m = pcall(fn)
 		end
 	end
 
 	if fn then
+		t = os.clock() - t
+
+		local bg, fg = term.getBackgroundColor(), term.getTextColor()
+		term.setTextColor(colors.cyan)
+		term.setBackgroundColor(colors.black)
+		term.write(string.format('out [%.2f]: ', t))
+		term.setBackgroundColor(bg)
+		term.setTextColor(fg)
 		if m or wrapped then
-			local bg, fg = term.getBackgroundColor(), term.getTextColor()
-			term.setTextColor(colors.cyan)
-			term.setBackgroundColor(colors.black)
-			term.write(string.format('out [%.2f]: ', os.clock() - t))
-			term.setBackgroundColor(bg)
-			term.setTextColor(fg)
 			Util.print(m or 'nil')
+		else
+			print()
 		end
 	else
 		_G.printError(m)

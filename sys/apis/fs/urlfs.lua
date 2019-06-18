@@ -1,4 +1,4 @@
-local rttp = require('rttp')
+--local rttp = require('rttp')
 local Util = require('util')
 
 local fs = _G.fs
@@ -39,7 +39,6 @@ function urlfs.getDrive()
 end
 
 function urlfs.open(node, fn, fl)
-
 	if fl == 'w' or fl == 'wb' then
 		fs.delete(fn)
 		return fs.open(fn, fl)
@@ -51,12 +50,15 @@ function urlfs.open(node, fn, fl)
 
 	local c = node.cache
 	if not c then
+		--[[
 		if node.url:match("^(rttps?:)") then
 			local s, response = rttp.get(node.url)
 			c = s and response.statusCode == 200 and response.data
 		else
 			c = Util.httpGet(node.url)
 		end
+		]]--
+		c = Util.httpGet(node.url)
 		if c then
 			node.cache = c
 			node.size = #c

@@ -131,8 +131,11 @@ end
 function Point.calculateMoves(pta, ptb, distance)
 	local heading = pta.heading
 	local moves = distance or Point.turtleDistance(pta, ptb)
+	local weighted = moves
+
 	if (pta.heading % 2) == 0 and pta.z ~= ptb.z then
 		moves = moves + 1
+		weighted = weighted + .9
 		if ptb.heading and (ptb.heading % 2 == 1) then
 			heading = ptb.heading
 		elseif ptb.z > pta.z then
@@ -142,6 +145,7 @@ function Point.calculateMoves(pta, ptb, distance)
 		end
 	elseif (pta.heading % 2) == 1 and pta.x ~= ptb.x then
 		moves = moves + 1
+		weighted = weighted + .9
 		if ptb.heading and (ptb.heading % 2 == 0) then
 			heading = ptb.heading
 		elseif ptb.x > pta.x then
@@ -152,15 +156,18 @@ function Point.calculateMoves(pta, ptb, distance)
 	end
 
 	if not ptb.heading then
-		return moves, heading, moves
+		return moves, heading, weighted
 	end
 
+	-- need to know if we are in digging mode
+	-- if so, we need to face blocks -- need a no-backwards flag
+
 	-- calc turns as slightly less than moves
-	local weighted = moves
+	-- local weighted = moves
 	if heading ~= ptb.heading then
 		local turns = Point.calculateTurns(heading, ptb.heading)
 		moves = moves + turns
-		local wturns = { [0] = 0, [1] = .9, [2] = 1.9 }
+		local wturns = { [0] = 0, [1] = .9, [2] = 1.8 }
 		weighted = weighted + wturns[turns]
 		heading = ptb.heading
 	end
@@ -233,7 +240,7 @@ end
 function Point.nearestTo(pta, ptb)
 	local heading
 
-	if     pta.x < ptb.x then
+	if pta.x < ptb.x then
 		heading = 0
 	elseif pta.z < ptb.z then
 		heading = 1

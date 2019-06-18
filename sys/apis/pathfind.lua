@@ -106,6 +106,17 @@ local function selectDestination(pts, box, grid)
 	end
 end
 
+local function updateCanvas(path)
+	local t = { }
+	for node in path:nodes() do
+		table.insert(t, { x = node.x, y = node.y, z = node.z })
+	end
+	os.queueEvent('canvas', {
+		type = 'canvas_path',
+		data = t,
+	})
+end
+
 local function pathTo(dest, options)
 	local blocks = options.blocks or turtle.getState().blocks or { }
 	local dests  = options.dest   or { dest }  -- support alternative destinations
@@ -156,6 +167,8 @@ local function pathTo(dest, options)
 		if not path then
 			Util.removeByValue(dests, dest)
 		else
+			updateCanvas(path)
+
 			path:filter()
 
 			for node in path:nodes() do
@@ -173,11 +186,19 @@ local function pathTo(dest, options)
 
 				-- use single turn method so the turtle doesn't turn around
 				-- when encountering obstacles
-				if not turtle.gotoSingleTurn(pt.x, pt.y, pt.z, pt.heading) then
-				--if not turtle.goto(pt) then
+				--if not turtle.gotoSingleTurn(pt.x, pt.y, pt.z, pt.heading) then
+				pt.heading = nil
+				if not turtle.go(pt) then
 					local bpt = Point.nearestTo(turtle.point, pt)
 
+					if turtle.getFuelLevel() == 0 then
+						return false, 'Out of fuel'
+					end
 					table.insert(blocks, bpt)
+					os.queueEvent('canvas', {
+						type = 'canvas_barrier',
+						data = { bpt },
+					})
 					-- really need to check if the block we ran into was a turtle.
 					-- if so, this block should be temporary (1-2 secs)
 

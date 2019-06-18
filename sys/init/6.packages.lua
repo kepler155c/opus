@@ -6,7 +6,9 @@ local help  = _G.help
 local shell = _ENV.shell
 
 if not fs.exists('usr/config/packages') then
-	Packages:downloadList()
+	pcall(function()
+		Packages:downloadList()
+	end)
 end
 
 local appPaths = Util.split(shell.path(), '(.-):')

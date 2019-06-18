@@ -52,6 +52,7 @@ function turtle.resetState()
 	state.movePolicy = _defaultMove
 	state.moveCallback = noop
 	state.blacklist = nil
+	state.reference = nil -- gps reference when converting to relative coords
 	Pathing.reset()
 	return true
 end
@@ -77,8 +78,6 @@ local function _dig(name, inspect, dig)
 	return dig()
 end
 
--- override dig
--- optionally check that the block is a certain type
 function turtle.dig(s)
 	return _dig(s, turtle.inspect, turtle.native.dig)
 end
@@ -359,7 +358,7 @@ function turtle.set(args)
 			turtle.setDigPolicy(turtle.getPolicy(v))
 
 		elseif k == 'movePolicy' then
-			turtle.setMovePolicy(turtle.getPolicy(v))
+			state.movePolicy = turtle.getPolicy(v)
 
 		elseif k == 'movementStrategy' then
 			turtle.setMovementStrategy(v)
@@ -378,6 +377,9 @@ function turtle.set(args)
 
 		elseif k == 'blacklist' then
 			state.blacklist = v
+
+		elseif k == 'reference' then
+			state.reference = v
 
 		else
 			error('Invalid turle.set: ' .. tostring(k))
@@ -424,6 +426,10 @@ end
 function turtle.setHeading(heading)
 	if not heading then
 		return false, 'Invalid heading'
+	end
+
+	if heading == turtle.point.heading then
+		return turtle.point
 	end
 
 	local fi = Point.facings[heading]

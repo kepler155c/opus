@@ -19,9 +19,9 @@ function Map.removeMatches(t, values)
 		return true
 	end
 
-	for k,v in pairs(t) do
-		if matchAll(v) then
-			t[k] = nil
+	for _, key in pairs(Util.keys(t)) do
+		if matchAll(t[key]) then
+			t[key] = nil
 		end
 	end
 end
