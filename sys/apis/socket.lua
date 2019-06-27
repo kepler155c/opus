@@ -115,7 +115,7 @@ function Socket.connect(host, port)
 		type = 'OPEN',
 		shost = socket.shost,
 		dhost = socket.dhost,
-		t = Crypto.encrypt({ ts = os.time(), seq = socket.seq }, Security.getPublicKey()),
+		t = Crypto.encrypt({ ts = os.time(), seq = socket.seq, nts = os.epoch('utc') }, Security.getPublicKey()),
 		rseq = socket.wseq,
 		wseq = socket.rseq,
 	})
@@ -169,6 +169,10 @@ local function trusted(msg, port)
 
 	if pubKey then
 		local data = Crypto.decrypt(msg.t or '', pubKey)
+
+		if data.nts then -- upgraded security
+			return data.nts and tonumber(data.nts) and math.abs(os.epoch('utc') - data.nts) < 1024
+		end
 
 		--local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
 		return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 24
