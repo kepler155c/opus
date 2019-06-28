@@ -10,6 +10,19 @@ local _sformat  = string.format
 local _srep     = string.rep
 local _ssub     = string.sub
 
+function Util.hexToByteArray(str)
+	local r = {}
+	str = tostring(str)
+	for b in str:gmatch("%x%x?") do
+			r[#r+1] = tonumber(b, 16)
+	end
+	return r
+end
+
+function Util.byteArrayToHex(tbl)
+	return ("%02x"):rep(#tbl):format(unpack(tbl))
+end
+
 function Util.tryTimed(timeout, f, ...)
 	local c = os.clock()
 	repeat

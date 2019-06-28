@@ -1,4 +1,6 @@
 local Config = require('config')
+local Util   = require('util')
+local ECC    = require('crypto.ecc')
 
 local Security = { }
 
@@ -14,33 +16,18 @@ end
 function Security.getSecretKey()
 	local config = Config.load('os')
 	if not config.secretKey then
-		config.secretKey = math.random(100000, 999999)
+		config.secretKey = ""
+		for _ = 1, 32 do
+			config.secretKey = config.secretKey .. ("%02x"):format(math.random(0, 0xFF))
+		end
 		Config.update('os', config)
 	end
-	return config.secretKey
+	return Util.hexToByteArray(config.secretKey)
 end
 
 function Security.getPublicKey()
-	local exchange = {
-		base = 11,
-		primeMod = 625210769
-	}
-
-	local function modexp(base, exponent, modulo)
-		local remainder = base
-
-		for _ = 1, exponent-1 do
-			remainder = remainder * remainder
-			if remainder >= modulo then
-				remainder = remainder % modulo
-			end
-		end
-
-		return remainder
-	end
-
 	local secretKey = Security.getSecretKey()
-	return modexp(exchange.base, secretKey, exchange.primeMod)
+	return ECC.publicKey(secretKey)
 end
 
 function Security.updatePassword(password)

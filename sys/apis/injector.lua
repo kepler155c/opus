@@ -192,7 +192,7 @@ return function(env)
 				error(msg, 2)
 			end
 		end
-		error('Unable to find module ' .. modname)
+		error('Unable to find module ' .. modname, 2)
 	end
 
 	return env.require -- backwards compatible

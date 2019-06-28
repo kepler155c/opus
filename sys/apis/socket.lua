@@ -1,4 +1,4 @@
-local Crypto   = require('crypto')
+local Crypto   = require('crypto.chacha20')
 local Security = require('security')
 local Util     = require('util')
 
@@ -167,15 +167,16 @@ local function trusted(msg, port)
 	local trustList = Util.readTable('usr/.known_hosts') or { }
 	local pubKey = trustList[msg.shost]
 
-	if pubKey then
-		local data = Crypto.decrypt(msg.t or '', pubKey)
+	if pubKey and msg.t then
+		pubKey = Util.hexToByteArray(pubKey)
+		local data = Crypto.decrypt(msg.t, pubKey)
 
-		if data.nts then -- upgraded security
+		if data and data.nts then -- upgraded security
 			return data.nts and tonumber(data.nts) and math.abs(os.epoch('utc') - data.nts) < 1024
 		end
 
 		--local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
-		return data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 24
+		return data and data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 24
 	end
 end
 

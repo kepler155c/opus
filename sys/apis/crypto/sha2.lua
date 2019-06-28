@@ -1,8 +1,6 @@
 -- SHA-256, HMAC and PBKDF2 functions in ComputerCraft
 -- By Anavrins
 
-local bit = _G.bit
-
 local mod32 = 2^32
 local band    = bit32 and bit32.band or bit.band
 local bnot    = bit32 and bit32.bnot or bit.bnot
@@ -40,7 +38,7 @@ local function counter(incr)
 	local t1, t2 = 0, 0
 	if 0xFFFFFFFF - t1 < incr then
 		t2 = t2 + 1
-		t1 = incr - (0xFFFFFFFF - t1) - 1
+		t1 = incr - (0xFFFFFFFF - t1) - 1		
 	else t1 = t1 + incr
 	end
 	return t2, t1
@@ -68,7 +66,7 @@ end
 
 local function digestblock(w, C)
 	for j = 17, 64 do
-		--local v = w[j-15]
+		local v = w[j-15]
 		local s0 = bxor(bxor(rrotate(w[j-15], 7), rrotate(w[j-15], 18)), brshift(w[j-15], 3))
 		local s1 = bxor(bxor(rrotate(w[j-2], 17), rrotate(w[j-2], 19)), brshift(w[j-2], 10))
 		w[j] = (w[j-16] + s0 + w[j-7] + s1)%mod32
@@ -97,7 +95,7 @@ end
 local mt = {
 	__tostring = function(a) return string.char(unpack(a)) end,
 	__index = {
-		toHex = function(self) return ("%02x"):rep(#self):format(unpack(self)) end,
+		toHex = function(self, s) return ("%02x"):rep(#self):format(unpack(self)) end,
 		isEqual = function(self, t)
 			if type(t) ~= "table" then return false end
 			if #self ~= #t then return false end
@@ -122,7 +120,7 @@ local function toBytes(t, n)
 end
 
 local function digest(data)
-	data = data or ""
+	local data = data or ""
 	data = type(data) == "table" and {upack(data)} or {tostring(data):byte(1,-1)}
 
 	data = preprocess(data)
@@ -132,8 +130,8 @@ local function digest(data)
 end
 
 local function hmac(data, key)
-	data = type(data) == "table" and {upack(data)} or {tostring(data):byte(1,-1)}
-	key = type(key) == "table" and {upack(key)} or {tostring(key):byte(1,-1)}
+	local data = type(data) == "table" and {upack(data)} or {tostring(data):byte(1,-1)}
+	local key = type(key) == "table" and {upack(key)} or {tostring(key):byte(1,-1)}
 
 	local blocksize = 64
 
@@ -163,12 +161,11 @@ local function hmac(data, key)
 end
 
 local function pbkdf2(pass, salt, iter, dklen)
+	local salt = type(salt) == "table" and salt or {tostring(salt):byte(1,-1)}
 	local hashlen = 32
+	local dklen = dklen or 32
 	local block = 1
 	local out = {}
-
-	dklen = dklen or 32
-  salt = type(salt) == "table" and salt or {tostring(salt):byte(1,-1)}
 
 	while dklen > 0 do
 		local ikey = {}
