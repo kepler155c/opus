@@ -2,10 +2,10 @@ if not _G.turtle then
 	return
 end
 
-local Pathing      = require('pathfind')
-local Point        = require('point')
-local synchronized = require('sync').sync
-local Util         = require('util')
+local Pathing      = require('opus.pathfind')
+local Point        = require('opus.point')
+local synchronized = require('opus.sync').sync
+local Util         = require('opus.util')
 
 local os         = _G.os
 local peripheral = _G.peripheral

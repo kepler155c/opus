@@ -5,7 +5,7 @@
 	* background read buffering
 ]]--
 
-local Event = require('event')
+local Event = require('opus.event')
 
 local os = _G.os
 

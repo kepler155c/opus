@@ -1,6 +1,6 @@
 _G.requireInjector(_ENV)
 
-local Config = require('config')
+local Config = require('opus.config')
 
 local device     = _G.device
 local kernel     = _G.kernel

@@ -1,4 +1,4 @@
-local Util = require('util')
+local Util = require('opus.util')
 
 local kernel     = _G.kernel
 local keyboard   = _G.device.keyboard

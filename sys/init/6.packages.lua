@@ -1,5 +1,5 @@
-local Packages = require('packages')
-local Util     = require('util')
+local Packages = require('opus.packages')
+local Util     = require('opus.util')
 
 local fs    = _G.fs
 local help  = _G.help
@@ -22,7 +22,7 @@ for name in pairs(Packages:installed()) do
 	table.insert(appPaths, 1, packageDir)
 	local apiPath = fs.combine(packageDir, 'apis')
 	if fs.exists(apiPath) then
-		fs.mount(fs.combine('sys/apis', name), 'linkfs', apiPath)
+		fs.mount(fs.combine('rom/modules/main', name), 'linkfs', apiPath)
 	end
 
 	local helpPath = '/' .. fs.combine(packageDir, 'help')
@@ -33,3 +33,5 @@ end
 
 help.setPath(table.concat(helpPaths, ':'))
 shell.setPath(table.concat(appPaths, ':'))
+
+fs.mount('rom/modules/main/opus', 'linkfs', 'sys/modules/opus')

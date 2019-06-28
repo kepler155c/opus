@@ -1,6 +1,6 @@
-local Event  = require('event')
-local Socket = require('socket')
-local Util   = require('util')
+local Event  = require('opus.event')
+local Socket = require('opus.socket')
+local Util   = require('opus.util')
 
 local function getProxy(path)
 	local x = Util.split(path, '(.-)/')

@@ -1,5 +1,5 @@
-local Config = require('config')
-local Util   = require('util')
+local Config = require('opus.config')
+local Util   = require('opus.util')
 
 local fs     = _G.fs
 local os     = _G.os

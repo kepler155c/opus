@@ -1,7 +1,7 @@
-local Ansi     = require('ansi')
-local Packages = require('packages')
-local UI       = require('ui')
-local Util     = require('util')
+local Ansi     = require('opus.ansi')
+local Packages = require('opus.packages')
+local UI       = require('opus.ui')
+local Util     = require('opus.util')
 
 local colors   = _G.colors
 local term     = _G.term

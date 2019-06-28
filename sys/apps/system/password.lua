@@ -1,6 +1,6 @@
-local Security = require('security')
-local SHA      = require('crypto.sha2')
-local UI       = require('ui')
+local Security = require('opus.security')
+local SHA      = require('opus.crypto.sha2')
+local UI       = require('opus.ui')
 
 local colors   = _G.colors
 

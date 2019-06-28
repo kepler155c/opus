@@ -13,8 +13,8 @@ sandboxEnv.shell = shell
 
 _G.requireInjector(_ENV)
 
-local trace = require('trace')
-local Util = require('util')
+local trace = require('opus.trace')
+local Util = require('opus.util')
 
 local DIR = (parentShell and parentShell.dir()) or ""
 local PATH = (parentShell and parentShell.path()) or ".:/rom/programs"
@@ -358,12 +358,12 @@ if #tArgs > 0 then
 	return run(env, ...)
 end
 
-local Config   = require('config')
-local Entry    = require('entry')
-local History  = require('history')
-local Input    = require('input')
-local Sound    = require('sound')
-local Terminal = require('terminal')
+local Config   = require('opus.config')
+local Entry    = require('opus.entry')
+local History  = require('opus.history')
+local Input    = require('opus.input')
+local Sound    = require('opus.sound')
+local Terminal = require('opus.terminal')
 
 local colors    = _G.colors
 local os        = _G.os

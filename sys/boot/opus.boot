@@ -44,19 +44,19 @@ local function runUrl(file, ...)
 end
 
 -- Install require shim
-if fs.exists('sys/apis/injector.lua') then
-	_G.requireInjector = run('sys/apis/injector.lua')
+if fs.exists('sys/modules/opus/injector.lua') then
+	_G.requireInjector = run('sys/modules/opus/injector.lua')
 else
 	-- not local, run the file system directly from git
 	if package and package.path then
-		package.path = package.path .. ';' .. BASE .. '/sys/apis'
+		package.path = package.path .. ';' .. BASE .. '/sys/modules/opus'
 	else
 		sandboxEnv.package = {
-			path = BASE .. '/sys/apis'
+			path = BASE .. '/sys/modules/opus'
 		}
 	end
 
-	_G.requireInjector = runUrl('sys/apis/injector.lua')
+	_G.requireInjector = runUrl('sys/modules/opus/injector.lua')
 
 	runUrl('sys/init/2.vfs.lua')
 

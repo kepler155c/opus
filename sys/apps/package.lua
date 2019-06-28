@@ -1,7 +1,7 @@
-local BulkGet  = require('bulkget')
-local Git      = require('git')
-local Packages = require('packages')
-local Util     = require('util')
+local BulkGet  = require('opus.bulkget')
+local Git      = require('opus.git')
+local Packages = require('opus.packages')
+local Util     = require('opus.util')
 
 local fs       = _G.fs
 local term     = _G.term

@@ -1,6 +1,6 @@
-local Security = require('security')
-local SHA      = require('crypto.sha2')
-local Terminal = require('terminal')
+local Security = require('opus.security')
+local SHA      = require('opus.crypto.sha2')
+local Terminal = require('opus.terminal')
 
 local password = Terminal.readPassword('Enter new password: ')
 

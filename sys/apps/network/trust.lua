@@ -1,8 +1,8 @@
-local Crypto   = require('crypto.chacha20')
-local Event    = require('event')
-local Security = require('security')
-local Socket   = require('socket')
-local Util     = require('util')
+local Crypto   = require('opus.crypto.chacha20')
+local Event    = require('opus.event')
+local Security = require('opus.security')
+local Socket   = require('opus.socket')
+local Util     = require('opus.util')
 
 local function trustConnection(socket)
 	local data = socket:read(2)

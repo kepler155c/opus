@@ -1,8 +1,8 @@
 _G.requireInjector(_ENV)
 
-local Config   = require('config')
-local trace    = require('trace')
-local Util     = require('util')
+local Config   = require('opus.config')
+local trace    = require('opus.trace')
+local Util     = require('opus.util')
 
 local colors     = _G.colors
 local fs         = _G.fs

@@ -1,4 +1,4 @@
-local Packages = require('packages')
+local Packages = require('opus.packages')
 
 local colors     = _G.colors
 local fs         = _G.fs

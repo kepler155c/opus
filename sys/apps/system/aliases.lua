@@ -1,5 +1,5 @@
-local Config = require('config')
-local UI     = require('ui')
+local Config = require('opus.config')
+local UI     = require('opus.ui')
 
 local kernel = _G.kernel
 

@@ -1,4 +1,4 @@
-local UI = require('ui')
+local UI = require('opus.ui')
 
 local settings = _G.settings
 

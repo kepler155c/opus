@@ -1,6 +1,6 @@
-local Config = require('config')
-local UI     = require('ui')
-local Util   = require('util')
+local Config = require('opus.config')
+local UI     = require('opus.ui')
+local Util   = require('opus.util')
 
 local tab = UI.Tab {
 	tabTitle = 'Path',

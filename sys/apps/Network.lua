@@ -1,8 +1,8 @@
-local Config = require('config')
-local Event  = require('event')
-local Socket = require('socket')
-local UI     = require('ui')
-local Util   = require('util')
+local Config = require('opus.config')
+local Event  = require('opus.event')
+local Socket = require('opus.socket')
+local UI     = require('opus.ui')
+local Util   = require('opus.util')
 
 local colors     = _G.colors
 local device     = _G.device

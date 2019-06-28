@@ -1,6 +1,6 @@
 _G.requireInjector(_ENV)
 
-local Peripheral = require('peripheral')
+local Peripheral = require('opus.peripheral')
 
 _G.device = Peripheral.getList()
 
@@ -24,8 +24,8 @@ _G.device.mouse = {
 	state   = { },
 }
 
-local Input      = require('input')
-local Util       = require('util')
+local Input      = require('opus.input')
+local Util       = require('opus.util')
 
 local device   = _G.device
 local kernel   = _G.kernel

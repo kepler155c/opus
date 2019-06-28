@@ -1,7 +1,7 @@
 _G.requireInjector(_ENV)
 
-local Terminal = require('terminal')
-local Util     = require('util')
+local Terminal = require('opus.terminal')
+local Util     = require('opus.util')
 
 _G.kernel = {
 	UID = 0,

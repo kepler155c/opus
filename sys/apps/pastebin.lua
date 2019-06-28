@@ -11,7 +11,7 @@ if not http then
 	return
 end
 
-local pastebin = require('http.pastebin')
+local pastebin = require('opus.http.pastebin')
 
 local tArgs = { ... }
 local sCommand = tArgs[1]

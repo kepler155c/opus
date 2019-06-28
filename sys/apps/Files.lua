@@ -1,8 +1,8 @@
-local Config = require('config')
-local Event  = require('event')
-local pastebin = require('http.pastebin')
-local UI     = require('ui')
-local Util   = require('util')
+local Config = require('opus.config')
+local Event  = require('opus.event')
+local pastebin = require('opus.http.pastebin')
+local UI     = require('opus.ui')
+local Util   = require('opus.util')
 
 local colors     = _G.colors
 local fs         = _G.fs

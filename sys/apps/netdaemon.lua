@@ -1,7 +1,7 @@
 _G.requireInjector(_ENV)
 
-local Event = require('event')
-local Util  = require('util')
+local Event = require('opus.event')
+local Util  = require('opus.util')
 
 local device     = _G.device
 local fs         = _G.fs

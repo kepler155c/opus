@@ -3,7 +3,7 @@ if fs.native then
 end
 
 _G.requireInjector(_ENV)
-local Util = require('util')
+local Util = require('opus.util')
 
 -- TODO: support getDrive for virtual nodes
 
@@ -256,7 +256,7 @@ end
 local function getfstype(fstype)
 	local vfs = fstypes[fstype]
 	if not vfs then
-		vfs = require('fs.' .. fstype)
+		vfs = require('opus.fs.' .. fstype)
 		fs.registerType(fstype, vfs)
 	end
 	return vfs

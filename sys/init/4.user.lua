@@ -1,4 +1,4 @@
-local Util = require('util')
+local Util = require('opus.util')
 
 local fs    = _G.fs
 local shell = _ENV.shell
@@ -43,7 +43,7 @@ end
 
 shell.setPath(table.concat(path, ':'))
 
-_G.LUA_PATH = config.lua_path
-_G.settings.set('mbs.shell.require_path', config.lua_path)
+--_G.LUA_PATH = config.lua_path
+--_G.settings.set('mbs.shell.require_path', config.lua_path)
 
 fs.loadTab('usr/config/fstab')
