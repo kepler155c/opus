@@ -2,6 +2,7 @@ local Config = require('config')
 local Util   = require('util')
 
 local fs     = _G.fs
+local os     = _G.os
 local shell  = _ENV.shell
 
 local config = Config.load('os')

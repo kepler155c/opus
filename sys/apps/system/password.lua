@@ -1,5 +1,5 @@
 local Security = require('security')
-local SHA2     = require('crypto.sha2')
+local SHA      = require('crypto.sha2')
 local UI       = require('ui')
 
 local colors   = _G.colors
@@ -40,11 +40,11 @@ function passwordTab:eventHandler(event)
 		if #self.newPass.value == 0 then
 			self:emit({ type = 'error_message', message = 'Invalid password' })
 
-		elseif Security.getPassword() and not Security.verifyPassword(SHA2.digest(self.oldPass.value):toHex()) then
+		elseif Security.getPassword() and not Security.verifyPassword(SHA.compute(self.oldPass.value)) then
 			self:emit({ type = 'error_message', message = 'Passwords do not match' })
 
 		else
-			Security.updatePassword(SHA2.digest(self.newPass.value):toHex())
+			Security.updatePassword(SHA.compute(self.newPass.value))
 			self.oldPass.inactive = false
 			self:emit({ type = 'success_message', message = 'Password updated' })
 		end

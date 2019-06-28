@@ -10,6 +10,7 @@ local bxor = bit32.bxor
 local band = bit32.band
 local blshift = bit32.lshift
 local brshift = bit32.arshift
+local os = _G.os
 local textutils = _G.textutils
 
 local mod = 2^32
@@ -91,7 +92,7 @@ end
 local mt = {
 	__tostring = function(a) return string.char(unpack(a)) end,
 	__index = {
-		toHex = function(self, s) return ("%02x"):rep(#self):format(unpack(self)) end,
+		toHex = function(self) return ("%02x"):rep(#self):format(unpack(self)) end,
 		isEqual = function(self, t)
 			if type(t) ~= "table" then return false end
 			if #self ~= #t then return false end
@@ -110,7 +111,7 @@ local function crypt(data, key, nonce, cntr, round)
 	assert(#key == 16 or #key == 32, "ChaCha20: Invalid key length ("..#key.."), must be 16 or 32")
 	assert(#nonce == 12, "ChaCha20: Invalid nonce length ("..#nonce.."), must be 12")
 
-	local data = type(data) == "table" and {unpack(data)} or {tostring(data):byte(1,-1)}
+	data = type(data) == "table" and {unpack(data)} or {tostring(data):byte(1,-1)}
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 

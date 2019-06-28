@@ -1,6 +1,6 @@
 local Crypto   = require('crypto.chacha20')
 local Security = require('security')
-local SHA2     = require('crypto.sha2')
+local SHA      = require('crypto.sha2')
 local Socket   = require('socket')
 local Terminal = require('terminal')
 
@@ -35,7 +35,7 @@ end
 
 local publicKey = Security.getPublicKey()
 
-socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, SHA2.digest(password):toHex()))
+socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, SHA.compute(password)))
 
 local data = socket:read(2)
 socket:close()

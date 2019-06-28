@@ -2,6 +2,8 @@ local fq       = require('crypto.ecc.fq')
 local elliptic = require('crypto.ecc.elliptic')
 local sha256   = require('crypto.sha2')
 
+local os = _G.os
+
 local q = {1372, 62520, 47765, 8105, 45059, 9616, 65535, 65535, 65535, 65535, 65535, 65532}
 
 local sLen = 24
@@ -35,9 +37,7 @@ local function exchange(sk, pk)
 	Z = elliptic.pointScale(Z)
 
 	local ss = fq.bytes(Z[2])
-	local ss = sha256.digest(ss)
-
-	return ss
+	return sha256.digest(ss)
 end
 
 local function sign(sk, message)

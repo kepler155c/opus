@@ -1,6 +1,6 @@
 local Ansi     = require('ansi')
 local Security = require('security')
-local SHA2     = require('crypto.sha2')
+local SHA      = require('crypto.sha2')
 local UI       = require('ui')
 
 local colors   = _G.colors
@@ -107,7 +107,7 @@ end
 
 function page.wizard.pages.password:validate()
 	if #self.newPass.value > 0 then
-		Security.updatePassword(SHA2.digest(self.newPass.value):toHex())
+		Security.updatePassword(SHA.compute(self.newPass.value))
 	end
 	--[[
 	if #self.group.value > 0 then
