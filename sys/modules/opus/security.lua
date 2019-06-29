@@ -27,7 +27,7 @@ function Security.generateKeyPair()
 end
 
 function Security.getIdentifier()
-	return Security.geetPublicKey()
+	return Security.getPublicKey()
 end
 
 -- deprecate - will use getIdentifier

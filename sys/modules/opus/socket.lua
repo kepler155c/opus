@@ -63,11 +63,13 @@ function socketClass:ping()
 end
 
 function socketClass:setupEncryption()
+	if false then
 	self.sharedKey = ECC.exchange(self.privKey, self.remotePubKey)
 	self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
 	self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
 	self.rseed  = SHA.pbkdf2(self.sharedKey, "3rseed", 1)
 	self.wseed  = SHA.pbkdf2(self.sharedKey, "4sseed", 1)
+	end
 end
 
 function socketClass:close()
