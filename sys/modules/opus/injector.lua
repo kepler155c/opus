@@ -1,6 +1,3 @@
-local PASTEBIN_URL   = 'http://pastebin.com/raw'
-local GIT_URL        = 'https://raw.githubusercontent.com'
-
 local function split(str, pattern)
 	local t = { }
 	local function helper(line) table.insert(t, line) return "" end
@@ -11,7 +8,7 @@ end
 local hasMain
 local luaPaths = package and package.path and split(package.path, '(.-);') or { }
 for i = 1, #luaPaths do
-	if luaPaths[i] == '?' or luaPaths[i] == '?.lua' then
+	if luaPaths[i] == '?' or luaPaths[i] == '?.lua' or luaPaths[i] == '?/init.lua' then
 		luaPaths[i] = nil
 	elseif string.find(luaPaths[i], '/rom/modules/main') then
 		hasMain = true
@@ -22,69 +19,19 @@ table.insert(luaPaths, 1, '?.lua')
 table.insert(luaPaths, 2, '?/init.lua')
 table.insert(luaPaths, 3, '/usr/modules/?.lua')
 table.insert(luaPaths, 4, '/usr/modules/?/init.lua')
-table.insert(luaPaths, 5, '/sys/modules/?.lua')
-table.insert(luaPaths, 6, '/sys/modules/?/init.lua')
+if not hasMain then
+	table.insert(luaPaths, 5, '/rom/modules/main/?')
+	table.insert(luaPaths, 6, '/rom/modules/main/?.lua')
+	table.insert(luaPaths, 7, '/rom/modules/main/?/init.lua')
+end
+table.insert(luaPaths, '/sys/modules/?.lua')
+table.insert(luaPaths, '/sys/modules/?/init.lua')
 
 local DEFAULT_PATH   = table.concat(luaPaths, ';')
-if not hasMain then
-	DEFAULT_PATH = DEFAULT_PATH .. ';/rom/modules/main/?;/rom/modules/main/?.lua;/rom/modules/main/?/init.lua'
-end
 
 local fs     = _G.fs
-local http   = _G.http
 local os     = _G.os
 local string = _G.string
-
---[[
-if not http._patched then
-	-- fix broken http get (http.get is not coroutine safe)
-	local syncLocks = { }
-
-	local function sync(obj, fn)
-		local key = tostring(obj)
-		if syncLocks[key] then
-			local cos = tostring(coroutine.running())
-			table.insert(syncLocks[key], cos)
-			repeat
-				local _, co = os.pullEvent('sync_lock')
-			until co == cos
-		else
-			syncLocks[key] = { }
-		end
-		fn()
-		local co = table.remove(syncLocks[key], 1)
-		if co then
-			os.queueEvent('sync_lock', co)
-		else
-			syncLocks[key] = nil
-		end
-	end
-
-	-- todo -- completely replace http.get with function that
-	-- checks for success on permanent redirects (minecraft 1.75 bug)
-
-	http._patched = http.get
-	function http.get(url, headers)
-		local s, m
-		sync(url, function()
-			s, m = http._patched(url, headers)
-		end)
-		return s, m
-	end
-end
---]]
-
-local function loadUrl(url)
-	local c
-	local h = http.get(url)
-	if h then
-		c = h.readAll()
-		h.close()
-	end
-	if c and #c > 0 then
-		return c
-	end
-end
 
 -- Add require and package to the environment
 return function(env)
@@ -118,45 +65,14 @@ return function(env)
 			local sPath = string.gsub(pattern, "%?", fname)
 			-- TODO: if there's no shell, we should not be checking relative paths below
 			-- as they will resolve to root directory
-			if sPath:match("^(https?:)") then
-				local c = loadUrl(sPath)
-				if c then
-					return load(c, modname, nil, env)
-				end
-			else
-				if env.shell and
-					type(env.shell.getRunningProgram) == 'function' and
-					sPath:sub(1, 1) ~= "/" then
+			if env.shell and
+				type(env.shell.getRunningProgram) == 'function' and
+				sPath:sub(1, 1) ~= "/" then
 
-					sPath = fs.combine(fs.getDir(env.shell.getRunningProgram() or ''), sPath)
-				end
-				if fs.exists(sPath) and not fs.isDir(sPath) then
-					return loadfile(sPath, env)
-				end
+				sPath = fs.combine(fs.getDir(env.shell.getRunningProgram() or ''), sPath)
 			end
-		end
-	end
-
-	-- require('BniCQPVf')
-	local function pastebinSearcher(modname)
-		if #modname == 8 and not modname:match('%W') then
-			local url = PASTEBIN_URL .. '/' .. modname
-			local c = loadUrl(url)
-			if c then
-				return load(c, modname, nil, env)
-			end
-		end
-	end
-
-	-- require('kepler155c.opus.master.sys.apis.util')
-	local function gitSearcher(modname)
-		local fname = modname:gsub('%.', '/') .. '.lua'
-		local _, count = fname:gsub("/", "")
-		if count >= 3 then
-			local url = GIT_URL .. '/' .. fname
-			local c = loadUrl(url)
-			if c then
-				return load(c, modname, nil, env)
+			if fs.exists(sPath) and not fs.isDir(sPath) then
+				return loadfile(sPath, env)
 			end
 		end
 	end
@@ -178,8 +94,6 @@ return function(env)
 			preloadSearcher,
 			loadedSearcher,
 			pathSearcher,
-			pastebinSearcher,
-			gitSearcher,
 		}
 	}
 

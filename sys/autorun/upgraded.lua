@@ -7,5 +7,6 @@ if fs.exists('sys/network') then fs.delete('sys/network') end
 if fs.exists('startup') then fs.delete('startup') end
 
 if fs.exists('sys/autorun/gps.lua') then fs.delete('sys/autorun/gps.lua') end
+if fs.exists('sys/autorun/gpsHost.lua') then fs.delete('sys/autorun/gpsHost.lua') end
 if fs.exists('sys/apps/network/redserver.lua') then fs.delete('sys/apps/network/redserver.lua') end
 if fs.exists('sys/apis') then fs.delete('sys/apis') end

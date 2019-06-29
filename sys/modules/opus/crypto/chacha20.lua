@@ -115,6 +115,7 @@ local function crypt(data, key, nonce, cntr, round)
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 
+	local throttle = util.throttle()
 	local out = {}
 	local state = initState(key, nonce, cntr)
 	local blockAmt = math.floor(#data/64)
@@ -131,8 +132,9 @@ local function crypt(data, key, nonce, cntr, round)
 		end
 
 		if i % 1000 == 0 then
-			os.queueEvent("")
-			os.pullEvent("")
+			throttle()
+			--os.queueEvent("")
+			--os.pullEvent("")
 		end
 	end
 	return setmetatable(out, mt)

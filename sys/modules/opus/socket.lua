@@ -1,5 +1,7 @@
 local Crypto   = require('opus.crypto.chacha20')
+local ECC      = require('opus.crypto.ecc')
 local Security = require('opus.security')
+local SHA      = require('opus.crypto.sha2')
 local Util     = require('opus.util')
 
 local device    = _G.device
@@ -60,6 +62,14 @@ function socketClass:ping()
 	end
 end
 
+function socketClass:setupEncryption()
+	self.sharedKey = ECC.exchange(self.privKey, self.remotePubKey)
+	self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
+	self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
+	self.rseed  = SHA.pbkdf2(self.sharedKey, "3rseed", 1)
+	self.wseed  = SHA.pbkdf2(self.sharedKey, "4sseed", 1)
+end
+
 function socketClass:close()
 	if self.connected then
 		self.transmit(self.dport, self.dhost, {
@@ -110,14 +120,20 @@ function Socket.connect(host, port)
 
 	local socket = newSocket(host == os.getComputerID())
 	socket.dhost = tonumber(host)
+	socket.privKey, socket.pubKey = Security.generateKeyPair()
 
 	socket.transmit(port, socket.sport, {
 		type = 'OPEN',
 		shost = socket.shost,
 		dhost = socket.dhost,
-		t = Crypto.encrypt({ ts = os.time(), seq = socket.seq, nts = os.epoch('utc') }, Security.getPublicKey()),
 		rseq = socket.wseq,
 		wseq = socket.rseq,
+		t = Crypto.encrypt({
+			ts = os.time(),
+			seq = socket.seq,
+			nts = os.epoch('utc'),
+			pk = Util.byteArrayToHex(socket.pubKey),
+		}, Security.getPublicKey()),
 	})
 
 	local timerId = os.startTimer(3)
@@ -133,6 +149,8 @@ function Socket.connect(host, port)
 			if msg.type == 'CONN' then
 				socket.dport = dport
 				socket.connected = true
+				socket.remotePubKey = Util.hexToByteArray(msg.pk)
+				socket:setupEncryption()
 				-- Logger.log('socket', 'connection established to %d %d->%d',
 				--											host, socket.sport, socket.dport)
 				_G.transport.open(socket)
@@ -153,7 +171,7 @@ function Socket.connect(host, port)
 	return false, 'Connection timed out', 'TIMEOUT'
 end
 
-local function trusted(msg, port)
+local function trusted(socket, msg, port)
 	if port == 19 or msg.shost == os.getComputerID() then
 		-- no auth for trust server or loopback
 		return true
@@ -168,11 +186,12 @@ local function trusted(msg, port)
 	local pubKey = trustList[msg.shost]
 
 	if pubKey and msg.t then
-		pubKey = Util.hexToByteArray(pubKey)
-		local data = Crypto.decrypt(msg.t, pubKey)
+		local data = Crypto.decrypt(msg.t, Util.hexToByteArray(pubKey))
 
 		if data and data.nts then -- upgraded security
-			return data.nts and tonumber(data.nts) and math.abs(os.epoch('utc') - data.nts) < 1024
+			if data.nts and tonumber(data.nts) and math.abs(os.epoch('utc') - data.nts) < 1024 then
+				socket.remotePubKey = Util.hexToByteArray(data.pk)
+			end
 		end
 
 		--local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
@@ -207,13 +226,17 @@ function Socket.server(port)
 				})
 				socket:close()
 
-			elseif trusted(msg, port) then
+			elseif trusted(socket, msg, port) then
 				socket.connected = true
+				socket.privKey, socket.pubKey = Security.generateKeyPair()
+				socket:setupEncryption()
 				socket.transmit(socket.dport, socket.sport, {
 					type = 'CONN',
 					dhost = socket.dhost,
 					shost = socket.shost,
+					pk = Util.byteArrayToHex(socket.pubKey),
 				})
+
 				-- Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
 				_G.transport.open(socket)

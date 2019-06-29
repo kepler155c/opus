@@ -71,6 +71,7 @@ local function run(env, ...)
 		tProgramStack[#tProgramStack + 1] = path
 	end
 
+	env[ "arg" ] = { [0] = path, table.unpack(args) }
 	local r = { fn(table.unpack(args)) }
 
 	tProgramStack[#tProgramStack] = nil

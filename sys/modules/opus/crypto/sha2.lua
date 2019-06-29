@@ -162,12 +162,25 @@ local function hmac(data, key)
 	return digest(padded_key)
 end
 
+local function throttler()
+	local ts = os.clock()
+	local timeout = .095
+	return function()
+		local nts = os.clock()
+		if nts > ts + timeout then
+			os.sleep(0)
+			ts = os.clock()
+		end
+	end
+end
+
 local function pbkdf2(pass, salt, iter, dklen)
 	salt = type(salt) == "table" and salt or {tostring(salt):byte(1,-1)}
 	local hashlen = 32
 	dklen = dklen or 32
 	local block = 1
 	local out = {}
+	local throttle = throttler()
 
 	while dklen > 0 do
 		local ikey = {}
@@ -182,7 +195,10 @@ local function pbkdf2(pass, salt, iter, dklen)
 		for j = 1, iter do
 			isalt = hmac(isalt, pass)
 			for k = 1, clen do ikey[k] = bxor(isalt[k], ikey[k] or 0) end
-			if j % 200 == 0 then os.queueEvent("PBKDF2", j) coroutine.yield("PBKDF2") end
+			if j % 200 == 0 then
+				throttle()
+				--os.queueEvent("PBKDF2", j) coroutine.yield("PBKDF2")
+			end
 		end
 		dklen = dklen - clen
 		block = block+1
