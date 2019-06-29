@@ -20,6 +20,7 @@ function Util.hexToByteArray(str)
 end
 
 function Util.byteArrayToHex(tbl)
+	if not tbl then error('byteArrayToHex: invalid table', 2) end
 	return ("%02x"):rep(#tbl):format(unpack(tbl))
 end
 

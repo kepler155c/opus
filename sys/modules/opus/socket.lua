@@ -6,11 +6,12 @@ local Util     = require('opus.util')
 
 local device    = _G.device
 local os        = _G.os
+local network   = _G.network
 
 local socketClass = { }
 
 function socketClass:read(timeout)
-	local data, distance = _G.transport.read(self)
+	local data, distance = network.getTransport().read(self)
 	if data then
 		return data, distance
 	end
@@ -25,7 +26,7 @@ function socketClass:read(timeout)
 		local e, id = os.pullEvent()
 
 		if e == 'transport_' .. self.uid then
-			data, distance = _G.transport.read(self)
+			data, distance = network.getTransport().read(self)
 			if data then
 				os.cancelTimer(timerId)
 				return data, distance
@@ -46,7 +47,7 @@ end
 
 function socketClass:write(data)
 	if self.connected then
-		_G.transport.write(self, {
+		network.getTransport().write(self, {
 			type = 'DATA',
 			seq = self.wseq,
 			data = data,
@@ -57,30 +58,31 @@ end
 
 function socketClass:ping()
 	if self.connected then
-		_G.transport.ping(self)
+		network.getTransport().ping(self)
 		return true
 	end
 end
 
-function socketClass:setupEncryption()
-	if false then
+function socketClass:setupEncryption(x)
+local timer = Util.timer()
 	self.sharedKey = ECC.exchange(self.privKey, self.remotePubKey)
 	self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
 	self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
-	self.rseed  = SHA.pbkdf2(self.sharedKey, "3rseed", 1)
-	self.wseed  = SHA.pbkdf2(self.sharedKey, "4sseed", 1)
-	end
+	self.rseq  = SHA.pbkdf2(self.sharedKey, x and "3rseed" or "4sseed", 1):toHex()
+	self.wseq  = SHA.pbkdf2(self.sharedKey, x and "4sseed" or "3rseed", 1):toHex()
+_syslog('shared in ' .. timer())
 end
 
 function socketClass:close()
 	if self.connected then
 		self.transmit(self.dport, self.dhost, {
 			type = 'DISC',
+			seq = self.wseq,
 		})
 		self.connected = false
 	end
 	device.wireless_modem.close(self.sport)
-	_G.transport.close(self)
+	network.getTransport().close(self)
 end
 
 local Socket = { }
@@ -115,27 +117,24 @@ local function newSocket(isLoopback)
 	error('No ports available')
 end
 
-function Socket.connect(host, port)
+function Socket.connect(host, port, options)
 	if not device.wireless_modem then
 		return false, 'Wireless modem not found', 'NOMODEM'
 	end
-
+local timer = Util.timer()
 	local socket = newSocket(host == os.getComputerID())
 	socket.dhost = tonumber(host)
-	socket.privKey, socket.pubKey = Security.generateKeyPair()
+	socket.privKey, socket.pubKey = network.getKeyPair()
+	local identifier = options and options.identifier or Security.getIdentifier()
 
 	socket.transmit(port, socket.sport, {
 		type = 'OPEN',
 		shost = socket.shost,
 		dhost = socket.dhost,
-		rseq = socket.wseq,
-		wseq = socket.rseq,
-		t = Crypto.encrypt({
-			ts = os.time(),
-			seq = socket.seq,
-			nts = os.epoch('utc'),
+		t = Crypto.encrypt({ -- this is not that much data...
+			ts = os.epoch('utc'),
 			pk = Util.byteArrayToHex(socket.pubKey),
-		}, Security.getPublicKey()),
+		}, Util.hexToByteArray(identifier)),
 	})
 
 	local timerId = os.startTimer(3)
@@ -152,10 +151,11 @@ function Socket.connect(host, port)
 				socket.dport = dport
 				socket.connected = true
 				socket.remotePubKey = Util.hexToByteArray(msg.pk)
-				socket:setupEncryption()
+				socket:setupEncryption(true)
 				-- Logger.log('socket', 'connection established to %d %d->%d',
 				--											host, socket.sport, socket.dport)
-				_G.transport.open(socket)
+				network.getTransport().open(socket)
+_syslog('connection in ' .. timer())
 				return socket
 
 			elseif msg.type == 'NOPASS' then
@@ -173,35 +173,30 @@ function Socket.connect(host, port)
 	return false, 'Connection timed out', 'TIMEOUT'
 end
 
-local function trusted(socket, msg, port)
-	if port == 19 or msg.shost == os.getComputerID() then
-		-- no auth for trust server or loopback
-		return true
+local function trusted(socket, msg, options)
+	local function getIdentifier()
+		local trustList = Util.readTable('usr/.known_hosts') or { }
+		return trustList[msg.shost]
 	end
 
-	if not Security.hasPassword() then
-		-- no password has been set on this computer
-		--return true
-	end
+	local identifier = options and options.identifier or getIdentifier()
 
-	local trustList = Util.readTable('usr/.known_hosts') or { }
-	local pubKey = trustList[msg.shost]
+	if identifier and msg.t and type(msg.t) == 'table' then
+		local data = Crypto.decrypt(msg.t, Util.hexToByteArray(identifier))
 
-	if pubKey and msg.t then
-		local data = Crypto.decrypt(msg.t, Util.hexToByteArray(pubKey))
-
-		if data and data.nts then -- upgraded security
-			if data.nts and tonumber(data.nts) and math.abs(os.epoch('utc') - data.nts) < 1024 then
+		if data and data.ts and tonumber(data.ts) then
+_G._syslog('time diff ' .. math.abs(os.epoch('utc') - data.ts))
+			if math.abs(os.epoch('utc') - data.ts) < 4096 then
 				socket.remotePubKey = Util.hexToByteArray(data.pk)
+				socket.privKey, socket.pubKey = network.getKeyPair()
+				socket:setupEncryption()
+				return true
 			end
 		end
-
-		--local sharedKey = modexp(pubKey, exchange.secretKey, public.primeMod)
-		return data and data.ts and tonumber(data.ts) and math.abs(os.time() - data.ts) < 24
 	end
 end
 
-function Socket.server(port)
+function Socket.server(port, options)
 	device.wireless_modem.open(port)
 	-- Logger.log('socket', 'Waiting for connections on port ' .. port)
 
@@ -219,6 +214,7 @@ function Socket.server(port)
 			socket.dhost = msg.shost
 			socket.wseq = msg.wseq
 			socket.rseq = msg.rseq
+			socket.options = options
 
 			if not Security.hasPassword() then
 				socket.transmit(socket.dport, socket.sport, {
@@ -228,10 +224,8 @@ function Socket.server(port)
 				})
 				socket:close()
 
-			elseif trusted(socket, msg, port) then
+			elseif trusted(socket, msg, options) then
 				socket.connected = true
-				socket.privKey, socket.pubKey = Security.generateKeyPair()
-				socket:setupEncryption()
 				socket.transmit(socket.dport, socket.sport, {
 					type = 'CONN',
 					dhost = socket.dhost,
@@ -241,7 +235,7 @@ function Socket.server(port)
 
 				-- Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
-				_G.transport.open(socket)
+				network.getTransport().open(socket)
 				return socket
 
 			else

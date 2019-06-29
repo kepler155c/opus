@@ -22,6 +22,8 @@
 -- Indistinguishability? No: The curve does not support indistinguishability maps.
 
 local fp = require('opus.crypto.ecc.fp')
+local Util = require('opus.util')
+
 local eq = fp.eq
 local mul = fp.mul
 local sqr = fp.sqr
@@ -31,6 +33,7 @@ local shr = fp.shr
 local mont = fp.mont
 local invMont = fp.invMont
 local sub192 = fp.sub192
+local unpack = table.unpack
 
 local bits = 192
 local pMinusTwoBinary = {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
@@ -203,20 +206,23 @@ local function scalarMul(s, P1)
 	end
 
 	local Q = {{unpack(ZERO)}, {unpack(ONE)}, {unpack(ONE)}}
-	for i = #naf, 1, -1 do
+	for i = #naf, 1, -1 do -- can this loop be optimized ?
+		local n = naf[i]
 		Q = pointDouble(Q)
-		if naf[i] > 0 then
-			Q = pointAdd(Q, PTable[naf[i]])
-		elseif naf[i] < 0 then
-			Q = pointSub(Q, PTable[-naf[i]])
+		if n > 0 then
+			Q = pointAdd(Q, PTable[n])
+		elseif n < 0 then
+			Q = pointSub(Q, PTable[-n])
 		end
 	end
 
 	return Q
 end
 
+local throttle = Util.throttle()
 for i = 2, 196 do
 	GTable[i] = pointDouble(GTable[i - 1])
+	throttle()
 end
 
 local function scalarMulG(s)

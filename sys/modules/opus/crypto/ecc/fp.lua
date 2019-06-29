@@ -1,5 +1,7 @@
 -- Fp Integer Arithmetic
 
+local unpack = table.unpack
+
 local n = 0xffff
 local m = 0x10000
 

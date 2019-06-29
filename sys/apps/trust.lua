@@ -27,15 +27,16 @@ if not password then
 end
 
 print('connecting...')
-local socket, msg = Socket.connect(remoteId, 19)
+local trustId = '01c3ba27fe01383a03a1785276d99df27c3edcef68fbf231ca'
+local socket, msg = Socket.connect(remoteId, 19, { identifier = trustId })
 
 if not socket then
 	error(msg)
 end
 
-local publicKey = Security.getPublicKey()
+local identifier = Security.getIdentifier()
 
-socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, SHA.compute(password)))
+socket:write(Crypto.encrypt({ pk = identifier, dh = os.getComputerID() }, SHA.compute(password)))
 
 local data = socket:read(2)
 socket:close()

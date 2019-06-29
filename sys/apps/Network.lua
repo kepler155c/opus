@@ -137,10 +137,14 @@ end
 ]]
 
 function page.ports.grid:update()
+	local transport = network:getTransport()
+
 	local function findConnection(port)
-		for _,socket in pairs(_G.transport.sockets) do
-			if socket.sport == port then
-				return socket
+		if transport then
+			for _,socket in pairs(transport.sockets) do
+				if socket.sport == port then
+					return socket
+				end
 			end
 		end
 	end

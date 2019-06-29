@@ -1,8 +1,8 @@
 -- SHA-256, HMAC and PBKDF2 functions in ComputerCraft
 -- By Anavrins
+local Util = require('opus.util')
 
 local bit     = _G.bit
-local os      = _G.os
 local mod32   = 2^32
 local band    = bit32 and bit32.band or bit.band
 local bnot    = bit32 and bit32.bnot or bit.bnot
@@ -162,25 +162,13 @@ local function hmac(data, key)
 	return digest(padded_key)
 end
 
-local function throttler()
-	local ts = os.clock()
-	local timeout = .095
-	return function()
-		local nts = os.clock()
-		if nts > ts + timeout then
-			os.sleep(0)
-			ts = os.clock()
-		end
-	end
-end
-
 local function pbkdf2(pass, salt, iter, dklen)
 	salt = type(salt) == "table" and salt or {tostring(salt):byte(1,-1)}
 	local hashlen = 32
 	dklen = dklen or 32
 	local block = 1
 	local out = {}
-	local throttle = throttler()
+	local throttle = Util.throttle()
 
 	while dklen > 0 do
 		local ikey = {}

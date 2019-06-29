@@ -6,7 +6,9 @@
 ]]--
 
 local Event = require('opus.event')
+local SHA   = require('opus.crypto.sha2')
 
+local network = _G.network
 local os = _G.os
 
 local computerId = os.getComputerID()
@@ -15,7 +17,10 @@ local transport = {
 	sockets = { },
 	UID = 0,
 }
-_G.transport = transport
+
+getmetatable(network).__index.getTransport = function()
+	return transport
+end
 
 function transport.open(socket)
 	transport.UID = transport.UID + 1
@@ -33,19 +38,11 @@ function transport.read(socket)
 end
 
 function transport.write(socket, data)
-	--_syslog('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
 	socket.transmit(socket.dport, socket.dhost, data)
-
-	--local timerId = os.startTimer(3)
-
-	--transport.timers[timerId] = socket
-	--socket.timers[socket.wseq] = timerId
-
-	socket.wseq = socket.wseq + 1
+	socket.wseq = SHA.digest(socket.wseq):toHex()
 end
 
 function transport.ping(socket)
-	--_syslog('>> ' .. Util.tostring({ type = 'DATA', seq = socket.wseq }))
 	if os.clock() - socket.activityTimer > 10 then
 		socket.activityTimer = os.clock()
 		socket.transmit(socket.dport, socket.dhost, {
@@ -53,7 +50,7 @@ function transport.ping(socket)
 				seq = -1,
 			})
 
-		local timerId = os.startTimer(5)
+		local timerId = os.startTimer(3)
 		transport.timers[timerId] = socket
 		socket.timers[-1] = timerId
 	end
@@ -78,18 +75,19 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 		local socket = transport.sockets[dport]
 		if socket and socket.connected then
 
-			--if msg.type then _syslog('<< ' .. Util.tostring(msg)) end
 			if socket.co and coroutine.status(socket.co) == 'dead' then
 				_G._syslog('socket coroutine dead')
 				socket:close()
 
 			elseif msg.type == 'DISC' then
 				-- received disconnect from other end
-				if socket.connected then
-					os.queueEvent('transport_' .. socket.uid)
+				if msg.seq == socket.rseq then
+					if socket.connected then
+						os.queueEvent('transport_' .. socket.uid)
+					end
+					socket.connected = false
+					socket:close()
 				end
-				socket.connected = false
-				socket:close()
 
 			elseif msg.type == 'ACK' then
 				local ackTimerId = socket.timers[msg.seq]
@@ -108,28 +106,19 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 				})
 
 			elseif msg.type == 'DATA' and msg.data then
-				socket.activityTimer = os.clock()
 				if msg.seq ~= socket.rseq then
 					print('transport seq error - closing socket ' .. socket.sport)
 					_syslog(msg.data)
-					_syslog('current ' .. socket.rseq)
-					_syslog('expected ' .. msg.seq)
---					socket:close()
---					os.queueEvent('transport_' .. socket.uid)
+					_syslog('expected ' .. socket.rseq)
+					_syslog('got ' .. msg.seq)
 				else
-					socket.rseq = socket.rseq + 1
+					socket.activityTimer = os.clock()
+					socket.rseq = SHA.digest(socket.rseq):toHex()
 					table.insert(socket.messages, { msg.data, distance })
 
-					-- use resume instead ??
 					if not socket.messages[2] then  -- table size is 1
 						os.queueEvent('transport_' .. socket.uid)
 					end
-
-					--_syslog('>> ' .. Util.tostring({ type = 'ACK', seq = msg.seq }))
-					--socket.transmit(socket.dport, socket.dhost, {
-					--  type = 'ACK',
-					--  seq = msg.seq,
-					--})
 				end
 			end
 		end

@@ -3,6 +3,7 @@ local elliptic = require('opus.crypto.ecc.elliptic')
 local sha256   = require('opus.crypto.sha2')
 
 local os = _G.os
+local unpack = table.unpack
 
 local q = {1372, 62520, 47765, 8105, 45059, 9616, 65535, 65535, 65535, 65535, 65535, 65532}
 

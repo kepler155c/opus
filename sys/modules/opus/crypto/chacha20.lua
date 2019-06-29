@@ -2,7 +2,7 @@
 -- By Anavrins
 
 local sha2 = require('opus.crypto.sha2')
-local util = require('opus.util')
+local Util = require('opus.util')
 
 local ROUNDS = 20 -- Adjust this for speed tradeoff
 
@@ -115,7 +115,7 @@ local function crypt(data, key, nonce, cntr, round)
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 
-	local throttle = util.throttle()
+	local throttle = Util.throttle()
 	local out = {}
 	local state = initState(key, nonce, cntr)
 	local blockAmt = math.floor(#data/64)
@@ -157,8 +157,8 @@ local function encrypt(data, key)
 end
 
 local function decrypt(data, key)
-	local nonce = util.hexToByteArray(data[1])
-	data = util.hexToByteArray(data[2])
+	local nonce = Util.hexToByteArray(data[1])
+	data = Util.hexToByteArray(data[2])
 	key = sha2.digest(key)
 	local ptx = crypt(data, key, nonce, 1, ROUNDS)
 	return textutils.unserialise(tostring(ptx))

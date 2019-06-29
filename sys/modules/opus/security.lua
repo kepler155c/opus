@@ -1,6 +1,6 @@
 local Config = require('opus.config')
-local Util   = require('opus.util')
 local ECC    = require('opus.crypto.ecc')
+local Util   = require('opus.util')
 
 local Security = { }
 
@@ -21,16 +21,6 @@ local function genKey()
 	return table.concat(key)
 end
 
-function Security.generateKeyPair()
-	local privateKey = Util.hexToByteArray(genKey())
-	return privateKey, ECC.publicKey(privateKey)
-end
-
-function Security.getIdentifier()
-	return Security.getPublicKey()
-end
-
--- deprecate - will use getIdentifier
 function Security.getSecretKey()
 	local config = Config.load('os')
 	if not config.secretKey then
@@ -40,9 +30,17 @@ function Security.getSecretKey()
 	return Util.hexToByteArray(config.secretKey)
 end
 
-function Security.getPublicKey()
-	local secretKey = Security.getSecretKey()
-	return ECC.publicKey(secretKey)
+function Security.getIdentifier()
+	local config = Config.load('os')
+	if config.identifier then
+		return config.identifier
+	end
+	-- preserve the hash the user generated
+	local identifier = ECC.publicKey(Security.getSecretKey())
+	config.identifier = Util.byteArrayToHex(identifier)
+	Config.update('os', config)
+
+	return config.identifier
 end
 
 function Security.updatePassword(password)

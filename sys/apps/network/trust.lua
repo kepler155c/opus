@@ -4,6 +4,8 @@ local Security = require('opus.security')
 local Socket   = require('opus.socket')
 local Util     = require('opus.util')
 
+local trustId = '01c3ba27fe01383a03a1785276d99df27c3edcef68fbf231ca'
+
 local function trustConnection(socket)
 	local data = socket:read(2)
 	if data then
@@ -14,7 +16,7 @@ local function trustConnection(socket)
 			data = Crypto.decrypt(data, password)
 			if data and data.pk and data.dh == socket.dhost then
 				local trustList = Util.readTable('usr/.known_hosts') or { }
-				trustList[data.dh] = Util.byteArrayToHex(data.pk)
+				trustList[data.dh] = data.pk
 				Util.writeTable('usr/.known_hosts', trustList)
 
 				socket:write({ success = true, msg = 'Trust accepted' })
@@ -29,7 +31,7 @@ Event.addRoutine(function()
 	print('trust: listening on port 19')
 
 	while true do
-		local socket = Socket.server(19)
+		local socket = Socket.server(19, { identifier = trustId })
 
 		print('trust: connection from ' .. socket.dhost)
 
