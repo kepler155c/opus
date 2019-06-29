@@ -6,13 +6,14 @@ local os     = _G.os
 local shell  = _ENV.shell
 
 local config = Config.load('os')
-if not config.welcomed and shell.openForegroundTab then
+if not config.welcomed then
 	config.welcomed = true
 	config.securityUpdate = true
 	config.readNotes = 1
 	Config.update('os', config)
-
-	shell.openForegroundTab('Welcome')
+	if shell.openForegroundTab then
+		shell.openForegroundTab('Welcome')
+	end
 end
 
 if not config.securityUpdate then
@@ -34,9 +35,13 @@ password in System->System->Password.
 All computers that you connect to will also
 need to be updated as well.
 
+Also, I have changed the location for apis.
+This will require you to update all installed
+packages. Sorry !
+
 Thanks for your patience. And... thanks to
 Anavrins for the much improved security.
-	]])
+]])
 end
 
 if fs.exists('sys/notes_1.txt') and shell.openForegroundTab then
