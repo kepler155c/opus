@@ -1,9 +1,8 @@
 -- Chacha20 cipher in ComputerCraft
 -- By Anavrins
 
-local LZW = require('opus.crypto.lualzw')
+local cbor = require('opus.cbor')
 local sha2 = require('opus.crypto.sha2')
-local Serializer = require('opus.crypto.serializer')
 local Util = require('opus.util')
 
 local ROUNDS = 8 -- Adjust this for speed tradeoff
@@ -153,10 +152,10 @@ end
 
 local function encrypt(data, key)
 	local nonce = genNonce(12)
-	data = Serializer.serialize(data)
-	data = LZW.compress(data)
+	data = cbor.encode(data)
 	key = sha2.digest(key)
 	local ctx = crypt(data, key, nonce, 1, ROUNDS)
+
 	return { nonce:toHex(), ctx:toHex() }
 end
 
@@ -165,7 +164,7 @@ local function decrypt(data, key)
 	data = Util.hexToByteArray(data[2])
 	key = sha2.digest(key)
 	local ptx = crypt(data, key, nonce, 1, ROUNDS)
-	return textutils.unserialise(LZW.decompress(tostring(ptx)))
+ return cbor.decode(tostring(ptx))
 end
 
 local obj = {}

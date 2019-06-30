@@ -71,3 +71,23 @@ Event.addRoutine(function()
 		end
 	end
 end)
+
+Event.addRoutine(function()
+
+	print('svnc: listening on port 5901')
+
+	while true do
+		local socket = Socket.server(5901, { ENCRYPT = true })
+
+		print('svnc: connection from ' .. socket.dhost)
+
+		-- no new process - only 1 connection allowed
+		-- due to term size issues
+		local s, m = pcall(vncHost, socket)
+		socket:close()
+		if not s and m then
+			print('vnc error')
+			_G.printError(m)
+		end
+	end
+end)

@@ -10,7 +10,7 @@ local shell      = _ENV.shell
 local term       = _G.term
 
 local remoteId
-local args = { ... }
+local args, options = Util.parse(...)
 if #args == 1 then
 	remoteId = tonumber(args[1])
 else
@@ -23,11 +23,12 @@ if not remoteId then
 end
 
 if multishell then
-	multishell.setTitle(multishell.getCurrent(), 'VNC-' .. remoteId)
+	multishell.setTitle(multishell.getCurrent(),
+ (options.s and 'SVNC-' or 'VNC-') .. remoteId)
 end
 
 local function connect()
-	local socket, msg, reason = Socket.connect(remoteId, 5900)
+	local socket, msg, reason = Socket.connect(remoteId, options.s and 5901 or 5900)
 
 	if reason == 'NOTRUST' then
 		local s, m = shell.run('trust ' .. remoteId)
