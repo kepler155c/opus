@@ -6,7 +6,7 @@ local sha2 = require('opus.crypto.sha2')
 local Serializer = require('opus.crypto.serializer')
 local Util = require('opus.util')
 
-local ROUNDS = 20 -- Adjust this for speed tradeoff
+local ROUNDS = 8 -- Adjust this for speed tradeoff
 
 local bxor = bit32.bxor
 local band = bit32.band
