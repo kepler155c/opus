@@ -1,7 +1,9 @@
 -- Chacha20 cipher in ComputerCraft
 -- By Anavrins
 
+local LZW = require('opus.crypto.lualzw')
 local sha2 = require('opus.crypto.sha2')
+local Serializer = require('opus.crypto.serializer')
 local Util = require('opus.util')
 
 local ROUNDS = 20 -- Adjust this for speed tradeoff
@@ -116,7 +118,7 @@ local function crypt(data, key, nonce, cntr, round)
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 
-	local throttle = Util.throttle()
+	local throttle = Util.throttle(function() _syslog('throttle') end)
 	local out = {}
 	local state = initState(key, nonce, cntr)
 	local blockAmt = math.floor(#data/64)
@@ -132,11 +134,11 @@ local function crypt(data, key, nonce, cntr, round)
 			out[#out+1] = bxor(block[j], ks[j])
 		end
 
-		if i % 1000 == 0 then
+		--if i % 1000 == 0 then
 			throttle()
 			--os.queueEvent("")
 			--os.pullEvent("")
-		end
+		--end
 	end
 	return setmetatable(out, mt)
 end
@@ -151,7 +153,8 @@ end
 
 local function encrypt(data, key)
 	local nonce = genNonce(12)
-	data = textutils.serialise(data)
+	data = Serializer.serialize(data)
+	data = LZW.compress(data)
 	key = sha2.digest(key)
 	local ctx = crypt(data, key, nonce, 1, ROUNDS)
 	return { nonce:toHex(), ctx:toHex() }
@@ -162,7 +165,7 @@ local function decrypt(data, key)
 	data = Util.hexToByteArray(data[2])
 	key = sha2.digest(key)
 	local ptx = crypt(data, key, nonce, 1, ROUNDS)
-	return textutils.unserialise(tostring(ptx))
+	return textutils.unserialise(LZW.decompress(tostring(ptx)))
 end
 
 local obj = {}

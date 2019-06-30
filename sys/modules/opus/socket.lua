@@ -47,9 +47,6 @@ end
 
 function socketClass:write(data)
 	if self.connected then
-		if self.options.ENCRYPT then
-			data = Crypto.encrypt({ data }, self.enckey)
-		end
 		network.getTransport().write(self, {
 			type = 'DATA',
 			seq = self.wseq,
@@ -64,19 +61,6 @@ function socketClass:ping()
 		network.getTransport().ping(self)
 		return true
 	end
-end
-
-function socketClass:setupEncryption(x)
-	self.rrng  = Crypto.newRNG(
-		SHA.pbkdf2(self.sharedKey, x and "3rseed" or "4sseed", 1))
-	self.wrng  = Crypto.newRNG(
-		SHA.pbkdf2(self.sharedKey, x and "4sseed" or "3rseed", 1))
-
-	self.sharedKey = ECC.exchange(self.privKey, self.remotePubKey)
-	self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
-	--self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
-	self.rseq  = self.rrng:nextInt(5)
-	self.wseq  = self.wrng:nextInt(5)
 end
 
 function socketClass:close()
@@ -121,6 +105,19 @@ local function newSocket(isLoopback)
 	error('No ports available')
 end
 
+local function setupCrypto(socket, isClient)
+	socket.rrng  = Crypto.newRNG(
+		SHA.pbkdf2(socket.sharedKey, isClient and "3rseed" or "4sseed", 1))
+	socket.wrng  = Crypto.newRNG(
+		SHA.pbkdf2(socket.sharedKey, isClient and "4sseed" or "3rseed", 1))
+
+	socket.sharedKey = ECC.exchange(socket.privKey, socket.remotePubKey)
+	socket.enckey  = SHA.pbkdf2(socket.sharedKey, "1enc", 1)
+	--self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
+	socket.rseq  = socket.rrng:nextInt(5)
+	socket.wseq  = socket.wrng:nextInt(5)
+end
+
 function Socket.connect(host, port, options)
 	if not device.wireless_modem then
 		return false, 'Wireless modem not found', 'NOMODEM'
@@ -156,7 +153,7 @@ function Socket.connect(host, port, options)
 				socket.connected = true
 				socket.remotePubKey = Util.hexToByteArray(msg.pk)
 				socket.options = msg.options or { }
-				socket:setupEncryption(true)
+				setupCrypto(socket, true)
 				network.getTransport().open(socket)
 				return socket
 
@@ -190,7 +187,7 @@ local function trusted(socket, msg, options)
 			if math.abs(os.epoch('utc') - data.ts) < 4096 then
 				socket.remotePubKey = Util.hexToByteArray(data.pk)
 				socket.privKey, socket.pubKey = network.getKeyPair()
-				socket:setupEncryption()
+				setupCrypto(socket)
 				return true
 			end
 			_G._syslog('time diff ' .. math.abs(os.epoch('utc') - data.ts))

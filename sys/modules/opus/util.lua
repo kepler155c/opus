@@ -56,7 +56,7 @@ Util.Timer = Util.timer -- deprecate
 
 function Util.throttle(fn)
 	local ts = os.clock()
-	local timeout = .095
+	local timeout = .295
 	return function(...)
 		local nts = os.clock()
 		if nts > ts + timeout then

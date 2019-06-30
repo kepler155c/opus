@@ -15,6 +15,7 @@ local computerId = os.getComputerID()
 local transport = {
 	timers  = { },
 	sockets = { },
+	encryptQueue = { },
 	UID = 0,
 }
 
@@ -40,8 +41,15 @@ function transport.read(socket)
 	end
 end
 
-function transport.write(socket, data)
-	socket.transmit(socket.dport, socket.dhost, data)
+function transport.write(socket, msg)
+	if socket.options.ENCRYPT then
+		if #transport.encryptQueue == 0 then
+			os.queueEvent('transport_encrypt')
+		end
+		table.insert(transport.encryptQueue, { socket.sport, msg })
+	else
+		socket.transmit(socket.dport, socket.dhost, msg)
+	end
 	socket.wseq = socket.wrng:nextInt(5)
 end
 
@@ -62,6 +70,19 @@ end
 function transport.close(socket)
 	transport.sockets[socket.sport] = nil
 end
+
+Event.on('transport_encrypt', function()
+	while #transport.encryptQueue > 0 do
+		local entry = table.remove(transport.encryptQueue, 1)
+		local socket = transport.sockets[entry[1]]
+
+		if socket and socket.connected then
+			local msg = entry[2]
+			msg.data = Crypto.encrypt({ msg.data }, socket.enckey)
+			socket.transmit(socket.dport, socket.dhost, msg)
+		end
+	end
+end)
 
 Event.on('timer', function(_, timerId)
 	local socket = transport.timers[timerId]
@@ -110,7 +131,7 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 
 			elseif msg.type == 'DATA' and msg.data then
 				if msg.seq ~= socket.rseq then
-					print('transport seq error - closing socket ' .. socket.sport)
+					print('transport seq error ' .. socket.sport)
 					_syslog(msg.data)
 					_syslog('expected ' .. socket.rseq)
 					_syslog('got ' .. msg.seq)
