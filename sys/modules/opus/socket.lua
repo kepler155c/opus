@@ -106,14 +106,15 @@ local function newSocket(isLoopback)
 end
 
 local function setupCrypto(socket, isClient)
+	socket.sharedKey = ECC.exchange(socket.privKey, socket.remotePubKey)
+	socket.enckey  = SHA.pbkdf2(socket.sharedKey, "1enc", 1)
+	--self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
+
 	socket.rrng  = Crypto.newRNG(
 		SHA.pbkdf2(socket.sharedKey, isClient and "3rseed" or "4sseed", 1))
 	socket.wrng  = Crypto.newRNG(
 		SHA.pbkdf2(socket.sharedKey, isClient and "4sseed" or "3rseed", 1))
 
-	socket.sharedKey = ECC.exchange(socket.privKey, socket.remotePubKey)
-	socket.enckey  = SHA.pbkdf2(socket.sharedKey, "1enc", 1)
-	--self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
 	socket.rseq  = socket.rrng:nextInt(5)
 	socket.wseq  = socket.wrng:nextInt(5)
 end
