@@ -47,6 +47,9 @@ end
 
 function socketClass:write(data)
 	if self.connected then
+		if self.options.ENCRYPT then
+			data = Crypto.encrypt({ data }, self.enckey)
+		end
 		network.getTransport().write(self, {
 			type = 'DATA',
 			seq = self.wseq,
@@ -70,7 +73,7 @@ function socketClass:setupEncryption(x)
 		SHA.pbkdf2(self.sharedKey, x and "4sseed" or "3rseed", 1))
 
 	self.sharedKey = ECC.exchange(self.privKey, self.remotePubKey)
-	--self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
+	self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
 	--self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
 	self.rseq  = self.rrng:nextInt(5)
 	self.wseq  = self.wrng:nextInt(5)
@@ -144,15 +147,15 @@ function Socket.connect(host, port, options)
 		if e == 'modem_message' and
 			 sport == socket.sport and
 			 type(msg) == 'table' and
-			 msg.dhost == socket.shost and
-			 type(msg.pk) == 'string' then
+			 msg.dhost == socket.shost then
 
 			os.cancelTimer(timerId)
 
-			if msg.type == 'CONN' then
+			if msg.type == 'CONN' and type(msg.pk) == 'string' then
 				socket.dport = dport
 				socket.connected = true
 				socket.remotePubKey = Util.hexToByteArray(msg.pk)
+				socket.options = msg.options or { }
 				socket:setupEncryption(true)
 				network.getTransport().open(socket)
 				return socket
@@ -210,7 +213,7 @@ function Socket.server(port, options)
 			local socket = newSocket(msg.shost == os.getComputerID())
 			socket.dport = dport
 			socket.dhost = msg.shost
-			socket.options = options
+			socket.options = options or { }
 
 			if not Security.hasPassword() then
 				socket.transmit(socket.dport, socket.sport, {
@@ -227,6 +230,7 @@ function Socket.server(port, options)
 					dhost = socket.dhost,
 					shost = socket.shost,
 					pk = Util.byteArrayToHex(socket.pubKey),
+					options = socket.options.ENCRYPT and { ENCRYPT = true },
 				})
 
 				network.getTransport().open(socket)

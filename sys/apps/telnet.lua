@@ -9,7 +9,7 @@ local read       = _G.read
 local shell      = _ENV.shell
 local term       = _G.term
 
-local args = { ... }
+local args, options = Util.parse(...)
 
 local remoteId = tonumber(table.remove(args, 1) or '')
 if not remoteId then
@@ -22,13 +22,14 @@ if not remoteId then
 end
 
 if multishell then
-	multishell.setTitle(multishell.getCurrent(), 'Telnet ' .. remoteId)
+	multishell.setTitle(multishell.getCurrent(),
+		(options.s and 'Secure ' or 'Telnet ') .. remoteId)
 end
 
 local socket, msg, reason
 
 while true do
-	socket, msg, reason = Socket.connect(remoteId, 23)
+	socket, msg, reason = Socket.connect(remoteId, options.s and 22 or 23)
 
 	if socket then
 		break

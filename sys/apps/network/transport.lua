@@ -5,7 +5,8 @@
 	* background read buffering
 ]]--
 
-local Event = require('opus.event')
+local Crypto = require('opus.crypto.chacha20')
+local Event  = require('opus.event')
 
 local network = _G.network
 local os = _G.os
@@ -32,7 +33,10 @@ end
 function transport.read(socket)
 	local data = table.remove(socket.messages, 1)
 	if data then
-		return unpack(data)
+		if socket.options.ENCRYPT then
+			return table.unpack(Crypto.decrypt(data[1], socket.enckey)), data[2]
+		end
+		return table.unpack(data)
 	end
 end
 

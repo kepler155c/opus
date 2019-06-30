@@ -6,7 +6,7 @@ local kernel = _G.kernel
 local term   = _G.term
 local window = _G.window
 
-local function telnetHost(socket)
+local function telnetHost(socket, mode)
 	local methods = { 'clear', 'clearLine', 'setCursorPos', 'write', 'blit',
 										'setTextColor', 'setTextColour', 'setBackgroundColor',
 										'setBackgroundColour', 'scroll', 'setCursorBlink', }
@@ -43,7 +43,7 @@ local function telnetHost(socket)
 	local shellThread = kernel.run({
 		terminal = win,
 		window = win,
-		title = 'Telnet client',
+		title = mode .. ' client',
 		hidden = true,
 		co = coroutine.create(function()
 			Util.run(_ENV, 'sys/apps/shell.lua', table.unpack(termInfo.program))
@@ -69,6 +69,23 @@ local function telnetHost(socket)
 end
 
 Event.addRoutine(function()
+	print('ssh: listening on port 22')
+	while true do
+		local socket = Socket.server(22, { ENCRYPT = true })
+
+		print('ssh: connection from ' .. socket.dhost)
+
+		Event.addRoutine(function()
+			local s, m = pcall(telnetHost, socket, 'SSH')
+			if not s and m then
+				print('ssh error')
+				_G.printError(m)
+			end
+		end)
+	end
+end)
+
+Event.addRoutine(function()
 	print('telnet: listening on port 23')
 	while true do
 		local socket = Socket.server(23)
@@ -76,7 +93,7 @@ Event.addRoutine(function()
 		print('telnet: connection from ' .. socket.dhost)
 
 		Event.addRoutine(function()
-			local s, m = pcall(telnetHost, socket)
+			local s, m = pcall(telnetHost, socket, 'Telnet')
 			if not s and m then
 				print('Telnet error')
 				_G.printError(m)

@@ -166,10 +166,10 @@ local function decrypt(data, key)
 end
 
 local obj = {}
-local mt = {['__index'] = obj}
+local rng_mt = {['__index'] = obj}
 
 function obj:nextInt(byte)
-	if byte < 1 or byte > 6 then error("Can only return 1-6 bytes", 2) end
+	if not byte or byte < 1 or byte > 6 then error("Can only return 1-6 bytes", 2) end
 	local output = 0
 	for i = 0, byte-1 do
 		if #self.block == 0 then
@@ -189,7 +189,7 @@ local function newRNG(seed)
 	o.cnt = 0
 	o.block = {}
 
-	return setmetatable(o, mt)
+	return setmetatable(o, rng_mt)
 end
 
 return {
