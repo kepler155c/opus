@@ -64,13 +64,16 @@ function socketClass:ping()
 end
 
 function socketClass:setupEncryption(x)
-local timer = Util.timer()
+	self.rrng  = Crypto.newRNG(
+		SHA.pbkdf2(self.sharedKey, x and "3rseed" or "4sseed", 1))
+	self.wrng  = Crypto.newRNG(
+		SHA.pbkdf2(self.sharedKey, x and "4sseed" or "3rseed", 1))
+
 	self.sharedKey = ECC.exchange(self.privKey, self.remotePubKey)
-	self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
-	self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
-	self.rseq  = SHA.pbkdf2(self.sharedKey, x and "3rseed" or "4sseed", 1):toHex()
-	self.wseq  = SHA.pbkdf2(self.sharedKey, x and "4sseed" or "3rseed", 1):toHex()
-_syslog('shared in ' .. timer())
+	--self.enckey  = SHA.pbkdf2(self.sharedKey, "1enc", 1)
+	--self.hmackey  = SHA.pbkdf2(self.sharedKey, "2hmac", 1)
+	self.rseq  = self.rrng:nextInt(5)
+	self.wseq  = self.wrng:nextInt(5)
 end
 
 function socketClass:close()
@@ -99,8 +102,6 @@ local function newSocket(isLoopback)
 				shost = os.getComputerID(),
 				sport = i,
 				transmit = device.wireless_modem.transmit,
-				wseq = math.random(100, 100000),
-				rseq = math.random(100, 100000),
 				timers = { },
 				messages = { },
 			}
@@ -121,7 +122,7 @@ function Socket.connect(host, port, options)
 	if not device.wireless_modem then
 		return false, 'Wireless modem not found', 'NOMODEM'
 	end
-local timer = Util.timer()
+
 	local socket = newSocket(host == os.getComputerID())
 	socket.dhost = tonumber(host)
 	socket.privKey, socket.pubKey = network.getKeyPair()
@@ -143,7 +144,8 @@ local timer = Util.timer()
 		if e == 'modem_message' and
 			 sport == socket.sport and
 			 type(msg) == 'table' and
-			 msg.dhost == socket.shost then
+			 msg.dhost == socket.shost and
+			 type(msg.pk) == 'string' then
 
 			os.cancelTimer(timerId)
 
@@ -152,10 +154,7 @@ local timer = Util.timer()
 				socket.connected = true
 				socket.remotePubKey = Util.hexToByteArray(msg.pk)
 				socket:setupEncryption(true)
-				-- Logger.log('socket', 'connection established to %d %d->%d',
-				--											host, socket.sport, socket.dport)
 				network.getTransport().open(socket)
-_syslog('connection in ' .. timer())
 				return socket
 
 			elseif msg.type == 'NOPASS' then
@@ -181,24 +180,23 @@ local function trusted(socket, msg, options)
 
 	local identifier = options and options.identifier or getIdentifier()
 
-	if identifier and msg.t and type(msg.t) == 'table' then
+	if identifier and type(msg.t) == 'table' then
 		local data = Crypto.decrypt(msg.t, Util.hexToByteArray(identifier))
 
 		if data and data.ts and tonumber(data.ts) then
-_G._syslog('time diff ' .. math.abs(os.epoch('utc') - data.ts))
 			if math.abs(os.epoch('utc') - data.ts) < 4096 then
 				socket.remotePubKey = Util.hexToByteArray(data.pk)
 				socket.privKey, socket.pubKey = network.getKeyPair()
 				socket:setupEncryption()
 				return true
 			end
+			_G._syslog('time diff ' .. math.abs(os.epoch('utc') - data.ts))
 		end
 	end
 end
 
 function Socket.server(port, options)
 	device.wireless_modem.open(port)
-	-- Logger.log('socket', 'Waiting for connections on port ' .. port)
 
 	while true do
 		local _, _, sport, dport, msg = os.pullEvent('modem_message')
@@ -212,8 +210,6 @@ function Socket.server(port, options)
 			local socket = newSocket(msg.shost == os.getComputerID())
 			socket.dport = dport
 			socket.dhost = msg.shost
-			socket.wseq = msg.wseq
-			socket.rseq = msg.rseq
 			socket.options = options
 
 			if not Security.hasPassword() then
@@ -232,8 +228,6 @@ function Socket.server(port, options)
 					shost = socket.shost,
 					pk = Util.byteArrayToHex(socket.pubKey),
 				})
-
-				-- Logger.log('socket', 'Connection established %d->%d', socket.sport, socket.dport)
 
 				network.getTransport().open(socket)
 				return socket

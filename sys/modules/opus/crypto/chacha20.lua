@@ -10,12 +10,13 @@ local bxor = bit32.bxor
 local band = bit32.band
 local blshift = bit32.lshift
 local brshift = bit32.arshift
-local os = _G.os
 local textutils = _G.textutils
 
 local mod = 2^32
 local tau = {("expand 16-byte k"):byte(1,-1)}
 local sigma = {("expand 32-byte k"):byte(1,-1)}
+local null32 = {("A"):rep(32):byte(1,-1)}
+local null12 = {("A"):rep(12):byte(1,-1)}
 
 local function rotl(n, b)
 	local s = n/(2^(32-b))
@@ -164,7 +165,35 @@ local function decrypt(data, key)
 	return textutils.unserialise(tostring(ptx))
 end
 
+local obj = {}
+local mt = {['__index'] = obj}
+
+function obj:nextInt(byte)
+	if byte < 1 or byte > 6 then error("Can only return 1-6 bytes", 2) end
+	local output = 0
+	for i = 0, byte-1 do
+		if #self.block == 0 then
+			self.cnt = self.cnt + 1
+			self.block = crypt(null32, self.seed, null12, self.cnt)
+		end
+
+		local newByte = table.remove(self.block)
+		output = output + (newByte * (2^(8*i)))
+	end
+	return output
+end
+
+local function newRNG(seed)
+	local o = {}
+	o.seed = seed
+	o.cnt = 0
+	o.block = {}
+
+	return setmetatable(o, mt)
+end
+
 return {
 	encrypt = encrypt,
 	decrypt = decrypt,
+	newRNG  = newRNG,
 }

@@ -6,7 +6,6 @@
 ]]--
 
 local Event = require('opus.event')
-local SHA   = require('opus.crypto.sha2')
 
 local network = _G.network
 local os = _G.os
@@ -39,7 +38,7 @@ end
 
 function transport.write(socket, data)
 	socket.transmit(socket.dport, socket.dhost, data)
-	socket.wseq = SHA.digest(socket.wseq):toHex()
+	socket.wseq = socket.wrng:nextInt(5)
 end
 
 function transport.ping(socket)
@@ -113,7 +112,8 @@ Event.on('modem_message', function(_, _, dport, dhost, msg, distance)
 					_syslog('got ' .. msg.seq)
 				else
 					socket.activityTimer = os.clock()
-					socket.rseq = SHA.digest(socket.rseq):toHex()
+					socket.rseq = socket.rrng:nextInt(5)
+
 					table.insert(socket.messages, { msg.data, distance })
 
 					if not socket.messages[2] then  -- table size is 1
