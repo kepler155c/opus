@@ -200,6 +200,7 @@ local function trusted(socket, msg, options)
 		_G._syslog('trust failure')
 		_G._syslog(m)
 	end
+	return s and m
 end
 
 function Socket.server(port, options)
