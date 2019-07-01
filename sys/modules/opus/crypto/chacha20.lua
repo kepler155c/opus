@@ -164,7 +164,7 @@ local function decrypt(data, key)
 	data = Util.hexToByteArray(data[2])
 	key = sha2.digest(key)
 	local ptx = crypt(data, key, nonce, 1, ROUNDS)
- return cbor.decode(tostring(ptx))
+	return cbor.decode(tostring(ptx))
 end
 
 local obj = {}

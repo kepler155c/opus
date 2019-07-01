@@ -29,9 +29,12 @@ for name in pairs(Packages:installed()) do
 	if fs.exists(helpPath) then
 		table.insert(helpPaths, helpPath)
 	end
+
+	local fstabPath = fs.combine(packageDir, 'etc/fstab')
+	if fs.exists(fstabPath) then
+		fs.loadTab(fstabPath)
+	end
 end
 
 help.setPath(table.concat(helpPaths, ':'))
 shell.setPath(table.concat(appPaths, ':'))
-
-fs.mount('rom/modules/main/opus', 'linkfs', 'sys/modules/opus')

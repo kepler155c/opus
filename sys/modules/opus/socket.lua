@@ -181,18 +181,24 @@ local function trusted(socket, msg, options)
 
 	local identifier = options and options.identifier or getIdentifier()
 
-	if identifier and type(msg.t) == 'table' then
-		local data = Crypto.decrypt(msg.t, Util.hexToByteArray(identifier))
+	local  s, m = pcall(function()
+		if identifier and type(msg.t) == 'table' then
+			local data = Crypto.decrypt(msg.t, Util.hexToByteArray(identifier))
 
-		if data and data.ts and tonumber(data.ts) then
-			if math.abs(os.epoch('utc') - data.ts) < 4096 then
-				socket.remotePubKey = Util.hexToByteArray(data.pk)
-				socket.privKey, socket.pubKey = network.getKeyPair()
-				setupCrypto(socket)
-				return true
+			if data and data.ts and tonumber(data.ts) then
+				if math.abs(os.epoch('utc') - data.ts) < 4096 then
+					socket.remotePubKey = Util.hexToByteArray(data.pk)
+					socket.privKey, socket.pubKey = network.getKeyPair()
+					setupCrypto(socket)
+					return true
+				end
+				_G._syslog('time diff ' .. math.abs(os.epoch('utc') - data.ts))
 			end
-			_G._syslog('time diff ' .. math.abs(os.epoch('utc') - data.ts))
 		end
+	end)
+	if not s and m then
+		_G._syslog('trust failure')
+		_G._syslog(m)
 	end
 end
 
