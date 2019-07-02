@@ -4,7 +4,6 @@ local UI    = require('opus.ui')
 UI.NftImage = class(UI.Window)
 UI.NftImage.defaults = {
 	UIElement = 'NftImage',
-	event = 'button_press',
 }
 function UI.NftImage:setParent()
 	if self.image then

@@ -457,7 +457,6 @@ function UI.Window:initChildren()
 			if not child.parent then
 				child.parent = self
 				child:setParent()
-				-- child:reposition() -- maybe
 				if self.enabled then
 					child:enable()
 				end
@@ -468,6 +467,24 @@ function UI.Window:initChildren()
 end
 
 function UI.Window:layout()
+	local function calc(p, max)
+		p = tonumber(p:match('(%d+)%%'))
+		return p and math.floor(max * p / 100) or 1
+	end
+
+	if type(self.x) == 'string' then
+		self.x = calc(self.x, self.parent.width)
+	end
+	if type(self.ex) == 'string' then
+		self.ex = calc(self.ex, self.parent.width)
+	end
+	if type(self.y) == 'string' then
+		self.y = calc(self.y, self.parent.height)
+	end
+	if type(self.ey) == 'string' then
+		self.ey = calc(self.ey, self.parent.height)
+	end
+
 	if self.x < 0 then
 		self.x = self.parent.width + self.x + 1
 	end

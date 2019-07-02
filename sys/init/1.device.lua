@@ -78,16 +78,12 @@ local modifiers = Util.transpose {
 	keys.leftAlt,   keys.rightAlt,
 }
 
-kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
+kernel.hook({ 'key', 'char', 'paste' }, function(event, eventData)
 	local code = eventData[1]
 
 	-- maintain global keyboard modifier state
-	if modifiers[code] then
-		if event == 'key' then
-			keyboard.state[code] = true
-		elseif event == 'key_up' then
-			keyboard.state[code] = nil
-		end
+	if event == 'key' and modifiers[code] then
+		keyboard.state[code] = true
 	end
 
 	-- and fire hotkeys
@@ -96,6 +92,14 @@ kernel.hook({ 'key', 'key_up', 'char', 'paste' }, function(event, eventData)
 	if hotkey and keyboard.hotkeys[hotkey.code] then
 		keyboard.hotkeys[hotkey.code](event, eventData)
 		return true
+	end
+end)
+
+kernel.hook('key_up', function(_, eventData)
+	local code = eventData[1]
+
+	if modifiers[code] then
+		keyboard.state[code] = nil
 	end
 end)
 
