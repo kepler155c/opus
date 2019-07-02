@@ -13,10 +13,9 @@ local function trustConnection(socket)
 		if not password then
 			socket:write({ msg = 'No password has been set' })
 		else
-			pcall(function()
-				data = Crypto.decrypt(data, password)
-			end)
-			if data and data.pk and data.dh == socket.dhost then
+			local s
+			s, data = pcall(Crypto.decrypt, data, password)
+			if s and data and data.pk and data.dh == socket.dhost then
 				local trustList = Util.readTable('usr/.known_hosts') or { }
 				trustList[data.dh] = data.pk
 				Util.writeTable('usr/.known_hosts', trustList)
