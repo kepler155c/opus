@@ -3,7 +3,7 @@ local Event  = require('opus.event')
 local NFT    = require('opus.nft')
 
 local colors     = _G.colors
-local fs         = _G.files
+local fs         = _G.fs
 local os         = _G.os
 local peripheral = _G.peripheral
 
