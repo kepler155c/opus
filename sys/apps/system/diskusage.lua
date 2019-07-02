@@ -1,7 +1,11 @@
 local UI     = require('opus.ui')
 local Event  = require('opus.event')
-local Util   = require('opus.util')
 local NFT    = require('opus.nft')
+
+local colors     = _G.colors
+local fs         = _G.files
+local os         = _G.os
+local peripheral = _G.peripheral
 
 local NftImages = {
   blank = '\30\56\31\55\153\153\153\153\153\153\153\153\10\30\55\31\56\153\153\153\153\153\153\153\153\10\30\56\31\55\153\153\153\153\153\153\153\153\10\30\55\31\56\153\153\153\153\153\153\153\153\10\30\56\31\55\153\153\153\153\153\153\153\153',
@@ -11,40 +15,42 @@ local NftImages = {
 }
 
 local tab = UI.Tab {
-  tabTitle = '1.Disks Usage',
+  tabTitle = 'Disks Usage',
   description = 'Visualise HDD and disks usage',
+
   drives = UI.ScrollingGrid {
-    y = 2, ey = 9, x = 2, ex = '47%',
+    x = 2, y = 1,
+    ex = '47%', ey = 8,
     columns = {
       { heading = 'Drive', key = 'name' },
-      { heading = 'Side' ,key = 'side', textColor = colors.yellow  }
+      { heading = 'Side' ,key = 'side', textColor = colors.yellow }
     },
     sortColumn = 'name',
   },
   infos = UI.Grid {
-    x = '52%', y = 3, ex = -2, ey = 9,
+    x = '52%', y = 2,
+    ex = -2, ey = 8,
     disableHeader = true,
     unfocusedBackgroundSelectedColor = colors.black,
     inactive = true,
-    backgroundSelectedColor = colors.black, --??
+    backgroundSelectedColor = colors.black,
     columns = {
-      {key = 'name' },
-      {key = 'value', align = 'right', textColor = colors.yellow },
+      { key = 'name' },
+      { key = 'value', align = 'right', textColor = colors.yellow },
     }
   },
 
   progress = UI.ProgressBar {
-    x = 11, y = 11, ex = -2,
-    barChar = '\127',
-    textColor = colors.blue,
-    backgroundColor = colors.black,
+    x = 11, y = 10,
+    ex = -2,
   },
   percentage = UI.Text {
-    x = 11, y = 12, ex = -2,
+    x = 11, y = 11,
+    ex = -2,
     align = 'center',
   },
   icon = UI.NftImage {
-    x = 2, y = 11,
+    x = 2, y = 10,
     image = NFT.parse(NftImages.blank)
   },
 }
@@ -96,7 +102,8 @@ local function getDriveInfo(p)
     end
   end
 
-  recurse(p)  
+  recurse(p)
+
   local info = {}
   table.insert(info, { name = 'Type', value = peripheral.getType(drive) or drive })
   table.insert(info, { name = 'Used', value = total })
@@ -113,7 +120,7 @@ function tab:updateInfo()
   local info, percent = getDriveInfo(selected and selected.name or self.drives.values[1].name)
   self.infos:setValues(info)
   self.progress.value = percent
-  self.percentage.value = ('%#3d%% used'):format(percent)
+  self.percentage.value = ('%#3d%%'):format(percent)
   self:draw()
 end
 
@@ -137,7 +144,7 @@ function tab:eventHandler(event)
 end
 
 Event.on({ 'disk', 'disk_eject' }, function()
-  sleep(1)
+  os.sleep(1)
   tab:updateDrives()
   tab:updateInfo()
   tab:sync()
