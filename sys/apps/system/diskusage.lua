@@ -17,7 +17,7 @@ local tab = UI.Tab {
     y = 2, ey = 9, x = 2, ex = '47%',
     columns = {
       { heading = 'Drive', key = 'name' },
-      { heading = 'Side' ,key = 'side' }
+      { heading = 'Side' ,key = 'side', textColor = colors.yellow  }
     },
     sortColumn = 'name',
   },
@@ -29,7 +29,7 @@ local tab = UI.Tab {
     backgroundSelectedColor = colors.black, --??
     columns = {
       {key = 'name' },
-      {key = 'value', align = 'right' },
+      {key = 'value', align = 'right', textColor = colors.yellow },
     }
   },
 
@@ -113,7 +113,7 @@ function tab:updateInfo()
   local info, percent = getDriveInfo(selected and selected.name or self.drives.values[1].name)
   self.infos:setValues(info)
   self.progress.value = percent
-  self.percentage.value = ('%#3d%%'):format(percent)
+  self.percentage.value = ('%#3d%% used'):format(percent)
   self:draw()
 end
 

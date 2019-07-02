@@ -31,7 +31,7 @@ local page = UI.Page {
 		sortColumn = 'name',
 	},
 	accelerators = {
-		q     = 'quit',
+		[ 'control-q' ] = 'quit',
 		enter = 'grid_select',
 	},
 }
@@ -47,7 +47,7 @@ local topicPage = UI.Page {
 		x = 2, ex = -1, y = 3, ey = -2,
 	},
 	accelerators = {
-		q = 'back',
+		[ 'control-q' ] = 'back',
 		backspace = 'back',
 	},
 }

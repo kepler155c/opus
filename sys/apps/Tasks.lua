@@ -26,7 +26,7 @@ local page = UI.Page {
 		autospace = true,
 	},
 	accelerators = {
-		q = 'quit',
+		[ 'control-q' ] = 'quit',
 		space = 'activate',
 		t = 'terminate',
 	},

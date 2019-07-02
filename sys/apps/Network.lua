@@ -103,7 +103,7 @@ This only needs to be done once.
 		t = 'telnet',
 		v = 'vnc',
 		r = 'reboot',
-		q = 'quit',
+		[ 'control-q' ] = 'quit',
 		c = 'clear',
 	},
 }

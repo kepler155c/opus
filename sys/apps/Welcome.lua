@@ -19,6 +19,13 @@ local passwordIntro = [[A password is required for wireless access.
 local packagesIntro = [[Setup Complete
 
 %sOpen the package manager to add software to this computer.]]
+local contributorsIntro = [[Contributors%s
+
+Anavrins:    Encryption/security/custom apps
+Community:   Several selected applications
+hugeblank:   Startup screen improvements
+LDDestroier: Art design + custom apps
+Lemmmy:      Application improvements]]
 
 local page = UI.Page {
 	wizard = UI.Wizard {
@@ -93,6 +100,15 @@ local page = UI.Page {
 					inactive = true,
 					x = 3, ex = -3, y = 2, ey = -4,
 					value = string.format(packagesIntro, Ansi.white),
+				},
+			},
+			contributors = UI.WizardPage {
+				index = 5,
+				intro = UI.TextArea {
+					textColor = colors.yellow,
+					inactive = true,
+					x = 3, ex = -3, y = 2, ey = -2,
+					value = string.format(contributorsIntro, Ansi.white),
 				},
 			},
 		},

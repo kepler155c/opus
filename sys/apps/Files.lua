@@ -47,7 +47,7 @@ local Browser = UI.Page {
 					{ text = 'Pastebin put p',    event = 'pastebin', flags = FILE },
 					{ text = 'Shell        s',    event = 'shell'  },
 					{ spacer = true },
-					{ text = 'Quit         q',    event = 'quit'   },
+					{ text = 'Quit        ^q',    event = 'quit'   },
 			} },
 			{ text = 'Edit', dropdown = {
 					{ text = 'Cut          ^x', event = 'cut'    },
@@ -140,7 +140,7 @@ local Browser = UI.Page {
 		},
 	},
 	accelerators = {
-		q               = 'quit',
+		[ 'control-q' ] = 'quit',
 		c               = 'cedit',
 		e               = 'edit',
 		s               = 'shell',

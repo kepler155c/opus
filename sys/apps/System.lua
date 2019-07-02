@@ -23,7 +23,7 @@ local systemPage = UI.Page {
 	},
 	notification = UI.Notification(),
 	accelerators = {
-		q = 'quit',
+		[ 'control-q' ] = 'quit',
 	},
 }
 

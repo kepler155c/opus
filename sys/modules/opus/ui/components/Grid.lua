@@ -351,8 +351,8 @@ function UI.Grid:drawRow(sb, row, focused, bg, fg)
 		sb:write(ind .. safeValue(row[col.key] or ''),
 			col.cw + 1,
 			col.align,
-			bg,
-			fg)
+			col.backgroundColor or bg,
+			col.textColor or fg)
 		ind = ' '
 	end
 end
