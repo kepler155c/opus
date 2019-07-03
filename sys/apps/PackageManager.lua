@@ -33,6 +33,12 @@ local page = UI.Page {
 		operationText = 'Remove',
 		help = 'Remove',
 	},
+	updateall = UI.Button {
+		ex = -2, y = -3, width = 12,
+		text = 'Update All',
+		event = 'updateall',
+		help = 'Update all installed packages',
+	},
 	description = UI.TextArea {
 		x = 16, y = 3, ey = -5,
 		marginRight = 0, marginLeft = 0,
@@ -138,6 +144,13 @@ function page:eventHandler(event)
 		self.description:draw()
 		self:updateSelection(event.selected)
 
+	elseif event.type == 'updateall' then
+		self.operation = 'updateall'
+		self.action.button.text = ' Begin '
+		self.action.button.event = 'begin'
+		self.action.titleBar.title = 'Update All'
+		self.action:show()
+
 	elseif event.type == 'action' then
 		local selected = self.grid:getSelected()
 		if selected then
@@ -153,11 +166,16 @@ function page:eventHandler(event)
 		self.action:hide()
 
 	elseif event.type == 'begin' then
-		local selected = self.grid:getSelected()
-		self:run(self.operation, selected.name)
-		selected.installed = Packages:isInstalled(selected.name)
+		if self.operation == 'updateall' then
+			self:run(self.operation, '')
+		else
+			local selected = self.grid:getSelected()
+			self:run(self.operation, selected.name)
+			selected.installed = Packages:isInstalled(selected.name)
 
-		self:updateSelection(selected)
+			self:updateSelection(selected)
+		end
+
 		self.action.button.text = ' Done  '
 		self.action.button.event = 'hide-action'
 		self.action.button:draw()

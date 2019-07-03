@@ -25,7 +25,10 @@ Anavrins:    Encryption/security/custom apps
 Community:   Several selected applications
 hugeblank:   Startup screen improvements
 LDDestroier: Art design + custom apps
-Lemmmy:      Application improvements]]
+Lemmmy:      Application improvements
+
+%sContribute at:%s
+https://github.com/kepler155c/opus]]
 
 local page = UI.Page {
 	wizard = UI.Wizard {
@@ -108,7 +111,7 @@ local page = UI.Page {
 					textColor = colors.yellow,
 					inactive = true,
 					x = 3, ex = -3, y = 2, ey = -2,
-					value = string.format(contributorsIntro, Ansi.white),
+					value = string.format(contributorsIntro, Ansi.white, Ansi.yellow, Ansi.white),
 				},
 			},
 		},

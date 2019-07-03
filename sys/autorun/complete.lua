@@ -17,6 +17,6 @@ end
 _ENV.shell.setCompletionFunction("sys/apps/package.lua",
 	function(_, index, text)
 		if index == 1 then
-			return completeMultipleChoice(text, { "install ", "update ", "uninstall " })
+			return completeMultipleChoice(text, { "install ", "update ", "uninstall ", "updateall ", "refresh" })
 		end
 	end)

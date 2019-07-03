@@ -21,6 +21,9 @@ function Packages:installed()
 end
 
 function Packages:list()
+	if not fs.exists('usr/config/packages') then
+		self:downloadList()
+	end
 	return Util.readTable('usr/config/packages') or { }
 end
 

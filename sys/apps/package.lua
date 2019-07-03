@@ -35,13 +35,15 @@ local function progress(max)
 	end
 end
 
-local function install(name, isUpdate)
+local function install(name, isUpdate, ignoreDeps)
 	local manifest = Packages:downloadManifest(name) or error('Invalid package')
 
-	if manifest.required then
-		for _, v in pairs(manifest.required) do
-			if isUpdate or not Packages:isInstalled(v) then
-				install(v, isUpdate)
+	if not ignoreDeps then
+		if manifest.required then
+			for _, v in pairs(manifest.required) do
+				if isUpdate or not Packages:isInstalled(v) then
+					install(v, isUpdate)
+				end
 			end
 		end
 	end
@@ -86,6 +88,21 @@ if action == 'install' then
 	install(name)
 	print('installation complete\n')
 	_G.printError('Reboot is required')
+	return
+end
+
+if action == 'refresh' then
+	print('Downloading...')
+	Packages:downloadList()
+	print('refresh complete')
+	return
+end
+
+if action == 'updateall' then
+	for name in pairs(Packages:installed()) do
+		install(name, true, true)
+	end
+	print('updateall complete')
 	return
 end
 

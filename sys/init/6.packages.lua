@@ -5,12 +5,6 @@ local fs    = _G.fs
 local help  = _G.help
 local shell = _ENV.shell
 
-if not fs.exists('usr/config/packages') then
-	pcall(function()
-		Packages:downloadList()
-	end)
-end
-
 local appPaths = Util.split(shell.path(), '(.-):')
 local helpPaths = Util.split(help.path(), '(.-):')
 
