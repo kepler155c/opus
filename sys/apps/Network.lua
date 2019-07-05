@@ -44,7 +44,7 @@ local page = UI.Page {
 				x = -3,
 				dropdown = {
 					{ text = 'Port Status', event = 'ports', modem = true },
-          { spacer = true },
+					{ spacer = true },
 					{ text = 'Help', event = 'help', noCheck = true },
 				},
 			},
@@ -127,14 +127,12 @@ local function sendCommand(host, command)
 	end
 end
 
---[[
 function page.ports:eventHandler(event)
 	if event.type == 'grid_select' then
 		shell.openForegroundTab('sniff ' .. event.selected.port)
 	end
 	return UI.SlideOut.eventHandler(self, event)
 end
-]]
 
 function page.ports.grid:update()
 	local transport = network:getTransport()
