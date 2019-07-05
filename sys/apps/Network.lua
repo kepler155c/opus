@@ -129,7 +129,7 @@ end
 
 function page.ports:eventHandler(event)
 	if event.type == 'grid_select' then
-		shell.openForegroundTab('sniff ' .. event.selected.port)
+		shell.openForegroundTab('Sniff ' .. event.selected.port)
 	end
 	return UI.SlideOut.eventHandler(self, event)
 end
