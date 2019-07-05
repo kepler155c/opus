@@ -9,7 +9,7 @@ local peripheral = _G.peripheral
 local multishell = _ENV.multishell
 
 local gridColumns = {}
-table.insert(gridColumns, { heading = '#',  key = 'id', width = 4, align = 'right' })
+table.insert(gridColumns, { heading = '#',  key = 'id', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Port', key = 'portid', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Reply', key = 'replyid', width = 5, align = 'right' })
 if UI.defaultDevice.width > 50 then table.insert(gridColumns, { heading = 'Dist', key = 'distance', width = 6, align = 'right' }) end
@@ -17,7 +17,7 @@ table.insert(gridColumns, { heading = 'Msg', key = 'message' })
 
 local page = UI.Page {
 	paused = false,
-	index = 0,
+	index = 1,
 	notification = UI.Notification { },
 	accelerators = { ['control-q'] = 'quit' },
 
@@ -266,6 +266,24 @@ function page.packetSlide:eventHandler(event)
 	return true
 end
 
+function page.packetGrid:addPacket(packet)
+	if not page.paused and (not filterConfig.filterAllCheck.value or filterConfig.filterGrid.values[packet.portid]) then
+		page.index = page.index + 1
+		table.insert(self.values, packet)
+	end
+	if #self.values > self.maxPacket then
+		local t = { }
+		for i = 10, #self.values do
+			t[i - 9] = self.values[i]
+		end
+		self:setValues(t)
+	end
+
+	self:update()
+	self:draw()
+	page:sync()
+end
+
 function page:enable()
 	modemConfig.modems = {}
 	peripheral.find('modem', function(side, dev)
@@ -323,27 +341,14 @@ function page:eventHandler(event)
 end
 
 Event.on('modem_message', function(event, side, chan, reply, msg, dist)
-	if not page.paused and modemConfig.currentModem.side == side and (not filterConfig.filterAllCheck.value or filterConfig.filterGrid.values[chan]) then
-		page.index = page.index + 1
-		table.insert(page.packetGrid.values, {
+	if modemConfig.currentModem.side == side  then
+		page.packetGrid:addPacket({
 			id = page.index,
 			portid = chan,
 			replyid = reply,
 			message = msg,
 			distance = dist,
 		})
-
-		if #page.packetGrid.values > page.packetGrid.maxPacket then
-			local t = { }
-			for i = 10, #page.packetGrid.values do
-				t[i - 9] = page.packetGrid.values[i]
-			end
-			page.packetGrid:setValues(t)
-		end
-
-		page.packetGrid:update()
-		page.packetGrid:draw()
-		page:sync()
 	end
 end)
 
