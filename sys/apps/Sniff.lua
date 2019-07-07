@@ -12,7 +12,9 @@ local gridColumns = {}
 table.insert(gridColumns, { heading = '#',  key = 'id', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Port', key = 'portid', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Reply', key = 'replyid', width = 5, align = 'right' })
-if UI.defaultDevice.width > 50 then table.insert(gridColumns, { heading = 'Dist', key = 'distance', width = 6, align = 'right' }) end
+if UI.defaultDevice.width > 50 then
+	table.insert(gridColumns, { heading = 'Dist', key = 'distance', width = 6, align = 'right' })
+end
 table.insert(gridColumns, { heading = 'Msg', key = 'packetStr' })
 
 local page = UI.Page {
@@ -269,7 +271,7 @@ end
 function page.packetGrid:addPacket(packet)
 	if not page.paused and (not filterConfig.filterAllCheck.value or filterConfig.filterGrid.values[packet.portid]) then
 		page.index = page.index + 1
-		local p, res = pcall(textutils.serialize, packet.message)
+		local _, res = pcall(textutils.serialize, packet.message)
 		packet.packetStr = res:gsub("\n%s*", "")
 		table.insert(self.values, packet)
 	end
@@ -342,7 +344,7 @@ function page:eventHandler(event)
 	return true
 end
 
-Event.on('modem_message', function(event, side, chan, reply, msg, dist)
+Event.on('modem_message', function(_, side, chan, reply, msg, dist)
 	if modemConfig.currentModem.side == side then
 		page.packetGrid:addPacket({
 			id = page.index,

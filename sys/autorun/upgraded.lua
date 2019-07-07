@@ -1,13 +1,14 @@
-if fs.exists('sys/apps/shell') and fs.exists('sys/apps/shell.lua') then
-  fs.delete('sys/apps/shell')
-end
-if fs.exists('sys/etc/app.db') then fs.delete('sys/etc/app.db') end
-if fs.exists('sys/extensions') then fs.delete('sys/extensions') end
-if fs.exists('sys/network') then fs.delete('sys/network') end
-if fs.exists('startup') then fs.delete('startup') end
+local fs = _G.fs
 
-if fs.exists('sys/autorun/gps.lua') then fs.delete('sys/autorun/gps.lua') end
-if fs.exists('sys/autorun/gpsHost.lua') then fs.delete('sys/autorun/gpsHost.lua') end
-if fs.exists('sys/apps/network/redserver.lua') then fs.delete('sys/apps/network/redserver.lua') end
+-- cleanup outdated files
+fs.delete('sys/apps/shell')
+fs.delete('sys/etc/app.db')
+fs.delete('sys/extensions')
+fs.delete('sys/network')
+fs.delete('startup')
+fs.delete('sys/apps/system/turtle.lua')
+fs.delete('sys/autorun/gps.lua')
+fs.delete('sys/autorun/gpsHost.lua')
+fs.delete('sys/apps/network/redserver.lua')
 if fs.exists('sys/apis') then fs.delete('sys/apis') end
-if fs.exists('sys/autorun/apps.lua') then fs.delete('sys/autorun/apps.lua') end
+fs.delete('sys/autorun/apps.lua')
