@@ -20,7 +20,7 @@ local tab = UI.Tab {
 
 	drives = UI.ScrollingGrid {
 		x = 2, y = 1,
-		ex = '47%', ey = 8,
+		ex = '47%', ey = -7,
 		columns = {
 			{ heading = 'Drive', key = 'name' },
 			{ heading = 'Side' ,key = 'side', textColor = colors.yellow }
@@ -29,7 +29,7 @@ local tab = UI.Tab {
 	},
 	infos = UI.Grid {
 		x = '52%', y = 2,
-		ex = -2, ey = 8,
+		ex = -2, ey = -4,
 		disableHeader = true,
 		unfocusedBackgroundSelectedColor = colors.black,
 		inactive = true,
@@ -41,16 +41,16 @@ local tab = UI.Tab {
 	},
 
 	progress = UI.ProgressBar {
-		x = 11, y = 10,
+		x = 11, y = -2,
 		ex = -2,
 	},
 	percentage = UI.Text {
-		x = 11, y = 11,
+		x = 11, y = -1,
 		ex = -2,
 		align = 'center',
 	},
 	icon = UI.NftImage {
-		x = 2, y = 10,
+		x = 2, y = -5,
 		image = NFT.parse(NftImages.blank)
 	},
 }

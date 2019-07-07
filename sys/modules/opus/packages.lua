@@ -33,7 +33,7 @@ end
 
 function Packages:downloadList()
 	local packages = {
-		[ 'develop-1.8' ] = 'https://pastebin.com/raw/WhEiNGZE',
+		[ 'develop-1.8' ] = 'https://raw.githubusercontent.com/kepler155c/opus-apps/develop-1.8/packages.list',
 		[ 'master-1.8' ] = 'https://pastebin.com/raw/pexZpAxt',
 	}
 
