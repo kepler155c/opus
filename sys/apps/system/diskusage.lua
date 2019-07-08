@@ -45,8 +45,8 @@ local tab = UI.Tab {
 		ex = -2,
 	},
 	percentage = UI.Text {
-		x = 11, y = -1,
-		ex = -2,
+		x = 11, y = -3,
+		ex = '47%',
 		align = 'center',
 	},
 	icon = UI.NftImage {
@@ -57,19 +57,16 @@ local tab = UI.Tab {
 
 local function getDrives()
 	local unique = { ['hdd'] = true, ['virt'] = true }
-	local exclude = {}
-	local drives = {
-		{name = 'hdd', side = ''},
-	}
+	local drives = { { name = 'hdd', side = '' } }
+
 	for _, drive in pairs(fs.list('/')) do
 		local side = fs.getDrive(drive)
 		if side and not unique[side] then
 			unique[side] = true
-			exclude[drive] = true
-			table.insert(drives, {name=drive, side=side})
+			table.insert(drives, { name = drive, side = side })
 		end
 	end
-	return drives, exclude
+	return drives
 end
 
 local function getDriveInfo(p)
@@ -125,8 +122,7 @@ function tab:updateInfo()
 end
 
 function tab:updateDrives()
-	local drives, exclude = getDrives()
-	self.exclude = exclude
+	local drives = getDrives()
 	self.drives:setValues(drives)
 end
 
@@ -139,7 +135,8 @@ end
 function tab:eventHandler(event)
 	if event.type == 'grid_focus_row' then
 		self:updateInfo()
-	else return UI.Tab.eventHandler(self, event)
+	else
+		return UI.Tab.eventHandler(self, event)
 	end
 	return true
 end

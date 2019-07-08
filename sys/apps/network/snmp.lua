@@ -121,8 +121,7 @@ print('discovery: listening on port 999')
 
 Event.on('modem_message', function(_, _, sport, id, info, distance)
 	if sport == 999 and tonumber(id) and type(info) == 'table' then
-		if info.label and info.id and
-			type(info.label) == 'string' and type(info.id) == 'number' then
+		if type(info.label) == 'string' and type(info.id) == 'number' then
 
 			if not network[id] then
 				network[id] = { }
@@ -150,6 +149,15 @@ local info = {
 }
 local infoTimer = os.clock()
 
+local function getSlots()
+	return Util.reduce(turtle.getInventory(), function(acc, v)
+		if v.count > 0 then
+			acc[v.index .. ',' .. v.count]  = v.key
+		end
+		return acc
+	end, { })
+end
+
 local function sendInfo()
 	if os.clock() - infoTimer >= 1 then -- don't flood
 		infoTimer = os.clock()
@@ -160,7 +168,7 @@ local function sendInfo()
 			info.fuel = turtle.getFuelLevel()
 			info.status = turtle.getStatus()
 			info.point = turtle.point
-			info.inventory = turtle.getInventory()
+			info.inv = getSlots()
 			info.slotIndex = turtle.getSelectedSlot()
 		end
 		if device.neuralInterface then
@@ -168,28 +176,24 @@ local function sendInfo()
 			if not info.status and device.neuralInterface.getMetaOwner then
 				pcall(function()
 					local meta = device.neuralInterface.getMetaOwner()
-
-					if meta.isWet then
-						info.status = 'Swimming'
-					elseif meta.isElytraFlying then
-						info.status = 'Flying'
-					elseif meta.isBurning then
-						info.status = 'Burning'
-					elseif meta.isDead then
-						info.status = 'Deceased'
-					elseif meta.isOnLadder then
-						info.status = 'Climbing'
-					elseif meta.isRiding then
-						info.status = 'Riding'
-					elseif meta.isSneaking then
-						info.status = 'Sneaking'
-					elseif meta.isSprinting then
-						info.status = 'Running'
-					else
-						info.status = 'health: ' ..
-							math.floor(meta.health /
-								meta.maxHealth * 100)
+					local states = {
+						isWet = 'Swimming',
+						isElytraFlying = 'Flying',
+						isBurning = 'Burning',
+						isDead = 'Deceased',
+						isOnLadder = 'Climbing',
+						isRiding = 'Riding',
+						isSneaking = 'Sneaking',
+						isSprinting = 'Running',
+					}
+					for k,v in pairs(states) do
+						if meta[k] then
+							info.status = v
+							break
+						end
 					end
+					info.status = info.status or 'health: ' ..
+							math.floor(meta.health / meta.maxHealth * 100)
 				end)
 			end
 		end
@@ -216,4 +220,4 @@ Event.on('turtle_response', function()
 	end
 end)
 
-sendInfo()
+Event.onTimeout(1, sendInfo)
