@@ -215,3 +215,5 @@ Event.on('turtle_response', function()
 		sendInfo()
 	end
 end)
+
+sendInfo()

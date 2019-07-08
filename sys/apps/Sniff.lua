@@ -351,7 +351,7 @@ Event.on('modem_message', function(_, side, chan, reply, msg, dist)
 			portid = chan,
 			replyid = reply,
 			message = msg,
-			distance = dist,
+			distance = dist or -1,
 		})
 	end
 end)
