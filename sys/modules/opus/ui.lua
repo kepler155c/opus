@@ -1217,6 +1217,8 @@ end
 
 loadComponents()
 UI:loadTheme('usr/config/ui.theme')
+Util.merge(UI.Window.defaults, UI.theme.Window)
+Util.merge(UI.Page.defaults, UI.theme.Page)
 UI:setDefaultDevice(UI.Device({ device = term.current() }))
 
 return UI
