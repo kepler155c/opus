@@ -34,30 +34,23 @@ function NFT.parse(imageText)
 		--As we're no longer 1-1, we keep track of what index to write to
 		local writeIndex = 1
 		--Tells us if we've hit a 30 or 31 (BG and FG respectively)- next char specifies the curr colour
-		local bgNext, fgNext = false, false
-		--The current background and foreground colours
-		local currBG, currFG = nil,nil
-		for i = 1, #sLine do
-			local nextChar = string.sub(sLine, i, i)
-			if nextChar:byte() == 30 then
-				bgNext = true
-			elseif nextChar:byte() == 31 then
-				fgNext = true
-			elseif bgNext then
-				currBG = getColourOf(nextChar)
-				bgNext = false
-			elseif fgNext then
-				currFG = getColourOf(nextChar)
-				fgNext = false
+
+		local tcol, bcol = colors.white,colors.black
+		local cx, sx = 1, 0
+		while sx < #sLine do
+			sx = sx + 1
+			if sLine:sub(sx,sx) == "\30" then
+				bcol = getColourOf(sLine:sub(sx+1,sx+1))
+				sx = sx + 1
+			elseif sLine:sub(sx,sx) == "\31" then
+				tcol = getColourOf(sLine:sub(sx+1,sx+1))
+				sx = sx + 1
 			else
-				--if nextChar ~= " " and currFG == nil then
-					-- any color not in range is considered transparent
-					-- currFG = _G.colors.white
-				--end
-				image.bg[num][writeIndex] = currBG
-				image.fg[num][writeIndex] = currFG
-				image.text[num][writeIndex] = nextChar
+				image.bg[num][writeIndex] = bcol
+				image.fg[num][writeIndex] = tcol
+				image.text[num][writeIndex] = sLine:sub(sx,sx)
 				writeIndex = writeIndex + 1
+				cx = cx + 1
 			end
 		end
 		image.height = num

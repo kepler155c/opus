@@ -155,10 +155,6 @@ local page = UI.Page {
 	},
 }
 
-if extSupport then
-	page.container.backgroundColor = colors.black
-end
-
 local function loadApplications()
 	local requirements = {
 		turtle = not not turtle,
