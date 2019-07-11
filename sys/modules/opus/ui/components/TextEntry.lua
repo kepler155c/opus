@@ -5,6 +5,8 @@ local Util  = require('opus.util')
 
 local colors = _G.colors
 local _rep   = string.rep
+local _lower = string.lower
+local _upper = string.upper
 
 UI.TextEntry = class(UI.Window)
 UI.TextEntry.defaults = {
@@ -104,12 +106,21 @@ function UI.TextEntry:focus()
 	end
 end
 
+function UI.TextEntry:_transform(text)
+	if self.transform == 'lowercase' then
+		return _lower(text)
+	elseif self.transform == 'uppercase' then
+		return _upper(text)
+	end
+	return text
+end
+
 function UI.TextEntry:eventHandler(event)
 	local text = self.value
 	self.entry.value = tostring(text)
 	if event.ie and self.entry:process(event.ie) then
 		if self.entry.textChanged then
-			self.value = self.entry.value
+			self.value = self:_transform(self.entry.value)
 			self:draw()
 			if text ~= self.value then
 				self:emit({ type = 'text_change', text = self.value, element = self })

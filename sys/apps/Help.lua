@@ -21,6 +21,7 @@ local page = UI.Page {
 	filter = UI.TextEntry {
 		x = 10, y = 2, ex = -3,
 		limit = 32,
+		transform = 'lowercase',
 	},
 	grid = UI.ScrollingGrid {
 		y = 4,
