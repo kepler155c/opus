@@ -412,8 +412,8 @@ function Util.first(t, order)
 end
 
 --[[ File functions ]]--
-function Util.readFile(fname)
-	local f = fs.open(fname, "r")
+function Util.readFile(fname, flags)
+	local f = fs.open(fname, flags or "r")
 	if f then
 		local t = f.readAll()
 		f.close()

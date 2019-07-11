@@ -50,9 +50,10 @@ function NFT.parse(imageText)
 				currFG = getColourOf(nextChar)
 				fgNext = false
 			else
-				if nextChar ~= " " and currFG == nil then
-					currFG = _G.colors.white
-				end
+				--if nextChar ~= " " and currFG == nil then
+					-- any color not in range is considered transparent
+					-- currFG = _G.colors.white
+				--end
 				image.bg[num][writeIndex] = currBG
 				image.fg[num][writeIndex] = currFG
 				image.text[num][writeIndex] = nextChar

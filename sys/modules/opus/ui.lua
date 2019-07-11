@@ -912,10 +912,12 @@ function UI.Window:emit(event)
 	end
 end
 
+function UI.Window:getProperty(property)
+	return self[property] or self.parent and self.parent:getProperty(property)
+end
+
 function UI.Window:find(uid)
-	if self.children then
-		return Util.find(self.children, 'uid', uid)
-	end
+	return self.children and Util.find(self.children, 'uid', uid)
 end
 
 function UI.Window:eventHandler()

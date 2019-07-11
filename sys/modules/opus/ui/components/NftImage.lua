@@ -17,9 +17,12 @@ end
 
 function UI.NftImage:draw()
 	if self.image then
+		-- due to blittle, the background and foreground transparent
+		-- color is the same as the background color
+		local bg = self:getProperty('backgroundColor')
 		for y = 1, self.image.height do
 			for x = 1, #self.image.text[y] do
-				self:write(x, y, self.image.text[y][x], self.image.bg[y][x], self.image.fg[y][x])
+				self:write(x, y, self.image.text[y][x], self.image.bg[y][x], self.image.fg[y][x] or bg)
 			end
 		end
 	else
