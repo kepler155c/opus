@@ -25,7 +25,7 @@ UI.TextEntry.defaults = {
 	}
 }
 function UI.TextEntry:postInit()
-	self.value = tostring(self.value)
+	self.value = tostring(self.value) -- is this right ? shouldnt raw numbers be allowed
 	self.entry = entry({ limit = self.limit, offset = 2 })
 end
 
@@ -35,7 +35,7 @@ function UI.TextEntry:layout()
 end
 
 function UI.TextEntry:setValue(value)
-	self.value = value
+	self.value = value or ''
 	self.entry:unmark()
 	self.entry.value = tostring(value)
 	self.entry:updateScroll()

@@ -29,10 +29,11 @@ function UI.Form:setValues(values)
 	self.values = values
 	for _,child in pairs(self.children) do
 		if child.formKey then
-			-- this should be child:setValue(self.values[child.formKey])
-			-- so chooser can set default choice if null
-			-- null should be valid as well
-			child.value = self.values[child.formKey] or ''
+			if child.setValue then
+				child:setValue(self.values[child.formKey])
+			else
+				child.value = self.values[child.formKey] or ''
+			end
 		end
 	end
 end
