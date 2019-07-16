@@ -7,6 +7,7 @@ UI.Menu.defaults = {
 	UIElement = 'Menu',
 	disableHeader = true,
 	columns = { { heading = 'Prompt', key = 'prompt', width = 20 } },
+	menuItems = { },
 }
 function UI.Menu:postInit()
 	self.values = self.menuItems

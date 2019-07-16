@@ -100,4 +100,5 @@ function tab:eventHandler(event)
 	end
 end
 
-return tab
+--this needs rework - see 4.user.lua
+--return tab

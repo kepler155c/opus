@@ -23,5 +23,5 @@ end
 
 -- register oc devices as peripherals
 kernel.hook('device_attach', function(_, eventData)
-	register(device[eventData[2]])
+	register(device[eventData[1]])
 end)
