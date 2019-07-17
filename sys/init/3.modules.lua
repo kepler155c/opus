@@ -39,6 +39,21 @@ local function addDevice(dev, args, doQueue)
 	if doQueue then
 		os.queueEvent('device_attach', name)
 	end
+	return device[name]
+end
+
+local function damnManipulator(container, method, args, doQueue)
+	local dev = addDevice(container[method](), args)
+	for k,v in pairs(dev) do
+		if type(v) == 'function' then
+			dev[k] = function(...)
+				return device[container.name][method]()[k](...)
+			end
+		end
+	end
+	if doQueue then
+		os.queueEvent('device_attach', args.name)
+	end
 end
 
 local function addContainer(v, doQueue)
@@ -55,21 +70,21 @@ local function addContainer(v, doQueue)
 			local name = v.getName()
 			if name then
 				if v.getInventory then
-					addDevice(v.getInventory(), {
+					damnManipulator(v, 'getInventory', {
 						name = name .. ':inventory',
 						type = 'inventory',
 						side = v.side
 					}, doQueue)
 				end
 				if v.getEquipment then
-					addDevice(v.getEquipment(), {
+					damnManipulator(v, 'getEquipment', {
 						name = name .. ':equipment',
 						type = 'equipment',
 						side = v.side
 					}, doQueue)
 				end
 				if v.getEnder then
-					addDevice(v.getEnder(), {
+					damnManipulator(v, 'getEnder', {
 						name = name .. ':enderChest',
 						type = 'enderChest',
 						side = v.side
