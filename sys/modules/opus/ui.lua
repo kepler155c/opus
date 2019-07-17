@@ -12,6 +12,7 @@ local fs         = _G.fs
 local os         = _G.os
 local peripheral = _G.peripheral
 local term       = _G.term
+local textutils  = _G.textutils
 
 --[[
 	Using the shorthand window definition, elements are created from
@@ -215,6 +216,34 @@ function Manager:loadTheme(filename)
 		end
 		Util.deepMerge(self.theme, theme)
 	end
+end
+
+function Manager:generateTheme(filename)
+	local t = { }
+	for k,v in pairs(self) do
+		if type(v) == 'table' then
+			if v._preload then
+				v._preload()
+				v = self[k]
+			end
+			if v.defaults and v.defaults.UIElement ~= 'Device' then
+				for p,d in pairs(v.defaults) do
+					if p:find('olor') then
+						if not t[k] then
+							t[k] = { }
+						end
+						for c, n in pairs(colors) do
+							if n == d then
+								t[k][p] = 'colors.' .. c
+								break
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	Util.writeFile(filename, textutils.serialize(t):gsub('(")', ''))
 end
 
 function Manager:emitEvent(event)
