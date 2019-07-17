@@ -188,9 +188,7 @@ function page:eventHandler(event)
 			os.queueEvent('overview_shortcut', {
 				title = t.label,
 				category = "VNC",
-				icon = "\
-		\031e\\\031   \031e/\031dn\
-		 \031e\\/\031  \0319c",
+				icon = "\010\030 \009\009\031e\\\031   \031e/\031dn\010\030 \009\009 \031e\\/\031  \031bc",
 				run = "vnc.lua " .. t.id,
 			})
 
