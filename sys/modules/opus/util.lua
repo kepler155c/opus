@@ -490,7 +490,7 @@ function Util.loadTable(fname)
 	if not fc then
 		return false, 'Unable to read file'
 	end
-	local s, m = loadstring('return ' .. fc, fname)
+	local s, m = load('return ' .. fc, fname)
 	if s then
 		s, m = pcall(s)
 		if s then
