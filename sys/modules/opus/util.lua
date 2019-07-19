@@ -21,7 +21,7 @@ end
 
 function Util.byteArrayToHex(tbl)
 	if not tbl then error('byteArrayToHex: invalid table', 2) end
-	return ("%02x"):rep(#tbl):format(unpack(tbl))
+	return ("%02x"):rep(#tbl):format(table.unpack(tbl))
 end
 
 function Util.tryTimed(timeout, f, ...)
@@ -39,10 +39,10 @@ function Util.tryTimes(attempts, f, ...)
 	for _ = 1, attempts do
 		result = { f(...) }
 		if result[1] then
-			return unpack(result)
+			return table.unpack(result)
 		end
 	end
-	return unpack(result)
+	return table.unpack(result)
 end
 
 function Util.timer()
