@@ -129,6 +129,7 @@ kernel.hook('device_attach', function(_, eventData)
 					device[name][k] = nil
 				end
 			end
+			Util.merge(device[name], dev)
 		else
 			cache[name] = dev
 		end
