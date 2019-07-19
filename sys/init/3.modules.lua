@@ -11,15 +11,22 @@ local containers = {
 
 local cache = { }
 
+-- manipulators will throw an error on listModules
+-- if the user has logged off
 local function getModules(dev, side)
 	local list = { }
-	if dev and dev.listModules then
-		for _, module in pairs(dev.listModules()) do
-			list[module] = Util.shallowCopy(dev)
-			list[module].name = module
-			list[module].type = module
-			list[module].side = side
+	local s, m = pcall(function()
+		if dev and dev.listModules then
+			for _, module in pairs(dev.listModules()) do
+				list[module] = Util.shallowCopy(dev)
+				list[module].name = module
+				list[module].type = module
+				list[module].side = side
+			end
 		end
+	end)
+	if not s and m then
+		_G._syslog(m)
 	end
 	return list
 end
@@ -39,20 +46,27 @@ local function addDevice(dev, args, doQueue)
 	if doQueue then
 		os.queueEvent('device_attach', name)
 	end
-	return device[name]
 end
 
+-- directly access the peripheral as the methods in getInventory, etc.
+-- can become invalid without any way to tell
 local function damnManipulator(container, method, args, doQueue)
-	local dev = addDevice(container[method](), args)
-	for k,v in pairs(dev) do
-		if type(v) == 'function' then
+	local dev = { }
+	local methods = {
+		'drop', 'getDocs', 'getItem', 'getItemMeta', 'getTransferLocations',
+		'list', 'pullItems', 'pushItems', 'size', 'suck',
+	}
+	-- the user might not be logged in when the compputer is started
+	-- and there's no way to know when they have logged in.
+	-- these methods will error if the user is not logged in
+	if container[method] then
+		for _,k in pairs(methods) do
 			dev[k] = function(...)
 				return device[container.name][method]()[k](...)
 			end
 		end
-	end
-	if doQueue then
-		os.queueEvent('device_attach', args.name)
+
+		addDevice(dev, args, doQueue)
 	end
 end
 
@@ -66,32 +80,29 @@ local function addContainer(v, doQueue)
 	end
 
 	if v.getName then
-		pcall(function()
+		local s, m = pcall(function()
 			local name = v.getName()
 			if name then
-				if v.getInventory then
-					damnManipulator(v, 'getInventory', {
-						name = name .. ':inventory',
-						type = 'inventory',
-						side = v.side
-					}, doQueue)
-				end
-				if v.getEquipment then
-					damnManipulator(v, 'getEquipment', {
-						name = name .. ':equipment',
-						type = 'equipment',
-						side = v.side
-					}, doQueue)
-				end
-				if v.getEnder then
-					damnManipulator(v, 'getEnder', {
-						name = name .. ':enderChest',
-						type = 'enderChest',
-						side = v.side
-					}, doQueue)
-				end
+				damnManipulator(v, 'getInventory', {
+					name = name .. ':inventory',
+					type = 'inventory',
+					side = v.side
+				}, doQueue)
+				damnManipulator(v, 'getEquipment', {
+					name = name .. ':equipment',
+					type = 'equipment',
+					side = v.side
+				}, doQueue)
+				damnManipulator(v, 'getEnder', {
+					name = name .. ':enderChest',
+					type = 'enderChest',
+					side = v.side
+				}, doQueue)
 			end
 		end)
+		if not s and m then
+			_G._syslog(m)
+		end
 	end
 end
 
@@ -113,9 +124,11 @@ kernel.hook('device_attach', function(_, eventData)
 		-- a module is removed
 		if cache[name] then
 			device[name] = cache[name]
-			-- TODO: cannot simply merge - need to remove
-			-- all functions then merge
-			Util.merge(device[name], dev)
+			for k,v in pairs(device[name]) do
+				if type(v) == 'function' then
+					device[name][k] = nil
+				end
+			end
 		else
 			cache[name] = dev
 		end
