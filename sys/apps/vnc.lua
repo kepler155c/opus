@@ -70,7 +70,7 @@ local function connect()
 				break
 			end
 			for _,v in ipairs(data) do
-				ct[v.f](unpack(v.args))
+				ct[v.f](table.unpack(v.args))
 			end
 		end
 	end)
