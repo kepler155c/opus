@@ -551,8 +551,9 @@ function Util.run(env, path, ...)
 end
 
 function Util.runFunction(env, fn, ...)
-	setfenv(fn, env)
+	--setfenv(fn, env)
 	setmetatable(env, { __index = _G })
+	fn = load(fn,"util.runfunction",nil,env)
 	return pcall(fn, ...)
 end
 
