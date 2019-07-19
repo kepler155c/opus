@@ -48,7 +48,7 @@ local function sambaConnection(socket)
 		end
 		local ret
 		local s, m = pcall(function()
-			ret = fn(unpack(msg.args))
+			ret = fn(table.unpack(msg.args))
 		end)
 		if not s and m then
 			_G.printError('samba: ' .. m)
