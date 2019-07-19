@@ -241,7 +241,7 @@ local function _place(action, indexOrId)
 		if not state.digPolicy(action) then
 			state.attackPolicy(action)
 		end
-		return unpack(result)
+		return table.unpack(result)
 	end)
 end
 
@@ -1024,7 +1024,7 @@ function turtle.run(fn, ...)
 
 	synchronized(turtle, function()
 		turtle.resetState()
-		s, m = pcall(function() fn(unpack(args)) end)
+		s, m = pcall(function() fn(table.unpack(args)) end)
 		turtle.resetState()
 		if not s and m then
 			_G.printError(m)
