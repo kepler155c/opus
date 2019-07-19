@@ -139,7 +139,7 @@ end
 term.clear()
 term.setCursorPos(1, 1)
 if bootOptions[bootOption].args then
-	os.run(_G.getfenv(1), table.unpack(bootOptions[bootOption].args))
+	os.run({}, table.unpack(bootOptions[bootOption].args))
 else
 	print(bootOptions[bootOption].prompt)
 end
