@@ -34,7 +34,7 @@ local function quarterRound(s, a, b, c, d)
 end
 
 local function hashBlock(state, rnd)
-	local s = {unpack(state)}
+	local s = {table.unpack(state)}
 	for i = 1, rnd do
 		local r = i%2==1
 		s = r and quarterRound(s, 1, 5,  9, 13) or quarterRound(s, 1, 6, 11, 16)
@@ -92,9 +92,9 @@ local function serialize(state)
 end
 
 local mt = {
-	__tostring = function(a) return string.char(unpack(a)) end,
+	__tostring = function(a) return string.char(table.unpack(a)) end,
 	__index = {
-		toHex = function(self) return ("%02x"):rep(#self):format(unpack(self)) end,
+		toHex = function(self) return ("%02x"):rep(#self):format(table.unpack(self)) end,
 		isEqual = function(self, t)
 			if type(t) ~= "table" then return false end
 			if #self ~= #t then return false end
@@ -113,7 +113,7 @@ local function crypt(data, key, nonce, cntr, round)
 	assert(#key == 16 or #key == 32, "ChaCha20: Invalid key length ("..#key.."), must be 16 or 32")
 	assert(#nonce == 12, "ChaCha20: Invalid nonce length ("..#nonce.."), must be 12")
 
-	data = type(data) == "table" and {unpack(data)} or {tostring(data):byte(1,-1)}
+	data = type(data) == "table" and {table.unpack(data)} or {tostring(data):byte(1,-1)}
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 
