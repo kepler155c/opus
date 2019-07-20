@@ -8,7 +8,7 @@ local band    = bit32 and bit32.band or bit.band
 local bnot    = bit32 and bit32.bnot or bit.bnot
 local bxor    = bit32 and bit32.bxor or bit.bxor
 local blshift = bit32 and bit32.lshift or bit.blshift
-local upack   = unpack
+local upack   = unpack or table.unpack
 
 local function rrotate(n, b)
 	local s = n/(2^b)
@@ -95,9 +95,9 @@ local function digestblock(w, C)
 end
 
 local mt = {
-	__tostring = function(a) return string.char(unpack(a)) end,
+	__tostring = function(a) return string.char(upack(a)) end,
 	__index = {
-		toHex = function(self) return ("%02x"):rep(#self):format(unpack(self)) end,
+		toHex = function(self) return ("%02x"):rep(#self):format(upack(self)) end,
 		isEqual = function(self, t)
 			if type(t) ~= "table" then return false end
 			if #self ~= #t then return false end

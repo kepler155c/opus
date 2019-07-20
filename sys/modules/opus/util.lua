@@ -21,7 +21,7 @@ end
 
 function Util.byteArrayToHex(tbl)
 	if not tbl then error('byteArrayToHex: invalid table', 2) end
-	return ("%02x"):rep(#tbl):format(unpack(tbl))
+	return ("%02x"):rep(#tbl):format(table.unpack(tbl))
 end
 
 function Util.tryTimed(timeout, f, ...)
@@ -39,10 +39,10 @@ function Util.tryTimes(attempts, f, ...)
 	for _ = 1, attempts do
 		result = { f(...) }
 		if result[1] then
-			return unpack(result)
+			return table.unpack(result)
 		end
 	end
-	return unpack(result)
+	return table.unpack(result)
 end
 
 function Util.timer()
@@ -490,7 +490,7 @@ function Util.loadTable(fname)
 	if not fc then
 		return false, 'Unable to read file'
 	end
-	local s, m = loadstring('return ' .. fc, fname)
+	local s, m = load('return ' .. fc, fname)
 	if s then
 		s, m = pcall(s)
 		if s then
@@ -551,8 +551,9 @@ function Util.run(env, path, ...)
 end
 
 function Util.runFunction(env, fn, ...)
-	setfenv(fn, env)
+	--setfenv(fn, env)
 	setmetatable(env, { __index = _G })
+	fn = load(fn,"util.runfunction",nil,env)
 	return pcall(fn, ...)
 end
 
