@@ -490,7 +490,7 @@ function Util.loadTable(fname)
 	if not fc then
 		return false, 'Unable to read file'
 	end
-	local s, m = load('return ' .. fc, fname)
+	local s, m = loadstring('return ' .. fc, fname)
 	if s then
 		s, m = pcall(s)
 		if s then
@@ -551,9 +551,8 @@ function Util.run(env, path, ...)
 end
 
 function Util.runFunction(env, fn, ...)
-	--setfenv(fn, env)
+	setfenv(fn, env)
 	setmetatable(env, { __index = _G })
-	fn = load(fn,"util.runfunction",nil,env)
 	return pcall(fn, ...)
 end
 

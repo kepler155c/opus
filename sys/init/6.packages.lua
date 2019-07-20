@@ -13,7 +13,7 @@ table.insert(helpPaths, '/sys/help')
 for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
 
-	table.insert(appPaths, 1, packageDir)
+	table.insert(appPaths, 1, '/' .. packageDir)
 	local apiPath = fs.combine(packageDir, 'apis')
 	if fs.exists(apiPath) then
 		fs.mount(fs.combine('rom/modules/main', name), 'linkfs', apiPath)

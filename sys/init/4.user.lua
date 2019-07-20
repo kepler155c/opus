@@ -19,7 +19,7 @@ end
 if not fs.exists('usr/config/shell') then
 	Util.writeTable('usr/config/shell', {
 		aliases  = shell.aliases(),
-		path     = 'usr/apps',
+		path     = '/usr/apps',
 		lua_path = package.path,
 		upgraded = 1,
 	})
@@ -36,7 +36,7 @@ if config.aliases then
 end
 
 local path = config.path and Util.split(config.path, '(.-):') or { }
-table.insert(path, 'sys/apps')
+table.insert(path, '/sys/apps')
 for _, v in pairs(Util.split(shell.path(), '(.-):')) do
 	table.insert(path, v)
 end
