@@ -125,9 +125,9 @@ function Manager:init()
 					focused = true })
 
 			elseif ie and currentPage then
-				--if not self.currentPage.parent.device.side then
+				if not currentPage.parent.device.side then
 					self:click(currentPage, ie.code, button, x, y)
-				--end
+				end
 			end
 		end,
 
@@ -158,21 +158,16 @@ function Manager:init()
 end
 
 function Manager:configure(appName, ...)
-	local options = {
-		device     = { arg = 'd', type = 'string',
-									 desc = 'Device type' },
-		textScale  = { arg = 't', type = 'number',
-									 desc = 'Text scale' },
-	}
 	local defaults = Util.loadTable('usr/config/' .. appName) or { }
 	if not defaults.device then
 		defaults.device = { }
 	end
 
-	Util.getOptions(options, { ... }, true)
+	-- starting a program: gpsServer --display=monitor_3148 --scale=.5 gps
+	local _, options = Util.parse(...)
 	local optionValues = {
-		name = options.device.value,
-		textScale = options.textScale.value,
+		name = options.display,
+		textScale = tonumber(options.scale),
 	}
 
 	Util.merge(defaults.device, optionValues)
@@ -183,7 +178,7 @@ function Manager:configure(appName, ...)
 		if defaults.device.name == 'terminal' then
 			dev = term.current()
 		else
-			dev = peripheral.wrap(defaults.device.name)
+			dev = _G.device[defaults.device.name]
 		end
 
 		if not dev then
