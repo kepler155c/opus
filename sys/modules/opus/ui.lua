@@ -8,9 +8,9 @@ local Util       = require('opus.util')
 local _rep       = string.rep
 local _sub       = string.sub
 local colors     = _G.colors
+local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
-local peripheral = _G.peripheral
 local term       = _G.term
 local textutils  = _G.textutils
 
@@ -178,7 +178,7 @@ function Manager:configure(appName, ...)
 		if defaults.device.name == 'terminal' then
 			dev = term.current()
 		else
-			dev = _G.device[defaults.device.name]
+			dev = device[defaults.device.name]
 		end
 
 		if not dev then
