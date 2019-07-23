@@ -542,7 +542,7 @@ function Browser.associations:eventHandler(event)
 end
 
 --[[-- Startup logic --]]--
-local args = { ... }
+local args = Util.parse(...)
 
 Browser:setDir(args[1] or shell.dir())
 

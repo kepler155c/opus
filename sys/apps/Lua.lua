@@ -376,7 +376,7 @@ function page:executeStatement(statement)
 	end
 end
 
-local args = { ... }
+local args = Util.parse(...)
 if args[1] then
 	command = 'args[1]'
 	sandboxEnv.args = args

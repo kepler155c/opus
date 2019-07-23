@@ -356,7 +356,7 @@ Event.on('modem_message', function(_, side, chan, reply, msg, dist)
 	end
 end)
 
-local args = {...}
+local args = Util.parse(...)
 if args[1] then
 	local id = tonumber(args[1])
 	if id then

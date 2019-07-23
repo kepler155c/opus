@@ -99,6 +99,6 @@ function page:eventHandler(event)
 	end
 end
 
-local args = { ... }
+local args = Util.parse(...)
 UI:setPage(args[1] and topicPage or page, args[1])
 UI:pullEvents()
