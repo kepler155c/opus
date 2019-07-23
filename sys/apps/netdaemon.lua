@@ -14,7 +14,9 @@ if not device.wireless_modem then
 end
 
 print('Net daemon starting')
-device.wireless_modem.closeAll()
+-- don't close as multiple computers may be sharing the
+-- wireless modem
+--device.wireless_modem.closeAll()
 
 for _,file in pairs(fs.list('sys/apps/network')) do
 	local fn, msg = Util.run(_ENV, 'sys/apps/network/' .. file)
