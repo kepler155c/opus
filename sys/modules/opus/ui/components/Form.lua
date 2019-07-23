@@ -60,14 +60,14 @@ function UI.Form:createForm()
 			end
 			if child.formLabel then
 				child.x = self.labelWidth + self.margin - 1
-				child.y = y
+				child.y = child.formIndex and (child.formIndex + self.margin - 1) or y
 				if not child.width and not child.ex then
 					child.ex = -self.margin
 				end
 
 				table.insert(self.children, UI.Text {
 					x = self.margin,
-					y = y,
+					y = child.y,
 					textColor = colors.black,
 					width = #child.formLabel,
 					value = child.formLabel,
