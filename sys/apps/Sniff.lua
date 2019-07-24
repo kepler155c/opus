@@ -73,12 +73,23 @@ local page = UI.Page {
 					event = 'filter_add',
 				},
 				filterAllCheck = UI.Checkbox {
-					x = 13, y = 4,
+					x = 14, y = 8,
 					value = false,
 				},
 				filterAddText = UI.Text {
-					x = 17, y = 4,
+					x = 18, y = 8,
 					value = "Use ID filter",
+				},
+				rangeText = UI.Text {
+					x = 15, y = 2,
+					value = "Distance filter",
+				},
+				rangeEntry = UI.TextEntry {
+					x = 15, y = 3,
+					width = 10,
+					limit = 8,
+					shadowText = 'Range',
+					transform = 'number',
 				},
 			},
 			modemTab = UI.Tab {
@@ -268,8 +279,14 @@ function page.packetSlide:eventHandler(event)
 	return true
 end
 
+function page.packetGrid:getDisplayValues(row)
+	local row = Util.shallowCopy(row)
+	row.distance = Util.toBytes(Util.round(row.distance), 2)
+	return row
+end
+
 function page.packetGrid:addPacket(packet)
-	if not page.paused and (not filterConfig.filterAllCheck.value or filterConfig.filterGrid.values[packet.portid]) then
+	if not page.paused and (packet.distance <= (filterConfig.rangeEntry.value or math.huge)) and (not filterConfig.filterAllCheck.value or filterConfig.filterGrid.values[packet.portid]) then
 		page.index = page.index + 1
 		local _, res = pcall(textutils.serialize, packet.message)
 		packet.packetStr = res:gsub("\n%s*", "")
