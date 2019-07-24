@@ -11,7 +11,7 @@ local _upper = string.upper
 UI.TextEntry = class(UI.Window)
 UI.TextEntry.defaults = {
 	UIElement = 'TextEntry',
-	value = '',
+	--value = '',
 	shadowText = '',
 	focused = false,
 	textColor = colors.white,
@@ -25,7 +25,6 @@ UI.TextEntry.defaults = {
 	}
 }
 function UI.TextEntry:postInit()
-	self.value = tostring(self.value) -- is this right ? shouldnt raw numbers be allowed
 	self.entry = entry({ limit = self.limit, offset = 2 })
 end
 
@@ -35,7 +34,7 @@ function UI.TextEntry:layout()
 end
 
 function UI.TextEntry:setValue(value)
-	self.value = value or ''
+	self.value = value --or ''
 	self.entry:unmark()
 	self.entry.value = tostring(value)
 	self.entry:updateScroll()
@@ -43,7 +42,7 @@ end
 
 function UI.TextEntry:setPosition(pos)
 	self.entry.pos = pos
-	self.entry.value = tostring(self.value)
+	self.entry.value = tostring(self.value or '')
 	self.entry:updateScroll()
 end
 
@@ -54,7 +53,7 @@ function UI.TextEntry:draw()
 		bg = self.backgroundFocusColor
 	end
 
-	local text = tostring(self.value)
+	local text = tostring(self.value or '')
 	if #text > 0 then
 		if self.entry.scroll > 0 then
 			text = text:sub(1 + self.entry.scroll)
@@ -88,7 +87,7 @@ end
 
 function UI.TextEntry:reset()
 	self.entry:reset()
-	self.value = ''
+	self.value = nil--''
 	self:draw()
 	self:updateCursor()
 end
@@ -111,13 +110,15 @@ function UI.TextEntry:_transform(text)
 		return _lower(text)
 	elseif self.transform == 'uppercase' then
 		return _upper(text)
+	elseif self.transform == 'number' then
+		return tonumber(text) --or 0
 	end
 	return text
 end
 
 function UI.TextEntry:eventHandler(event)
-	local text = self.value
-	self.entry.value = tostring(text)
+	local text = self.value --or ''
+	self.entry.value = tostring(text or '')
 	if event.ie and self.entry:process(event.ie) then
 		if self.entry.textChanged then
 			self.value = self:_transform(self.entry.value)
