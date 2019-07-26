@@ -125,7 +125,7 @@ function page.wizard.pages.label:validate()
 end
 
 function page.wizard.pages.password:validate()
-	if #self.newPass.value > 0 then
+	if type(self.newPass.value) == "string" and #self.newPass.value > 0 then
 		Security.updatePassword(SHA.compute(self.newPass.value))
 	end
 	--[[
