@@ -1,14 +1,20 @@
 local fs = _G.fs
 
+local function deleteIfExists(path)
+  if fs.exists(path) then
+    fs.delete(path)
+    print("Deleted outdated file at: "..path)
+  end
+end
 -- cleanup outdated files
-fs.delete('sys/apps/shell')
-fs.delete('sys/etc/app.db')
-fs.delete('sys/extensions')
-fs.delete('sys/network')
-fs.delete('startup')
-fs.delete('sys/apps/system/turtle.lua')
-fs.delete('sys/autorun/gps.lua')
-fs.delete('sys/autorun/gpshost.lua')
-fs.delete('sys/apps/network/redserver.lua')
-if fs.exists('sys/apis') then fs.delete('sys/apis') end
-fs.delete('sys/autorun/apps.lua')
+deleteIfExists('sys/apps/shell')
+deleteIfExists('sys/etc/app.db')
+deleteIfExists('sys/extensions')
+deleteIfExists('sys/network')
+deleteIfExists('startup')
+deleteIfExists('sys/apps/system/turtle.lua')
+deleteIfExists('sys/autorun/gps.lua')
+deleteIfExists('sys/autorun/gpshost.lua')
+deleteIfExists('sys/apps/network/redserver.lua')
+deleteIfExists('sys/apis')
+deleteIfExists('sys/autorun/apps.lua')
