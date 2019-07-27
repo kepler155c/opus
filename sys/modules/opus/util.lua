@@ -46,10 +46,10 @@ function Util.tryTimes(attempts, f, ...)
 end
 
 function Util.timer()
-  local ct = os.clock()
-  return function()
-    return os.clock() - ct
-  end
+	local ct = os.clock()
+	return function()
+		return os.clock() - ct
+	end
 end
 
 Util.Timer = Util.timer -- deprecate
@@ -678,33 +678,33 @@ end
 
 -- https://github.com/MightyPirates/OpenComputers
 function Util.parse(...)
-  local params = table.pack(...)
-  local args = {}
-  local options = {}
-  local doneWithOptions = false
-  for i = 1, params.n do
-    local param = params[i]
-    if not doneWithOptions and type(param) == "string" then
-      if param == "--" then
-        doneWithOptions = true -- stop processing options at `--`
-      elseif param:sub(1, 2) == "--" then
-        local key, value = param:match("%-%-(.-)=(.*)")
-        if not key then
-          key, value = param:sub(3), true
-        end
-        options[key] = value
-      elseif param:sub(1, 1) == "-" and param ~= "-" then
-        for j = 2, string.len(param) do
-          options[string.sub(param, j, j)] = true
-        end
-      else
-        table.insert(args, param)
-      end
-    else
-      table.insert(args, param)
-    end
-  end
-  return args, options
+	local params = table.pack(...)
+	local args = {}
+	local options = {}
+	local doneWithOptions = false
+	for i = 1, params.n do
+		local param = params[i]
+		if not doneWithOptions and type(param) == "string" then
+			if param == "--" then
+				doneWithOptions = true -- stop processing options at `--`
+			elseif param:sub(1, 2) == "--" then
+				local key, value = param:match("%-%-(.-)=(.*)")
+				if not key then
+					key, value = param:sub(3), true
+				end
+				options[key] = value
+			elseif param:sub(1, 1) == "-" and param ~= "-" then
+				for j = 2, string.len(param) do
+					options[string.sub(param, j, j)] = true
+				end
+			else
+				table.insert(args, param)
+			end
+		else
+			table.insert(args, param)
+		end
+	end
+	return args, options
 end
 
 function Util.args(arg)
@@ -797,6 +797,27 @@ function Util.getOptions(options, args, ignoreInvalid)
 		end
 	end
 	return true, Util.size(rawOptions)
+end
+
+-- https://www.lua.org/pil/9.3.html
+function Util.permutation(tbl)
+	local function permgen(a, n)
+		if n == 0 then
+			coroutine.yield(a)
+		else
+			for i=1,n do
+				a[n], a[i] = a[i], a[n]
+				permgen(a, n - 1)
+				a[n], a[i] = a[i], a[n]
+			end
+		end
+	end
+
+	local co = coroutine.create(function() permgen(tbl, #tbl) end)
+	return function()
+		local _, res = coroutine.resume(co)
+		return res
+	end
 end
 
 return Util

@@ -1,3 +1,5 @@
+local Util = require('opus.util')
+
 local GPS = { }
 
 local device = _G.device
@@ -89,19 +91,17 @@ end
 -- end stock gps api
 
 function GPS.trilaterate(tFixes)
-	local pos1, pos2 = trilaterate(tFixes[1], tFixes[2], tFixes[3])
-
-	if pos2 then
-		pos1, pos2 = narrow(pos1, pos2, tFixes[4])
+	local attemps = 0
+	for tFixes in Util.permutation(tFixes) do
+		attemps = attemps + 1
+		local pos1, pos2 = trilaterate(tFixes[4], tFixes[3], tFixes[2])
+		if pos2 then
+			pos1, pos2 = narrow(pos1, pos2, tFixes[1])
+		end
+		if not pos2 then
+			return pos1, attemps
+		end
 	end
-
-	if pos1 and pos2 then
-		print("Ambiguous position")
-		print("Could be "..pos1.x..","..pos1.y..","..pos1.z.." or "..pos2.x..","..pos2.y..","..pos2.z )
-		return
-	end
-
-	return pos1
 end
 
 return GPS
