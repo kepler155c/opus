@@ -8,10 +8,9 @@ local function register(v)
 			local dev = v.getMethodsRemote(name)
 			if dev then
 				dev.name = name
-				dev.side = name
+				dev.side = v.side
 				dev.type = v.getTypeRemote(name)
 				device[name] = dev
-				table.insert(v._children, dev)
 			end
 		end
 	end
