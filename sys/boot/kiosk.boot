@@ -15,6 +15,7 @@ end
 local mon = name and peripheral.wrap(name)
 
 if mon then
+	print("Opus OS is running in Kiosk mode, and the screen will be redirected to the monitor. To undo this, go to the boot option menu by pressing a key while booting, then select the option 2.")
 	term.redirect(mon)
 	mon.setTextScale(tonumber(settings.get('kiosk.textscale')) or 1)
 
