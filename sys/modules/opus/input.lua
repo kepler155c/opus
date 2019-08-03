@@ -10,6 +10,17 @@ local modifiers = Util.transpose {
 	keys.leftAlt,   keys.rightAlt,
 }
 
+if not keyboard then -- not running under Opus OS
+	keyboard = { state = { } }
+
+	local Event = require('opus.event')
+	Event.on({ 'key', 'key_up' }, function(event, code)
+		if modifiers[code] then
+			keyboard.state[code] = event == 'key'
+		end
+	end)
+end
+
 local input = { }
 
 function input:modifierPressed()
