@@ -15,5 +15,4 @@
 ## Install
 ```
 pastebin run uzghlbnc
-reboot
 ```
