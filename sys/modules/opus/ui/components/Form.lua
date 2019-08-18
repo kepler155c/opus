@@ -100,6 +100,7 @@ function UI.Form:validateField(field)
 		end
 	end
 	if field.validate == 'numeric' then
+		field.value = field.value or ''
 		if #tostring(field.value) > 0 then
 			if not tonumber(field.value) then
 				return false, 'Invalid number'
