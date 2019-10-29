@@ -3,6 +3,7 @@ local parentShell = _ENV.shell
 _ENV.shell = { }
 
 local fs         = _G.fs
+local settings   = _G.settings
 local shell      = _ENV.shell
 
 local sandboxEnv = setmetatable({ }, { __index = _G })
@@ -672,6 +673,10 @@ local history = History.load('usr/.shell_history', 25)
 
 term.setBackgroundColor(_colors.backgroundColor)
 term.clear()
+
+if settings.get("motd.enabled") then
+	shell.run("motd")
+end
 
 while not bExit do
 	if config.displayDirectory then
