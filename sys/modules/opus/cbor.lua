@@ -14,7 +14,7 @@ end
 
 local setmetatable = setmetatable;
 local getmetatable = getmetatable;
-local dbg_getmetatable = debug.getmetatable;
+local dbg_getmetatable = debug and debug.getmetatable;
 local assert = assert;
 local error = error;
 local type = type;

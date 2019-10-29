@@ -195,7 +195,7 @@ end
 function Entry:paste(ie)
 	if #ie.text > 0 then
 		if self.mark.active then
-      self:delete()
+			self:delete()
 		end
 		self:insertText(self.pos, ie.text)
 	end
@@ -347,16 +347,16 @@ local mappings = {
 --	[ 'control-y'           ] = Entry.paste,  -- well this won't work...
 
 	[ 'mouse_doubleclick'   ] = Entry.markWord,
-  [ 'shift-left'          ] = Entry.markLeft,
-  [ 'shift-right'         ] = Entry.markRight,
-  [ 'mouse_down'          ] = Entry.markAnchor,
-  [ 'mouse_drag'          ] = Entry.markTo,
-  [ 'shift-mouse_click'   ] = Entry.markTo,
-  [ 'control-a'           ] = Entry.markAll,
-  [ 'control-shift-right' ] = Entry.markNextWord,
-  [ 'control-shift-left'  ] = Entry.markPrevWord,
-  [ 'shift-end'           ] = Entry.markEnd,
-  [ 'shift-home'          ] = Entry.markHome,
+	[ 'shift-left'          ] = Entry.markLeft,
+	[ 'shift-right'         ] = Entry.markRight,
+	[ 'mouse_down'          ] = Entry.markAnchor,
+	[ 'mouse_drag'          ] = Entry.markTo,
+	[ 'shift-mouse_click'   ] = Entry.markTo,
+	[ 'control-a'           ] = Entry.markAll,
+	[ 'control-shift-right' ] = Entry.markNextWord,
+	[ 'control-shift-left'  ] = Entry.markPrevWord,
+	[ 'shift-end'           ] = Entry.markEnd,
+	[ 'shift-home'          ] = Entry.markHome,
 }
 
 function Entry:process(ie)
@@ -369,7 +369,7 @@ function Entry:process(ie)
 		local line = self.value
 
 		local wasMarking = self.mark.continue
-    self.mark.continue = false
+		self.mark.continue = false
 
 		action(self, ie)
 
@@ -378,7 +378,7 @@ function Entry:process(ie)
 		self:updateScroll()
 
 		if not self.mark.continue and wasMarking then
-      self:unmark()
+			self:unmark()
 		end
 
 		return true
