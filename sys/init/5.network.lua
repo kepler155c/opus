@@ -39,7 +39,7 @@ local function setModem(dev)
 	end
 end
 
--- create a psuedo-device named 'wireleess_modem'
+-- create a psuedo-device named 'wireless_modem'
 kernel.hook('device_attach', function(_, eventData)
 	local dev = device[eventData[1]]
 	if dev and dev.type == 'modem' then

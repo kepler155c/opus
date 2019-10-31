@@ -20,6 +20,29 @@ function Packages:installed()
 	return list
 end
 
+function Packages:installedSorted()
+	local list = { }
+
+	for k, v in pairs(self.installed()) do
+		v.name = k
+		v.deps = { }
+		table.insert(list, v)
+		for _, v2 in pairs(v.required or { }) do
+			v.deps[v2] = true
+		end
+	end
+
+	table.sort(list, function(a, b)
+		return not not (b.deps and b.deps[a.name])
+	end)
+
+	table.sort(list, function(a, b)
+		return not (a.deps and a.deps[b.name])
+	end)
+
+	return list
+end
+
 function Packages:list()
 	if not fs.exists('usr/config/packages') then
 		self:downloadList()

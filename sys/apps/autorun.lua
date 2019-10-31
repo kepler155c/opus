@@ -47,8 +47,8 @@ local function runDir(directory)
 end
 
 runDir('sys/autorun')
-for name in pairs(Packages:installed()) do
-	local packageDir = 'packages/' .. name .. '/autorun'
+for _, package in pairs(Packages:installedSorted()) do
+	local packageDir = 'packages/' .. package.name .. '/autorun'
 	runDir(packageDir)
 end
 runDir('usr/autorun')

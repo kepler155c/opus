@@ -58,6 +58,9 @@ local page = UI.Page {
 		},
 	},
 	statusBar = UI.StatusBar { },
+	accelerators = {
+		[ 'control-q' ] = 'quit',
+	},
 }
 
 function page:loadPackages()
