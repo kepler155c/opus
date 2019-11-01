@@ -179,6 +179,10 @@ function kernel.run(args)
 end
 
 function kernel.raise(uid)
+	if kernel.getFocused() and kernel.getFocused().pinned then
+		return false
+	end
+
 	local routine = Util.find(kernel.routines, 'uid', uid)
 
 	if routine then

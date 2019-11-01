@@ -264,7 +264,7 @@ kernel.hook('multishell_redraw', function()
 		write(currentTab.sx - 1,
 			' ' .. currentTab.title:sub(1, currentTab.width - 1) .. ' ',
 			_colors.focusBackgroundColor, _colors.focusTextColor)
-		if not currentTab.isOverview then
+		if not currentTab.noTerminate then
 			write(w, closeInd, _colors.backgroundColor, _colors.focusTextColor)
 		end
 	end
@@ -340,6 +340,7 @@ kernel.hook('kernel_ready', function()
 	overviewId = multishell.openTab({
 		path = config.launcher or 'sys/apps/Overview.lua',
 		isOverview = true,
+		noTerminate = true,
 		focused = true,
 		title = '+',
 		env = env,

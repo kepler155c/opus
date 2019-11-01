@@ -7,7 +7,7 @@ local tween = {
 
 		Copyright (c) 2014 Enrique García Cota, Yuichi Tateno, Emmanuel Oga
 
-		Licence details: https://opensource.org/licenses/MIT
+		license details: https://opensource.org/licenses/MIT
 	]]
 }
 
