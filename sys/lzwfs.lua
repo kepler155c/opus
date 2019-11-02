@@ -11,7 +11,7 @@
 -- 1 is reserved for compression exclusion
 --    fs.addException('startup.lua', 1)
 
--- To renable compression for a file 
+-- To renable compression for a file
 --    fs.removeException('startup.lua', 1)
 
 -- Restores file system
@@ -22,6 +22,9 @@ local type    = type
 local sub     = string.sub
 local tconcat = table.concat
 local tinsert = table.insert
+
+local bit = _G.bit
+local fs  = _G.fs
 
 local SIGC = 'LZWC'
 local IGNORE_COMPRESSION = 1 -- support other bits as well
@@ -157,7 +160,7 @@ local function decompress(input)
     return tconcat(result)
 end
 
-function split(str, pattern)
+local function split(str, pattern)
 	pattern = pattern or "(.-)\n"
 	local t = {}
 	local function helper(line) tinsert(t, line) return "" end
@@ -219,7 +222,7 @@ function fs.open(fname, flags)
 			end,
             flush = function()
                 -- this isn't gonna work...
-                // f.write(compress(tconcat(c)))
+                -- f.write(compress(tconcat(c)))
                 f.flush();
 			end,
             close = function()

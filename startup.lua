@@ -13,10 +13,13 @@
 			description:	array of menu entries (see .startup.boot for examples)
 ]]
 
-local colors   = _G.colors
-local os       = _G.os
-local settings = _G.settings
-local term     = _G.term
+local colors    = _G.colors
+local fs        = _G.fs
+local keys      = _G.keys
+local os        = _G.os
+local settings  = _G.settings
+local term      = _G.term
+local textutils = _G.textutils
 
 local function loadBootOptions()
 	if not fs.exists('.startup.boot') then
@@ -87,19 +90,19 @@ local function startupMenu()
 
 		if key == keys.enter or key == keys.right then
 			return selected
-		elseif key == keys.down then 
-			if selected == #bootOptions.menu then 
-				selected = 0 
+		elseif key == keys.down then
+			if selected == #bootOptions.menu then
+				selected = 0
 			end
 			selected = selected + 1
-		elseif key == keys.up then 
-			if selected == 1 then 
-				selected = #bootOptions.menu + 1 
+		elseif key == keys.up then
+			if selected == 1 then
+				selected = #bootOptions.menu + 1
 			end
 			selected = selected - 1
 		elseif event == 'char' then
 			key = tonumber(key) or 0
-			if bootOptions.menu[key] then 
+			if bootOptions.menu[key] then
 				return key
 			end
 		end
@@ -145,12 +148,12 @@ local function splash()
 	term.write(str)
 end
 
-term.clear()
-splash()
-
 for _, v in pairs(bootOptions.preload) do
 	os.run(_ENV, v)
 end
+
+term.clear()
+splash()
 
 local timerId = os.startTimer(bootOptions.delay)
 while true do

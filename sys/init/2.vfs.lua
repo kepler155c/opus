@@ -1,3 +1,5 @@
+local fs = _G.fs
+
 if fs.native then
 	return
 end
@@ -7,8 +9,6 @@ local Util = require('opus.util')
 
 -- TODO: support getDrive for virtual nodes
 
-local fs = _G.fs
-
 fs.native = Util.shallowCopy(fs)
 
 local fstypes = { }
@@ -16,7 +16,7 @@ local nativefs = { }
 
 for k,fn in pairs(fs) do
 	if type(fn) == 'function' then
-		nativefs[k] = function(node, ...)
+		nativefs[k] = function(_, ...)
 			return fn(...)
 		end
 	end
@@ -340,8 +340,8 @@ function fs.unmount(path)
 	end
 end
 
-function fs.registerType(name, fs)
-	fstypes[name] = fs
+function fs.registerType(name, vfs)
+	fstypes[name] = vfs
 end
 
 function fs.getTypes()
