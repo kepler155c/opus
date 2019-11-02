@@ -19,6 +19,9 @@ function linkfs.mount(_, source)
 		error('Source is required')
 	end
 	source = fs.combine(source, '')
+	if not fs.exists(source) then
+		error('Source is missing')
+	end
 	if fs.isDir(source) then
 		return {
 			source = source,

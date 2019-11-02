@@ -152,7 +152,7 @@ function Canvas:write(x, y, text, bg, fg)
 		bg = _rep(self.palette[bg], #text)
 	end
 	if fg then
-		fg = _rep(self.palette[fg], #text)
+		fg = _rep(self.palette[fg] or self.palette[1], #text)
 	end
 	self:blit(x, y, text, bg, fg)
 end
