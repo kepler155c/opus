@@ -220,6 +220,8 @@ function fs.find(spec) -- not optimized
 --  local files = node.fs.find(node, spec)
 	local files = { }
 	-- method from https://github.com/N70/deltaOS/blob/dev/vfs
+
+	-- REVISIT - see globbing in shellex package
 	local function recurse_spec(results, path, spec)
 		local segment = spec:match('([^/]*)'):gsub('/', '')
 		local pattern = '^' .. segment:gsub("[%.%[%]%(%)%%%+%-%?%^%$]","%%%1"):gsub("%z","%%z"):gsub("%*","[^/]-") .. '$'
@@ -303,7 +305,8 @@ function fs.loadTab(path)
 	local mounts = Util.readFile(path)
 	if mounts then
 		for _,l in ipairs(Util.split(mounts)) do
-			if l:sub(1, 1) ~= '#' then
+			l = Util.trim(l)
+			if #l > 0 and l:sub(1, 1) ~= '#' then
 				local s, m = pcall(function()
 					fs.mount(table.unpack(Util.matches(l)))
 				end)

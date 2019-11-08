@@ -11,7 +11,7 @@ if _G.http.websocket then
 
 	local tab = UI.Tab {
 		tabTitle = 'Cloud',
-		description = 'Cloud catcher options',
+		description = 'Cloud Catcher options',
 		key = UI.TextEntry {
 			x = 3, ex = -3, y = 2,
 			limit = 32,
