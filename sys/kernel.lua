@@ -1,5 +1,6 @@
 _G.requireInjector(_ENV)
 
+local Array    = require('opus.array')
 local Terminal = require('opus.terminal')
 local Util     = require('opus.util')
 
@@ -55,7 +56,7 @@ end
 function kernel.unhook(event, fn)
 	local eventHooks = kernel.hooks[event]
 	if eventHooks then
-		Util.removeByValue(eventHooks, fn)
+		Array.removeByValue(eventHooks, fn)
 		if #eventHooks == 0 then
 			kernel.hooks[event] = nil
 		end
@@ -107,7 +108,7 @@ function Routine:resume(event, ...)
 			error(result, -1)
 		end
 		if coroutine.status(self.co) == 'dead' then
-			Util.removeByValue(kernel.routines, self)
+			Array.removeByValue(kernel.routines, self)
 			if #kernel.routines > 0 then
 				switch(kernel.routines[1])
 			end
@@ -188,7 +189,7 @@ function kernel.raise(uid)
 	if routine then
 		local previous = kernel.routines[1]
 		if routine ~= previous then
-			Util.removeByValue(kernel.routines, routine)
+			Array.removeByValue(kernel.routines, routine)
 			table.insert(kernel.routines, 1, routine)
 		end
 
@@ -211,7 +212,7 @@ function kernel.lower(uid)
 			end
 		end
 
-		Util.removeByValue(kernel.routines, routine)
+		Array.removeByValue(kernel.routines, routine)
 		table.insert(kernel.routines, routine)
 		return true
 	end
@@ -229,7 +230,17 @@ end
 function kernel.event(event, eventData)
 	local stopPropagation
 
-	local eventHooks = kernel.hooks[event]
+	local eventHooks = kernel.hooks['*']
+	if eventHooks then
+		for i = #eventHooks, 1, -1 do
+			stopPropagation = eventHooks[i](event, eventData)
+			if stopPropagation then
+				break
+			end
+		end
+	end
+
+	eventHooks = kernel.hooks[event]
 	if eventHooks then
 		for i = #eventHooks, 1, -1 do
 			stopPropagation = eventHooks[i](event, eventData)

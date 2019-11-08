@@ -48,6 +48,10 @@ function ramfs.getDrive()
 	return 'ram'
 end
 
+function ramfs.getFreeSpace()
+	return math.huge
+end
+
 function ramfs.list(node, dir)
 	if node.nodes and node.mountPoint == dir then
 		local files = { }

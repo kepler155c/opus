@@ -20,6 +20,7 @@ local config = Config.load('Files', {
 })
 config.associations = config.associations or {
 	nft = 'pain',
+	txt = 'edit',
 }
 
 local copied = { }
