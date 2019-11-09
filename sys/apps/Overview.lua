@@ -1,3 +1,4 @@
+local Alt      = require('opus.alternate')
 local class    = require('opus.class')
 local Config   = require('opus.config')
 local Event    = require('opus.event')
@@ -420,13 +421,13 @@ function page:eventHandler(event)
 		shell.switchTab(shell.openTab(event.button.app.run))
 
 	elseif event.type == 'shell' then
-		shell.switchTab(shell.openTab('sys/apps/shell.lua'))
+		shell.switchTab(shell.openTab(Alt.get('shell')))
 
 	elseif event.type == 'lua' then
-		shell.switchTab(shell.openTab('sys/apps/Lua.lua'))
+		shell.switchTab(shell.openTab(Alt.get('lua')))
 
 	elseif event.type == 'files' then
-		shell.switchTab(shell.openTab('sys/apps/Files.lua'))
+		shell.switchTab(shell.openTab(Alt.get('files')))
 
 	elseif event.type == 'focus_change' then
 		if event.focused.parent.UIElement == 'Icon' then

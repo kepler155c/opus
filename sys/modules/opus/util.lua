@@ -621,17 +621,17 @@ end
 
 -- http://snippets.luacode.org/?p=snippets/trim_whitespace_from_string_76
 function Util.trim(s)
-	return s:find'^%s*$' and '' or s:match'^%s*(.*%S)'
+	return s:find('^%s*$') and '' or s:match('^%s*(.*%S)')
 end
 
 -- trim whitespace from left end of string
 function Util.triml(s)
-	return s:match'^%s*(.*)'
+	return s:match('^%s*(.*)')
 end
 
 -- trim whitespace from right end of string
 function Util.trimr(s)
-	return s:find'^%s*$' and '' or s:match'^(.*%S)'
+	return s:find('^%s*$') and '' or s:match('^(.*%S)')
 end
 -- end http://snippets.luacode.org/?p=snippets/trim_whitespace_from_string_76
 

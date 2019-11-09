@@ -1,3 +1,4 @@
+local Alt    = require('opus.alternate')
 local Event  = require('opus.event')
 local Socket = require('opus.socket')
 local Util   = require('opus.util')
@@ -46,7 +47,7 @@ local function telnetHost(socket, mode)
 		title = mode .. ' client',
 		hidden = true,
 		co = coroutine.create(function()
-			Util.run(_ENV, 'sys/apps/shell.lua', table.unpack(termInfo.program))
+			Util.run(_ENV, Alt.get('shell'), table.unpack(termInfo.program))
 			if socket.queue then
 				socket:write(socket.queue)
 			end
