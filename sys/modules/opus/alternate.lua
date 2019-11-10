@@ -1,3 +1,4 @@
+local Array  = require('opus.array')
 local Config = require('opus.config')
 local Util   = require('opus.util')
 
@@ -33,7 +34,19 @@ end
 function Alt.set(key, value)
     local config = getConfig()
 
+    Alt.addChoice(key, value)
+
     config.default[key] = value
+    Config.update('alternate', config)
+end
+
+function Alt.remove(key, value)
+    local config = getConfig()
+
+    Array.removeByValue(config.choices[key], value)
+    if config.default[key] == value then
+        config.default[key] = config.choices[key][1]
+    end
     Config.update('alternate', config)
 end
 
