@@ -44,7 +44,7 @@ function Alt.addChoice(key, value)
         config.choices[key] = { }
     end
     if not Util.contains(config.choices[key], value) then
-        config.choices[key] = value
+        table.insert(config.choices[key], value)
         Config.update('alternate', config)
     end
 end

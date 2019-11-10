@@ -9,6 +9,12 @@ local term     = _G.term
 local args     = { ... }
 local action   = table.remove(args, 1)
 
+local function makeSandbox()
+	local sandbox = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
+	_G.requireInjector(sandbox)
+	return sandbox
+end
+
 local function Syntax(msg)
 	_G.printError(msg)
 	print('\nSyntax: Package list | install [name] ... |  update [name] | uninstall [name]')
@@ -71,6 +77,17 @@ local function install(name, isUpdate, ignoreDeps)
 		end
 		showProgress()
 	end)
+
+	if not isUpdate then
+		if manifest.install then
+			local s, m = pcall(function()
+				load(manifest.install, 'install', nil, makeSandbox())
+			end)
+			if not s and m then
+				_G.printError(m)
+			end
+		end
+	end
 end
 
 if action == 'list' then
@@ -120,6 +137,15 @@ if action == 'uninstall' then
 	local name = args[1] or Syntax('Invalid package')
 	if not Packages:isInstalled(name) then
 		error('Package is not installed')
+	end
+	local manifest = Packages:getManifest(name)
+	if manifest.uninstall then
+		local s, m = pcall(function()
+			load(manifest.uninstall, 'uninstall', nil, makeSandbox())
+		end)
+		if not s and m then
+			_G.printError(m)
+		end
 	end
 	local packageDir = fs.combine('packages', name)
 	fs.delete(packageDir)
