@@ -81,7 +81,7 @@ local function install(name, isUpdate, ignoreDeps)
 	if not isUpdate then
 		if manifest.install then
 			local s, m = pcall(function()
-				load(manifest.install, 'install', nil, makeSandbox())
+				load(manifest.install, 'install', nil, makeSandbox())()
 			end)
 			if not s and m then
 				_G.printError(m)
@@ -141,7 +141,7 @@ if action == 'uninstall' then
 	local manifest = Packages:getManifest(name)
 	if manifest.uninstall then
 		local s, m = pcall(function()
-			load(manifest.uninstall, 'uninstall', nil, makeSandbox())
+			load(manifest.uninstall, 'uninstall', nil, makeSandbox())()
 		end)
 		if not s and m then
 			_G.printError(m)
