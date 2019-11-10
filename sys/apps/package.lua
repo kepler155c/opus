@@ -41,6 +41,21 @@ local function progress(max)
 	end
 end
 
+local function runScript(script)
+	if script then
+		local s, m = pcall(function()
+			local fn, m = load(script, 'script', nil, makeSandbox())
+			if not fn then
+				error(m)
+			end
+			fn()
+		end)
+		if not s and m then
+			_G.printError(m)
+		end
+	end
+end
+
 local function install(name, isUpdate, ignoreDeps)
 	local manifest = Packages:downloadManifest(name) or error('Invalid package')
 
@@ -79,14 +94,7 @@ local function install(name, isUpdate, ignoreDeps)
 	end)
 
 	if not isUpdate then
-		if manifest.install then
-			local s, m = pcall(function()
-				load(manifest.install, 'install', nil, makeSandbox())()
-			end)
-			if not s and m then
-				_G.printError(m)
-			end
-		end
+		runScript(manifest.install)
 	end
 end
 
@@ -138,15 +146,10 @@ if action == 'uninstall' then
 	if not Packages:isInstalled(name) then
 		error('Package is not installed')
 	end
+
 	local manifest = Packages:getManifest(name)
-	if manifest.uninstall then
-		local s, m = pcall(function()
-			load(manifest.uninstall, 'uninstall', nil, makeSandbox())()
-		end)
-		if not s and m then
-			_G.printError(m)
-		end
-	end
+	runScript(manifest.uninstall)
+
 	local packageDir = fs.combine('packages', name)
 	fs.delete(packageDir)
 	print('removed: ' .. packageDir)

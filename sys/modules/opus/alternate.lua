@@ -6,7 +6,7 @@ local function getConfig()
 	return Config.load('alternate', {
 		shell = {
 			'sys/apps/shell.lua',
-			'rom/programs/shell',
+			'rom/programs/shell.lua',
 		},
 		lua = {
 			'sys/apps/Lua.lua',

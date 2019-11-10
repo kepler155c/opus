@@ -1,8 +1,11 @@
+local Alt = require('opus.alternate')
+
 local kernel = _G.kernel
 local os     = _G.os
 local shell  = _ENV.shell
 
 local launcherTab = kernel.getCurrent()
+launcherTab.noFocus = true
 
 kernel.hook('kernel_focus', function(_, eventData)
 	local focusTab = eventData and eventData[1]
@@ -17,7 +20,7 @@ kernel.hook('kernel_focus', function(_, eventData)
 			end
 		end
 		if nextTab == launcherTab then
-			shell.switchTab(shell.openTab('sys/apps/shell.lua'))
+			shell.switchTab(shell.openTab(Alt.get('shell')))
 		else
 			shell.switchTab(nextTab.uid)
 		end

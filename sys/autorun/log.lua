@@ -54,6 +54,7 @@ if multishell and multishell.openTab then
 	multishell.openTab({
 		title = 'System Log',
 		fn = systemLog,
+		noTerminate = true,
 		hidden = true,
 	})
 else

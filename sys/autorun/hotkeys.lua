@@ -42,7 +42,7 @@ keyboard.addHotkey('control-tab', function()
 		return a.uid < b.uid
 	end
 	for _,tab in Util.spairs(tabs, compareTab) do
-		if not tab.hidden then
+		if not tab.hidden and not tab.noFocus then
 			table.insert(visibleTabs, tab)
 		end
 	end
