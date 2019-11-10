@@ -32,10 +32,9 @@ function Alt.get(key)
 end
 
 function Alt.set(key, value)
-    local config = getConfig()
-
     Alt.addChoice(key, value)
 
+    local config = getConfig()
     config.default[key] = value
     Config.update('alternate', config)
 end
