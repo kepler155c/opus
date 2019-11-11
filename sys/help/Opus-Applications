@@ -1,0 +1,30 @@
+Opus applications are grouped into packages with a common theme.
+
+To install a package, use either the System -> Packages program or the package command line program.
+
+Shell usage:
+
+> package list
+> package install <name>
+> package update <name>
+> package uninstall <name>
+
+Package definitions are located in usr/apps/packages. This file can be modified to add custom packages.
+
+Current stable packages
+=======================
+
+* core
+Programming and miscellaneous applications. Also contains drivers needed for other packages.
+
+* builder
+A program for creating structures from schematic files using a turtle (requires core).
+
+* farms
+Various programs for farming resources (wood, crops, animals).
+
+* milo
+An A/E like storage implementation (requires core).
+
+* miners
+Mining programs.

@@ -1,8 +1,5 @@
-_G.requireInjector(_ENV)
-
-local Event = require('event')
-local UI    = require('ui')
-local Util  = require('util')
+local Event = require('opus.event')
+local UI    = require('opus.ui')
 
 local kernel     = _G.kernel
 local multishell = _ENV.multishell
@@ -29,7 +26,7 @@ local page = UI.Page {
 		autospace = true,
 	},
 	accelerators = {
-		q = 'quit',
+		[ 'control-q' ] = 'quit',
 		space = 'activate',
 		t = 'terminate',
 	},
@@ -51,15 +48,15 @@ function page:eventHandler(event)
 end
 
 function page.grid:getDisplayValues(row)
-	row = Util.shallowCopy(row)
 	local elapsed = os.clock()-row.timestamp
-	if elapsed < 60 then
-		row.timestamp = string.format("%ds", math.floor(elapsed))
-	else
-		row.timestamp = string.format("%sm", math.floor(elapsed/6)/10)
-	end
-	row.status = row.isDead and 'error' or coroutine.status(row.co)
-	return row
+	return {
+		uid = row.uid,
+		title = row.title,
+		status = row.isDead and 'error' or coroutine.status(row.co),
+		timestamp = elapsed < 60 and
+			string.format("%ds", math.floor(elapsed)) or
+			string.format("%sm", math.floor(elapsed/6)/10),
+	}
 end
 
 Event.onInterval(1, function()

@@ -1,10 +1,8 @@
-_G.requireInjector(_ENV)
-
-local Crypto   = require('crypto')
-local Security = require('security')
-local SHA1     = require('sha1')
-local Socket   = require('socket')
-local Terminal = require('terminal')
+local Crypto   = require('opus.crypto.chacha20')
+local Security = require('opus.security')
+local SHA      = require('opus.crypto.sha2')
+local Socket   = require('opus.socket')
+local Terminal = require('opus.terminal')
 
 local os = _G.os
 
@@ -29,15 +27,16 @@ if not password then
 end
 
 print('connecting...')
-local socket, msg = Socket.connect(remoteId, 19)
+local trustId = '01c3ba27fe01383a03a1785276d99df27c3edcef68fbf231ca'
+local socket, msg = Socket.connect(remoteId, 19, { identifier = trustId })
 
 if not socket then
 	error(msg)
 end
 
-local publicKey = Security.getPublicKey()
+local identifier = Security.getIdentifier()
 
-socket:write(Crypto.encrypt({ pk = publicKey, dh = os.getComputerID() }, SHA1.sha1(password)))
+socket:write(Crypto.encrypt({ pk = identifier, dh = os.getComputerID() }, SHA.compute(password)))
 
 local data = socket:read(2)
 socket:close()

@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 --[[
 	Adds a task and the control-d hotkey to view the kernel log.
 --]]
@@ -13,23 +11,27 @@ local term       = _G.term
 local function systemLog()
 	local routine = kernel.getCurrent()
 
-	local w, h = kernel.window.getSize()
-	kernel.window.reposition(1, 2, w, h - 1)
+	if multishell and multishell.openTab then
+		local w, h = kernel.window.getSize()
+		kernel.window.reposition(1, 2, w, h - 1)
 
-	routine.terminal = kernel.window
-	routine.window = kernel.window
-	term.redirect(kernel.window)
+		routine.terminal = kernel.window
+		routine.window = kernel.window
+		term.redirect(kernel.window)
+	end
 
 	kernel.hook('mouse_scroll', function(_, eventData)
 		local dir, y = eventData[1], eventData[3]
 
 		if y > 1 then
 			local currentTab = kernel.getFocused()
-			if currentTab.terminal.scrollUp and not currentTab.terminal.noAutoScroll then
-				if dir == -1 then
-					currentTab.terminal.scrollUp()
-				else
-					currentTab.terminal.scrollDown()
+			if currentTab == routine then
+				if currentTab.terminal.scrollUp and not currentTab.terminal.noAutoScroll then
+					if dir == -1 then
+						currentTab.terminal.scrollUp()
+					else
+						currentTab.terminal.scrollDown()
+					end
 				end
 			end
 		end
@@ -48,8 +50,16 @@ local function systemLog()
 	keyboard.removeHotkey('control-d')
 end
 
-multishell.openTab({
-	title = 'System Log',
-	fn = systemLog,
-	hidden = true,
-})
+if multishell and multishell.openTab then
+	multishell.openTab({
+		title = 'System Log',
+		fn = systemLog,
+		noTerminate = true,
+		hidden = true,
+	})
+else
+	kernel.run({
+		title = 'Syslog',
+		fn = systemLog,
+	})
+end

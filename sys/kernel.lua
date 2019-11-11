@@ -1,7 +1,8 @@
 _G.requireInjector(_ENV)
 
-local Terminal = require('terminal')
-local Util     = require('util')
+local Array    = require('opus.array')
+local Terminal = require('opus.terminal')
+local Util     = require('opus.util')
 
 _G.kernel = {
 	UID = 0,
@@ -18,9 +19,9 @@ local window = _G.window
 
 local w, h = term.getSize()
 kernel.terminal = term.current()
-kernel.window = window.create(kernel.terminal, 1, 1, w, h, false)
 
-Terminal.scrollable(kernel.window)
+kernel.window = Terminal.window(kernel.terminal, 1, 1, w, h, false)
+kernel.window.setMaxScroll(100)
 
 local focusedRoutineEvents = Util.transpose {
 	'char', 'key', 'key_up',
@@ -28,16 +29,11 @@ local focusedRoutineEvents = Util.transpose {
 	'paste', 'terminate',
 }
 
-_G._debug = function(pattern, ...)
+_G._syslog = function(pattern, ...)
 	local oldTerm = term.redirect(kernel.window)
+	kernel.window.scrollBottom()
 	Util.print(pattern, ...)
 	term.redirect(oldTerm)
-end
-
-if not _G.debug then -- don't clobber lua debugger
-	function _G.debug(...)
-		_G._debug(...)
-	end
 end
 
 -- any function that runs in a kernel hook does not run in
@@ -60,7 +56,7 @@ end
 function kernel.unhook(event, fn)
 	local eventHooks = kernel.hooks[event]
 	if eventHooks then
-		Util.removeByValue(eventHooks, fn)
+		Array.removeByValue(eventHooks, fn)
 		if #eventHooks == 0 then
 			kernel.hooks[event] = nil
 		end
@@ -68,6 +64,23 @@ function kernel.unhook(event, fn)
 end
 
 local Routine = { }
+
+local function switch(routine, previous)
+	if routine then
+		if previous and previous.window then
+			previous.window.setVisible(false)
+			if previous.hidden then
+				kernel.lower(previous.uid)
+			end
+		end
+
+		if routine and routine.window then
+			routine.window.setVisible(true)
+		end
+
+		os.queueEvent('kernel_focus', routine.uid, previous and previous.uid)
+	end
+end
 
 function Routine:resume(event, ...)
 	if not self.co or coroutine.status(self.co) == 'dead' then
@@ -92,12 +105,12 @@ function Routine:resume(event, ...)
 		term.redirect(previousTerm)
 
 		if not ok and self.haltOnError then
-			error(result)
+			error(result, -1)
 		end
 		if coroutine.status(self.co) == 'dead' then
-			Util.removeByValue(kernel.routines, self)
+			Array.removeByValue(kernel.routines, self)
 			if #kernel.routines > 0 then
-				os.queueEvent('kernel_focus', kernel.routines[1].uid)
+				switch(kernel.routines[1])
 			end
 			if self.haltOnExit then
 				kernel.halt()
@@ -115,6 +128,10 @@ function kernel.getCurrent()
 	return kernel.running
 end
 
+function kernel.getShell()
+	return shell
+end
+
 function kernel.newRoutine(args)
 	kernel.UID = kernel.UID + 1
 
@@ -123,6 +140,7 @@ function kernel.newRoutine(args)
 		timestamp = os.clock(),
 		terminal = kernel.window,
 		window = kernel.window,
+		title = 'untitled',
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
@@ -162,15 +180,22 @@ function kernel.run(args)
 end
 
 function kernel.raise(uid)
+	if kernel.getFocused() and kernel.getFocused().pinned then
+		return false
+	end
+
 	local routine = Util.find(kernel.routines, 'uid', uid)
 
 	if routine then
 		local previous = kernel.routines[1]
 		if routine ~= previous then
-			Util.removeByValue(kernel.routines, routine)
+			Array.removeByValue(kernel.routines, routine)
 			table.insert(kernel.routines, 1, routine)
 		end
-		os.queueEvent('kernel_focus', routine.uid, previous and previous.uid)
+
+		switch(routine, previous)
+--		local previous = eventData[2]
+--			local routine = kernel.find(previous)
 		return true
 	end
 	return false
@@ -187,7 +212,7 @@ function kernel.lower(uid)
 			end
 		end
 
-		Util.removeByValue(kernel.routines, routine)
+		Array.removeByValue(kernel.routines, routine)
 		table.insert(kernel.routines, routine)
 		return true
 	end
@@ -205,7 +230,17 @@ end
 function kernel.event(event, eventData)
 	local stopPropagation
 
-	local eventHooks = kernel.hooks[event]
+	local eventHooks = kernel.hooks['*']
+	if eventHooks then
+		for i = #eventHooks, 1, -1 do
+			stopPropagation = eventHooks[i](event, eventData)
+			if stopPropagation then
+				break
+			end
+		end
+	end
+
+	eventHooks = kernel.hooks[event]
 	if eventHooks then
 		for i = #eventHooks, 1, -1 do
 			stopPropagation = eventHooks[i](event, eventData)
@@ -254,7 +289,7 @@ local function init(...)
 	local runLevel = #args > 0 and 6 or 7
 
 	print('Starting Opus OS')
-	local dir = 'sys/extensions'
+	local dir = 'sys/init'
 	local files = fs.list(dir)
 	table.sort(files)
 	for _,file in ipairs(files) do
@@ -272,13 +307,19 @@ local function init(...)
 
 	if args[1] then
 		kernel.hook('kernel_ready', function()
+
+			term.redirect(kernel.window)
+			shell.run('sys/apps/autorun.lua')
+
+			local shellWindow = window.create(kernel.terminal, 1, 1, w, h, false)
 			local s, m = kernel.run({
 				title = args[1],
-				path = 'sys/apps/shell',
+				path = 'sys/apps/shell.lua',
 				args = args,
 				haltOnExit = true,
 				haltOnError = true,
-				terminal = kernel.terminal,
+				terminal = shellWindow,
+				window = shellWindow,
 			})
 			if s then
 				kernel.raise(s.uid)

@@ -1,0 +1,39 @@
+Shortcut Keys
+=============
+ * Control-o: Show the Overview
+ * Control-tab: Cycle to next tab
+ * Control-shift-tab: Cycle to previous tab
+ * Control-d: Show/toggle logging screen
+ * Control-c: Copy (in most applications)
+ * Control-shift-v: Paste from internal clipboard
+ * Control-shift-doubleclick: Open in Lua the clicked UI element
+
+Wireless Networking
+===================
+To establish one-way trust between two computers with modems, run the following in a shell prompt:
+
+On the target computer, run:
+> password
+
+On the source computer, run:
+> trust <target computer ID>
+
+Running Custom Programs
+=======================
+To create a program that runs at startup, create a file in /usr/autorun to start the program. Example:
+
+In file: /usr/autorun/startup.lua
+shell.openForegroundTab('myprogram')
+
+There are 3 different ways to open tabs:
+
+ * shell.openTab : background tab
+ * shell.openForegroundTab : focused tab
+ * shell.openHiddenTab : appears only in the Tasks application
+
+Copy / Paste
+============
+Opus can paste from both the system clipboard and the internal clipboard.
+
+ * control-v: for normal clipboard
+ * control-shift-v: for internal clipboard

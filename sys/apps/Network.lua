@@ -1,14 +1,11 @@
-_G.requireInjector(_ENV)
-
-local Config = require('config')
-local Event  = require('event')
-local Socket = require('socket')
-local UI     = require('ui')
-local Util   = require('util')
+local Config = require('opus.config')
+local Event  = require('opus.event')
+local Socket = require('opus.socket')
+local UI     = require('opus.ui')
+local Util   = require('opus.util')
 
 local colors     = _G.colors
 local device     = _G.device
-local multishell = _ENV.multishell
 local network    = _G.network
 local os         = _G.os
 local shell      = _ENV.shell
@@ -17,16 +14,17 @@ UI:configure('Network', ...)
 
 local gridColumns = {
 	{ heading = 'Label',  key = 'label'    },
-	{ heading = 'Dist',   key = 'distance' },
+	{ heading = 'Dist',   key = 'distance', align = 'right' },
 	{ heading = 'Status', key = 'status'   },
 }
 
-local trusted = Util.readTable('usr/.known_hosts')
 local config = Config.load('network', { })
 
 if UI.term.width >= 30 then
-	table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5 })
-	table.insert(gridColumns, { heading = 'Uptime', key = 'uptime' })
+	table.insert(gridColumns, { heading = 'Fuel',   key = 'fuel', width = 5, align = 'right' })
+end
+if UI.term.width >= 40 then
+	table.insert(gridColumns, { heading = 'Uptime', key = 'uptime', align = 'right' })
 end
 
 local page = UI.Page {
@@ -35,22 +33,19 @@ local page = UI.Page {
 			{ text = 'Connect', dropdown = {
 				{ text = 'Telnet      t', event = 'telnet' },
 				{ text = 'VNC         v', event = 'vnc'    },
-				UI.MenuBar.spacer,
+				{ spacer = true },
 				{ text = 'Reboot      r', event = 'reboot' },
 			} },
-			--{ text = 'Chat', event = 'chat' },
 			{ text = 'Trust', dropdown = {
 				{ text = 'Establish', event = 'trust'   },
-				{ text = 'Remove',    event = 'untrust' },
 			} },
-			{ text = 'Help', event = 'help', noCheck = true },
 			{
-				text = '\206',
+				text = '\187',
 				x = -3,
 				dropdown = {
-					{ text = 'Show all', event = 'show_all', noCheck = true },
-					UI.MenuBar.spacer,
-					{ text = 'Show trusted', event = 'show_trusted', noCheck = true },
+					{ text = 'Port Status', event = 'ports', modem = true },
+					{ spacer = true },
+					{ text = 'Help', event = 'help', noCheck = true },
 				},
 			},
 		},
@@ -62,12 +57,53 @@ local page = UI.Page {
 		sortColumn = 'label',
 		autospace = true,
 	},
+	ports = UI.SlideOut {
+		titleBar = UI.TitleBar {
+			title = 'Ports',
+			event = 'ports_hide',
+		},
+		grid = UI.ScrollingGrid {
+			y = 2,
+			columns = {
+				{ heading = 'Port',       key = 'port'       },
+				{ heading = 'State',      key = 'state'      },
+				{ heading = 'Connection', key = 'connection' },
+			},
+			sortColumn = 'port',
+			autospace = true,
+		},
+	},
+	help = UI.SlideOut {
+		backgroundColor = colors.cyan,
+		x = 5, ex = -5, height = 8, y = -8,
+		titleBar = UI.TitleBar {
+			title = 'Network Help',
+			event = 'slide_hide',
+		},
+		text = UI.TextArea {
+			x = 2, y = 2,
+			backgroundColor = colors.cyan,
+			value = [[
+
+In order to connect to another computer:
+
+1. The target computer must have a password set (run 'password' from the shell prompt).
+
+2. From this computer, click trust and enter the password for that computer.
+
+This only needs to be done once.
+			]],
+		},
+		accelerators = {
+			q = 'slide_hide',
+		}
+	},
 	notification = UI.Notification { },
 	accelerators = {
 		t = 'telnet',
 		v = 'vnc',
 		r = 'reboot',
-		q = 'quit',
+		[ 'control-q' ] = 'quit',
 		c = 'clear',
 	},
 }
@@ -91,23 +127,71 @@ local function sendCommand(host, command)
 	end
 end
 
+function page.ports:eventHandler(event)
+	if event.type == 'grid_select' then
+		shell.openForegroundTab('Sniff ' .. event.selected.port)
+	end
+	return UI.SlideOut.eventHandler(self, event)
+end
+
+function page.ports.grid:update()
+	local transport = network:getTransport()
+
+	local function findConnection(port)
+		if transport then
+			for _,socket in pairs(transport.sockets) do
+				if socket.sport == port then
+					return socket
+				end
+			end
+		end
+	end
+
+	local connections = { }
+
+	pcall(function() -- guard against modem removal
+		if device.wireless_modem then
+			for i = 0, 65535 do
+				if device.wireless_modem.isOpen(i) then
+					local conn = {
+						port = i
+					}
+					local socket = findConnection(i)
+					if socket then
+						conn.state = 'CONNECTED'
+						local host = socket.dhost
+						if network[host] then
+							host = network[host].label
+						end
+						conn.connection = host .. ':' .. socket.dport
+					else
+						conn.state = 'LISTEN'
+					end
+					table.insert(connections, conn)
+				end
+			end
+		end
+	end)
+
+	self.values = connections
+	UI.Grid.update(self)
+end
+
 function page:eventHandler(event)
 	local t = self.grid:getSelected()
 	if t then
 		if event.type == 'telnet' then
-			multishell.openTab({
-				path = 'sys/apps/telnet.lua',
-				focused = true,
-				args = { t.id },
-				title = t.label,
-			})
+			shell.openForegroundTab('telnet ' .. t.id)
+
 		elseif event.type == 'vnc' then
-			multishell.openTab({
-				path = 'sys/apps/vnc.lua',
-				focused = true,
-				args = { t.id },
+			shell.openForegroundTab('vnc.lua ' .. t.id)
+			os.queueEvent('overview_shortcut', {
 				title = t.label,
+				category = "VNC",
+				icon = "\010\030 \009\009\031e\\\031   \031e/\031dn\010\030 \009\009 \031e\\/\031  \031bc",
+				run = "vnc.lua " .. t.id,
 			})
+
 		elseif event.type == 'clear' then
 			Util.clear(network)
 			page.grid:update()
@@ -116,18 +200,6 @@ function page:eventHandler(event)
 		elseif event.type == 'trust' then
 			shell.openForegroundTab('trust ' .. t.id)
 
-		elseif event.type == 'untrust' then
-			local trustList = Util.readTable('usr/.known_hosts') or { }
-			trustList[t.id] = nil
-			Util.writeTable('usr/.known_hosts', trustList)
-
-		elseif event.type == 'chat' then
-			multishell.openTab({
-				path    = 'sys/apps/shell',
-				args    = { 'chat join opusChat-' .. t.id .. ' guest-' .. os.getComputerID() },
-				title   = 'Chatroom',
-				focused = true,
-			})
 		elseif event.type == 'reboot' then
 			sendCommand(t.id, 'reboot')
 
@@ -135,32 +207,23 @@ function page:eventHandler(event)
 			sendCommand(t.id, 'shutdown')
 		end
 	end
+
 	if event.type == 'help' then
-		UI:setPage(UI.Dialog {
-			title = 'Network Help',
-			height = 10,
-			backgroundColor = colors.white,
-			text = UI.TextArea {
-				x = 2, y = 2,
-				backgroundColor = colors.white,
-				value = [[
-In order to connect to another computer:
+		self.help:show()
 
-	1. The target computer must have a password set (run 'password' from the shell prompt).
-	2. From this computer, click trust and enter the password for that computer.
+	elseif event.type == 'ports' then
+		self.ports.grid:update()
+		self.ports:show()
 
-This only needs to be done once.
-				]],
-			},
-			accelerators = {
-				q = 'cancel',
-			}
-		})
+		self.portsHandler = Event.onInterval(3, function()
+			self.ports.grid:update()
+			self.ports.grid:draw()
+			self:sync()
+		end)
 
-	elseif event.type == 'show_all' then
-		config.showTrusted = false
-		self.grid:setValues(network)
-		Config.update('network', config)
+	elseif event.type == 'ports_hide' then
+		Event.off(self.portsHandler)
+		self.ports:hide()
 
 	elseif event.type == 'show_trusted' then
 		config.showTrusted = true
@@ -174,16 +237,15 @@ end
 
 function page.menuBar:getActive(menuItem)
 	local t = page.grid:getSelected()
-	if menuItem.event == 'untrust' then
-		local trustList = Util.readTable('usr/.known_hosts') or { }
-		return t and trustList[t.id]
+	if menuItem.modem then
+		return not not device.wireless_modem
 	end
 	return menuItem.noCheck or not not t
 end
 
 function page.grid:getRowTextColor(row, selected)
 	if not row.active then
-		return colors.orange
+		return colors.lightGray
 	end
 	return UI.Grid.getRowTextColor(self, row, selected)
 end
@@ -193,31 +255,23 @@ function page.grid:getDisplayValues(row)
 	if row.uptime then
 		if row.uptime < 60 then
 			row.uptime = string.format("%ds", math.floor(row.uptime))
+		elseif row.uptime < 3600 then
+			row.uptime = string.format("%sm", math.floor(row.uptime / 60))
 		else
-			row.uptime = string.format("%sm", math.floor(row.uptime/6)/10)
+			row.uptime = string.format("%sh", math.floor(row.uptime / 3600))
 		end
 	end
 	if row.fuel then
-		row.fuel = Util.toBytes(row.fuel)
+		row.fuel = row.fuel > 0 and Util.toBytes(row.fuel) or ''
 	end
 	if row.distance then
-		row.distance = Util.round(row.distance, 1)
+		row.distance = Util.toBytes(Util.round(row.distance, 1))
 	end
 	return row
 end
 
 Event.onInterval(1, function()
-	local t = { }
-	if config.showTrusted then
-		for k,v in pairs(network) do
-			if trusted[k] then
-				t[k] = v
-			end
-		end
-		page.grid:setValues(t)
-	else
-		page.grid:update()
-	end
+	page.grid:update()
 	page.grid:draw()
 	page:sync()
 end)

@@ -1,10 +1,12 @@
-_G.requireInjector(_ENV)
-
-local Util = require('util')
+local Util = require('opus.util')
 
 local kernel     = _G.kernel
 local keyboard   = _G.device.keyboard
 local multishell = _ENV.multishell
+
+if not multishell or not multishell.getTabs then
+	return
+end
 
 -- overview
 keyboard.addHotkey('control-o', function()
@@ -21,10 +23,12 @@ keyboard.addHotkey('control-backspace', function()
 	local tab = kernel.find(uid)
 	if not tab.isOverview then
 		multishell.terminate(uid)
-		tab = Util.shallowCopy(tab)
-		tab.isDead = false
-		tab.focused = true
-		multishell.openTab(tab)
+		multishell.openTab({
+			path = tab.path,
+			env = tab.env,
+			args = tab.args,
+			focused = true,
+		})
 	end
 end)
 
@@ -38,7 +42,7 @@ keyboard.addHotkey('control-tab', function()
 		return a.uid < b.uid
 	end
 	for _,tab in Util.spairs(tabs, compareTab) do
-		if not tab.hidden then
+		if not tab.hidden and not tab.noFocus then
 			table.insert(visibleTabs, tab)
 		end
 	end

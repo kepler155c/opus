@@ -1,10 +1,8 @@
-_G.requireInjector(_ENV)
+local UI    = require('opus.ui')
+local Util  = require('opus.util')
 
-local UI    = require('ui')
-local Util  = require('util')
-
-local colors     = _G.colors
-local help       = _G.help
+local colors = _G.colors
+local help   = _G.help
 
 UI:configure('Help', ...)
 
@@ -23,6 +21,7 @@ local page = UI.Page {
 	filter = UI.TextEntry {
 		x = 10, y = 2, ex = -3,
 		limit = 32,
+		transform = 'lowercase',
 	},
 	grid = UI.ScrollingGrid {
 		y = 4,
@@ -33,7 +32,7 @@ local page = UI.Page {
 		sortColumn = 'name',
 	},
 	accelerators = {
-		q     = 'quit',
+		[ 'control-q' ] = 'quit',
 		enter = 'grid_select',
 	},
 }
@@ -42,21 +41,30 @@ local topicPage = UI.Page {
 	backgroundColor = colors.black,
 	titleBar = UI.TitleBar {
 		title = 'text',
-		previousPage = true,
+		event = 'back',
 	},
 	helpText = UI.TextArea {
 		backgroundColor = colors.black,
 		x = 2, ex = -1, y = 3, ey = -2,
 	},
 	accelerators = {
-		q = 'back',
+		[ 'control-q' ] = 'back',
 		backspace = 'back',
 	},
 }
 
+function topicPage:enable(name)
+	local f = help.lookup(name)
+
+	self.titleBar.title = name
+	self.helpText:setText(f and Util.readFile(f) or 'No help available for ' .. name)
+
+	return UI.Page.enable(self)
+end
+
 function topicPage:eventHandler(event)
 	if event.type == 'back' then
-		UI:setPreviousPage()
+		UI:setPage(page)
 	end
 	return UI.Page.eventHandler(self, event)
 end
@@ -68,12 +76,8 @@ function page:eventHandler(event)
 	elseif event.type == 'grid_select' then
 		if self.grid:getSelected() then
 			local name = self.grid:getSelected().name
-			local f = help.lookup(name)
 
-			topicPage.titleBar.title = name
-			topicPage.helpText:setText(Util.readFile(f))
-
-			UI:setPage(topicPage)
+			UI:setPage(topicPage, name)
 		end
 
 	elseif event.type == 'text_change' then
@@ -95,5 +99,6 @@ function page:eventHandler(event)
 	end
 end
 
-UI:setPage(page)
+local args = Util.parse(...)
+UI:setPage(args[1] and topicPage or page, args[1])
 UI:pullEvents()

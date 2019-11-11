@@ -1,16 +1,15 @@
-_G.requireInjector(_ENV)
-
-local Event    = require('event')
-local Socket   = require('socket')
-local Terminal = require('terminal')
-local Util     = require('util')
+local Event    = require('opus.event')
+local Socket   = require('opus.socket')
+local Terminal = require('opus.terminal')
+local Util     = require('opus.util')
 
 local multishell = _ENV.multishell
 local os         = _G.os
 local read       = _G.read
+local shell      = _ENV.shell
 local term       = _G.term
 
-local args = { ... }
+local args, options = Util.parse(...)
 
 local remoteId = tonumber(table.remove(args, 1) or '')
 if not remoteId then
@@ -23,13 +22,25 @@ if not remoteId then
 end
 
 if multishell then
-	multishell.setTitle(multishell.getCurrent(), 'Telnet ' .. remoteId)
+	multishell.setTitle(multishell.getCurrent(),
+		(options.s and 'Secure ' or 'Telnet ') .. remoteId)
 end
 
-local socket, msg = Socket.connect(remoteId, 23)
+local socket, msg, reason
 
-if not socket then
-	error(msg)
+while true do
+	socket, msg, reason = Socket.connect(remoteId, options.s and 22 or 23)
+
+	if socket then
+		break
+	elseif reason ~= 'NOTRUST' then
+		error(msg)
+	end
+
+	local s, m = shell.run('trust ' .. remoteId)
+	if not s then
+		error(m)
+	end
 end
 
 local ct = Util.shallowCopy(term.current())

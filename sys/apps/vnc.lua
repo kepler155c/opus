@@ -1,17 +1,16 @@
-_G.requireInjector(_ENV)
-
-local Event      = require('event')
-local Socket     = require('socket')
-local Terminal   = require('terminal')
-local Util       = require('util')
+local Event      = require('opus.event')
+local Socket     = require('opus.socket')
+local Terminal   = require('opus.terminal')
+local Util       = require('opus.util')
 
 local colors     = _G.colors
 local multishell = _ENV.multishell
 local os         = _G.os
+local shell      = _ENV.shell
 local term       = _G.term
 
 local remoteId
-local args = { ... }
+local args, options = Util.parse(...)
 if #args == 1 then
 	remoteId = tonumber(args[1])
 else
@@ -24,11 +23,20 @@ if not remoteId then
 end
 
 if multishell then
-	multishell.setTitle(multishell.getCurrent(), 'VNC-' .. remoteId)
+	multishell.setTitle(multishell.getCurrent(),
+ (options.s and 'SVNC-' or 'VNC-') .. remoteId)
 end
 
 local function connect()
-	local socket, msg = Socket.connect(remoteId, 5900)
+	local socket, msg, reason = Socket.connect(remoteId, options.s and 5901 or 5900)
+
+	if reason == 'NOTRUST' then
+		local s, m = shell.run('trust ' .. remoteId)
+		if not s then
+			return s, m
+		end
+		socket, msg = Socket.connect(remoteId, 5900)
+	end
 
 	if not socket then
 		return false, msg
@@ -62,7 +70,7 @@ local function connect()
 				break
 			end
 			for _,v in ipairs(data) do
-				ct[v.f](unpack(v.args))
+				ct[v.f](table.unpack(v.args))
 			end
 		end
 	end)

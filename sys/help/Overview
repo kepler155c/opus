@@ -1,0 +1,15 @@
+Overview is the main application launcher.
+
+Shortcut keys
+=============
+ * s: Shell
+ * l: Lua application
+ * f: Files
+ * e: Edit an application (or right-click)
+ * control-n: Add a new application
+ * delete: Delete an application
+
+Adding a new application
+========================
+The run entry can be either a disk file or a URL.
+Icons must be in NFT format with a height of 3 and a width of 3 to 8 characters.

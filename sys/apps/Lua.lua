@@ -1,8 +1,9 @@
+-- Lua may be called from outside of shell - inject a require
 _G.requireInjector(_ENV)
 
-local History    = require('history')
-local UI         = require('ui')
-local Util       = require('util')
+local History    = require('opus.history')
+local UI         = require('opus.ui')
+local Util       = require('opus.util')
 
 local colors     = _G.colors
 local os         = _G.os
@@ -19,6 +20,7 @@ _G.requireInjector(sandboxEnv)
 UI:configure('Lua', ...)
 
 local command = ''
+local counter = 1
 local history = History.load('usr/.lua_history', 25)
 
 local page = UI.Page {
@@ -32,7 +34,7 @@ local page = UI.Page {
 	prompt = UI.TextEntry {
 		y = 2,
 		shadowText = 'enter command',
-		limit = 256,
+		limit = 1024,
 		accelerators = {
 			enter               = 'command_enter',
 			up                  = 'history_back',
@@ -41,35 +43,40 @@ local page = UI.Page {
 			[ 'control-space' ] = 'autocomplete',
 		},
 	},
-	grid = UI.ScrollingGrid {
-		y = 3, ey = -2,
-		columns = {
-			{ heading = 'Key',   key = 'name'  },
-			{ heading = 'Value', key = 'value' },
+	tabs = UI.Tabs {
+		y = 3,
+		[1] = UI.Tab {
+			tabTitle = 'Formatted',
+			grid = UI.ScrollingGrid {
+				columns = {
+					{ heading = 'Key',   key = 'name'  },
+					{ heading = 'Value', key = 'value' },
+				},
+				sortColumn = 'name',
+				autospace = true,
+			},
 		},
-		sortColumn = 'name',
-		autospace = true,
-	},
-	titleBar = UI.TitleBar {
-		title = 'Output',
-		y = -1,
-		event = 'show_output',
-		closeInd = '^'
-	},
-	output = UI.Embedded {
-		y = -6,
-		backgroundColor = colors.gray,
+		[2] = UI.Tab {
+			tabTitle = 'Output',
+			output = UI.Embedded {
+				visible = true,
+				maxScroll = 1000,
+				backgroundColor = colors.black,
+			},
+		},
 	},
 }
 
+page.grid = page.tabs[1].grid
+page.output = page.tabs[2].output
+
 function page:setPrompt(value, focus)
 	self.prompt:setValue(value)
-	self.prompt.scroll = 0
-	self.prompt:setPosition(#value)
-	self.prompt:updateScroll()
 
 	if value:sub(-1) == ')' then
 		self.prompt:setPosition(#value - 1)
+	else
+		self.prompt:setPosition(#value)
 	end
 
 	self.prompt:draw()
@@ -79,9 +86,8 @@ function page:setPrompt(value, focus)
 end
 
 function page:enable()
-	self:setFocus(self.prompt)
 	UI.Page.enable(self)
-	self.output:disable()
+	self:setFocus(self.prompt)
 end
 
 local function autocomplete(env, oLine, x)
@@ -140,23 +146,16 @@ function page:eventHandler(event)
 
 		self:draw()
 
+	elseif event.type == 'tab_select' then
+		self:setFocus(self.prompt)
+
 	elseif event.type == 'show_output' then
-		self.output:enable()
-
-		self.titleBar.oy = -7
-		self.titleBar.event = 'hide_output'
-		self.titleBar.closeInd = 'v'
-		self.titleBar:resize()
-
-		self.grid.ey = -8
-		self.grid:resize()
-
-		self:draw()
+		self.tabs:selectTab(self.tabs[2])
 
 	elseif event.type == 'autocomplete' then
 		local sz = #self.prompt.value
-		local pos = self.prompt.pos
-		self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.pos))
+		local pos = self.prompt.entry.pos
+		self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.entry.pos))
 		self.prompt:setPosition(pos + #self.prompt.value - sz)
 		self.prompt:updateCursor()
 
@@ -181,8 +180,6 @@ function page:eventHandler(event)
 		local s = tostring(self.prompt.value)
 
 		if #s > 0 then
-			history:add(s)
-			history:back()
 			self:executeStatement(s)
 		else
 			local t = { }
@@ -211,10 +208,6 @@ end
 
 function page:setResult(result)
 	local t = { }
-
-	local oterm = term.redirect(self.output.win)
-	Util.print(result)
-	term.redirect(oterm)
 
 	local function safeValue(v)
 		if type(v) == 'string' or type(v) == 'number' then
@@ -300,24 +293,45 @@ end
 
 function page:rawExecute(s)
 	local fn, m
+	local wrapped
 
 	fn = load('return (' ..s.. ')', 'lua', nil, sandboxEnv)
 
 	if fn then
 		fn = load('return {' ..s.. '}', 'lua', nil, sandboxEnv)
+		wrapped = true
 	end
 
+	local t = os.clock()
 	if fn then
 		fn, m = pcall(fn)
-		if #m == 1 then
+		if #m <= 1 and wrapped then
 			m = m[1]
 		end
-		return fn, m
+	else
+		fn, m = load(s, 'lua', nil, sandboxEnv)
+		if fn then
+			t = os.clock()
+			fn, m = pcall(fn)
+		end
 	end
 
-	fn, m = load(s, 'lua', nil, sandboxEnv)
 	if fn then
-		fn, m = pcall(fn)
+		t = os.clock() - t
+
+		local bg, fg = term.getBackgroundColor(), term.getTextColor()
+		term.setTextColor(colors.cyan)
+		term.setBackgroundColor(colors.black)
+		term.write(string.format('out [%.2f]: ', t))
+		term.setBackgroundColor(bg)
+		term.setTextColor(fg)
+		if m or wrapped then
+			Util.print(m or 'nil')
+		else
+			print()
+		end
+	else
+		_G.printError(m)
 	end
 
 	return fn, m
@@ -326,15 +340,26 @@ end
 function page:executeStatement(statement)
 	command = statement
 
+	history:add(statement)
+	history:back()
+
 	local s, m
 	local oterm = term.redirect(self.output.win)
+	self.output.win.scrollBottom()
+	local bg, fg = term.getBackgroundColor(), term.getTextColor()
+	term.setBackgroundColor(colors.black)
+	term.setTextColor(colors.green)
+	term.write(string.format('in [%d]: ', counter))
+	term.setBackgroundColor(bg)
+	term.setTextColor(fg)
+	print(tostring(statement))
+
 	pcall(function()
 		s, m = self:rawExecute(command)
 	end)
-	if not s then
-		_G.printError(m)
-	end
+
 	term.redirect(oterm)
+	counter = counter + 1
 
 	if s and m then
 		self:setResult(m)
@@ -351,7 +376,7 @@ function page:executeStatement(statement)
 	end
 end
 
-local args = { ... }
+local args = Util.parse(...)
 if args[1] then
 	command = 'args[1]'
 	sandboxEnv.args = args
