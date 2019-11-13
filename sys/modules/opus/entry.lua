@@ -393,7 +393,7 @@ function Entry:process(ie)
 		if not self.value or #_val(self.value) == 0 then
 			self.value = nil
 		end
-_syslog(tostring(line) .. ' ' .. tostring(self.value) .. ' ' .. tostring(self.textChanged))
+
 		self.textChanged = self.textChanged or self.value ~= line
 		self.posChanged = pos ~= self.pos
 		self:updateScroll()

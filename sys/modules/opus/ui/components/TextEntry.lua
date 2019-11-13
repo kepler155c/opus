@@ -41,15 +41,15 @@ function UI.TextEntry:layout()
 end
 
 function UI.TextEntry:setValue(value)
-	self.value = value --or ''
+	self.value = value
 	self.entry:unmark()
-	self.entry.value = value --tostring(value or '')
+	self.entry.value = value
 	self.entry:updateScroll()
 end
 
 function UI.TextEntry:setPosition(pos)
 	self.entry.pos = pos
-	self.entry.value = self.value --tostring(self.value or '') -- WHY HERE ?
+	self.entry.value = self.value -- WHY HERE ?
 	self.entry:updateScroll()
 end
 
@@ -117,7 +117,6 @@ function UI.TextEntry:eventHandler(event)
 	self.entry.value = text
 	if event.ie and self.entry:process(event.ie) then
 		if self.entry.textChanged then
---_syslog(tostring(self.entry.value) .. ' ' .. tostring(self.value))
 			self.value = self.entry.value
 			self:draw()
 			self:emit({ type = 'text_change', text = self.value, element = self })

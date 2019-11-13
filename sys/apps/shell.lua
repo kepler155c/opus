@@ -586,6 +586,7 @@ local function shellRead(history)
 		end
 		local _,cy = term.getCursorPos()
 		term.setCursorPos(3, cy)
+		entry.value = entry.value or ''
 		local filler = #entry.value < lastLen
 			and string.rep(' ', lastLen - #entry.value)
 			or ''
@@ -635,6 +636,7 @@ local function shellRead(history)
 				redraw()
 
 			elseif ie.code == 'tab' then
+				entry.value = entry.value or ''
 				if entry.pos == #entry.value then
 					local cline = autocomplete(entry.value)
 					if cline then
@@ -650,6 +652,7 @@ local function shellRead(history)
 
 			else
 				entry:process(ie)
+				entry.value = entry.value or ''
 				if entry.textChanged then
 					redraw()
 				elseif entry.posChanged then
@@ -666,7 +669,7 @@ local function shellRead(history)
 
 	print()
 	term.setCursorBlink( false )
-	return entry.value
+	return entry.value or ''
 end
 
 local history = History.load('usr/.shell_history', 25)
