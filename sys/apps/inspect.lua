@@ -6,11 +6,6 @@ local multishell = _ENV.multishell
 local name = ({ ... })[1] or error('Syntax: inspect COMPONENT')
 local events = { }
 local page
-local component = UI[name] and UI[name]() or error('Invalid component')
-
-if not component.example then
-	error('No example present')
-end
 
 local function isRelevant(el)
 	return page.testContainer == el or el.parent and isRelevant(el.parent)
@@ -18,8 +13,7 @@ end
 
 local emitter = UI.Window.emit
 function UI.Window:emit(event)
-	if not event.recorded and isRelevant(self) then
-		event.recorded = true
+	if not event._recorded and isRelevant(self) then
 		local t = { }
 		for k,v in pairs(event) do
 			if k ~= 'type' and k ~= 'recorded' then
@@ -35,7 +29,14 @@ function UI.Window:emit(event)
 			page.tabs.events.grid:draw()
 		end
 	end
+	event._recorded = true
 	return emitter(self, event)
+end
+
+-- do not load component until emit hook is in place
+local component = UI[name] and UI[name]() or error('Invalid component')
+if not component.example then
+	error('No example present')
 end
 
 page = UI.Page {
@@ -122,7 +123,7 @@ page = UI.Page {
 			self.tabs.methodsTab.grid:draw()
 
 		elseif event.type == 'grid_select' and event.element == self.tabs.events.grid then
-			event.selected.raw.recorded = nil
+			event.selected.raw._recorded = nil
 			multishell.openTab({
 				path = 'sys/apps/Lua.lua',
 				args = { event.selected.raw },

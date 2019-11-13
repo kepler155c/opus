@@ -153,10 +153,11 @@ function page:eventHandler(event)
 		self.tabs:selectTab(self.tabs[2])
 
 	elseif event.type == 'autocomplete' then
-		local sz = #self.prompt.value
+		local value = self.prompt.value or ''
+		local sz = #value
 		local pos = self.prompt.entry.pos
-		self:setPrompt(autocomplete(sandboxEnv, self.prompt.value, self.prompt.entry.pos))
-		self.prompt:setPosition(pos + #self.prompt.value - sz)
+		self:setPrompt(autocomplete(sandboxEnv, value, self.prompt.entry.pos))
+		self.prompt:setPosition(pos + #value - sz)
 		self.prompt:updateCursor()
 
 	elseif event.type == 'device' then
@@ -177,7 +178,7 @@ function page:eventHandler(event)
 		history:reset()
 
 	elseif event.type == 'command_enter' then
-		local s = tostring(self.prompt.value)
+		local s = tostring(self.prompt.value or '')
 
 		if #s > 0 then
 			self:executeStatement(s)

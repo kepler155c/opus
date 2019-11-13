@@ -2,39 +2,48 @@ local class = require('opus.class')
 
 local os = _G.os
 
+-- convert value to a string (supporting nils or numbers in value)
+local function _val(a)
+	return a and tostring(a) or ''
+end
+
 local Entry = class()
 
 function Entry:init(args)
 	self.pos = 0
 	self.scroll = 0
-	self.value = ''
+	self.value = args.value
 	self.width = args.width or 256
 	self.limit = args.limit or 1024
 	self.mark = { }
 	self.offset = args.offset or 1
+	self.transform = args.transform or function(a) return a end
 end
 
 function Entry:reset()
 	self.pos = 0
 	self.scroll = 0
-	self.value = ''
+	self.value = nil
 	self.mark = { }
 end
 
 function Entry:nextWord()
-	return select(2, self.value:find("[%s%p]?%w[%s%p]", self.pos + 1)) or #self.value
+	local value = _val(self.value)
+	return select(2, value:find("[%s%p]?%w[%s%p]", self.pos + 1)) or #value
 end
 
 function Entry:prevWord()
-	local x = #self.value - (self.pos - 1)
-	local _, n = self.value:reverse():find("[%s%p]?%w[%s%p]", x)
-	return n and #self.value - n + 1 or 0
+	local value = _val(self.value)
+	local x = #value - (self.pos - 1)
+	local _, n = value:reverse():find("[%s%p]?%w[%s%p]", x)
+	return n and #value - n + 1 or 0
 end
 
 function Entry:updateScroll()
 	local ps = self.scroll
-	if self.pos > #self.value then
-		self.pos = #self.value
+	local value = _val(self.value)
+	if self.pos > #value then
+		self.pos = #value
 		self.scroll = 0 -- ??
 	end
 	if self.pos - self.scroll > self.width then
@@ -48,21 +57,25 @@ function Entry:updateScroll()
 end
 
 function Entry:copyText(cx, ex)
-	return self.value:sub(cx + 1, ex)
+	-- this should be transformed (ie. if number)
+	return _val(self.value):sub(cx + 1, ex)
 end
 
 function Entry:insertText(x, text)
-	if #self.value + #text > self.limit then
-		text = text:sub(1, self.limit-#self.value)
+	text = tostring(self.transform(text)) or ''
+	local value = _val(self.value)
+	if #value + #text > self.limit then
+		text = text:sub(1, self.limit-#value)
 	end
-	self.value = self.value:sub(1, x) .. text .. self.value:sub(x + 1)
+	self.value = self.transform(value:sub(1, x) .. text .. value:sub(x + 1))
 	self.pos = self.pos + #text
 end
 
 function Entry:deleteText(sx, ex)
-	local front = self.value:sub(1, sx)
-	local back = self.value:sub(ex + 1, #self.value)
-	self.value = front .. back
+	local value = _val(self.value)
+	local front = value:sub(1, sx)
+	local back = value:sub(ex + 1, #value)
+	self.value = self.transform(front .. back)
 	self.pos = sx
 end
 
@@ -74,7 +87,7 @@ function Entry:moveLeft()
 end
 
 function Entry:moveRight()
-	if self.pos < #self.value then
+	if self.pos < #_val(self.value) then
 		self.pos = self.pos + 1
 		return true
 	end
@@ -88,14 +101,14 @@ function Entry:moveHome()
 end
 
 function Entry:moveEnd()
-	if self.pos ~= #self.value then
-		self.pos = #self.value
+	if self.pos ~= #_val(self.value) then
+		self.pos = #_val(self.value)
 		return true
 	end
 end
 
 function Entry:moveTo(ie)
-	self.pos = math.max(0, math.min(ie.x + self.scroll - self.offset, #self.value))
+	self.pos = math.max(0, math.min(ie.x + self.scroll - self.offset, #_val(self.value)))
 end
 
 function Entry:backspace()
@@ -107,7 +120,7 @@ function Entry:backspace()
 end
 
 function Entry:moveWordRight()
-	if self.pos < #self.value then
+	if self.pos < #_val(self.value) then
 		self.pos = self:nextWord(self.value, self.pos + 1)
 		return true
 	end
@@ -123,7 +136,7 @@ end
 function Entry:delete()
 	if self.mark.active then
 		self:deleteText(self.mark.x, self.mark.ex)
-	elseif self.pos < #self.value then
+	elseif self.pos < #_val(self.value) then
 		self:deleteText(self.pos, self.pos + 1)
 	end
 end
@@ -137,15 +150,16 @@ function Entry:cutFromStart()
 end
 
 function Entry:cutToEnd()
-	if self.pos < #self.value then
-		local text = self:copyText(self.pos, #self.value)
-		self:deleteText(self.pos, #self.value)
+	local value = _val(self.value)
+	if self.pos < #value then
+		local text = self:copyText(self.pos, #value)
+		self:deleteText(self.pos, #value)
 		os.queueEvent('clipboard_copy', text)
 	end
 end
 
 function Entry:cutNextWord()
-	if self.pos < #self.value then
+	if self.pos < #_val(self.value) then
 		local ex = self:nextWord(self.value, self.pos)
 		local text = self:copyText(self.pos, ex)
 		self:deleteText(self.pos, ex)
@@ -170,7 +184,7 @@ function Entry:insertChar(ie)
 end
 
 function Entry:copy()
-	if #self.value > 0 then
+	if #_val(self.value) > 0 then
 		self.mark.continue = true
 		if self.mark.active then
 			self:copyMarked()
@@ -202,7 +216,7 @@ function Entry:paste(ie)
 end
 
 function Entry:clearLine()
-	if #self.value > 0 then
+	if #_val(self.value) > 0 then
 		self:reset()
 	end
 end
@@ -233,10 +247,13 @@ function Entry:unmark()
 end
 
 function Entry:markAnchor(ie)
+	local wasMarking = self.mark.active
 	self:unmark()
 	self:moveTo(ie)
 	self:markBegin()
 	self:markFinish()
+
+	self.textChanged = wasMarking
 end
 
 function Entry:markLeft()
@@ -257,7 +274,7 @@ function Entry:markWord(ie)
 	local index = 1
 	self:moveTo(ie)
 	while true do
-		local s, e = self.value:find('%w+', index)
+		local s, e = _val(self.value):find('%w+', index)
 		if not s or s - 1 > self.pos then
 			break
 		end
@@ -288,12 +305,12 @@ function Entry:markPrevWord()
 end
 
 function Entry:markAll()
-	if #self.value > 0 then
+	if #_val(self.value) > 0 then
 		self.mark.anchor = { x = 1 }
 		self.mark.active = true
 		self.mark.continue = true
 		self.mark.x = 0
-		self.mark.ex = #self.value
+		self.mark.ex = #_val(self.value)
 		self.textChanged = true
 	end
 end
@@ -373,6 +390,10 @@ function Entry:process(ie)
 
 		action(self, ie)
 
+		if not self.value or #_val(self.value) == 0 then
+			self.value = nil
+		end
+_syslog(tostring(line) .. ' ' .. tostring(self.value) .. ' ' .. tostring(self.textChanged))
 		self.textChanged = self.textChanged or self.value ~= line
 		self.posChanged = pos ~= self.pos
 		self:updateScroll()

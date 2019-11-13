@@ -32,7 +32,7 @@ function UI.Form:setValues(values)
 			if child.setValue then
 				child:setValue(self.values[child.formKey])
 			else
-				child.value = self.values[child.formKey] or ''
+				child.value = self.values[child.formKey]
 			end
 		end
 	end
@@ -56,7 +56,7 @@ function UI.Form:createForm()
 	for _, child in pairs(self) do
 		if type(child) == 'table' and child.UIElement then
 			if child.formKey then
-				child.value = self.values[child.formKey] or ''
+				child.value = self.values[child.formKey]
 			end
 			if child.formLabel then
 				child.x = self.labelWidth + self.margin - 1
@@ -99,14 +99,6 @@ function UI.Form:validateField(field)
 			return false, 'Field is required'
 		end
 	end
-	if field.validate == 'numeric' then
-		field.value = field.value or ''
-		if #tostring(field.value) > 0 then
-			if not tonumber(field.value) then
-				return false, 'Invalid number'
-			end
-		end
-	end
 	return true
 end
 
@@ -124,11 +116,7 @@ function UI.Form:save()
 	end
 	for _,child in pairs(self.children) do
 		if child.formKey then
-			if child.validate == 'numeric' then
-				self.values[child.formKey] = tonumber(child.value)
-			else
-				self.values[child.formKey] = child.value
-			end
+			self.values[child.formKey] = child.value
 		end
 	end
 

@@ -39,7 +39,7 @@ local labelTab = UI.Tab {
 }
 
 function labelTab:eventHandler(event)
-	if event.type == 'update_label' then
+	if event.type == 'update_label' and self.label.value then
 		os.setComputerLabel(self.label.value)
 		self:emit({ type = 'success_message', message = 'Label updated' })
 		return true

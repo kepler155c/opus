@@ -81,7 +81,7 @@ function page:eventHandler(event)
 		end
 
 	elseif event.type == 'text_change' then
-		if #event.text == 0 then
+		if not event.text then
 			self.grid.values = topics
 		else
 			self.grid.values = { }

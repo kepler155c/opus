@@ -493,3 +493,43 @@ function UI.Grid:eventHandler(event)
 	end
 	return true
 end
+
+function UI.Grid.example()
+	local values = {
+		{ key = 'key1', value = 'value1' },
+		{ key = 'key2', value = 'value2' },
+		{ key = 'key3', value = 'value3-longer value text' },
+		{ key = 'key4', value = 'value4' },
+		{ key = 'key5', value = 'value5' },
+	}
+	return UI.Window {
+		regular = UI.Grid {
+			ex = '48%', ey = 4,
+			values = values,
+			sortColumn = 'key',
+			inverseSort = true,
+			columns = {
+				{ heading = 'key', key = 'key' },
+				{ heading = 'value', key = 'value' },
+			},
+		},
+		noheader = UI.Grid {
+			ex = '48%', y = 6, ey = -2,
+			disableHeader = true,
+			values = values,
+			columns = {
+				{ heading = 'key', key = 'key', width = 6,  },
+				{ heading = 'value', key = 'value', textColor = colors.yellow },
+			},
+		},
+		autospace = UI.Grid {
+			x = '52%', ey = 4,
+			autospace = true,
+			values = values,
+			columns = {
+				{ heading = 'key', key = 'key' },
+				{ heading = 'value', key = 'value' },
+			},
+		},
+	}
+end

@@ -120,7 +120,9 @@ local page = UI.Page {
 }
 
 function page.wizard.pages.label:validate()
-	os.setComputerLabel(self.label.value)
+	if self.label.value then
+		os.setComputerLabel(self.label.value)
+	end
 	return true
 end
 

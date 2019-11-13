@@ -5,8 +5,15 @@ local Util  = require('opus.util')
 
 local colors = _G.colors
 local _rep   = string.rep
-local _lower = string.lower
-local _upper = string.upper
+
+local function transform(directive)
+	local transforms = {
+		lowercase = string.lower,
+		uppercase = string.upper,
+		number    = tonumber,
+	}
+	return transforms[directive]
+end
 
 UI.TextEntry = class(UI.Window)
 UI.TextEntry.defaults = {
@@ -25,7 +32,7 @@ UI.TextEntry.defaults = {
 	}
 }
 function UI.TextEntry:postInit()
-	self.entry = entry({ limit = self.limit, offset = 2 })
+	self.entry = entry({ limit = self.limit, offset = 2, transform = transform(self.transform) })
 end
 
 function UI.TextEntry:layout()
@@ -36,13 +43,13 @@ end
 function UI.TextEntry:setValue(value)
 	self.value = value --or ''
 	self.entry:unmark()
-	self.entry.value = tostring(value)
+	self.entry.value = value --tostring(value or '')
 	self.entry:updateScroll()
 end
 
 function UI.TextEntry:setPosition(pos)
 	self.entry.pos = pos
-	self.entry.value = tostring(self.value or '')
+	self.entry.value = self.value --tostring(self.value or '') -- WHY HERE ?
 	self.entry:updateScroll()
 end
 
@@ -105,27 +112,15 @@ function UI.TextEntry:focus()
 	end
 end
 
-function UI.TextEntry:_transform(text)
-	if self.transform == 'lowercase' then
-		return _lower(text)
-	elseif self.transform == 'uppercase' then
-		return _upper(text)
-	elseif self.transform == 'number' then
-		return tonumber(text) --or 0
-	end
-	return text
-end
-
 function UI.TextEntry:eventHandler(event)
-	local text = self.value --or ''
-	self.entry.value = tostring(text or '')
+	local text = self.value
+	self.entry.value = text
 	if event.ie and self.entry:process(event.ie) then
 		if self.entry.textChanged then
-			self.value = self:_transform(self.entry.value)
+--_syslog(tostring(self.entry.value) .. ' ' .. tostring(self.value))
+			self.value = self.entry.value
 			self:draw()
-			if text ~= self.value then
-				self:emit({ type = 'text_change', text = self.value, element = self })
-			end
+			self:emit({ type = 'text_change', text = self.value, element = self })
 		elseif self.entry.posChanged then
 			self:updateCursor()
 		end

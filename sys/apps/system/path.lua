@@ -59,7 +59,7 @@ function tab:save()
 end
 
 function tab:eventHandler(event)
-	if event.type == 'update_path' then
+	if event.type == 'update_path' and self.entry.value then
 		table.insert(self.grid.values, {
 			value = self.entry.value,
 		})
