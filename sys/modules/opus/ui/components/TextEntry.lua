@@ -134,3 +134,35 @@ function UI.TextEntry:eventHandler(event)
 
 	return false
 end
+
+function UI.TextEntry.example()
+	return UI.Window {
+		text = UI.TextEntry {
+			x = 2, y = 2,
+			width = 12,
+			limit = 36,
+			shadowText = 'normal',
+		},
+		upper = UI.TextEntry {
+			x = 2, y = 3,
+			width = 12,
+			limit = 36,
+			shadowText = 'upper',
+			transform = 'uppercase',
+		},
+		lower = UI.TextEntry {
+			x = 2, y = 4,
+			width = 12,
+			limit = 36,
+			shadowText = 'lower',
+			transform = 'lowercase',
+		},
+		number = UI.TextEntry {
+			x = 2, y = 5,
+			width = 12,
+			limit = 36,
+			transform = 'number',
+			shadowText = 'number',
+		},
+	}
+end

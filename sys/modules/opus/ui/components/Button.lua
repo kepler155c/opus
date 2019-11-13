@@ -64,3 +64,23 @@ function UI.Button:eventHandler(event)
 	end
 	return false
 end
+
+function UI.Button.example()
+	return UI.Window {
+		button1 = UI.Button {
+			x = 2, y = 2,
+			text = 'Press',
+		},
+		button2 = UI.Button {
+			x = 2, y = 4,
+			backgroundColor = colors.green,
+			event = 'custom_event',
+		},
+		button3 = UI.Button {
+			x = 12, y = 2,
+			height = 5,
+			event = 'big_event',
+			text = 'large button'
+		}
+	}
+end

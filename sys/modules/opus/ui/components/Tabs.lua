@@ -87,3 +87,19 @@ function UI.Tabs:eventHandler(event)
 		tab:draw()
 	end
 end
+
+function UI.Tabs.example()
+	return UI.Tabs {
+		[1] = UI.Tab {
+			tabTitle = 'tab1',
+			entry = UI.TextEntry { y = 3, shadowText = 'text' },
+		},
+		[2] = UI.Tab {
+			tabTitle = 'tab2',
+			button = UI.Button { y = 3 },
+		},
+		[3] = UI.Tab {
+			tabTitle = 'tab3',
+		}
+	}
+end

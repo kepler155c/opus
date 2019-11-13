@@ -34,3 +34,9 @@ function UI.TextArea:draw()
 		end
 	end
 end
+
+function UI.TextArea.example()
+	return UI.TextArea {
+		value = 'sample text\nabc'
+	}
+end
