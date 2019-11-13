@@ -248,23 +248,8 @@ function Manager:emitEvent(event)
 	end
 end
 
-function Manager:inputEvent(parent, event)
-	while parent do
-		if parent.accelerators then
-			local acc = parent.accelerators[event.key]
-			if acc then
-				if parent:emit({ type = acc, element = parent }) then
-					return true
-				end
-			end
-		end
-		if parent.eventHandler then
-			if parent:eventHandler(event) then
-				return true
-			end
-		end
-		parent = parent.parent
-	end
+function Manager:inputEvent(parent, event) -- deprecate ?
+	return parent and parent:emit(event)
 end
 
 function Manager:click(target, code, button, x, y)
@@ -927,6 +912,14 @@ end
 function UI.Window:emit(event)
 	local parent = self
 	while parent do
+		if parent.accelerators and event.key then -- not ideal
+			-- could be [event.key or event.type] to support accelerators
+			-- for non-input type events
+			local acc = parent.accelerators[event.key]
+			if acc and parent:emit({ type = acc, element = parent }) then
+				return true
+			end
+		end
 		if parent.eventHandler then
 			if parent:eventHandler(event) then
 				return true

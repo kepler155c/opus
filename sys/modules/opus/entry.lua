@@ -62,13 +62,15 @@ function Entry:copyText(cx, ex)
 end
 
 function Entry:insertText(x, text)
-	text = tostring(self.transform(text)) or ''
-	local value = _val(self.value)
-	if #value + #text > self.limit then
-		text = text:sub(1, self.limit-#value)
+	text = tostring(self.transform(text) or '')
+	if #text > 0 then
+		local value = _val(self.value)
+		if #value + #text > self.limit then
+			text = text:sub(1, self.limit-#value)
+		end
+		self.value = self.transform(value:sub(1, x) .. text .. value:sub(x + 1))
+		self.pos = self.pos + #text
 	end
-	self.value = self.transform(value:sub(1, x) .. text .. value:sub(x + 1))
-	self.pos = self.pos + #text
 end
 
 function Entry:deleteText(sx, ex)
