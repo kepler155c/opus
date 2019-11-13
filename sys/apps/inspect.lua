@@ -1,13 +1,16 @@
-local Event = require('opus.event')
-local UI    = require('opus.ui')
+local UI = require('opus.ui')
 
 local colors     = _G.colors
 local multishell = _ENV.multishell
 
-local args = { ... }
-local name = args[1] or error('Syntax: inspect COMPONENT')
+local name = ({ ... })[1] or error('Syntax: inspect COMPONENT')
 local events = { }
 local page
+local component = UI[name] and UI[name]() or error('Invalid component')
+
+if not component.example then
+	error('No example present')
+end
 
 local function isRelevant(el)
 	return page.testContainer == el or el.parent and isRelevant(el.parent)
@@ -27,6 +30,10 @@ function UI.Window:emit(event)
 		while #events > 10 do
 			table.remove(events)
 		end
+		page.tabs.events.grid:update()
+		if page.tabs.events.enabled then
+			page.tabs.events.grid:draw()
+		end
 	end
 	return emitter(self, event)
 end
@@ -34,11 +41,11 @@ end
 page = UI.Page {
 	testContainer = UI.Window {
 		ey = 10,
+		testing = component.example(),
 	},
 	tabs = UI.Tabs {
 		y = 11,
 		properties = UI.Tab {
-			backgroundColor = colors.red,
 			tabTitle = 'Properties',
 			grid = UI.ScrollingGrid {
 				headerBackgroundColor = colors.red,
@@ -53,7 +60,6 @@ page = UI.Page {
 			},
 		},
 		methodsTab = UI.Tab {
-			backgroundColor = colors.red,
 			tabTitle = 'Methods',
 			grid = UI.ScrollingGrid {
 				headerBackgroundColor = colors.red,
@@ -64,7 +70,6 @@ page = UI.Page {
 			},
 		},
 		events = UI.Tab {
-			backgroundColor = colors.red,
 			tabTitle = 'Events',
 			grid = UI.ScrollingGrid {
 				headerBackgroundColor = colors.red,
@@ -138,17 +143,6 @@ page = UI.Page {
 		return UI.Page.eventHandler(self, event)
 	end
 }
-
-Event.onInterval(1, function()
-	page.tabs.events.grid:update()
-	page.tabs.events.grid:draw()
-	page.tabs.events.grid:sync()
-end)
-
-local component = UI[name]()
-local testing = component.example()
-
-page.testContainer:add({ test = testing })
 
 UI:setPage(page)
 UI:pullEvents()
