@@ -74,3 +74,26 @@ end
 function UI.Embedded:focus()
 	-- allow scrolling
 end
+
+function UI.Embedded.example()
+	local Event = require('opus.event')
+	local Util  = require('opus.util')
+	local term  = _G.term
+
+	return UI.Embedded {
+		visible = true,
+		enable = function (self)
+			UI.Embedded.enable(self)
+			Event.addRoutine(function()
+				local oterm = term.redirect(self.win)
+				Util.run(_ENV, '/sys/apps/shell.lua')
+				term.redirect(oterm)
+			end)
+		end,
+		eventHandler = function(_, event)
+			if event.type == 'key' then
+				return true
+			end
+		end
+	}
+end

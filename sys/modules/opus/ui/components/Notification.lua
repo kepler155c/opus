@@ -110,7 +110,7 @@ function UI.Notification.example()
 			if event.type == 'test_success' then
 				self.notify:success('Example text')
 			elseif event.type == 'test_error' then
-				self.notify:error('Example text')
+				self.notify:error('Example text', 0)
 			end
 		end,
 	}

@@ -50,3 +50,29 @@ function UI.SlideOut:eventHandler(event)
 		return true
 	end
 end
+
+function UI.SlideOut.example()
+	return UI.Window {
+		button = UI.Button {
+			x = 2, y = 2,
+			text = 'show',
+		},
+		slideOut = UI.SlideOut {
+			backgroundColor = colors.yellow,
+			y = -4, height = 4,
+			button = UI.Button {
+				x = 2, y = 2,
+				text = 'hide',
+			},
+		},
+		eventHandler = function (self, event)
+			if event.type == 'button_press' then
+				if self.slideOut.enabled then
+					self.slideOut:hide()
+				else
+					self.slideOut:show()
+				end
+			end
+		end,
+	}
+end

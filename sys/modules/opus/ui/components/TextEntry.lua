@@ -117,9 +117,14 @@ function UI.TextEntry:eventHandler(event)
 	self.entry.value = text
 	if event.ie and self.entry:process(event.ie) then
 		if self.entry.textChanged then
+			local changed = self.value ~= self.entry.value
 			self.value = self.entry.value
 			self:draw()
-			self:emit({ type = 'text_change', text = self.value, element = self })
+			if changed then
+				-- we get entry.textChanged when marking is updated
+				-- no need to emit in that case
+				self:emit({ type = 'text_change', text = self.value, element = self })
+			end
 		elseif self.entry.posChanged then
 			self:updateCursor()
 		end

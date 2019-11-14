@@ -122,3 +122,34 @@ function UI.Wizard:eventHandler(event)
 		self:draw()
 	end
 end
+
+function UI.Wizard.example()
+	return UI.Wizard {
+		ey = -2,
+		pages = {
+			splash = UI.WizardPage {
+				index = 1,
+				intro = UI.TextArea {
+					inactive = true,
+					x = 3, ex = -3, y = 2, ey = -2,
+					value = 'sample text',
+				},
+			},
+			label = UI.WizardPage {
+				index = 2,
+				intro = UI.TextArea {
+					inactive = true,
+					x = 3, ex = -3, y = 2, ey = -2,
+					value = 'sample more text',
+				},
+			},
+			password = UI.WizardPage {
+				index = 3,
+				text = UI.TextEntry {
+					x = 12, ex = -3, y = 2,
+					shadowText = 'tet',
+				},
+			},
+		},
+	}
+end

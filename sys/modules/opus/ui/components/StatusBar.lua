@@ -96,3 +96,20 @@ function UI.StatusBar:draw()
 		self:write(1, 1, Util.widthify(s, self.width))
 	end
 end
+
+function UI.StatusBar.example()
+	return UI.Window {
+		status1 = UI.StatusBar { values = 'standard' },
+		status2 = UI.StatusBar {
+			ey = -3,
+			columns = {
+				{ key = 'field1' },
+				{ key = 'field2', width = 6 },
+			},
+			values = {
+				field1 = 'test',
+				field2 = '42',
+			}
+		}
+	}
+end

@@ -49,7 +49,7 @@ function UI.Slider:draw()
 			i == self.width and self.rightBorder or
 			self.barChar
 
-			table.insert(bar, filler)
+		table.insert(bar, filler)
 	end
 	self:write(1, 1, table.concat(bar), nil, self.barColor)
 	self:write(progress, 1, self.sliderChar, nil, self.focused and self.sliderFocusColor or self.sliderColor)
@@ -80,6 +80,5 @@ function UI.Slider.example()
 	return UI.Slider {
 		y = 2, x = 2, ex = -2,
 		min = 0, max = 1,
-		help = 'Volume setting',
 	}
 end
