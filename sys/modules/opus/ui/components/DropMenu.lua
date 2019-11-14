@@ -73,3 +73,16 @@ function UI.DropMenu:eventHandler(event)
 	end
 	return true
 end
+
+function UI.DropMenu.example()
+	return UI.MenuBar {
+		buttons = {
+			{ text = 'File', dropdown = {
+					{ text = 'Run',            event = 'run' },
+					{ text = 'Shell        s', event = 'shell'  },
+					{ spacer = true },
+					{ text = 'Quit        ^q', event = 'quit'   },
+			} },
+		}
+	}
+end

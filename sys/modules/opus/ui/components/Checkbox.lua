@@ -61,3 +61,9 @@ function UI.Checkbox:eventHandler(event)
 		return true
 	end
 end
+
+function UI.Checkbox.example()
+	return UI.Checkbox {
+		x = 2, y = 2,
+	}
+end

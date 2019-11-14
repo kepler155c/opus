@@ -53,7 +53,7 @@ function UI.Chooser:eventHandler(event)
 		if event.key == 'right' or event.key == 'space' then
 			local _,k = Util.find(self.choices, 'value', self.value)
 			local choice
-			if not k then k = 1 end
+			if not k then k = 0 end
 			if k and k < #self.choices then
 				choice = self.choices[k+1]
 			else
@@ -85,4 +85,26 @@ function UI.Chooser:eventHandler(event)
 			return true
 		end
 	end
+end
+
+function UI.Chooser.example()
+	return UI.Window {
+		a = UI.Chooser {
+			x = 2, y = 2,
+			choices = {
+				{ name = 'choice1', value = 'value1' },
+				{ name = 'choice2', value = 'value2' },
+				{ name = 'choice3', value = 'value3' },
+			},
+			value = 'value2',
+		},
+		b = UI.Chooser {
+			x = 2, y = 4,
+			choices = {
+				{ name = 'choice1', value = 'value1' },
+				{ name = 'choice2', value = 'value2' },
+				{ name = 'choice3', value = 'value3' },
+			},
+		}
+	}
 end

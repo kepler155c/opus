@@ -134,3 +134,23 @@ function UI.Form:eventHandler(event)
 	end
 	return true
 end
+
+function UI.Form.example()
+	return UI.Form {
+		x = 2, ex = -2, y = 2,
+		ptype = UI.Chooser {
+			formLabel = 'Type', formKey = 'type',
+			width = 10,
+			choices = {
+				{ name = 'Modem', value = 'wireless_modem' },
+				{ name = 'Drive', value = 'disk_drive'     },
+			},
+		},
+		drive_id = UI.TextEntry {
+			formLabel = 'Drive', formKey = 'drive_id',
+			required = true,
+			width = 5,
+			transform = 'number',
+		},
+	}
+end

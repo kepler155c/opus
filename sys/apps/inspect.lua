@@ -1,4 +1,5 @@
-local UI = require('opus.ui')
+local UI   = require('opus.ui')
+local Util = require('opus.util')
 
 local colors     = _G.colors
 local multishell = _ENV.multishell
@@ -6,6 +7,7 @@ local multishell = _ENV.multishell
 local name = ({ ... })[1] or error('Syntax: inspect COMPONENT')
 local events = { }
 local page
+local lastEvent
 
 local function isRelevant(el)
 	return page.testContainer == el or el.parent and isRelevant(el.parent)
@@ -13,7 +15,8 @@ end
 
 local emitter = UI.Window.emit
 function UI.Window:emit(event)
-	if not event._recorded and isRelevant(self) then
+	if event ~= lastEvent and isRelevant(self) then
+		lastEvent = event
 		local t = { }
 		for k,v in pairs(event) do
 			if k ~= 'type' and k ~= 'recorded' then
@@ -21,7 +24,7 @@ function UI.Window:emit(event)
 			end
 		end
 		table.insert(events, 1, { type = event.type, value = table.concat(t, ' '), raw = event })
-		while #events > 10 do
+		while #events > 20 do
 			table.remove(events)
 		end
 		page.tabs.events.grid:update()
@@ -29,7 +32,6 @@ function UI.Window:emit(event)
 			page.tabs.events.grid:draw()
 		end
 	end
-	event._recorded = true
 	return emitter(self, event)
 end
 
@@ -72,13 +74,23 @@ page = UI.Page {
 		},
 		events = UI.Tab {
 			tabTitle = 'Events',
+			UI.MenuBar {
+				y = -1,
+				buttons = {
+					{ text = 'Clear', event = 'event_clear' },
+				}
+			},
 			grid = UI.ScrollingGrid {
+				ey = -2,
 				headerBackgroundColor = colors.red,
 				values = events,
 				autospace = true,
 				columns = {
 					{ heading = 'type', key = 'type' },
 					{ heading = 'value', key = 'value',  }
+				},
+				accelerators = {
+					grid_select = 'event_inspect',
 				},
 			}
 		}
@@ -122,15 +134,19 @@ page = UI.Page {
 			self.tabs.methodsTab.grid:update()
 			self.tabs.methodsTab.grid:draw()
 
-		elseif event.type == 'grid_select' and event.element == self.tabs.events.grid then
-			event.selected.raw._recorded = nil
+		elseif event.type == 'event_clear' then
+			Util.clear(self.tabs.events.grid.values)
+			self.tabs.events.grid:update()
+			self.tabs.events.grid:draw()
+
+		elseif event.type == 'event_inspect' then
 			multishell.openTab({
 				path = 'sys/apps/Lua.lua',
 				args = { event.selected.raw },
 				focused = true,
 			})
 
-		elseif event.type == 'grid_select' and event.element == self.tabs.properties.grid then
+		elseif event.type == 'edit_property' then
 			self.editor.entry.value = event.selected.value
 			self.editor:show()
 

@@ -912,12 +912,16 @@ end
 function UI.Window:emit(event)
 	local parent = self
 	while parent do
-		if parent.accelerators and event.key then -- not ideal
-			-- could be [event.key or event.type] to support accelerators
-			-- for non-input type events
-			local acc = parent.accelerators[event.key]
-			if acc and parent:emit({ type = acc, element = parent }) then
-				return true
+		if parent.accelerators then
+			-- events types can be made unique via accelerators
+			local acc = parent.accelerators[event.key or event.type]
+			if acc and acc ~= event.type then -- don't get stuck in a loop
+				local event2 = Util.shallowCopy(event)
+				event2.type = acc
+				event2.key = nil
+				if parent:emit(event2) then
+					return true
+				end
 			end
 		end
 		if parent.eventHandler then

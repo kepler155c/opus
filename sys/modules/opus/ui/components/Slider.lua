@@ -75,3 +75,11 @@ function UI.Slider:eventHandler(event)
 		self:draw()
 	end
 end
+
+function UI.Slider.example()
+	return UI.Slider {
+		y = 2, x = 2, ex = -2,
+		min = 0, max = 1,
+		help = 'Volume setting',
+	}
+end

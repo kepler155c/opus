@@ -88,3 +88,12 @@ function UI.MenuBar:eventHandler(event)
 		return true
 	end
 end
+
+function UI.MenuBar.example()
+	return UI.MenuBar {
+		buttons = {
+			{ text = 'Choice1', event = 'event1' },
+			{ text = 'Choice2', event = 'event2' },
+		}
+	}
+end

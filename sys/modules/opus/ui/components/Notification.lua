@@ -90,3 +90,28 @@ function UI.Notification:eventHandler(event)
 		end
 	end
 end
+
+function UI.Notification.example()
+	return UI.Window {
+		notify = UI.Notification {
+			anchor = 'top',
+		},
+		button1 = UI.Button {
+			x = 2, y = 3,
+			text = 'success',
+			event = 'test_success',
+		},
+		button2 = UI.Button {
+			x = 2, y = 5,
+			text = 'error',
+			event = 'test_error',
+		},
+		eventHandler = function (self, event)
+			if event.type == 'test_success' then
+				self.notify:success('Example text')
+			elseif event.type == 'test_error' then
+				self.notify:error('Example text')
+			end
+		end,
+	}
+end

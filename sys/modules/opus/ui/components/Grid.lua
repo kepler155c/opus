@@ -512,6 +512,9 @@ function UI.Grid.example()
 				{ heading = 'key', key = 'key' },
 				{ heading = 'value', key = 'value' },
 			},
+			accelerators = {
+				grid_select = 'custom_select',
+			}
 		},
 		noheader = UI.Grid {
 			ex = '48%', y = 6, ey = -2,
