@@ -24,40 +24,38 @@ local page = UI.Page {
 		values = kernel.routines,
 		sortColumn = 'uid',
 		autospace = true,
+		getDisplayValues = function(_, row)
+			local elapsed = os.clock()-row.timestamp
+			return {
+				uid = row.uid,
+				title = row.title,
+				status = row.isDead and 'error' or coroutine.status(row.co),
+				timestamp = elapsed < 60 and
+					string.format("%ds", math.floor(elapsed)) or
+					string.format("%sm", math.floor(elapsed/6)/10),
+			}
+		end
 	},
 	accelerators = {
 		[ 'control-q' ] = 'quit',
 		space = 'activate',
 		t = 'terminate',
 	},
-}
-
-function page:eventHandler(event)
-	local t = self.grid:getSelected()
-	if t then
-		if event.type == 'activate' or event.type == 'grid_select' then
-			multishell.setFocus(t.uid)
-		elseif event.type == 'terminate' then
-			multishell.terminate(t.uid)
+	eventHandler = function (self, event)
+		local t = self.grid:getSelected()
+		if t then
+			if event.type == 'activate' or event.type == 'grid_select' then
+				multishell.setFocus(t.uid)
+			elseif event.type == 'terminate' then
+				multishell.terminate(t.uid)
+			end
 		end
+		if event.type == 'quit' then
+			Event.exitPullEvents()
+		end
+		UI.Page.eventHandler(self, event)
 	end
-	if event.type == 'quit' then
-		Event.exitPullEvents()
-	end
-	UI.Page.eventHandler(self, event)
-end
-
-function page.grid:getDisplayValues(row)
-	local elapsed = os.clock()-row.timestamp
-	return {
-		uid = row.uid,
-		title = row.title,
-		status = row.isDead and 'error' or coroutine.status(row.co),
-		timestamp = elapsed < 60 and
-			string.format("%ds", math.floor(elapsed)) or
-			string.format("%sm", math.floor(elapsed/6)/10),
-	}
-end
+}
 
 Event.onInterval(1, function()
 	page.grid:update()

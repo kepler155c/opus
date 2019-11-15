@@ -35,6 +35,15 @@ function UI.MenuBar:addButtons(buttons)
 	end
 
 	for _,button in pairs(buttons) do
+		if button.index then -- don't sort unless needed
+			table.sort(buttons, function(a, b)
+				return (a.index or 999) < (b.index or 999)
+			end)
+			break
+		end
+	end
+
+	for _,button in pairs(buttons) do
 		if button.UIElement then
 			table.insert(self.children, button)
 		else

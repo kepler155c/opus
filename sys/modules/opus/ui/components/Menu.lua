@@ -59,3 +59,14 @@ function UI.Menu:eventHandler(event)
 	end
 	return UI.Grid.eventHandler(self, event)
 end
+
+function UI.Menu.example()
+	return UI.Menu {
+		x = 2, y = 2, height = 3,
+		menuItems = {
+			{ prompt = 'Start',    event = 'start' },
+			{ prompt = 'Continue', event = 'continue' },
+			{ prompt = 'Quit',     event = 'quit' }
+		}
+	}
+end

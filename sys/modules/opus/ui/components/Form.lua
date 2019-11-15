@@ -139,7 +139,7 @@ function UI.Form.example()
 	return UI.Form {
 		x = 2, ex = -2, y = 2,
 		ptype = UI.Chooser {
-			formLabel = 'Type', formKey = 'type',
+			formLabel = 'Type', formKey = 'type', formIndex = 1,
 			width = 10,
 			choices = {
 				{ name = 'Modem', value = 'wireless_modem' },
@@ -147,7 +147,7 @@ function UI.Form.example()
 			},
 		},
 		drive_id = UI.TextEntry {
-			formLabel = 'Drive', formKey = 'drive_id',
+			formLabel = 'Drive', formKey = 'drive_id', formIndex = 2,
 			required = true,
 			width = 5,
 			transform = 'number',

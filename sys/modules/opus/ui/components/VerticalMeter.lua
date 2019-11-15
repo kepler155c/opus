@@ -16,3 +16,19 @@ function UI.VerticalMeter:draw()
 	self:clear()
 	self:clearArea(1, height + 1, self.width, self.height, self.meterColor)
 end
+
+function UI.VerticalMeter.example()
+	local Event = require('opus.event')
+	return UI.VerticalMeter {
+		x = 2, width = 3, y = 2, ey = -2,
+		focus = function() end,
+		enable = function(self)
+			Event.onInterval(.25, function()
+				self.value = self.value == 100 and 0 or self.value + 5
+				self:draw()
+				self:sync()
+			end)
+			return UI.VerticalMeter.enable(self)
+		end
+	}
+end

@@ -19,6 +19,14 @@ end
 function UI.SlideOut:enable()
 end
 
+function UI.SlideOut:toggle()
+	if self.enabled then
+		self:hide()
+	else
+		self:show()
+	end
+end
+
 function UI.SlideOut:show(...)
 	self:addTransition('expandUp')
 	self.canvas:raise()
@@ -52,7 +60,9 @@ function UI.SlideOut:eventHandler(event)
 end
 
 function UI.SlideOut.example()
-	return UI.Window {
+	-- for the transistion to work properly, the parent must have a canvas
+	return UI.ActiveLayer {
+		backgroundColor = colors.cyan,
 		button = UI.Button {
 			x = 2, y = 2,
 			text = 'show',
@@ -67,11 +77,8 @@ function UI.SlideOut.example()
 		},
 		eventHandler = function (self, event)
 			if event.type == 'button_press' then
-				if self.slideOut.enabled then
-					self.slideOut:hide()
-				else
-					self.slideOut:show()
-				end
+				self.slideOut.canvas.xxx = true
+				self.slideOut:toggle()
 			end
 		end,
 	}

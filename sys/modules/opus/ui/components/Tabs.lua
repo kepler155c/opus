@@ -16,6 +16,7 @@ function UI.Tabs:add(children)
 		if type(child) == 'table' and child.UIElement and child.tabTitle then
 			child.y = 2
 			table.insert(buttons, {
+				index = child.index,
 				text = child.tabTitle,
 				event = 'tab_select',
 				tabUid = child.uid,
@@ -32,7 +33,7 @@ function UI.Tabs:add(children)
 	end
 
 	if self.parent then
-		return UI.Window.add(self, children)
+		UI.Window.add(self, children)
 	end
 end
 
@@ -57,7 +58,7 @@ function UI.Tabs:enable()
 
 	local menuItem = Util.find(self.tabBar.children, 'selected', true)
 
-	for _,child in pairs(self.children) do
+	for _,child in pairs(self.children or { }) do
 		if child.uid == menuItem.tabUid then
 			child:enable()
 			self:emit({ type = 'tab_activate', activated = child })
@@ -90,16 +91,19 @@ end
 
 function UI.Tabs.example()
 	return UI.Tabs {
-		[1] = UI.Tab {
+		tab1 = UI.Tab {
+			index = 1,
 			tabTitle = 'tab1',
 			entry = UI.TextEntry { y = 3, shadowText = 'text' },
 		},
-		[2] = UI.Tab {
+		tab2 = UI.Tab {
+			index = 2,
 			tabTitle = 'tab2',
 			button = UI.Button { y = 3 },
 		},
-		[3] = UI.Tab {
+		tab3 = UI.Tab {
+			index = 3,
 			tabTitle = 'tab3',
-		}
+		},
 	}
 end

@@ -26,3 +26,19 @@ function UI.ProgressBar:draw()
 		self:write(1, i, progress, self.progressColor)
 	end
 end
+
+function UI.ProgressBar.example()
+	local Event = require('opus.event')
+	return UI.ProgressBar {
+		x = 2, ex = -2, y = 2,
+		focus = function() end,
+		enable = function(self)
+			Event.onInterval(.25, function()
+				self.value = self.value == 100 and 0 or self.value + 5
+				self:draw()
+				self:sync()
+			end)
+			return UI.ProgressBar.enable(self)
+		end
+	}
+end

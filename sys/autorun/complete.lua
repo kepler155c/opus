@@ -1,3 +1,5 @@
+local fs = _G.fs
+
 local function completeMultipleChoice(sText, tOptions, bAddSpaces)
 	local tResults = { }
 	for n = 1,#tOptions do
@@ -18,5 +20,16 @@ _ENV.shell.setCompletionFunction("sys/apps/package.lua",
 	function(_, index, text)
 		if index == 1 then
 			return completeMultipleChoice(text, { "install ", "update ", "uninstall ", "updateall ", "refresh" })
+		end
+	end)
+
+_ENV.shell.setCompletionFunction("sys/apps/inspect.lua",
+	function(_, index, text)
+		if index == 1 then
+			local components = { }
+			for _, f in pairs(fs.list('sys/modules/opus/ui/components')) do
+				table.insert(components, (f:gsub("%.lua$", "")))
+			end
+			return completeMultipleChoice(text, components)
 		end
 	end)

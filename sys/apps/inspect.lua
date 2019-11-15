@@ -63,6 +63,7 @@ page = UI.Page {
 			},
 		},
 		methodsTab = UI.Tab {
+			index = 2,
 			tabTitle = 'Methods',
 			grid = UI.ScrollingGrid {
 				headerBackgroundColor = colors.red,
@@ -73,11 +74,12 @@ page = UI.Page {
 			},
 		},
 		events = UI.Tab {
+			index = 1,
 			tabTitle = 'Events',
 			UI.MenuBar {
 				y = -1,
 				buttons = {
-					{ text = 'Clear', event = 'event_clear' },
+					{ text = 'Clear' },
 				}
 			},
 			grid = UI.ScrollingGrid {
@@ -89,10 +91,21 @@ page = UI.Page {
 					{ heading = 'type', key = 'type' },
 					{ heading = 'value', key = 'value',  }
 				},
-				accelerators = {
-					grid_select = 'event_inspect',
-				},
-			}
+			},
+			eventHandler = function (self, event)
+				if event.type == 'button_press' then
+					Util.clear(self.grid.values)
+					self.grid:update()
+					self.grid:draw()
+
+				elseif event.type == 'grid_select' then
+					multishell.openTab({
+						path = 'sys/apps/Lua.lua',
+						args = { event.selected.raw },
+						focused = true,
+					})
+				end
+			end
 		}
 	},
 	editor = UI.SlideOut {
@@ -133,18 +146,6 @@ page = UI.Page {
 			self.tabs.methodsTab.grid:setValues(t)
 			self.tabs.methodsTab.grid:update()
 			self.tabs.methodsTab.grid:draw()
-
-		elseif event.type == 'event_clear' then
-			Util.clear(self.tabs.events.grid.values)
-			self.tabs.events.grid:update()
-			self.tabs.events.grid:draw()
-
-		elseif event.type == 'event_inspect' then
-			multishell.openTab({
-				path = 'sys/apps/Lua.lua',
-				args = { event.selected.raw },
-				focused = true,
-			})
 
 		elseif event.type == 'edit_property' then
 			self.editor.entry.value = event.selected.value

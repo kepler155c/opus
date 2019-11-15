@@ -353,6 +353,12 @@ function Canvas:__renderLayers(device, offset)
 end
 
 function Canvas:__blitClipped(device, offset)
+	if self.parent then
+		-- contain the rendered region in the parent's region
+		local p = Region.new(1, 1, self.parent.width, self.parent.height)
+		self.regions:andRegion(p)
+	end
+
 	for _,region in ipairs(self.regions.region) do
 		self:__blitRect(device,
 			{ x = region[1] - offset.x,
