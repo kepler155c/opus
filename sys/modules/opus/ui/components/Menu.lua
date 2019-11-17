@@ -1,7 +1,6 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
---[[-- Menu --]]--
 UI.Menu = class(UI.Grid)
 UI.Menu.defaults = {
 	UIElement = 'Menu',

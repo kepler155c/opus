@@ -398,6 +398,7 @@ local UI = Manager()
 --[[-- Basic drawable area --]]--
 UI.Window = class()
 UI.Window.uid = 1
+UI.Window.docs = { }
 UI.Window.defaults = {
 	UIElement = 'Window',
 	x = 1,
@@ -482,13 +483,14 @@ function UI.Window:layout()
 	end
 
 	if type(self.x) == 'string' then
-		self.x = calc(self.x, self.parent.width)
+		self.x = calc(self.x, self.parent.width) + 1
+		-- +1 in order to allow both x and ex to use the same %
 	end
 	if type(self.ex) == 'string' then
 		self.ex = calc(self.ex, self.parent.width)
 	end
 	if type(self.y) == 'string' then
-		self.y = calc(self.y, self.parent.height)
+		self.y = calc(self.y, self.parent.height) + 1
 	end
 	if type(self.ey) == 'string' then
 		self.ey = calc(self.ey, self.parent.height)
@@ -539,6 +541,22 @@ function UI.Window:setParent()
 
 	self:layout()
 
+	-- Experimental
+	-- Inherit properties from the parent container
+	-- does this need to be in reverse order ?
+	local m = getmetatable(self)  -- get the class for this instance
+	repeat
+		if m.inherits then
+			for k, v in pairs(m.inherits) do
+				local value = self.parent:getProperty(v)
+				if value then
+					self[k] = value
+				end
+			end
+		end
+		m = m._base
+	until not m
+
 	self:initChildren()
 end
 
@@ -555,6 +573,13 @@ function UI.Window:resize()
 	end
 end
 
+UI.Window.docs.add = [[add(TABLE)
+Add element(s) to a window. Example:
+page:add({
+	text = UI.Text {
+	  x=5,value='help'
+	}
+})]]
 function UI.Window:add(children)
 	UI:mergeProperties(self, children)
 	self:initChildren()
@@ -574,6 +599,8 @@ function UI.Window:setCursorBlink(blink)
 	self.parent:setCursorBlink(blink)
 end
 
+UI.Window.docs.draw = [[draw(VOID)
+Redraws the window in the internal buffer.]]
 function UI.Window:draw()
 	self:clear(self.backgroundColor)
 	if self.children then
@@ -585,6 +612,21 @@ function UI.Window:draw()
 	end
 end
 
+UI.Window.docs.getDoc = [[getDoc(STRING method)
+Gets the documentation for a method.]]
+function UI.Window:getDoc(method)
+	local m = getmetatable(self)  -- get the class for this instance
+	repeat
+		if m.docs and m.docs[method] then
+			return m.docs[method]
+		end
+		m = m._base
+	until not m
+end
+
+UI.Window.docs.sync = [[sync(VOID)
+Invoke a screen update. Automatically called at top level after an input event.
+Call to force a screen update.]]
 function UI.Window:sync()
 	if self.parent then
 		self.parent:sync()
@@ -614,9 +656,11 @@ function UI.Window:setTextScale(textScale)
 	self.parent:setTextScale(textScale)
 end
 
+UI.Window.docs.clear = [[clear(opt COLOR bg, opt COLOR fg)
+Clears the window using the either the passed values or the defaults for that window.]]
 function UI.Window:clear(bg, fg)
 	if self.canvas then
-		self.canvas:clear(bg or self.backgroundColor, fg or self.textColor)
+		self.canvas:clear(bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
 	else
 		self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
 	end
@@ -635,18 +679,18 @@ function UI.Window:clearArea(x, y, width, height, bg)
 	end
 end
 
-function UI.Window:write(x, y, text, bg, tc)
+function UI.Window:write(x, y, text, bg, fg)
 	bg = bg or self.backgroundColor
-	tc = tc or self.textColor
+	fg = fg or self.textColor
 
 	if self.canvas then
-		self.canvas:write(x, y, text, bg, tc)
+		self.canvas:write(x, y, text, bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
 	else
 		x = x - self.offx
 		y = y - self.offy
 		if y <= self.height and y > 0 then
 			self.parent:write(
-				self.x + x - 1, self.y + y - 1, tostring(text), bg, tc)
+				self.x + x - 1, self.y + y - 1, tostring(text), bg, fg)
 		end
 	end
 end
@@ -752,12 +796,20 @@ function UI.Window:print(text, bg, fg)
 	return self.cursorX, self.cursorY
 end
 
+UI.Window.docs.focus = [[focus(VOID)
+If the function is present on a class, it indicates
+that this element can accept focus. Called when receiving focus.]]
+
+UI.Window.docs.setFocus = [[setFocus(ELEMENT el)
+Set the page's focus to the passed element.]]
 function UI.Window:setFocus(focus)
 	if self.parent then
 		self.parent:setFocus(focus)
 	end
 end
 
+UI.Window.docs.capture = [[capture(ELEMENT el)
+Restricts input to the passed element's tree.]]
 function UI.Window:capture(child)
 	if self.parent then
 		self.parent:capture(child)
@@ -793,6 +845,8 @@ function UI.Window:pointToChild(x, y)
 	}
 end
 
+UI.Window.docs.getFocusables = [[getFocusables(VOID)
+Returns a list of children that can accept focus.]]
 function UI.Window:getFocusables()
 	local focusable = { }
 

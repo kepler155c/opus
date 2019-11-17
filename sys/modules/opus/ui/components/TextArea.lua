@@ -1,7 +1,6 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
---[[-- TextArea --]]--
 UI.TextArea = class(UI.Viewport)
 UI.TextArea.defaults = {
 	UIElement = 'TextArea',

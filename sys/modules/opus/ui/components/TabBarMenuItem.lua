@@ -3,7 +3,6 @@ local UI    = require('opus.ui')
 
 local colors = _G.colors
 
---[[-- TabBarMenuItem --]]--
 UI.TabBarMenuItem = class(UI.Button)
 UI.TabBarMenuItem.defaults = {
 	UIElement = 'TabBarMenuItem',
@@ -12,6 +11,9 @@ UI.TabBarMenuItem.defaults = {
 	selectedBackgroundColor = colors.cyan,
 	unselectedBackgroundColor = colors.lightGray,
 	backgroundColor = colors.lightGray,
+}
+UI.TabBarMenuItem.inherits = {
+	selectedBackgroundColor = 'selectedBackgroundColor',
 }
 function UI.TabBarMenuItem:draw()
 	if self.selected then

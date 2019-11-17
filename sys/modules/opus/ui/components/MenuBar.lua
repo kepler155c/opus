@@ -51,6 +51,7 @@ function UI.MenuBar:addButtons(buttons)
 				x = self.lastx,
 				width = #(button.text or 'button') + self.spacing,
 				centered = false,
+				backgroundColor = self.backgroundColor,
 			}
 			self.lastx = self.lastx + buttonProperties.width
 			UI:mergeProperties(buttonProperties, button)

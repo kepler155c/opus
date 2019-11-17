@@ -16,6 +16,7 @@ local function transform(directive)
 end
 
 UI.TextEntry = class(UI.Window)
+UI.TextEntry.docs = { }
 UI.TextEntry.defaults = {
 	UIElement = 'TextEntry',
 	--value = '',
@@ -92,6 +93,8 @@ function UI.TextEntry:draw()
 	end
 end
 
+UI.TextEntry.docs.reset = [[reset()
+Clears the value and resets the cursor.]]
 function UI.TextEntry:reset()
 	self.entry:reset()
 	self.value = nil--''

@@ -3,7 +3,6 @@ local UI    = require('opus.ui')
 
 local colors = _G.colors
 
---[[-- Viewport --]]--
 UI.Viewport = class(UI.Window)
 UI.Viewport.defaults = {
 	UIElement = 'Viewport',

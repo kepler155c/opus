@@ -1,7 +1,6 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
---[[-- SlideOut --]]--
 UI.SlideOut = class(UI.Window)
 UI.SlideOut.defaults = {
 	UIElement = 'SlideOut',
@@ -62,9 +61,12 @@ end
 function UI.SlideOut.example()
 	-- for the transistion to work properly, the parent must have a canvas
 	return UI.ActiveLayer {
+		y = 1,	-- TODO: if this is set to anything greater than 1, then
+				-- the layer is not rendered in the correct location
+				-- a general issue in canvas layers
 		backgroundColor = colors.cyan,
 		button = UI.Button {
-			x = 2, y = 2,
+			x = 2, y = 5,
 			text = 'show',
 		},
 		slideOut = UI.SlideOut {

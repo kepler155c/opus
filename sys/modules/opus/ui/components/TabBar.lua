@@ -2,13 +2,13 @@ local class = require('opus.class')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.TabBar = class(UI.MenuBar)
 UI.TabBar.defaults = {
 	UIElement = 'TabBar',
 	buttonClass = 'TabBarMenuItem',
-	selectedBackgroundColor = colors.cyan,
+}
+UI.TabBar.inherits = {
+	selectedBackgroundColor = 'backgroundColor',
 }
 function UI.TabBar:enable()
 	UI.MenuBar.enable(self)

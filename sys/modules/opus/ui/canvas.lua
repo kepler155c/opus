@@ -355,7 +355,9 @@ end
 function Canvas:__blitClipped(device, offset)
 	if self.parent then
 		-- contain the rendered region in the parent's region
-		local p = Region.new(1, 1, self.parent.width, self.parent.height)
+		local p = Region.new(1, 1,
+			self.parent.width + offset.x - self.x + 1,
+			self.parent.height + offset.y - self.y + 1)
 		self.regions:andRegion(p)
 	end
 

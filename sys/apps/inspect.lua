@@ -6,8 +6,7 @@ local multishell = _ENV.multishell
 
 local name = ({ ... })[1] or error('Syntax: inspect COMPONENT')
 local events = { }
-local page
-local lastEvent
+local page, lastEvent, focused
 
 local function isRelevant(el)
 	return page.testContainer == el or el.parent and isRelevant(el.parent)
@@ -43,11 +42,12 @@ end
 
 page = UI.Page {
 	testContainer = UI.Window {
-		ey = 10,
+		ey = '50%',
 		testing = component.example(),
 	},
 	tabs = UI.Tabs {
-		y = 11,
+		backgroundColor = colors.red,
+		y = '50%',
 		properties = UI.Tab {
 			tabTitle = 'Properties',
 			grid = UI.ScrollingGrid {
@@ -66,18 +66,29 @@ page = UI.Page {
 			index = 2,
 			tabTitle = 'Methods',
 			grid = UI.ScrollingGrid {
+				ex = '50%',
 				headerBackgroundColor = colors.red,
 				sortColumn = 'key',
 				columns = {
 					{ heading = 'key', key = 'key' },
 				},
 			},
+			docs = UI.TextArea {
+				x = '50%',
+				backgroundColor = colors.black,
+			},
+			eventHandler = function (self, event)
+				if event.type == 'grid_focus_row' and focused then
+					self.docs:setText(focused:getDoc(event.selected.key) or '')
+				end
+			end,
 		},
 		events = UI.Tab {
 			index = 1,
 			tabTitle = 'Events',
 			UI.MenuBar {
 				y = -1,
+				backgroundColor = colors.red,
 				buttons = {
 					{ text = 'Clear' },
 				}
@@ -124,6 +135,7 @@ page = UI.Page {
 	},
 	eventHandler = function (self, event)
 		if event.type == 'focus_change' and isRelevant(event.focused) then
+			focused = event.focused
 			local t = { }
 			for k,v in pairs(event.focused) do
 				table.insert(t, {

@@ -92,25 +92,26 @@ function UI.Notification:eventHandler(event)
 end
 
 function UI.Notification.example()
-	return UI.Window {
-		notify = UI.Notification {
+	return UI.ActiveLayer {
+		notify1 = UI.Notification {
 			anchor = 'top',
 		},
+		notify2 = UI.Notification { },
 		button1 = UI.Button {
 			x = 2, y = 3,
-			text = 'success',
+			text = 'example 1',
 			event = 'test_success',
 		},
 		button2 = UI.Button {
 			x = 2, y = 5,
-			text = 'error',
+			text = 'example 2',
 			event = 'test_error',
 		},
 		eventHandler = function (self, event)
 			if event.type == 'test_success' then
-				self.notify:success('Example text')
+				self.notify1:success('Example text')
 			elseif event.type == 'test_error' then
-				self.notify:error('Example text', 0)
+				self.notify2:error('Example text', 0)
 			end
 		end,
 	}

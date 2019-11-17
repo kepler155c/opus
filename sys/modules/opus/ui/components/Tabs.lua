@@ -3,6 +3,7 @@ local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
 UI.Tabs = class(UI.Window)
+UI.Tabs.docs = { }
 UI.Tabs.defaults = {
 	UIElement = 'Tabs',
 }
@@ -37,6 +38,8 @@ function UI.Tabs:add(children)
 	end
 end
 
+UI.Tabs.docs.selectTab = [[selectTab(TAB)
+Make to the passed tab active.]]
 function UI.Tabs:selectTab(tab)
 	local menuItem = Util.find(self.tabBar.children, 'tabUid', tab.uid)
 	if menuItem then

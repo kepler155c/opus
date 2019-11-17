@@ -2,7 +2,6 @@ local class = require('opus.class')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
---[[-- ScrollingGrid  --]]--
 UI.ScrollingGrid = class(UI.Grid)
 UI.ScrollingGrid.defaults = {
 	UIElement = 'ScrollingGrid',

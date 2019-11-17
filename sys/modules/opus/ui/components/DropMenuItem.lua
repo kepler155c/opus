@@ -3,7 +3,6 @@ local UI    = require('opus.ui')
 
 local colors = _G.colors
 
---[[-- DropMenuItem --]]--
 UI.DropMenuItem = class(UI.Button)
 UI.DropMenuItem.defaults = {
 	UIElement = 'DropMenuItem',
