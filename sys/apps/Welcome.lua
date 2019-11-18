@@ -60,6 +60,12 @@ local page = UI.Page {
 					x = 3, ex = -3, y = 4, ey = -3,
 					value = string.format(labelIntro, Ansi.white),
 				},
+				validate = function (self)
+					if self.label.value then
+						os.setComputerLabel(self.label.value)
+					end
+					return true
+				end,
 			},
 			password = UI.WizardPage {
 				index = 3,
@@ -73,23 +79,18 @@ local page = UI.Page {
 					mask = true,
 					shadowText = 'password',
 				},
---[[
-				groupLabel = UI.Text {
-					x = 3, y = 3,
-					value = 'Group'
-				},
-				group = UI.TextEntry {
-					x = 12, ex = -3, y = 3,
-					limit = 32,
-					shadowText = 'network group',
-				},
-]]
 				intro = UI.TextArea {
 					textColor = colors.yellow,
 					inactive = true,
 					x = 3, ex = -3, y = 5, ey = -3,
 					value = string.format(passwordIntro, Ansi.white),
 				},
+				validate = function (self)
+					if type(self.newPass.value) == "string" and #self.newPass.value > 0 then
+						Security.updatePassword(SHA.compute(self.newPass.value))
+					end
+					return true
+				end,
 			},
 			packages = UI.WizardPage {
 				index = 4,
@@ -118,27 +119,6 @@ local page = UI.Page {
 	},
 	notification = UI.Notification { },
 }
-
-function page.wizard.pages.label:validate()
-	if self.label.value then
-		os.setComputerLabel(self.label.value)
-	end
-	return true
-end
-
-function page.wizard.pages.password:validate()
-	if type(self.newPass.value) == "string" and #self.newPass.value > 0 then
-		Security.updatePassword(SHA.compute(self.newPass.value))
-	end
-	--[[
-	if #self.group.value > 0 then
-		local config = Config.load('os')
-		config.group = self.group.value
-		Config.update('os', config)
-	end
-	]]
-	return true
-end
 
 function page:eventHandler(event)
 	if event.type == 'skip' then

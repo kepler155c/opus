@@ -9,6 +9,7 @@ local colors = _G.colors
 
 local Canvas = class()
 
+Canvas.__visualize = false
 Canvas.colorPalette = { }
 Canvas.darkPalette = { }
 Canvas.grayscalePalette = { }
@@ -303,7 +304,7 @@ end
 -- the array.
 function Canvas:__renderLayers(device, offset)
 	if #self.layers > 0 then
-		self.regions = self.regions or Region.new(self.x, self.y, self.ex, self.ey)
+		self.regions = self.regions or Region.new(self.x + offset.x, self.y + offset.y, self.ex + offset.x, self.ey + offset.y)
 
 		for i = 1, #self.layers do
 			local canvas = self.layers[i]
@@ -379,31 +380,29 @@ function Canvas:__punch(rect, offset)
 		rect.ey + offset.y)
 end
 
+-- performance can probably be improved by using one more buffer tied to the device
 function Canvas:__blitRect(device, src, tgt)
 	src = src or { x = 1, y = 1, ex = self.ex - self.x + 1, ey = self.ey - self.y + 1 }
 	tgt = tgt or self
 
-	--[[
-		-- for visualizing updates on the screen
-	local drew
-	for i = 0, src.ey - src.y do
-		local line = self.lines[src.y + i + (self.offy or 0)]
-		if line and line.dirty then
-			drew = true
-			local t, fg, bg = line.text, line.fg, line.bg
-			if src.x > 1 or src.ex < self.ex then
-				t  = _sub(t, src.x, src.ex)
-				fg = _rep(1, src.ex-src.x + 1)
-				bg = _rep(2, src.ex-src.x + 1)
+	-- for visualizing updates on the screen
+	if Canvas.__visualize then
+		local drew
+		local t  = _rep(' ', src.ex-src.x + 1)
+		local bg = _rep(2,   src.ex-src.x + 1)
+		for i = 0, src.ey - src.y do
+			local line = self.lines[src.y + i + (self.offy or 0)]
+			if line and line.dirty then
+				drew = true
+				device.setCursorPos(tgt.x, tgt.y + i)
+				device.blit(t, bg, bg)
 			end
-			device.setCursorPos(tgt.x, tgt.y + i)
-			device.blit(t, fg, bg)
+		end
+		if drew then
+			local t = os.clock()
+			repeat until os.clock()-t > .2
 		end
 	end
-	if drew then
-		os.sleep(.3)
-	end
-	]]
 	for i = 0, src.ey - src.y do
 		local line = self.lines[src.y + i + (self.offy or 0)]
 		if line and line.dirty then

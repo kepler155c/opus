@@ -14,6 +14,11 @@ UI.Chooser.defaults = {
 	leftIndicator = UI.extChars and '\17' or '<',
 	rightIndicator = UI.extChars and '\16' or '>',
 	height = 1,
+	accelerators = {
+		space = 'choice_next',
+		right = 'choice_next',
+		left  = 'choice_prev',
+	}
 }
 function UI.Chooser:setParent()
 	if not self.width and not self.ex then
@@ -29,16 +34,11 @@ function UI.Chooser:setParent()
 end
 
 function UI.Chooser:draw()
-	local bg = self.backgroundColor
-	if self.focused then
-		bg = self.backgroundFocusColor
-	end
+	local bg = self.focused and self.backgroundFocusColor or self.backgroundColor
 	local fg = self.inactive and self.textInactiveColor or self.textColor
 	local choice = Util.find(self.choices, 'value', self.value)
-	local value = self.nochoice
-	if choice then
-		value = choice.name
-	end
+	local value = choice and choice.name or self.nochoice
+
 	self:write(1, 1, self.leftIndicator, self.backgroundColor, colors.black)
 	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg, fg)
 	self:write(self.width, 1, self.rightIndicator, self.backgroundColor, colors.black)
@@ -49,39 +49,37 @@ function UI.Chooser:focus()
 end
 
 function UI.Chooser:eventHandler(event)
-	if event.type == 'key' then
-		if event.key == 'right' or event.key == 'space' then
-			local _,k = Util.find(self.choices, 'value', self.value)
-			local choice
-			if not k then k = 0 end
-			if k and k < #self.choices then
-				choice = self.choices[k+1]
-			else
-				choice = self.choices[1]
-			end
-			self.value = choice.value
-			self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
-			self:draw()
-			return true
-		elseif event.key == 'left' then
-			local _,k = Util.find(self.choices, 'value', self.value)
-			local choice
-			if k and k > 1 then
-				choice = self.choices[k-1]
-			else
-				choice = self.choices[#self.choices]
-			end
-			self.value = choice.value
-			self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
-			self:draw()
-			return true
+	if event.type == 'choice_next' then
+		local _,k = Util.find(self.choices, 'value', self.value)
+		local choice
+		if not k then k = 0 end
+		if k and k < #self.choices then
+			choice = self.choices[k+1]
+		else
+			choice = self.choices[1]
 		end
+		self.value = choice.value
+		self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
+		self:draw()
+		return true
+	elseif event.type == 'choice_prev' then
+		local _,k = Util.find(self.choices, 'value', self.value)
+		local choice
+		if k and k > 1 then
+			choice = self.choices[k-1]
+		else
+			choice = self.choices[#self.choices]
+		end
+		self.value = choice.value
+		self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
+		self:draw()
+		return true
 	elseif event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
 		if event.x == 1 then
-			self:emit({ type = 'key', key = 'left' })
+			self:emit({ type = 'choice_prev' })
 			return true
 		elseif event.x == self.width then
-			self:emit({ type = 'key', key = 'right' })
+			self:emit({ type = 'choice_next' })
 			return true
 		end
 	end

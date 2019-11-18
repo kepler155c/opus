@@ -61,17 +61,14 @@ end
 function UI.SlideOut.example()
 	-- for the transistion to work properly, the parent must have a canvas
 	return UI.ActiveLayer {
-		y = 1,	-- TODO: if this is set to anything greater than 1, then
-				-- the layer is not rendered in the correct location
-				-- a general issue in canvas layers
-		backgroundColor = colors.cyan,
+		y = 2,
 		button = UI.Button {
 			x = 2, y = 5,
 			text = 'show',
 		},
 		slideOut = UI.SlideOut {
-			backgroundColor = colors.yellow,
-			y = -4, height = 4,
+			backgroundColor = _G.colors.yellow,
+			y = -4, height = 4, x = 3, ex = -3,
 			button = UI.Button {
 				x = 2, y = 2,
 				text = 'hide',

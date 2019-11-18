@@ -24,7 +24,7 @@ local page = UI.Page {
 		values = kernel.routines,
 		sortColumn = 'uid',
 		autospace = true,
-		getDisplayValues = function(_, row)
+		getDisplayValues = function (_, row)
 			local elapsed = os.clock()-row.timestamp
 			return {
 				uid = row.uid,
