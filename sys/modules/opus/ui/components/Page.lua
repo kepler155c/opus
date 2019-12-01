@@ -73,12 +73,17 @@ function UI.Page:pointToChild(x, y)
 	if self.__target == self then
 		return UI.Window.pointToChild(self, x, y)
 	end
+	x = x + self.offx - self.x + 1
+	y = y + self.offy - self.y + 1
+--[[
+	-- this is supposed to fix when there are multiple sub canvases
 	local absX, absY = getPosition(self.__target)
-
-	-- this is sketchy
-	x = x + self.offx - self.x - (absX - self.__target.x) + 1
-	y = y + self.offy - self.y - (absY - self.__target.y) + 1
-
+	if self.__target.canvas then
+		x = x - (self.__target.canvas.x - self.__target.x)
+		y = y - (self.__target.canvas.y - self.__target.y)
+		_syslog({'raw', self.__target.canvas.y, self.__target.y})
+	end
+	]]
 	return self.__target:pointToChild(x, y)
 end
 
