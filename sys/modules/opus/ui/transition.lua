@@ -39,7 +39,7 @@ function Transition.expandUp(args)
 	local easing = args.easing or 'linear'
 	local pos    = { y = args.ey + 1 }
 	local tween  = Tween.new(ticks, pos, { y = args.y }, easing)
-_syslog(args)
+
 	args.canvas:move(args.x, pos.y)
 
 	return function()

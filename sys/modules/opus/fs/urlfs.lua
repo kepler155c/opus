@@ -74,6 +74,10 @@ function urlfs.open(node, fn, fl)
 
 	if fl == 'r' then
 		return {
+			read = function()
+                ctr = ctr + 1
+                return c:sub(ctr, ctr)
+			end,
 			readLine = function()
 				if not lines then
 					lines = Util.split(c)

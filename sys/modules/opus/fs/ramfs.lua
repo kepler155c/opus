@@ -77,6 +77,10 @@ function ramfs.open(node, fn, fl)
 		local ctr = 0
 		local lines
 		return {
+            read = function()
+                ctr = ctr + 1
+                return node.contents:sub(ctr, ctr)
+			end,
 			readLine = function()
 				if not lines then
 					lines = Util.split(node.contents)
