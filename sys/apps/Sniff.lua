@@ -307,14 +307,16 @@ end
 
 function page:enable()
 	modemConfig.modems = {}
-	peripheral.find('modem', function(side, dev)
-		modemConfig.modems[side] = {
-			type = dev.isWireless() and 'Wireless' or 'Wired',
-			side = side,
-			openChannels = { },
-			device = dev,
-			loaded = false
-		}
+	Util.each(_G.device, function(dev)
+		if dev.type == "modem" then
+			modemConfig.modems[dev.side] = {
+				type = dev.isWireless() and 'Wireless' or 'Wired',
+				side = dev.side,
+				openChannels = { },
+				device = dev,
+				loaded = false
+			}
+		end
 	end)
 	modemConfig.currentModem = device.wireless_modem and
 		modemConfig.modems[device.wireless_modem.side] or
