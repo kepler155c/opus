@@ -27,6 +27,12 @@ local DEFAULT_ICON = NFT.parse("\0308\0317\153\153\153\153\153\
 \0307\0318\153\153\153\153\153\
 \0308\0317\153\153\153\153\153")
 
+-- overview
+local uid = _ENV.multishell.getCurrent()
+device.keyboard.addHotkey('control-o', function()
+	_ENV.multishell.setFocus(uid)
+end)
+
 UI:configure('Overview', ...)
 
 local config = {

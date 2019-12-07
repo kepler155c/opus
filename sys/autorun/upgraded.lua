@@ -18,3 +18,7 @@ deleteIfExists('sys/autorun/gpshost.lua')
 deleteIfExists('sys/apps/network/redserver.lua')
 deleteIfExists('sys/apis')
 deleteIfExists('sys/autorun/apps.lua')
+deleteIfExists('sys/init/6.tl3.lua')
+
+-- remove this file
+deleteIfExists('sys/autorun/upgraded.lua')

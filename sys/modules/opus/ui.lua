@@ -388,9 +388,9 @@ function Manager:pullEvents(...)
 	end
 end
 
-function Manager:exitPullEvents()
-	Event.exitPullEvents()
-end
+Manager.exitPullEvents = Event.exitPullEvents
+Manager.quit = Event.exitPullEvents
+Manager.start = Manager.pullEvents
 
 local UI = Manager()
 

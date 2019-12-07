@@ -50,16 +50,9 @@ local function systemLog()
 	keyboard.removeHotkey('control-d')
 end
 
-if multishell and multishell.openTab then
-	multishell.openTab({
-		title = 'System Log',
-		fn = systemLog,
-		noTerminate = true,
-		hidden = true,
-	})
-else
-	kernel.run({
-		title = 'Syslog',
-		fn = systemLog,
-	})
-end
+kernel.run({
+	title = 'System Log',
+	fn = systemLog,
+	noTerminate = true,
+	hidden = true,
+})
