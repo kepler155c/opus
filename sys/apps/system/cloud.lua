@@ -42,7 +42,7 @@ To obtain a key, visit:
 
 	function tab:eventHandler(event)
 		if event.type == 'update_key' then
-			if #self.key.value > 0 then
+			if self.key.value then
 				config.key = self.key.value
 			else
 				config.key = nil
