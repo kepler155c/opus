@@ -98,7 +98,7 @@ function GPS.trilaterate(tFixes)
 		if pos2 then
 			pos1, pos2 = narrow(pos1, pos2, tFixes[1])
 		end
-		if not pos2 then
+		if not pos2 and pos1 and not (pos1.x ~= pos1.x) then
 			return pos1, attemps
 		end
 	end
