@@ -126,7 +126,11 @@ function Socket.connect(host, port, options)
 
 	local socket = newSocket(host == os.getComputerID())
 	socket.dhost = tonumber(host)
-	socket.privKey, socket.pubKey = network.getKeyPair()
+	if options and options.keypair then
+		socket.privKey, socket.pubKey = unpack(options.keypair)
+	else
+		socket.privKey, socket.pubKey = network.getKeyPair()
+	end
 	local identifier = options and options.identifier or Security.getIdentifier()
 
 	socket.transmit(port, socket.sport, {
