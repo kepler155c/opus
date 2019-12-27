@@ -1,17 +1,71 @@
 local Util = require('opus.util')
 
 local GPS = { }
+GPS.CHANNEL_GPS = 65534
 
 local device = _G.device
-local gps    = _G.gps
+local vector = _G.vector
 
 function GPS.locate(timeout, debug)
-	local pt = { }
-	timeout = timeout or 10
-	pt.x, pt.y, pt.z = gps.locate(timeout, debug)
-	if pt.x then
-		return pt
+	if not device.wireless_modem then
+		if debug then
+			print('No wireless modem attached')
+		end
+		return nil
 	end
+
+	if debug then
+		print('Finding position...')
+	end
+
+	local modem = device.wireless_modem
+	local closeChannel = false
+	local selfID = os.getComputerID()
+	if not modem.isOpen(selfID) then
+		modem.open(selfID)
+		closeChannel = true
+	end
+
+	modem.transmit(GPS.CHANNEL_GPS, selfID, "PING")
+
+	local fixes = {}
+	local pos = nil
+	local timer = os.startTimer(timeout or 1)
+	while true do
+		local e, side, chan, reply, msg, dist = os.pullEvent()
+		if e == "modem_message" then
+			if side == modem.side and chan == selfID and reply == GPS.CHANNEL_GPS and dist then
+				if type(msg) == "table" and #msg == 3 and tonumber(msg[1]) and tonumber(msg[2]) and tonumber(msg[3]) then
+					local fix = {
+						position = vector.new(unpack(msg)),
+						distance = dist,
+					}
+					if debug then
+						print(fix.distance..' meters from '..fix.position:tostring())
+					end
+					if fix.distance == 0 then
+						pos = fix.position
+					else
+						fixes[#fixes+1] = fix
+						if #fixes > 3 then
+							pos = GPS.trilaterate(fixes)
+							if pos then break end
+						end
+					end
+				end
+			end
+		elseif e == "timer" and side == timer then
+			break
+		end
+	end
+
+	if closeChannel then
+		modem.close(selfID)
+	end
+	if debug then
+		print("Position is "..pos.x..","..pos.y..","..pos.z)
+	end
+	return vector.new(pos.x, pos.y, pos.z)
 end
 
 function GPS.isAvailable()
@@ -66,26 +120,26 @@ local function trilaterate(A, B, C)
 		local result1 = result + (ez * z)
 		local result2 = result - (ez * z)
 
-		local rounded1, rounded2 = result1:round(), result2:round()
+		local rounded1, rounded2 = result1:round(0.01), result2:round(0.01)
 		if rounded1.x ~= rounded2.x or rounded1.y ~= rounded2.y or rounded1.z ~= rounded2.z then
 			return rounded1, rounded2
 		else
 			return rounded1
 		end
 	end
-	return result:round()
+	return result:round(0.01)
 end
 
 local function narrow( p1, p2, fix )
 	local dist1 = math.abs( (p1 - fix.position):length() - fix.distance )
 	local dist2 = math.abs( (p2 - fix.position):length() - fix.distance )
 
-	if math.abs(dist1 - dist2) < 0.05 then
+	if math.abs(dist1 - dist2) < 0.01 then
 		return p1, p2
 	elseif dist1 < dist2 then
-		return p1:round()
+		return p1:round(0.01)
 	else
-		return p2:round()
+		return p2:round(0.01)
 	end
 end
 -- end stock gps api
