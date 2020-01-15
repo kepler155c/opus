@@ -19,7 +19,7 @@ local function run(file, ...)
 end
 
 _G._syslog = function() end
-_G.OPUS_BRANCH = 'master'
+_G.OPUS_BRANCH = 'master-1.8'
 
 -- Install require shim
 _G.requireInjector = run('sys/modules/opus/injector.lua')
