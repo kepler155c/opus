@@ -3,10 +3,11 @@ local Util = require('opus.util')
 
 local TREE_URL = 'https://api.github.com/repos/%s/%s/git/trees/%s?recursive=1'
 local FILE_URL = 'https://raw.githubusercontent.com/%s/%s/%s/%s'
+local TREE_HEADERS = {}
 local git = { }
 
 if _G._GIT_API_KEY then
-	TREE_URL = TREE_URL .. '&access_token=' .. _G._GIT_API_KEY
+	TREE_HEADERS.Authorization =  'token ' .. _G._GIT_API_KEY
 end
 
 function git.list(repository)
@@ -23,8 +24,10 @@ function git.list(repository)
 
 	local function getContents()
 		local dataUrl = string.format(TREE_URL, user, repo, branch)
-		local contents = Util.download(dataUrl)
-		if contents then
+		local contents, msg = Util.httpGet(dataUrl,TREE_HEADERS)
+		if not contents then
+			error(_sformat('Failed to download %s\n%s', dataUrl, msg), 2)
+		else
 			return json.decode(contents)
 		end
 	end
