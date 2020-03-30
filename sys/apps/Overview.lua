@@ -157,6 +157,7 @@ local page = UI.Page {
 		f = 'files',
 		s = 'shell',
 		l = 'lua',
+		n = 'network',
 		[ 'control-n' ] = 'new',
 		delete = 'delete',
 	},
@@ -434,6 +435,9 @@ function page:eventHandler(event)
 
 	elseif event.type == 'files' then
 		shell.switchTab(shell.openTab(Alt.get('files')))
+
+	elseif event.type == 'network' then
+		shell.switchTab(shell.openTab('network'))
 
 	elseif event.type == 'focus_change' then
 		if event.focused.parent.UIElement == 'Icon' then

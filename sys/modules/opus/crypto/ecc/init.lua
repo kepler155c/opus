@@ -1,9 +1,12 @@
 local fq       = require('opus.crypto.ecc.fq')
 local elliptic = require('opus.crypto.ecc.elliptic')
 local sha256   = require('opus.crypto.sha2')
+local Util     = require('opus.util')
+
 
 local os = _G.os
 local unpack = table.unpack
+local mt = Util.byteArrayMT
 
 local q = {1372, 62520, 47765, 8105, 45059, 9616, 65535, 65535, 65535, 65535, 65535, 65532}
 
@@ -27,7 +30,7 @@ local function publicKey(sk)
 	local Y = elliptic.scalarMulG(x)
 	local pk = elliptic.pointEncode(Y)
 
-	return pk
+	return setmetatable(pk, mt)
 end
 
 local function exchange(sk, pk)
@@ -62,7 +65,7 @@ local function sign(sk, message)
 		sig[#sig + 1] = s[i]
 	end
 
-	return sig
+	return setmetatable(sig, mt)
 end
 
 local function verify(pk, message, sig)

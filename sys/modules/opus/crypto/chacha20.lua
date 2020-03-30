@@ -12,12 +12,11 @@ local band = bit32.band
 local blshift = bit32.lshift
 local brshift = bit32.arshift
 local textutils = _G.textutils
+local mt = Util.byteArrayMT
 
 local mod = 2^32
 local tau = {("expand 16-byte k"):byte(1,-1)}
 local sigma = {("expand 32-byte k"):byte(1,-1)}
-local null32 = {("A"):rep(32):byte(1,-1)}
-local null12 = {("A"):rep(12):byte(1,-1)}
 
 local function rotl(n, b)
 	local s = n/(2^(32-b))
@@ -91,22 +90,6 @@ local function serialize(state)
 	return r
 end
 
-local mt = {
-	__tostring = function(a) return string.char(table.unpack(a)) end,
-	__index = {
-		toHex = function(self) return ("%02x"):rep(#self):format(table.unpack(self)) end,
-		isEqual = function(self, t)
-			if type(t) ~= "table" then return false end
-			if #self ~= #t then return false end
-			local ret = 0
-			for i = 1, #self do
-				ret = bit32.bor(ret, bxor(self[i], t[i]))
-			end
-			return ret == 0
-		end
-	}
-}
-
 local function crypt(data, key, nonce, cntr, round)
 	assert(type(key) == "table", "ChaCha20: Invalid key format ("..type(key).."), must be table")
 	assert(type(nonce) == "table", "ChaCha20: Invalid nonce format ("..type(nonce).."), must be table")
@@ -133,15 +116,12 @@ local function crypt(data, key, nonce, cntr, round)
 			out[#out+1] = bxor(block[j], ks[j])
 		end
 
-		--if i % 1000 == 0 then
-			throttle()
-			--os.queueEvent("")
-			--os.pullEvent("")
-		--end
+		throttle()
 	end
 	return setmetatable(out, mt)
 end
 
+-- Helper functions
 local function genNonce(len)
 	local nonce = {}
 	for i = 1, len do
@@ -170,6 +150,9 @@ end
 local obj = {}
 local rng_mt = {['__index'] = obj}
 
+-- PRNG object
+local null32 = {("A"):rep(32):byte(1,-1)}
+local null12 = {("A"):rep(12):byte(1,-1)}
 function obj:nextInt(byte)
 	if not byte or byte < 1 or byte > 6 then error("Can only return 1-6 bytes", 2) end
 	local output = 0

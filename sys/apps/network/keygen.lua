@@ -10,30 +10,30 @@ local keyPairs = { }
 local function generateKeyPair()
 	local key = { }
 	for _ = 1, 32 do
-		table.insert(key, ("%02x"):format(math.random(0, 0xFF)))
+		table.insert(key, math.random(0, 0xFF))
 	end
-  local privateKey = Util.hexToByteArray(table.concat(key))
+	local privateKey = setmetatable(key, Util.byteArrayMT)
 	return privateKey, ECC.publicKey(privateKey)
 end
 
 getmetatable(network).__index.getKeyPair = function()
-  local keys = table.remove(keyPairs)
-  os.queueEvent('generate_keypair')
-  if not keys then
-    return generateKeyPair()
-  end
-  return table.unpack(keys)
+	local keys = table.remove(keyPairs)
+	os.queueEvent('generate_keypair')
+	if not keys then
+		return generateKeyPair()
+	end
+	return table.unpack(keys)
 end
 
 -- Generate key pairs in the background as this is a time-consuming process
 Event.on('generate_keypair', function()
-  while true do
-    os.sleep(5)
-    local timer = Util.timer()
-    table.insert(keyPairs, { generateKeyPair() })
-    _G._syslog('Generated keypair in ' .. timer())
-    if #keyPairs >= 3 then
-      break
-    end
-  end
+	while true do
+		os.sleep(5)
+		local timer = Util.timer()
+		table.insert(keyPairs, { generateKeyPair() })
+		_G._syslog('Generated keypair in ' .. timer())
+		if #keyPairs >= 3 then
+	  		break
+		end
+	end
 end)

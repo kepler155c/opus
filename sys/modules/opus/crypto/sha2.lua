@@ -9,6 +9,7 @@ local bnot    = bit32 and bit32.bnot or bit.bnot
 local bxor    = bit32 and bit32.bxor or bit.bxor
 local blshift = bit32 and bit32.lshift or bit.blshift
 local upack   = unpack or table.unpack
+local mt      = Util.byteArrayMT
 
 local function rrotate(n, b)
 	local s = n/(2^b)
@@ -68,17 +69,16 @@ end
 
 local function digestblock(w, C)
 	for j = 17, 64 do
-		-- local v = w[j-15]
-		local s0 = bxor(bxor(rrotate(w[j-15], 7), rrotate(w[j-15], 18)), brshift(w[j-15], 3))
-		local s1 = bxor(bxor(rrotate(w[j-2], 17), rrotate(w[j-2], 19)), brshift(w[j-2], 10))
+		local s0 = bxor(rrotate(w[j-15], 7), rrotate(w[j-15], 18), brshift(w[j-15], 3))
+		local s1 = bxor(rrotate(w[j-2], 17), rrotate(w[j-2], 19), brshift(w[j-2], 10))
 		w[j] = (w[j-16] + s0 + w[j-7] + s1)%mod32
 	end
 	local a, b, c, d, e, f, g, h = upack(C)
 	for j = 1, 64 do
-		local S1 = bxor(bxor(rrotate(e, 6), rrotate(e, 11)), rrotate(e, 25))
+		local S1 = bxor(rrotate(e, 6), rrotate(e, 11), rrotate(e, 25))
 		local ch = bxor(band(e, f), band(bnot(e), g))
 		local temp1 = (h + S1 + ch + K[j] + w[j])%mod32
-		local S0 = bxor(bxor(rrotate(a, 2), rrotate(a, 13)), rrotate(a, 22))
+		local S0 = bxor(rrotate(a, 2), rrotate(a, 13), rrotate(a, 22))
 		local maj = bxor(bxor(band(a, b), band(a, c)), band(b, c))
 		local temp2 = (S0 + maj)%mod32
 		h, g, f, e, d, c, b, a = g, f, e, (d+temp1)%mod32, c, b, a, (temp1+temp2)%mod32
@@ -93,22 +93,6 @@ local function digestblock(w, C)
 	C[8] = (C[8] + h)%mod32
 	return C
 end
-
-local mt = {
-	__tostring = function(a) return string.char(upack(a)) end,
-	__index = {
-		toHex = function(self) return ("%02x"):rep(#self):format(upack(self)) end,
-		isEqual = function(self, t)
-			if type(t) ~= "table" then return false end
-			if #self ~= #t then return false end
-			local ret = 0
-			for i = 1, #self do
-				ret = bit32.bor(ret, bxor(self[i], t[i]))
-			end
-			return ret == 0
-		end
-	}
-}
 
 local function toBytes(t, n)
 	local b = {}
