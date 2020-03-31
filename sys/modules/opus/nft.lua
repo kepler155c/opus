@@ -1,16 +1,19 @@
 local Util = require('opus.util')
 
+local colors = _G.colors
+
 local NFT = { }
 
 -- largely copied from http://www.computercraft.info/forums2/index.php?/topic/5029-145-npaintpro/
 
-local tColourLookup = { }
+local hexToColor = { }
 for n = 1, 16 do
-	tColourLookup[string.byte("0123456789abcdef", n, n)] = 2 ^ (n - 1)
+	hexToColor[string.sub("0123456789abcdef", n, n)] = 2 ^ (n - 1)
 end
+local colorToHex = Util.transpose(hexToColor)
 
 local function getColourOf(hex)
-	return tColourLookup[hex:byte()]
+	return hexToColor[hex]
 end
 
 function NFT.parse(imageText)
@@ -62,13 +65,58 @@ function NFT.parse(imageText)
 	return image
 end
 
-function NFT.load(path)
+function NFT.transparency(image)
+	for y = 1, image.height do
+		for _,key in pairs(Util.keys(image.fg[y])) do
+			if image.fg[y][key] == colors.magenta then
+				image.fg[y][key] = nil
+			end
+		end
+		for _,key in pairs(Util.keys(image.bg[y])) do
+			if image.bg[y][key] == colors.magenta then
+				image.bg[y][key] = nil
+			end
+		end
+	end
+end
 
+function NFT.load(path)
 	local imageText = Util.readFile(path)
 	if not imageText then
 		error('Unable to read image file')
 	end
 	return NFT.parse(imageText)
+end
+
+function NFT.save(image, filename)
+	local bgcode, txcode = '\30', '\31'
+	local output = { }
+
+	for y = 1, image.height do
+		local lastBG, lastFG
+		if image.text[y] then
+			for x = 1, #image.text[y] do
+				local bg = image.bg[y][x] or colors.magenta
+				if bg ~= lastBG then
+					lastBG = bg
+					table.insert(output, bgcode .. colorToHex[bg])
+				end
+
+				local fg = image.fg[y][x] or colors.magenta
+				if fg ~= lastFG then
+					lastFG = fg
+					table.insert(output, txcode .. colorToHex[fg])
+				end
+
+				table.insert(output, image.text[y][x])
+			end
+		end
+
+		if y < image.height then
+			table.insert(output, '\n')
+		end
+	end
+	Util.writeFile(filename, table.concat(output))
 end
 
 return NFT

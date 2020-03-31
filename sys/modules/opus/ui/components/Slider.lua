@@ -57,8 +57,16 @@ end
 
 function UI.Slider:eventHandler(event)
 	if event.type == "mouse_down" or event.type == "mouse_drag" then
+
+		local pos = event.x - 1
+		if event.type == 'mouse_down' then
+			self.anchor = event.x - 1
+		else
+			pos = self.anchor + event.dx
+		end
+
 		local range = self.max - self.min
-		local i = (event.x - 1) / (self.width - 1)
+		local i = pos / (self.width - 1)
 		self.value = self.min + (i * range)
 		self:emit({ type = self.event, value = self.value, element = self })
 		self:draw()

@@ -28,12 +28,11 @@ function UI.ProgressBar:draw()
 end
 
 function UI.ProgressBar.example()
-	local Event = require('opus.event')
 	return UI.ProgressBar {
 		x = 2, ex = -2, y = 2,
 		focus = function() end,
 		enable = function(self)
-			Event.onInterval(.25, function()
+			require('opus.event').onInterval(.25, function()
 				self.value = self.value == 100 and 0 or self.value + 5
 				self:draw()
 				self:sync()

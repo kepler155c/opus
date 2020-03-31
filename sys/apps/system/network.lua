@@ -2,24 +2,29 @@ local Ansi   = require('opus.ansi')
 local Config = require('opus.config')
 local UI     = require('opus.ui')
 
+local colors = _G.colors
 local device = _G.device
 
 local tab = UI.Tab {
 	tabTitle = 'Network',
 	description = 'Networking options',
 	info = UI.TextArea {
-		x = 3, y = 4,
+		x = 2, y = 6, ex = -2, ey = -2,
+		backgroundColor = colors.black,
 		value = string.format(
 [[%sSet the primary modem used for wireless communications.%s
 
 Reboot to take effect.]], Ansi.yellow, Ansi.reset)
 	},
+	[1] = UI.Window {
+		x = 2, y = 2, ex = -2, ey = 4,
+	},
 	label = UI.Text {
-		x = 3, y = 2,
+		x = 3, y = 3,
 		value = 'Modem',
 	},
 	modem = UI.Chooser {
-		x = 10, ex = -3, y = 2,
+		x = 10, ex = -3, y = 3,
 		nochoice = 'auto',
 	},
 }

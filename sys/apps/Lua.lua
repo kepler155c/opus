@@ -59,7 +59,6 @@ local page = UI.Page {
 		[2] = UI.Tab {
 			tabTitle = 'Output',
 			output = UI.Embedded {
-				visible = true,
 				maxScroll = 1000,
 				backgroundColor = colors.black,
 			},

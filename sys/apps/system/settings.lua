@@ -7,7 +7,7 @@ if settings then
 		tabTitle = 'Settings',
 		description = 'Computercraft configurable settings',
 		grid = UI.Grid {
-			y = 2,
+			x = 2, y = 2, ex = -2, ey = -2,
 			autospace = true,
 			sortColumn = 'name',
 			columns = {

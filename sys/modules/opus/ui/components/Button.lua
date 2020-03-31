@@ -35,11 +35,11 @@ function UI.Button:draw()
 	local bg = self.backgroundColor
 	local ind = ' '
 	if self.focused then
-		bg = self.backgroundFocusColor
-		fg = self.textFocusColor
+		bg = self:getProperty('backgroundFocusColor')
+		fg = self:getProperty('textFocusColor')
 		ind = self.focusIndicator
 	elseif self.inactive then
-		fg = self.textInactiveColor
+		fg = self:getProperty('textInactiveColor')
 	end
 	local text = ind .. self.text .. ' '
 	if self.centered then

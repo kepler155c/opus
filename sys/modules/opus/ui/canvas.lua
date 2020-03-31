@@ -9,7 +9,6 @@ local colors = _G.colors
 
 local Canvas = class()
 
-Canvas.__visualize = false
 Canvas.colorPalette = { }
 Canvas.darkPalette = { }
 Canvas.grayscalePalette = { }
@@ -22,15 +21,17 @@ end
 
 --[[
 	A canvas can have more lines than canvas.height in order to scroll
-]]
 
+	TODO: finish vertical scrolling
+]]
 function Canvas:init(args)
-	self.x = 1
-	self.y = 1
-	self.layers = { }
+	self.bg = colors.black
+	self.fg = colors.white
 
 	Util.merge(self, args)
 
+	self.x = self.x or 1
+	self.y = self.y or 1
 	self.ex = self.x + self.width - 1
 	self.ey = self.y + self.height - 1
 
@@ -46,15 +47,30 @@ function Canvas:init(args)
 	for i = 1, self.height do
 		self.lines[i] = { }
 	end
+
+	self:clear()
 end
 
 function Canvas:move(x, y)
 	self.x, self.y = x, y
 	self.ex = self.x + self.width - 1
 	self.ey = self.y + self.height - 1
+	if self.parent then
+		self.parent:dirty(true)
+	end
 end
 
 function Canvas:resize(w, h)
+	self:resizeBuffer(w, h)
+
+	self.ex = self.x + w - 1
+	self.ey = self.y + h - 1
+	self.width = w
+	self.height = h
+end
+
+-- resize the canvas buffer - not the canvas itself
+function Canvas:resizeBuffer(w, h)
 	for i = #self.lines, h do
 		self.lines[i] = { }
 		self:clearLine(i)
@@ -66,26 +82,24 @@ function Canvas:resize(w, h)
 
 	if w < self.width then
 		for i = 1, h do
-			self.lines[i].text = _sub(self.lines[i].text, 1, w)
-			self.lines[i].fg = _sub(self.lines[i].fg, 1, w)
-			self.lines[i].bg = _sub(self.lines[i].bg, 1, w)
+			local ln = self.lines[i]
+			ln.text = _sub(ln.text, 1, w)
+			ln.fg = _sub(ln.fg, 1, w)
+			ln.bg = _sub(ln.bg, 1, w)
 		end
 	elseif w > self.width then
 		local d = w - self.width
 		local text = _rep(' ', d)
-		local fg = _rep(self.palette[self.fg or colors.white], d)
-		local bg = _rep(self.palette[self.bg or colors.black], d)
+		local fg = _rep(self.palette[self.fg], d)
+		local bg = _rep(self.palette[self.bg], d)
 		for i = 1, h do
-			self.lines[i].text = self.lines[i].text .. text
-			self.lines[i].fg = self.lines[i].fg .. fg
-			self.lines[i].bg = self.lines[i].bg .. bg
+			local ln = self.lines[i]
+			ln.text = ln.text .. text
+			ln.fg = ln.fg .. fg
+			ln.bg = ln.bg .. bg
+			ln.dirty = true
 		end
 	end
-
-	self.ex = self.x + w - 1
-	self.ey = self.y + h - 1
-	self.width = w
-	self.height = h
 end
 
 function Canvas:copy()
@@ -113,22 +127,25 @@ function Canvas:addLayer(layer)
 		isColor = self.isColor,
 	})
 	canvas.parent = self
-	table.insert(self.layers, canvas)
+	if not self.children then
+		self.children = { }
+	end
+	table.insert(self.children, canvas)
 	return canvas
 end
 
 function Canvas:removeLayer()
-	for k, layer in pairs(self.parent.layers) do
+	for k, layer in pairs(self.parent.children) do
 		if layer == self then
 			self:setVisible(false)
-			table.remove(self.parent.layers, k)
+			table.remove(self.parent.children, k)
 			break
 		end
 	end
 end
 
 function Canvas:setVisible(visible)
-	self.visible = visible
+	self.visible = visible  -- TODO: use self.active = visible
 	if not visible and self.parent then
 		self.parent:dirty()
 		-- TODO: set parent's lines to dirty for each line in self
@@ -137,11 +154,10 @@ end
 
 -- Push a layer to the top
 function Canvas:raise()
-	if self.parent then
-		local layers = self.parent.layers or { }
-		for k, v in pairs(layers) do
+	if self.parent and self.parent.children then
+		for k, v in pairs(self.parent.children) do
 			if v == self then
-				table.insert(layers, table.remove(layers, k))
+				table.insert(self.parent.children, table.remove(self.parent.children, k))
 				break
 			end
 		end
@@ -224,15 +240,15 @@ function Canvas:writeLine(y, text, fg, bg)
 end
 
 function Canvas:clearLine(y, bg, fg)
-	fg = _rep(self.palette[fg or colors.white], self.width)
-	bg = _rep(self.palette[bg or colors.black], self.width)
+	fg = _rep(self.palette[fg or self.fg], self.width)
+	bg = _rep(self.palette[bg or self.bg], self.width)
 	self:writeLine(y, _rep(' ', self.width), fg, bg)
 end
 
 function Canvas:clear(bg, fg)
 	local text = _rep(' ', self.width)
-	fg = _rep(self.palette[fg or colors.white], self.width)
-	bg = _rep(self.palette[bg or colors.black], self.width)
+	fg = _rep(self.palette[fg or self.fg], self.width)
+	bg = _rep(self.palette[bg or self.bg], self.width)
 	for i = 1, #self.lines do
 		self:writeLine(i, text, fg, bg)
 	end
@@ -246,13 +262,16 @@ function Canvas:isDirty()
 	end
 end
 
-function Canvas:dirty()
-	for i = 1, #self.lines do
-		self.lines[i].dirty = true
-	end
-	if self.layers then
-		for _, canvas in pairs(self.layers) do
-			canvas:dirty()
+function Canvas:dirty(includingChildren)
+	if self.lines then
+		for i = 1, #self.lines do
+			self.lines[i].dirty = true
+		end
+
+		if includingChildren and self.children then
+			for _, child in pairs(self.children) do
+				child:dirty(true)
+			end
 		end
 	end
 end
@@ -280,104 +299,89 @@ end
 
 function Canvas:render(device)
 	local offset = { x = 0, y = 0 }
+
+	-- WIP
+	local function getRegion(canvas)
+		local region
+		if canvas.parent then
+			region = getRegion(canvas.parent)
+		else
+			region = Region.new(self.x, self.y, self.ex, self.ey)
+		end
+		offset.x = offset.x + canvas.x - 1
+		offset.y = offset.y + canvas.y - 1
+		-- clip against parent
+		return region
+	end
+
+	-- this code works - but is all kinds of wrong
+	-- adding a margin to UI.Page will cause issues
+	-- and could be clipping issues
+	offset = { x = self.x - 1, y = self.y - 1 }
 	local parent = self.parent
 	while parent do
 		offset.x = offset.x + parent.x - 1
 		offset.y = offset.y + parent.y - 1
 		parent = parent.parent
 	end
-	if #self.layers > 0 then
-		self:__renderLayers(device, offset)
-	else
-		self:__blitRect(device, nil, {
-			x = self.x + offset.x,
-			y = self.y + offset.y
-		})
-		self:clean()
-	end
+
+	-- TODO: need to clip if there is a parent
+	--self.regions = Region.new(self.x + offset.x, self.y + offset.y, self.ex + offset.x, self.ey + offset.y)
+	--self:__renderLayers(device, offset)
+
+	self.regions = Region.new(self.x, self.y, self.ex, self.ey)
+	self:__renderLayers(device, { x = self.x - 1, y = self.y - 1 })
 end
 
--- regions are comprised of absolute values that coorespond to the output device.
+-- regions are comprised of absolute values that correspond to the output device.
 -- canvases have coordinates relative to their parent.
 -- canvas layer's stacking order is determined by the position within the array.
 -- layers in the beginning of the array are overlayed by layers further down in
 -- the array.
 function Canvas:__renderLayers(device, offset)
-	if #self.layers > 0 then
-		self.regions = self.regions or Region.new(self.x + offset.x, self.y + offset.y, self.ex + offset.x, self.ey + offset.y)
-
-		for i = 1, #self.layers do
-			local canvas = self.layers[i]
-			if canvas.visible then
-
-				-- punch out this area from the parent's canvas
-				self:__punch(canvas, offset)
-
+	if self.children then
+		for i = #self.children, 1, -1 do
+			local canvas = self.children[i]
+			if canvas.visible or canvas.enabled then
 				-- get the area to render for this layer
 				canvas.regions = Region.new(
-					canvas.x + offset.x,
-					canvas.y + offset.y,
-					canvas.ex + offset.x,
-					canvas.ey + offset.y)
+					canvas.x + offset.x - (self.offx or 0),
+					canvas.y + offset.y - (self.offy or 0),
+					canvas.ex + offset.x - (self.offx or 0),
+					canvas.ey + offset.y - (self.offy or 0))
 
-				-- punch out any layers that overlap this one
-				for j  = i + 1, #self.layers do
-					if self.layers[j].visible then
-						canvas:__punch(self.layers[j], offset)
-					end
-				end
+				-- contain within parent
+				canvas.regions:andRegion(self.regions)
+
+				-- punch out this area from the parent's canvas
+				self.regions:subRect(
+					canvas.x + offset.x - (self.offx or 0),
+					canvas.y + offset.y - (self.offy or 0),
+					canvas.ex + offset.x - (self.offx or 0),
+					canvas.ey + offset.y - (self.offy or 0))
+
 				if #canvas.regions.region > 0 then
 					canvas:__renderLayers(device, {
-						x = canvas.x + offset.x - 1,
-						y = canvas.y + offset.y - 1,
+						x = canvas.x + offset.x - 1 - (self.offx or 0),
+						y = canvas.y + offset.y - 1 - (self.offy or 0),
 					})
 				end
 				canvas.regions = nil
 			end
 		end
-
-		self:__blitClipped(device, offset)
-		self.regions = nil
-
-	elseif self.regions and #self.regions.region > 0 then
-		self:__blitClipped(device, offset)
-		self.regions = nil
-
-	else
-		self:__blitRect(device, nil, {
-			x = self.x + offset.x,
-			y = self.y + offset.y
-		})
-		self.regions = nil
-	end
-	self:clean()
-end
-
-function Canvas:__blitClipped(device, offset)
-	if self.parent then
-		-- contain the rendered region in the parent's region
-		local p = Region.new(1, 1,
-			self.parent.width + offset.x - self.x + 1,
-			self.parent.height + offset.y - self.y + 1)
-		self.regions:andRegion(p)
 	end
 
 	for _,region in ipairs(self.regions.region) do
 		self:__blitRect(device,
 			{ x = region[1] - offset.x,
-				y = region[2] - offset.y,
-				ex = region[3] - offset.x,
-				ey = region[4] - offset.y},
+			  y = region[2] - offset.y,
+			  ex = region[3] - offset.x,
+			  ey = region[4] - offset.y },
 			{ x = region[1], y = region[2] })
 	end
-end
+	self.regions = nil
 
-function Canvas:__punch(rect, offset)
-	self.regions:subRect(
-		rect.x + offset.x,
-		rect.y + offset.y,
-		rect.ex + offset.x,
-		rect.ey + offset.y)
+	self:clean()
 end
 
 -- performance can probably be improved by using one more buffer tied to the device
@@ -386,7 +390,7 @@ function Canvas:__blitRect(device, src, tgt)
 	tgt = tgt or self
 
 	-- for visualizing updates on the screen
-	if Canvas.__visualize then
+	if Canvas.__visualize or self.visualize then
 		local drew
 		local t  = _rep(' ', src.ex-src.x + 1)
 		local bg = _rep(2,   src.ex-src.x + 1)
@@ -399,8 +403,8 @@ function Canvas:__blitRect(device, src, tgt)
 			end
 		end
 		if drew then
-			local t = os.clock()
-			repeat until os.clock()-t > .2
+			local c = os.clock()
+			repeat until os.clock()-c > .03
 		end
 	end
 	for i = 0, src.ey - src.y do
@@ -416,6 +420,18 @@ function Canvas:__blitRect(device, src, tgt)
 			device.blit(t, fg, bg)
 		end
 	end
+end
+
+if not ({ ... })[1] then
+	local UI = require('opus.ui')
+
+	UI:setPage(UI.Page {
+		button = UI.Button {
+			x = 5, y = 5,
+			text = 'abc'
+		}
+	})
+	UI:start()
 end
 
 return Canvas

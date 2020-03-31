@@ -7,6 +7,9 @@ local colors   = _G.colors
 local passwordTab = UI.Tab {
 	tabTitle = 'Password',
 	description = 'Wireless network password',
+	[1] = UI.Window {
+		x = 2, y = 2, ex = -2, ey = 4,
+	},
 	newPass = UI.TextEntry {
 		x = 3, ex = -3, y = 3,
 		limit = 32,
@@ -17,12 +20,13 @@ local passwordTab = UI.Tab {
 		},
 	},
 	button = UI.Button {
-		x = 3, y = 5,
-		text = 'Update',
+		x = -8, ex = -2, y = -2,
+		text = 'Apply',
 		event = 'update_password',
 	},
 	info = UI.TextArea {
-		x = 3, ex = -3, y = 7,
+		x = 2, ex = -2, y = 6, ey = -4,
+		backgroundColor = colors.black,
 		textColor = colors.yellow,
 		inactive = true,
 		value = 'Add a password to enable other computers to connect to this one.',

@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Array    = require('opus.array')
 local Terminal = require('opus.terminal')
 local Util     = require('opus.util')

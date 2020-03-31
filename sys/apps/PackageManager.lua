@@ -44,7 +44,6 @@ local page = UI.Page {
 		marginRight = 0, marginLeft = 0,
 	},
 	action = UI.SlideOut {
-		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
 			event = 'hide-action',
 		},

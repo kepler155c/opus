@@ -56,12 +56,12 @@ end
 
 function UI.Tabs:enable()
 	self.enabled = true
-	self.transitionHint = nil
 	self.tabBar:enable()
 
 	local menuItem = Util.find(self.tabBar.children, 'selected', true)
 
-	for _,child in pairs(self.children or { }) do
+	for child in self:eachChild() do
+		child.transitionHint = nil
 		if child.uid == menuItem.tabUid then
 			child:enable()
 			self:emit({ type = 'tab_activate', activated = child })
@@ -74,14 +74,11 @@ end
 function UI.Tabs:eventHandler(event)
 	if event.type == 'tab_change' then
 		local tab = self:find(event.tab.tabUid)
-		if event.current > event.last then
-			self.transitionHint = 'slideLeft'
-		else
-			self.transitionHint = 'slideRight'
-		end
+		local hint = event.current > event.last and 'slideLeft' or 'slideRight'
 
-		for _,child in pairs(self.children) do
+		for child in self:eachChild() do
 			if child.uid == event.tab.tabUid then
+				child.transitionHint = hint
 				child:enable()
 			elseif child.tabTitle then
 				child:disable()
@@ -89,6 +86,7 @@ function UI.Tabs:eventHandler(event)
 		end
 		self:emit({ type = 'tab_activate', activated = tab })
 		tab:draw()
+		return true
 	end
 end
 
@@ -102,7 +100,18 @@ function UI.Tabs.example()
 		tab2 = UI.Tab {
 			index = 2,
 			tabTitle = 'tab2',
-			button = UI.Button { y = 3 },
+			subtabs = UI.Tabs {
+				x = 3, y = 2, ex = -3, ey = -2,
+				tab1 = UI.Tab {
+					index = 1,
+					tabTitle = 'tab4',
+					entry = UI.TextEntry { y = 3, shadowText = 'text' },
+				},
+				tab3 = UI.Tab {
+					index = 2,
+					tabTitle = 'tab5',
+				},
+			},
 		},
 		tab3 = UI.Tab {
 			index = 3,

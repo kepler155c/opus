@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Config   = require('opus.config')
 local trace    = require('opus.trace')
 local Util     = require('opus.util')
@@ -334,16 +332,12 @@ kernel.hook('mouse_scroll', function(_, eventData)
 end)
 
 kernel.hook('kernel_ready', function()
-	local env = Util.shallowCopy(shell.getEnv())
-	_G.requireInjector(env)
-
 	overviewId = multishell.openTab({
 		path = config.launcher or 'sys/apps/Overview.lua',
 		isOverview = true,
 		noTerminate = true,
 		focused = true,
 		title = '+',
-		env = env,
 	})
 
 	multishell.openTab({

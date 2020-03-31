@@ -6,11 +6,8 @@ UI.TextArea.defaults = {
 	UIElement = 'TextArea',
 	marginRight = 2,
 	value = '',
+	showScrollBar = true,
 }
-function UI.TextArea:postInit()
-	self.scrollBar = UI.ScrollBar()
-end
-
 function UI.TextArea:setText(text)
 	self:reset()
 	self.value = text
@@ -23,19 +20,28 @@ end
 
 function UI.TextArea:draw()
 	self:clear()
---  self:setCursorPos(1, 1)
 	self.cursorX, self.cursorY = 1, 1
 	self:print(self.value)
-
-	for _,child in pairs(self.children) do
-		if child.enabled then
-			child:draw()
-		end
-	end
+	self:drawChildren()
 end
 
 function UI.TextArea.example()
-	return UI.TextArea {
-		value = 'sample text\nabc'
+	return UI.Window {
+		backgroundColor = 2048,
+		t1 = UI.TextArea {
+			ey = 3,
+			value = 'sample text\nabc'
+		},
+		t2 = UI.TextArea {
+			y = 5,
+			value = [[1
+2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
+3
+4
+5
+6
+7
+8]]
+		}
 	}
 end

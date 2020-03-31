@@ -48,6 +48,7 @@ local page = UI.Page {
 			y = 2,
 			filterTab = UI.Tab {
 				tabTitle = 'Filter',
+				noFill = true,
 				filterGridText = UI.Text {
 					x = 2, y = 2,
 					value = 'ID filter',
@@ -130,7 +131,6 @@ local page = UI.Page {
 			title = 'Packet Information',
 			event = 'packet_close',
 		},
-		backgroundColor = colors.cyan,
 		accelerators = {
 			['backspace'] = 'packet_close',
 			['left'] = 'prev_packet',

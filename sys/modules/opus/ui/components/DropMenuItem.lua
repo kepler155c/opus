@@ -14,7 +14,7 @@ UI.DropMenuItem.defaults = {
 }
 function UI.DropMenuItem:eventHandler(event)
 	if event.type == 'button_activate' then
-		self.parent:hide()
+		self.parent:disable()
 	end
 	return UI.Button.eventHandler(self, event)
 end

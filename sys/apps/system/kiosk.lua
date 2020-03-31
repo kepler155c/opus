@@ -8,7 +8,7 @@ local tab = UI.Tab {
 	tabTitle = 'Kiosk',
 	description = 'Kiosk options',
 	form = UI.Form {
-		x = 2, ex = -2,
+		x = 2, y = 2, ex = -2, ey = 5,
 		manualControls = true,
 		monitor = UI.Chooser {
 			formLabel = 'Monitor', formKey = 'monitor',
@@ -22,11 +22,12 @@ local tab = UI.Tab {
 			},
 			help = 'Adjust text scaling',
 		},
-		labelText = UI.TextArea {
-			x = 2, ex = -2, y = 5,
-			textColor = colors.yellow,
-			value = 'Settings apply to kiosk mode selected during startup'
-		},
+	},
+	labelText = UI.TextArea {
+		x = 2, ex = -2, y = 7, ey = -2,
+		textColor = colors.yellow,
+		backgroundColor = colors.black,
+		value = 'Settings apply to kiosk mode selected during startup'
 	},
 }
 

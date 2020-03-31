@@ -42,25 +42,23 @@ local tab = UI.Tab {
 	tabTitle = 'Shell',
 	description = 'Shell options',
 	grid1 = UI.ScrollingGrid {
-		y = 2, ey = -10, x = 3, ex = -16,
+		y = 2, ey = -10, x = 2, ex = -17,
 		disableHeader = true,
 		columns = { { key = 'name' } },
 		values = allSettings,
 		sortColumn = 'name',
 	},
 	grid2 = UI.ScrollingGrid {
-		y = 2, ey = -10, x = -14, ex = -3,
+		y = 2, ey = -10, x = -14, ex = -2,
 		disableHeader = true,
 		columns = { { key = 'name' } },
 		values = allColors,
 		sortColumn = 'name',
 	},
-	directoryLabel = UI.Text {
-		x = 2, y = -2,
-		value = 'Display directory',
-	},
 	directory = UI.Checkbox {
-		x = 20, y = -2,
+		x = 2, y = -2,
+		labelBackgroundColor = colors.black,
+		label = 'Directory',
 		value = config.displayDirectory
 	},
 	reset = UI.Button {
@@ -74,7 +72,7 @@ local tab = UI.Tab {
 		event = 'update',
 	},
 	display = UI.Window {
-		x = 3, ex = -3, y = -8, height = 5,
+		x = 2, ex = -2, y = -8, height = 5,
 	},
 }
 

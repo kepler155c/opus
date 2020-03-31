@@ -21,4 +21,4 @@ deleteIfExists('sys/autorun/apps.lua')
 deleteIfExists('sys/init/6.tl3.lua')
 
 -- remove this file
-deleteIfExists('sys/autorun/upgraded.lua')
+--deleteIfExists('sys/autorun/upgraded.lua')

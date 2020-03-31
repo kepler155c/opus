@@ -20,24 +20,15 @@ UI.Throttle.defaults = {
 		'  //)    (O ). @  \\-d )      (@ '
 	}
 }
-function UI.Throttle:setParent()
+function UI.Throttle:layout()
 	self.x = math.ceil((self.parent.width - self.width) / 2)
 	self.y = math.ceil((self.parent.height - self.height) / 2)
-	UI.Window.setParent(self)
+	self:reposition(self.x, self.y, self.width, self.height)
 end
 
 function UI.Throttle:enable()
 	self.c = os.clock()
-	self.enabled = false
-end
-
-function UI.Throttle:disable()
-	if self.canvas then
-		self.enabled = false
-		self.canvas:removeLayer()
-		self.canvas = nil
-		self.ctr = 0
-	end
+	self.ctr = 0
 end
 
 function UI.Throttle:update()
@@ -46,11 +37,7 @@ function UI.Throttle:update()
 		os.sleep(0)
 		self.c = os.clock()
 		self.enabled = true
-		if not self.canvas then
-			self.canvas = self:addLayer(self.backgroundColor, self.borderColor)
-			self.canvas:setVisible(true)
-			self:clear(self.borderColor)
-		end
+		self:clear(self.borderColor)
 		local image = self.image[self.ctr + 1]
 		local width = self.width - 2
 		for i = 0, #self.image do
@@ -62,4 +49,26 @@ function UI.Throttle:update()
 
 		self:sync()
 	end
+end
+
+function UI.Throttle.example()
+	return UI.Window {
+		button1 = UI.Button {
+			x = 2, y = 2,
+			text = 'Test',
+		},
+		throttle = UI.Throttle {
+			textColor = colors.yellow,
+			borderColor = colors.green,
+		},
+		eventHandler = function (self, event)
+			if event.type == 'button_press' then
+				for _ = 1, 40 do
+					self.throttle:update()
+					os.sleep(.05)
+				end
+				self.throttle:disable()
+			end
+		end,
+	}
 end

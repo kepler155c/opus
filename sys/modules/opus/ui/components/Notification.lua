@@ -43,31 +43,33 @@ function UI.Notification:cancel()
 		self.timer = nil
 	end
 
-	if self.canvas then
-		self.enabled = false
-		self.canvas:removeLayer()
-		self.canvas = nil
-	end
+	self:disable()
 end
 
 function UI.Notification:display(value, timeout)
-	self:cancel()
-	self.enabled = true
 	local lines = Util.wordWrap(value, self.width - 3)
+
+	self.enabled = true
 	self.height = #lines
 
 	if self.anchor == 'bottom' then
 		self.y = self.parent.height - self.height + 1
-		self.canvas = self:addLayer(self.backgroundColor, self.textColor)
 		self:addTransition('expandUp', { ticks = self.height })
 	else
-		self.canvas = self:addLayer(self.backgroundColor, self.textColor)
 		self.y = 1
 	end
-	self.canvas:setVisible(true)
+
+	self:reposition(self.x, self.y, self.width, self.height)
+	self:raise()
 	self:clear()
 	for k,v in pairs(lines) do
 		self:write(2, k, v)
+	end
+	self:write(self.width, 1, self.closeInd)
+
+	if self.timer then
+		Event.off(self.timer)
+		self.timer = nil
 	end
 
 	timeout = timeout or self.timeout
@@ -77,7 +79,6 @@ function UI.Notification:display(value, timeout)
 			self:sync()
 		end)
 	else
-		self:write(self.width, 1, self.closeInd)
 		self:sync()
 	end
 end
@@ -92,7 +93,7 @@ function UI.Notification:eventHandler(event)
 end
 
 function UI.Notification.example()
-	return UI.ActiveLayer {
+	return UI.Window {
 		notify1 = UI.Notification {
 			anchor = 'top',
 		},
@@ -111,7 +112,9 @@ function UI.Notification.example()
 			if event.type == 'test_success' then
 				self.notify1:success('Example text')
 			elseif event.type == 'test_error' then
-				self.notify2:error('Example text', 0)
+				self.notify2:error([[Example text test test
+test test test test test
+test test test]], 0)
 			end
 		end,
 	}

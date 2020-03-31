@@ -74,7 +74,6 @@ local page = UI.Page {
 		},
 	},
 	help = UI.SlideOut {
-		backgroundColor = colors.cyan,
 		x = 5, ex = -5, height = 8, y = -8,
 		titleBar = UI.TitleBar {
 			title = 'Network Help',
@@ -82,7 +81,6 @@ local page = UI.Page {
 		},
 		text = UI.TextArea {
 			x = 2, y = 2,
-			backgroundColor = colors.cyan,
 			value = [[
 
 In order to connect to another computer:

@@ -1,4 +1,3 @@
-local Canvas = require('opus.ui.canvas')
 local class  = require('opus.class')
 local UI     = require('opus.ui')
 
@@ -19,14 +18,14 @@ function UI.Dialog:postInit()
 end
 
 function UI.Dialog:show(...)
-	local canvas = self.parent:getCanvas()
+	local canvas = self.parent
 	self.oldPalette = canvas.palette
-	canvas:applyPalette(Canvas.darkPalette)
+	canvas:applyPalette(self.darkPalette)
 	UI.SlideOut.show(self, ...)
 end
 
 function UI.Dialog:hide(...)
-	self.parent:getCanvas().palette = self.oldPalette
+	self.parent.palette = self.oldPalette
 	UI.SlideOut.hide(self, ...)
 	self.parent:draw()
 end
@@ -36,4 +35,31 @@ function UI.Dialog:eventHandler(event)
 		self:hide()
 	end
 	return UI.SlideOut.eventHandler(self, event)
+end
+
+function UI.Dialog.example()
+	return UI.Dialog {
+		title = 'Enter Starting Level',
+		height = 7,
+		form = UI.Form {
+			y = 3, x = 2, height = 4,
+			event = 'setStartLevel',
+			cancelEvent = 'slide_hide',
+			text = UI.Text {
+				x = 5, y = 1, width = 20,
+				textColor = colors.gray,
+			},
+			textEntry = UI.TextEntry {
+				formKey = 'level',
+				x = 15, y = 1, width = 7,
+			},
+		},
+		statusBar = UI.StatusBar(),
+		enable = function(self)
+			require('opus.event').onTimeout(0, function()
+				self:show()
+				self:sync()
+			end)
+		end,
+	}
 end

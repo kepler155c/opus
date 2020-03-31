@@ -91,7 +91,6 @@ local Browser = UI.Page {
 	},
 	notification = UI.Notification { },
 	associations = UI.SlideOut {
-		backgroundColor = colors.cyan,
 		menuBar = UI.MenuBar {
 			buttons = {
 				{ text = 'Save',    event = 'save'    },
@@ -99,7 +98,7 @@ local Browser = UI.Page {
 			},
 		},
 		grid = UI.ScrollingGrid {
-			x = 2, ex = -6, y = 3, ey = -5,
+			x = 2, ex = -6, y = 3, ey = -8,
 			columns = {
 				{ heading = 'Extension', key = 'name'  },
 				{ heading = 'Program',   key = 'value' },
@@ -114,8 +113,11 @@ local Browser = UI.Page {
 			x = -4, y = 6,
 			text = '-', event = 'remove_entry', help = 'Remove',
 		},
+		[1] = UI.Window {
+			x = 2, y = -6, ex = -6, ey = -3,
+		},
 		form = UI.Form {
-			x = 3, y = -3, ey = -2,
+			x = 3, y = -5, ex = -7, ey = -3,
 			margin = 1,
 			manualControls = true,
 			[1] = UI.TextEntry {

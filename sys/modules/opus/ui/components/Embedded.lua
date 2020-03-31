@@ -18,45 +18,33 @@ UI.Embedded.defaults = {
 function UI.Embedded:setParent()
 	UI.Window.setParent(self)
 
+	function self.render()
+		self:sync()
+	end
 	self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
+	self.win.canvas = self
 	self.win.setMaxScroll(self.maxScroll)
-
-	local canvas = self:getCanvas()
-	self.win.getCanvas().parent = canvas
-	table.insert(canvas.layers, self.win.getCanvas())
-	self.canvas = self.win.getCanvas()
-
 	self.win.setCursorPos(1, 1)
 	self.win.setBackgroundColor(self.backgroundColor)
 	self.win.setTextColor(self.textColor)
 	self.win.clear()
 end
 
-function UI.Embedded:layout()
-	UI.Window.layout(self)
-	if self.win then
-		self.win.reposition(self.x, self.y, self.width, self.height)
-	end
+function UI.Embedded:draw()
+	self:dirty()
 end
 
-function UI.Embedded:draw()
-	self.canvas:dirty()
+function UI.Embedded:focus()
+	-- allow scrolling
 end
 
 function UI.Embedded:enable()
-	self.canvas:setVisible(true)
-	self.canvas:raise()
-	if self.visible then
-		-- the window will automatically update on changes
-		-- the canvas does not need to be rendereed
-		self.win.setVisible(true)
-	end
 	UI.Window.enable(self)
-	self.canvas:dirty()
+	self.win.setVisible(true)
+	self:dirty()
 end
 
 function UI.Embedded:disable()
-	self.canvas:setVisible(false)
 	self.win.setVisible(false)
 	UI.Window.disable(self)
 end
@@ -71,17 +59,12 @@ function UI.Embedded:eventHandler(event)
 	end
 end
 
-function UI.Embedded:focus()
-	-- allow scrolling
-end
-
 function UI.Embedded.example()
 	local Event = require('opus.event')
 	local Util  = require('opus.util')
 	local term  = _G.term
 
 	return UI.Embedded {
-		visible = true,
 		enable = function (self)
 			UI.Embedded.enable(self)
 			Event.addRoutine(function()

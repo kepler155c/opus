@@ -63,7 +63,7 @@ end
 
 function UI.StatusBar:timedStatus(status, timeout)
 	self:write(2, 1, Util.widthify(status, self.width-2), self.backgroundColor)
-	Event.on(timeout or 3, function()
+	Event.onTimeout(timeout or 3, function()
 		if self.enabled then
 			self:draw()
 			self:sync()

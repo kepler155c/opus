@@ -66,11 +66,11 @@ local function run(env, ...)
 		_ENV.multishell.setTitle(_ENV.multishell.getCurrent(), fs.getName(path):match('([^%.]+)'))
 	end
 
-	if isUrl then
-		tProgramStack[#tProgramStack + 1] = path -- path:match("^https?://([^/:]+:?[0-9]*/?.*)$")
-	else
-		tProgramStack[#tProgramStack + 1] = path
-	end
+	tProgramStack[#tProgramStack + 1] = {
+		path = path, -- path:match("^https?://([^/:]+:?[0-9]*/?.*)$")
+		env = env,
+		args = args,
+	}
 
 	env[ "arg" ] = { [0] = path, table.unpack(args) }
 	local r = { fn(table.unpack(args)) }
@@ -278,6 +278,10 @@ function shell.getCompletionInfo()
 end
 
 function shell.getRunningProgram()
+	return tProgramStack[#tProgramStack] and tProgramStack[#tProgramStack].path
+end
+
+function shell.getRunningInfo()
 	return tProgramStack[#tProgramStack]
 end
 

@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Event = require('opus.event')
 local Util  = require('opus.util')
 

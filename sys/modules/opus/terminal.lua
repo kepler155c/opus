@@ -38,7 +38,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	local blink = false
 	local bg, fg = parent.getBackgroundColor(), parent.getTextColor()
 
-	local canvas = Canvas({
+	win.canvas = Canvas({
 		x       = sx,
 		y       = sy,
 		width   = w,
@@ -47,50 +47,53 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		offy    = 0,
 	})
 
-	win.canvas = canvas
-
 	local function update()
 		if isVisible then
-			canvas:render(parent)
+			win.canvas:render(parent)
 			win.setCursorPos(cx, cy)
 		end
 	end
 
 	local function scrollTo(y)
 		y = math.max(0, y)
-		y = math.min(#canvas.lines - canvas.height, y)
+		y = math.min(#win.canvas.lines - win.canvas.height, y)
 
-		if y ~= canvas.offy then
-			canvas.offy = y
-			canvas:dirty()
+		if y ~= win.canvas.offy then
+			win.canvas.offy = y
+			win.canvas:dirty()
 			update()
 		end
 	end
 
 	function win.write(str)
 		str = tostring(str) or ''
-		canvas:write(cx, cy + canvas.offy, str, bg, fg)
+		win.canvas:write(cx, cy +  win.canvas.offy, str, bg, fg)
 		win.setCursorPos(cx + #str, cy)
 		update()
 	end
 
 	function win.blit(str, fg, bg)
-		canvas:blit(cx, cy + canvas.offy, str, bg, fg)
+		win.canvas:blit(cx, cy + win.canvas.offy, str, bg, fg)
 		win.setCursorPos(cx + #str, cy)
 		update()
 	end
 
 	function win.clear()
-		canvas.offy = 0
-		for i = #canvas.lines, canvas.height + 1, -1 do
-			canvas.lines[i] = nil
+		win.canvas.offy = 0
+		for i = #win.canvas.lines, win.canvas.height + 1, -1 do
+			win.canvas.lines[i] = nil
 		end
-		canvas:clear(bg, fg)
+		win.canvas:clear(bg, fg)
 		update()
 	end
 
+	function win.getLine(n)
+		local line = win.canvas.lines[n]
+		return line.text, line.fg, line.bg
+	end
+
 	function win.clearLine()
-		canvas:clearLine(cy + canvas.offy, bg, fg)
+		win.canvas:clearLine(cy + win.canvas.offy, bg, fg)
 		win.setCursorPos(cx, cy)
 		update()
 	end
@@ -102,8 +105,12 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	function win.setCursorPos(x, y)
 		cx, cy = math.floor(x), math.floor(y)
 		if isVisible then
-			parent.setCursorPos(cx + canvas.x - 1, cy + canvas.y - 1)
+			parent.setCursorPos(cx + win.canvas.x - 1, cy + win.canvas.y - 1)
 		end
+	end
+
+	function win.getCursorBlink()
+		return blink
 	end
 
 	function win.setCursorBlink(b)
@@ -114,7 +121,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.isColor()
-		return canvas.isColor
+		return win.canvas.isColor
 	end
 	win.isColour = win.isColor
 
@@ -144,22 +151,22 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	win.setBackgroundColour = win.setBackgroundColor
 
 	function win.getSize()
-		return canvas.width, canvas.height
+		return win.canvas.width, win.canvas.height
 	end
 
 	function win.scroll(n)
 		n = n or 1
 		if n > 0 then
-			local lines = #canvas.lines
+			local lines = #win.canvas.lines
 			for i = 1, n do
-				canvas.lines[lines + i] = { }
-				canvas:clearLine(lines + i, bg, fg)
+				win.canvas.lines[lines + i] = { }
+				win.canvas:clearLine(lines + i, bg, fg)
 			end
-			while #canvas.lines > maxScroll do
-				table.remove(canvas.lines, 1)
+			while #win.canvas.lines > maxScroll do
+				table.remove(win.canvas.lines, 1)
 			end
-			scrollTo(#canvas.lines)
-			canvas:dirty()
+			scrollTo(#win.canvas.lines)
+			win.canvas:dirty()
 			update()
 		end
 	end
@@ -178,7 +185,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		if visible ~= isVisible then
 			isVisible = visible
 			if isVisible then
-				canvas:dirty()
+				win.canvas:dirty()
 				update()
 			end
 		end
@@ -186,7 +193,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 
 	function win.redraw()
 		if isVisible then
-			canvas:dirty()
+			win.canvas:dirty()
 			update()
 		end
 	end
@@ -200,21 +207,21 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.getPosition()
-		return canvas.x, canvas.y
+		return win.canvas.x, win.canvas.y
 	end
 
 	function win.reposition(x, y, width, height)
-		canvas.x, canvas.y = x, y
-		canvas:resize(width or canvas.width, height or canvas.height)
+		win.canvas.x, win.canvas.y = x, y
+		win.canvas:resize(width or win.canvas.width, height or win.canvas.height)
 	end
 
 	--[[ Additional methods ]]--
 	function win.scrollDown()
-		scrollTo(canvas.offy + 1)
+		scrollTo(win.canvas.offy + 1)
 	end
 
 	function win.scrollUp()
-		scrollTo(canvas.offy - 1)
+		scrollTo(win.canvas.offy - 1)
 	end
 
 	function win.scrollTop()
@@ -222,7 +229,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.scrollBottom()
-		scrollTo(#canvas.lines)
+		scrollTo(#win.canvas.lines)
 	end
 
 	function win.setMaxScroll(ms)
@@ -230,37 +237,35 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.getCanvas()
-		return canvas
+		return win.canvas
 	end
 
 	function win.getParent()
 		return parent
 	end
 
-	canvas:clear()
+	win.canvas:clear()
 
 	return win
 end
 
 -- get windows contents
-function Terminal.getContents(win, parent)
-	local oblit, oscp = parent.blit, parent.setCursorPos
-	local lines = { }
+function Terminal.getContents(win)
+	if not win.getLine then
+		error('window is required')
+	end
 
-	parent.blit = function(text, fg, bg)
-		lines[#lines + 1] = {
+	local lines = { }
+	local _, h = win.getSize()
+
+	for i = 1, h do
+		local text, fg, bg = win.getLine(i)
+		lines[i] = {
 			text = text,
 			fg = fg,
 			bg = bg,
 		}
 	end
-	parent.setCursorPos = function() end
-
-	win.setVisible(true)
-	win.redraw()
-
-	parent.blit = oblit
-	parent.setCursorPos = oscp
 
 	return lines
 end

@@ -1,8 +1,10 @@
+local Array      = require('opus.array')
 local class      = require('opus.class')
 local Event      = require('opus.event')
 local Input      = require('opus.input')
 local Transition = require('opus.ui.transition')
 local Util       = require('opus.util')
+local Canvas     = require('opus.ui.canvas')
 
 local _rep       = string.rep
 local _sub       = string.sub
@@ -44,8 +46,7 @@ function Manager:init()
 		local currentPage = self:getActivePage()
 		if ie and currentPage then
 			local target = currentPage.focused or currentPage
-			self:inputEvent(target,
-				{ type = 'key', key = ie.code == 'char' and ie.ch or ie.code, element = target, ie = ie })
+			target:emit({ type = 'key', key = ie.code == 'char' and ie.ch or ie.code, element = target, ie = ie })
 			currentPage:sync()
 		end
 	end
@@ -81,8 +82,7 @@ function Manager:init()
 				}
 				-- revisit - should send out scroll_up and scroll_down events
 				-- let the element convert them to up / down
-				self:inputEvent(event.element,
-					{ type = 'key', key = directions[direction] })
+				event.element:emit({ type = 'key', key = directions[direction] })
 				currentPage:sync()
 			end
 		end,
@@ -92,7 +92,7 @@ function Manager:init()
 			if dev and dev.currentPage then
 				Input:translate('mouse_click', 1, x, y)
 				local ie = Input:translate('mouse_up', 1, x, y)
-				self:click(dev.currentPage, ie.code, 1, x, y)
+				self:click(dev.currentPage, ie)
 			end
 		end,
 
@@ -107,7 +107,7 @@ function Manager:init()
 						currentPage:setFocus(event.element)
 						currentPage:sync()
 					end
-					self:click(currentPage, ie.code, button, x, y)
+					self:click(currentPage, ie)
 				end
 			end
 		end,
@@ -125,7 +125,7 @@ function Manager:init()
 
 			elseif ie and currentPage then
 				if not currentPage.parent.device.side then
-					self:click(currentPage, ie.code, button, x, y)
+					self:click(currentPage, ie)
 				end
 			end
 		end,
@@ -135,7 +135,7 @@ function Manager:init()
 			local currentPage = self:getActivePage()
 
 			if ie and currentPage then
-				self:click(currentPage, ie.code, button, x, y)
+				self:click(currentPage, ie)
 			end
 		end,
 
@@ -247,30 +247,44 @@ function Manager:emitEvent(event)
 	end
 end
 
-function Manager:inputEvent(parent, event) -- deprecate ?
-	return parent and parent:emit(event)
-end
+function Manager:click(target, ie)
+	local clickEvent
 
-function Manager:click(target, code, button, x, y)
-	local clickEvent = target:pointToChild(x, y)
+	if ie.code == 'mouse_drag' then
+		clickEvent = {
+			element = self.lastClicked,
+			x = ie.x,
+			y = ie.y,   -- this is not correct (should be relative to element)
+			dx = ie.dx,
+			dy = ie.dy,
+		}
+	else
+		clickEvent = target:pointToChild(ie.x, ie.y)
+	end
 
-	if code == 'mouse_doubleclick' then
-		if self.doubleClickElement ~= clickEvent.element then
+	-- hack for dropdown menus
+	if ie.code == 'mouse_click' and not clickEvent.element.focus then
+		self:emitEvent({ type = 'mouse_out' })
+	end
+
+	if ie.code == 'mouse_doubleclick' then
+		if self.lastClicked ~= clickEvent.element then
 			return
 		end
 	else
-		self.doubleClickElement = clickEvent.element
+		self.lastClicked = clickEvent.element
 	end
 
-	clickEvent.button = button
-	clickEvent.type = code
-	clickEvent.key = code
-	clickEvent.ie = { code = code, x = clickEvent.x, y = clickEvent.y }
+	clickEvent.button = ie.button
+	clickEvent.type = ie.code
+	clickEvent.key = ie.code
+	clickEvent.ie = { code = ie.code, x = clickEvent.x, y = clickEvent.y }
+	clickEvent.raw = ie
 
 	if clickEvent.element.focus then
 		target:setFocus(clickEvent.element)
 	end
-	self:inputEvent(clickEvent.element, clickEvent)
+	clickEvent.element:emit(clickEvent)
 
 	target:sync()
 end
@@ -310,7 +324,6 @@ end
 
 function Manager:setActivePage(page)
 	page.parent.currentPage = page
-	page.parent.canvas = page.canvas
 end
 
 function Manager:setPage(pageOrName, ...)
@@ -388,6 +401,12 @@ function Manager:pullEvents(...)
 	end
 end
 
+Manager.colors = {
+	primary = colors.cyan,
+	secondary = colors.blue,
+	tertiary = colors.blue,
+}
+
 Manager.exitPullEvents = Event.exitPullEvents
 Manager.quit = Event.exitPullEvents
 Manager.start = Manager.pullEvents
@@ -395,7 +414,7 @@ Manager.start = Manager.pullEvents
 local UI = Manager()
 
 --[[-- Basic drawable area --]]--
-UI.Window = class()
+UI.Window = class(Canvas)
 UI.Window.uid = 1
 UI.Window.docs = { }
 UI.Window.defaults = {
@@ -413,7 +432,9 @@ function UI.Window:init(args)
 	local defaults = args
 	local m = getmetatable(self)  -- get the class for this instance
 	repeat
-		defaults = UI:getDefaults(m, defaults)
+		if m.disable then
+			defaults = UI:getDefaults(m, defaults)
+		end
 		m = m._base
 	until not m
 	UI:mergeProperties(self, defaults)
@@ -531,6 +552,8 @@ function UI.Window:layout()
 	if not self.height then
 		self.height = self.parent.height - self.y + 1
 	end
+
+	self:reposition(self.x, self.y, self.width, self.height)
 end
 
 -- Called when the window's parent has be assigned
@@ -539,23 +562,6 @@ function UI.Window:setParent()
 	self.ox, self.oy = self.x, self.y
 
 	self:layout()
-
-	-- Experimental
-	-- Inherit properties from the parent container
-	-- does this need to be in reverse order ?
-	local m = getmetatable(self)  -- get the class for this instance
-	repeat
-		if m.inherits then
-			for k, v in pairs(m.inherits) do
-				local value = self.parent:getProperty(v)
-				if value then
-					self[k] = value
-				end
-			end
-		end
-		m = m._base
-	until not m
-
 	self:initChildren()
 end
 
@@ -566,10 +572,31 @@ function UI.Window:resize()
 	self:layout()
 
 	if self.children then
-		for _,child in ipairs(self.children) do
+		for child in self:eachChild() do
 			child:resize()
 		end
 	end
+end
+
+function UI.Window:reposition(x, y, w, h)
+	if not self.lines then
+		Canvas.init(self, {
+			x = x,
+			y = y,
+			width = w,
+			height = h,
+			isColor = self.parent.isColor,
+		})
+	else
+		self:move(x, y)
+		Canvas.resize(self, w, h)
+	end
+end
+
+function UI.Window:raise()
+	Array.removeByValue(self.parent.children, self)
+	table.insert(self.parent.children, self)
+	self:dirty(true)
 end
 
 UI.Window.docs.add = [[add(TABLE)
@@ -582,6 +609,20 @@ page:add({
 function UI.Window:add(children)
 	UI:mergeProperties(self, children)
 	self:initChildren()
+end
+
+function UI.Window:eachChild()
+	local c = self.children and Util.shallowCopy(self.children)
+	local i = 0
+	return function()
+		i = i + 1
+		return c and c[i]
+	end
+end
+
+function UI.Window:remove()
+	Array.removeByValue(self.parent.children, self)
+	self.parent:dirty(true)
 end
 
 function UI.Window:getCursorPos()
@@ -601,12 +642,14 @@ end
 UI.Window.docs.draw = [[draw(VOID)
 Redraws the window in the internal buffer.]]
 function UI.Window:draw()
-	self:clear(self.backgroundColor)
-	if self.children then
-		for _,child in pairs(self.children) do
-			if child.enabled then
-				child:draw()
-			end
+	self:clear()
+	self:drawChildren()
+end
+
+function UI.Window:drawChildren()
+	for child in self:eachChild() do
+		if child.enabled then
+			child:draw()
 		end
 	end
 end
@@ -634,19 +677,30 @@ end
 
 function UI.Window:enable(...)
 	self.enabled = true
-	if self.children then
-		for _,child in pairs(self.children) do
-			child:enable(...)
-		end
+	if self.transitionHint then
+		self:addTransition(self.transitionHint)
+	end
+
+	if self.modal then
+		self:raise()
+		self:capture(self)
+	end
+
+	for child in self:eachChild() do
+		child:enable(...)
 	end
 end
 
 function UI.Window:disable()
 	self.enabled = false
-	if self.children then
-		for _,child in pairs(self.children) do
-			child:disable()
-		end
+	self.parent:dirty(true)
+
+	if self.modal then
+		self:release(self)
+	end
+
+	for child in self:eachChild() do
+		child:disable()
 	end
 end
 
@@ -656,13 +710,9 @@ function UI.Window:setTextScale(textScale)
 end
 
 UI.Window.docs.clear = [[clear(opt COLOR bg, opt COLOR fg)
-Clears the window using the either the passed values or the defaults for that window.]]
+Clears the window using either the passed values or the defaults for that window.]]
 function UI.Window:clear(bg, fg)
-	if self.canvas then
-		self.canvas:clear(bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
-	else
-		self:clearArea(1 + self.offx, 1 + self.offy, self.width, self.height, bg)
-	end
+	Canvas.clear(self, bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
 end
 
 function UI.Window:clearLine(y, bg)
@@ -670,28 +720,20 @@ function UI.Window:clearLine(y, bg)
 end
 
 function UI.Window:clearArea(x, y, width, height, bg)
+	self:fillArea(x, y, width, height, ' ', bg)
+end
+
+function UI.Window:fillArea(x, y, width, height, fillChar, bg, fg)
 	if width > 0 then
-		local filler = _rep(' ', width)
+		local filler = _rep(fillChar, width)
 		for i = 0, height - 1 do
-			self:write(x, y + i, filler, bg)
+			self:write(x, y + i, filler, bg, fg)
 		end
 	end
 end
 
 function UI.Window:write(x, y, text, bg, fg)
-	bg = bg or self.backgroundColor
-	fg = fg or self.textColor
-
-	if self.canvas then
-		self.canvas:write(x, y, text, bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
-	else
-		x = x - self.offx
-		y = y - self.offy
-		if y <= self.height and y > 0 then
-			self.parent:write(
-				self.x + x - 1, self.y + y - 1, tostring(text), bg, fg)
-		end
-	end
+	Canvas.write(self, x, y, text, bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
 end
 
 function UI.Window:centeredWrite(y, text, bg, fg)
@@ -826,7 +868,8 @@ function UI.Window:pointToChild(x, y)
 	x = x + self.offx - self.x + 1
 	y = y + self.offy - self.y + 1
 	if self.children then
-		for _,child in pairs(self.children) do
+		for i = #self.children, 1, -1 do
+			local child = self.children[i]
 			if child.enabled and not child.inactive and
 				 x >= child.x and x < child.x + child.width and
 				 y >= child.y and y < child.y + child.height then
@@ -882,36 +925,28 @@ function UI.Window:focusFirst()
 	end
 end
 
-function UI.Window:refocus()
-	local el = self
-	while el do
-		local focusables = el:getFocusables()
-		if focusables[1] then
-			self:setFocus(focusables[1])
-			break
-		end
-		el = el.parent
-	end
-end
-
 function UI.Window:scrollIntoView()
 	local parent = self.parent
+	local offx, offy = parent.offx, parent.offy
 
 	if self.x <= parent.offx then
 		parent.offx = math.max(0, self.x - 1)
-		parent:draw()
+		if offx ~= parent.offx then
+			parent:draw()
+		end
 	elseif self.x + self.width > parent.width + parent.offx then
 		parent.offx = self.x + self.width - parent.width - 1
-		parent:draw()
+		if offx ~= parent.offx then
+			parent:draw()
+		end
 	end
 
 	-- TODO: fix
 	local function setOffset(y)
 		parent.offy = y
-		if parent.canvas then
-			parent.canvas.offy = parent.offy
+		if offy ~= parent.offy then
+			parent:draw()
 		end
-		parent:draw()
 	end
 
 	if self.y <= parent.offy then
@@ -921,43 +956,16 @@ function UI.Window:scrollIntoView()
 	end
 end
 
-function UI.Window:getCanvas()
-	local el = self
-	repeat
-		if el.canvas then
-			return el.canvas
-		end
-		el = el.parent
-	until not el
-end
-
-function UI.Window:addLayer(bg, fg)
-	local canvas = self:getCanvas()
-	local x, y = self.x, self.y
-	local parent = self.parent
-	while parent and not parent.canvas do
-		x = x + parent.x - 1
-		y = y + parent.y - 1
-		parent = parent.parent
-	end
-	canvas = canvas:addLayer({
-		x = x, y = y, height = self.height, width = self.width
-	}, bg, fg)
-
-	canvas:clear(bg or self.backgroundColor, fg or self.textColor)
-	return canvas
-end
-
 function UI.Window:addTransition(effect, args)
 	if self.parent then
 		args = args or { }
 		if not args.x then -- not good
-			args.x, args.y = self.x, self.y -- getPosition(self)
+			args.x, args.y = self.x, self.y
 			args.width = self.width
 			args.height = self.height
+			args.canvas = self
 		end
 
-		args.canvas = args.canvas or self.canvas
 		self.parent:addTransition(effect, args)
 	end
 end
@@ -991,7 +999,16 @@ function UI.Window:getProperty(property)
 end
 
 function UI.Window:find(uid)
-	return self.children and Util.find(self.children, 'uid', uid)
+	local el = self.children and Util.find(self.children, 'uid', uid)
+	if not el then
+		for child in self:eachChild() do
+			el = child:find(uid)
+			if el then
+				break
+			end
+		end
+	end
+	return el
 end
 
 function UI.Window:eventHandler()
@@ -1010,18 +1027,14 @@ UI.Device.defaults = {
 function UI.Device:postInit()
 	self.device = self.device or term.current()
 
-	--if self.deviceType then
-	--	self.device = device[self.deviceType]
-	--end
-
 	if not self.device.setTextScale then
 		self.device.setTextScale = function() end
 	end
 
 	self.device.setTextScale(self.textScale)
 	self.width, self.height = self.device.getSize()
-
 	self.isColor = self.device.isColor()
+	Canvas.init(self, { isColor = self.isColor })
 
 	UI.devices[self.device.side or 'terminal'] = self
 end
@@ -1031,8 +1044,8 @@ function UI.Device:resize()
 	self.width, self.height = self.device.getSize()
 	self.lines = { }
 	-- TODO: resize all pages added to this device
-	self.canvas:resize(self.width, self.height)
-	self.canvas:clear(self.backgroundColor, self.textColor)
+	Canvas.resize(self, self.width, self.height)
+	Canvas.clear(self, self.backgroundColor, self.textColor)
 end
 
 function UI.Device:setCursorPos(x, y)
@@ -1069,7 +1082,7 @@ function UI.Device:addTransition(effect, args)
 	args = args or { }
 	args.ex = args.x + args.width - 1
 	args.ey = args.y + args.height - 1
-	args.canvas = args.canvas or self.canvas
+	args.canvas = args.canvas or self
 
 	if type(effect) == 'string' then
 		effect = Transition[effect]
@@ -1078,10 +1091,13 @@ function UI.Device:addTransition(effect, args)
 		end
 	end
 
-	table.insert(self.transitions, { update = effect(args), args = args })
+	table.insert(self.transitions, { effect = effect, args = args })
 end
 
-function UI.Device:runTransitions(transitions, canvas)
+function UI.Device:runTransitions(transitions)
+	for _,k in pairs(transitions) do
+		k.update = k.effect(k.args)
+	end
 	while true do
 		for _,k in ipairs(Util.keys(transitions)) do
 			local transition = transitions[k]
@@ -1089,7 +1105,7 @@ function UI.Device:runTransitions(transitions, canvas)
 				transitions[k] = nil
 			end
 		end
-		canvas:render(self.device)
+		self.currentPage:render(self.device)
 		if Util.empty(transitions) then
 			break
 		end
@@ -1105,9 +1121,9 @@ function UI.Device:sync()
 		self.device.setCursorBlink(false)
 	end
 
-	self.canvas:render(self.device)
+	self.currentPage:render(self.device)
 	if transitions then
-		self:runTransitions(transitions, self.canvas)
+		self:runTransitions(transitions)
 	end
 
 	if self:getCursorBlink() then

@@ -19,7 +19,6 @@ UI.TextEntry = class(UI.Window)
 UI.TextEntry.docs = { }
 UI.TextEntry.defaults = {
 	UIElement = 'TextEntry',
-	--value = '',
 	shadowText = '',
 	focused = false,
 	textColor = colors.white,

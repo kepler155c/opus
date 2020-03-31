@@ -32,42 +32,38 @@ function UI.DropMenu:layout()
 	self.height = #self.children + 1
 	self.width = maxWidth + 2
 
-	if not self.canvas then
-		self.canvas = self:addLayer()
-	else
-		self.canvas:resize(self.width, self.height)
+	if self.x + self.width > self.parent.width then
+		self.x = self.parent.width - self.width + 1
 	end
+
+	self:reposition(self.x, self.y, self.width, self.height)
 end
 
 function UI.DropMenu:enable()
-end
-
-function UI.DropMenu:show(x, y)
-	self.x, self.y = x, y
-	self.canvas:move(x, y)
-	self.canvas:setVisible(true)
+	for _,c in pairs(self.children) do
+		if not c.spacer then
+			c.inactive = not self:getActive(c)
+		end
+	end
 
 	UI.Window.enable(self)
-
-	self:draw()
-	self:capture(self)
 	self:focusFirst()
+	self:draw()
 end
 
-function UI.DropMenu:hide()
-	self:disable()
-	self.canvas:setVisible(false)
-	self:release(self)
+function UI.DropMenu:disable()
+	UI.Window.disable(self)
+	self:remove()
 end
 
 function UI.DropMenu:eventHandler(event)
 	if event.type == 'focus_lost' and self.enabled then
 		if not Util.contains(self.children, event.focused) then
-			self:hide()
+			self:disable()
 		end
 	elseif event.type == 'mouse_out' and self.enabled then
-		self:hide()
-		self:refocus()
+		self:disable()
+		self:setFocus(self.parent:find(self.lastFocus))
 	else
 		return UI.MenuBar.eventHandler(self, event)
 	end
@@ -82,6 +78,15 @@ function UI.DropMenu.example()
 					{ text = 'Shell        s', event = 'shell'  },
 					{ spacer = true },
 					{ text = 'Quit        ^q', event = 'quit'   },
+			} },
+			{ text = 'Edit', dropdown = {
+				{ text = 'Copy',           event = 'run' },
+				{ text = 'Paste        s', event = 'shell'  },
+			} },
+			{ text = '\187',
+				x = -3,
+				dropdown = {
+					{ text = 'Associations', event = 'associate' },
 			} },
 		}
 	}

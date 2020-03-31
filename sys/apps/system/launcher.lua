@@ -9,12 +9,15 @@ local config = Config.load('multishell')
 local tab = UI.Tab {
 	tabTitle = 'Launcher',
 	description = 'Set the application launcher',
+	[1] = UI.Window {
+		x = 2, y = 2, ex = -2, ey = 5,
+	},
 	launcherLabel = UI.Text {
-		x = 3, y = 2,
+		x = 3, y = 3,
 		value = 'Launcher',
 	},
 	launcher = UI.Chooser {
-		x = 13, y = 2, width = 12,
+		x = 13, y = 3, width = 12,
 		choices = {
 			{ name = 'Overview', value = 'sys/apps/Overview.lua' },
 			{ name = 'Shell',    value = 'sys/apps/ShellLauncher.lua'    },
@@ -22,17 +25,18 @@ local tab = UI.Tab {
 		},
 	},
 	custom = UI.TextEntry {
-		x = 13, ex = -3, y = 3,
+		x = 13, ex = -3, y = 4,
 		limit = 128,
 		shadowText = 'File name',
 	},
 	button = UI.Button {
-		x = 3, y = 5,
-		text = 'Update',
+		x = -8, ex = -2, y = -2,
+		text = 'Apply',
 		event = 'update',
 	},
 	labelText = UI.TextArea {
-		x = 3, ex = -3, y = 7,
+		x = 2, ex = -2, y = 7, ey = -4,
+		backgroundColor = colors.black,
 		textColor = colors.yellow,
 		value = 'Choose an application launcher',
 	},

@@ -17,7 +17,10 @@ UI.ScrollBar.defaults = {
 	ey = -1,
 }
 function UI.ScrollBar:draw()
-	local view = self.parent:getViewArea()
+	local parent = self.target or self.parent --self:find(self.target)
+	local view = parent:getViewArea()
+
+	self:clear()
 
 	if view.totalHeight > view.height then
 		local maxScroll = view.totalHeight - view.height
@@ -27,7 +30,7 @@ function UI.ScrollBar:draw()
 
 		local row = view.y
 		if not view.static then  -- does the container scroll ?
-			self.height = view.totalHeight
+			self:reposition(self.x, self.y, self.width, view.totalHeight)
 		end
 
 		for i = 1, view.height - 2 do
@@ -56,16 +59,17 @@ end
 function UI.ScrollBar:eventHandler(event)
 	if event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
 		if event.x == 1 then
-			local view = self.parent:getViewArea()
+			local parent = self.target or self.parent --self:find(self.target)
+			local view = parent:getViewArea()
 			if view.totalHeight > view.height then
 				if event.y == view.y then
-					self:emit({ type = 'scroll_up'})
+					parent:emit({ type = 'scroll_up'})
 				elseif event.y == view.y + view.height - 1 then
-					self:emit({ type = 'scroll_down'})
+					parent:emit({ type = 'scroll_down'})
 				else
 					local percent = (event.y - view.y) / (view.height - 2)
 					local y = math.floor((view.totalHeight - view.height) * percent)
-					self:emit({ type = 'scroll_to', offset = y })
+					parent :emit({ type = 'scroll_to', offset = y })
 				end
 			end
 			return true

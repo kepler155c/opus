@@ -21,9 +21,6 @@ UI.Checkbox.defaults = {
 		mouse_click = 'checkbox_toggle',
 	}
 }
-UI.Checkbox.inherits = {
-	labelBackgroundColor = 'backgroundColor',
-}
 function UI.Checkbox:postInit()
 	self.width = self.label and #self.label + 4 or 3
 end

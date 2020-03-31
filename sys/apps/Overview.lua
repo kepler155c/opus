@@ -26,6 +26,9 @@ local REGISTRY_DIR = 'usr/.registry'
 local DEFAULT_ICON = NFT.parse("\0308\0317\153\153\153\153\153\
 \0307\0318\153\153\153\153\153\
 \0308\0317\153\153\153\153\153")
+local TRANS_ICON = NFT.parse("\0302\0312\32\32\32\32\32\
+\0302\0312\32\32\32\32\32\
+\0302\0312\32\32\32\32\32")
 
 -- overview
 local uid = _ENV.multishell.getCurrent()
@@ -65,6 +68,7 @@ local function parseIcon(iconText)
 			if icon.height > 3 or icon.width > 8 then
 				error('Must be an NFT image - 3 rows, 8 cols max')
 			end
+			NFT.transparency(icon)
 		end
 		return icon
 	end)
@@ -89,6 +93,7 @@ function UI.VerticalTabBar:setParent()
 		c.ox, c.oy = c.x, c.y
 		c.ow = 8
 		c.width = 8
+		c:reposition(c.x, c.y, c.width, c.height)
 	end
 end
 
@@ -114,7 +119,6 @@ local page = UI.Page {
 	},
 	editor = UI.SlideOut {
 		y = -12, height = 12,
-		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
 			title = 'Edit Application',
 			event = 'slide_hide',
@@ -122,7 +126,7 @@ local page = UI.Page {
 		form = UI.Form {
 			y = 2, ey = -2,
 			[1] = UI.TextEntry {
-				formLabel = 'Title', formKey = 'title', limit = 11, help = 'Application title',
+				formLabel = 'Title', formKey = 'title', limit = 11, width = 13, help = 'Application title',
 				required = true,
 			},
 			[2] = UI.TextEntry {
@@ -130,21 +134,24 @@ local page = UI.Page {
 				required = true,
 			},
 			[3] = UI.TextEntry {
-				formLabel = 'Category', formKey = 'category', limit = 11, help = 'Category of application',
+				formLabel = 'Category', formKey = 'category', limit = 6, width = 8, help = 'Category of application',
 				required = true,
 			},
-			iconFile = UI.TextEntry {
-				x = 11, ex = -12, y = 7,
-				limit = 128, help = 'Path to icon file',
-				shadowText = 'Path to icon file',
+			editIcon = UI.Button {
+				x = 11, y = 9,
+				text = 'Edit', event = 'editIcon', help = 'Edit icon file',
 			},
 			loadIcon = UI.Button {
-				x = 11, y = 9,
+				x = 18, y = 9,
 				text = 'Load', event = 'loadIcon', help = 'Load icon file',
+			},
+			info = UI.TextArea {
+				x = 11, y = 6, height = 2,
+				value = 'magenta is transparent\n3 high - max width is 8'
 			},
 			image = UI.NftImage {
 				backgroundColor = colors.black,
-				y = 7, x = 2, height = 3, width = 8,
+				y = 6, x = 2, height = 3, width = 8,
 			},
 		},
 		notification = UI.Notification(),
@@ -226,6 +233,7 @@ local function loadApplications()
 	page:add {
 		tabBar = UI.VerticalTabBar {
 			buttons = buttons,
+			selectedBackgroundColor = UI.colors.primary,
 		},
 	}
 
@@ -308,14 +316,12 @@ function page.container:setCategory(categoryName, animate)
 			image = UI.NftImage({
 				x = math.floor((width - icon.width) / 2) + 1,
 				image = icon,
-				width = 5,
-				height = 3,
 			}),
 			button = UI.Button({
 				x = math.floor((width - #title - 2) / 2) + 1,
 				y = 4,
 				text = title,
-				backgroundColor = self.backgroundColor,
+				backgroundColor = self:getProperty('backgroundColor'),
 				backgroundFocusColor = colors.gray,
 				textColor = colors.white,
 				textFocusColor = colors.white,
@@ -333,7 +339,8 @@ function page.container:setCategory(categoryName, animate)
 	local col, row = gutter, 2
 	local count = #self.children
 
-	local r = math.random(1, 5)
+	local r = math.random(1, 7)
+	local frames = 5
 	-- reposition all children
 	for k,child in ipairs(self.children) do
 		if r == 1 then
@@ -355,13 +362,21 @@ function page.container:setCategory(categoryName, animate)
 				child.x = self.width
 				child.y = self.height - 3
 			end
+		elseif r == 6 then
+			child.x = col
+			child.y = 1
+		elseif r == 7 then
+			child.x = 1
+			child.y = self.height - 3
 		end
-		child.tween = Tween.new(6, child, { x = col, y = row }, 'linear')
+		child.tween = Tween.new(frames, child, { x = col, y = row }, 'inQuad')
 
 		if not animate then
 			child.x = col
 			child.y = row
 		end
+
+		self:setViewHeight(row + 3)
 
 		if k < count then
 			col = col + child.width
@@ -377,15 +392,13 @@ function page.container:setCategory(categoryName, animate)
 		local function transition()
 			local i = 1
 			return function()
-				self:clear()
 				for _,child in pairs(self.children) do
 					child.tween:update(1)
-					child.x = math.floor(child.x)
-					child.y = math.floor(child.y)
-					child:draw()
+					child:move(math.floor(child.x), math.floor(child.y))
 				end
+				--os.sleep(.5)
 				i = i + 1
-				return i < 7
+				return i <= frames
 			end
 		end
 		self:addTransition(transition)
@@ -512,6 +525,30 @@ function page.editor:updateApplications(app)
 	loadApplications()
 end
 
+function page.editor:loadImage(filename)
+	local s, m = pcall(function()
+		local iconLines = Util.readFile(filename)
+		if not iconLines then
+			error('Must be an NFT image - 3 rows, 8 cols max')
+		end
+		local icon, m = parseIcon(iconLines)
+		if not icon then
+			error(m)
+		end
+		if extSupport then
+			self.form.values.iconExt = iconLines
+		else
+			self.form.values.icon = iconLines
+		end
+		self.form.image:setImage(icon)
+		self.form.image:draw()
+	end)
+	if not s and m then
+		local msg = m:gsub('.*: (.*)', '%1')
+		self.notification:error(msg)
+	end
+end
+
 function page.editor:eventHandler(event)
 	if event.type == 'form_cancel' or event.type == 'cancel' then
 		self:hide()
@@ -520,27 +557,20 @@ function page.editor:eventHandler(event)
 		self.statusBar:setStatus(event.focused.help or '')
 		self.statusBar:draw()
 
+	elseif event.type == 'editIcon' then
+		local filename = '/tmp/editing.nft'
+		NFT.save(self.form.image.image or TRANS_ICON, filename)
+		local success = shell.run('pain.lua ' .. filename)
+		self.parent:dirty(true)
+		if success then
+			self:loadImage(filename)
+		end
+
 	elseif event.type == 'loadIcon' then
-		local s, m = pcall(function()
-			local iconLines = Util.readFile(self.form.iconFile.value)
-			if not iconLines then
-				error('Must be an NFT image - 3 rows, 8 cols max')
-			end
-			local icon, m = parseIcon(iconLines)
-			if not icon then
-				error(m)
-			end
-			if extSupport then
-				self.form.values.iconExt = iconLines
-			else
-				self.form.values.icon = iconLines
-			end
-			self.form.image:setImage(icon)
-			self.form.image:draw()
-		end)
-		if not s and m then
-			local msg = m:gsub('.*: (.*)', '%1')
-			self.notification:error(msg)
+		local success, filename = shell.run('fileui.lua')
+		self.parent:dirty(true)
+		if success and filename then
+			self:loadImage(filename)
 		end
 
 	elseif event.type == 'form_invalid' then
@@ -590,5 +620,4 @@ end)
 loadApplications()
 
 UI:setPage(page)
-
-UI:pullEvents()
+UI:start()

@@ -13,7 +13,7 @@ function Transition.slideLeft(args)
 	return function()
 		local finished = tween:update(1)
 		args.canvas:move(math.floor(pos.x), args.canvas.y)
-		args.canvas:dirty()
+		args.canvas:dirty(true)
 		return not finished
 	end
 end
@@ -29,7 +29,7 @@ function Transition.slideRight(args)
 	return function()
 		local finished = tween:update(1)
 		args.canvas:move(math.floor(pos.x), args.canvas.y)
-		args.canvas:dirty()
+		args.canvas:dirty(true)
 		return not finished
 	end
 end
@@ -45,7 +45,7 @@ function Transition.expandUp(args)
 	return function()
 		local finished = tween:update(1)
 		args.canvas:move(args.x, math.floor(pos.y))
-		args.canvas:dirty()
+		args.canvas.parent:dirty(true)
 		return not finished
 	end
 end
