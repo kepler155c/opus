@@ -33,7 +33,7 @@ Event.on('generate_keypair', function()
 		table.insert(keyPairs, { generateKeyPair() })
 		_G._syslog('Generated keypair in ' .. timer())
 		if #keyPairs >= 3 then
-	  		break
+			break
 		end
 	end
 end)
