@@ -9,6 +9,39 @@ local textutils = _G.textutils
 local _sformat  = string.format
 local _srep     = string.rep
 local _ssub     = string.sub
+local _unpack   = table.unpack
+local _bor      = bit32.bor
+local _bxor     = bit32.bxor
+
+byteArrayMT = {
+	__tostring = function(a) return string.char(_unpack(a)) end,
+	__index = {
+		toHex = function(self) return ("%02x"):rep(#self):format(_unpack(self)) end,
+		isEqual = function(self, t)
+			if type(t) ~= "table" then return false end
+			if #self ~= #t then return false end
+			local ret = 0
+			for i = 1, #self do
+				ret = _bor(ret, _bxor(self[i], t[i]))
+			end
+			return ret == 0
+		end,
+		sub = function(self, a, b)
+			local len = #self+1
+			local start = a%len
+			local stop = (b or len-1)%len
+			local ret = {}
+			local i = 1
+			for j = start, stop, start<stop and 1 or -1 do
+				ret[i] = self[j]
+				i = i+1
+			end
+			return setmetatable(ret, byteArrayMT)
+		end
+	}
+}
+
+Util.byteArrayMT = byteArrayMT
 
 function Util.hexToByteArray(str)
 	local r = {}
@@ -16,12 +49,12 @@ function Util.hexToByteArray(str)
 	for b in str:gmatch("%x%x?") do
 			r[#r+1] = tonumber(b, 16)
 	end
-	return r
+	return setmetatable(r, byteArrayMT)
 end
 
 function Util.byteArrayToHex(tbl)
 	if not tbl then error('byteArrayToHex: invalid table', 2) end
-	return ("%02x"):rep(#tbl):format(table.unpack(tbl))
+	return ("%02x"):rep(#tbl):format(_unpack(tbl))
 end
 
 function Util.tryTimed(timeout, f, ...)
@@ -39,10 +72,10 @@ function Util.tryTimes(attempts, f, ...)
 	for _ = 1, attempts do
 		result = { f(...) }
 		if result[1] then
-			return table.unpack(result)
+			return _unpack(result)
 		end
 	end
-	return table.unpack(result)
+	return _unpack(result)
 end
 
 function Util.timer()

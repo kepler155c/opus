@@ -139,7 +139,7 @@ function Socket.connect(host, port, options)
 		dhost = socket.dhost,
 		t = Crypto.encrypt({ -- this is not that much data...
 			ts = os.epoch('utc'),
-			pk = Util.byteArrayToHex(socket.pubKey),
+			pk = socket.pubKey:toHex(),
 		}, Util.hexToByteArray(identifier)),
 	})
 
@@ -237,7 +237,7 @@ function Socket.server(port, options)
 					type = 'CONN',
 					dhost = socket.dhost,
 					shost = socket.shost,
-					pk = Util.byteArrayToHex(socket.pubKey),
+					pk = socket.pubKey:toHex(),
 					options = socket.options.ENCRYPT and { ENCRYPT = true },
 				})
 
