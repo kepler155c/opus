@@ -77,6 +77,9 @@ function UI.Viewport:getViewArea()
 end
 
 function UI.Viewport:eventHandler(event)
+	if #self.lines <= self.height then
+		return
+	end
 	if event.type == 'scroll_down' then
 		self:setScrollPosition(self.offy + 1, self.offx)
 	elseif event.type == 'scroll_up' then

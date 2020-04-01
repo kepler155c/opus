@@ -18,6 +18,12 @@ local shell      = _ENV.shell
 local term       = _G.term
 local turtle     = _G.turtle
 
+--[[
+	turtle: 39x13
+	computer: 51x19
+	pocket: 26x20
+]]
+
 if not _ENV.multishell then
 	error('multishell is required')
 end
@@ -110,6 +116,17 @@ local page = UI.Page {
 		backgroundColor = colors.lightGray,
 		newApp = UI.Button {
 			text = '+', event = 'new',
+			backgroundFocusColor = colors.lightGray,
+		},
+		mode = UI.Button {
+			x = 3,
+			text = '=', event = 'display_mode',
+			backgroundFocusColor = colors.lightGray,
+		},
+		help = UI.Button {
+			x = 5,
+			text = '?', event = 'help',
+			backgroundFocusColor = colors.lightGray,
 		},
 		--[[
 		volume = UI.Button {
@@ -138,16 +155,16 @@ local page = UI.Page {
 				required = true,
 			},
 			editIcon = UI.Button {
-				x = 11, y = 9,
+				x = 11, y = 6,
 				text = 'Edit', event = 'editIcon', help = 'Edit icon file',
 			},
 			loadIcon = UI.Button {
-				x = 18, y = 9,
+				x = 11, y = 8,
 				text = 'Load', event = 'loadIcon', help = 'Load icon file',
 			},
-			info = UI.TextArea {
-				x = 11, y = 6, height = 2,
-				value = 'magenta is transparent\n3 high - max width is 8'
+			helpIcon = UI.Button {
+				x = 11, y = 8,
+				text = 'Load', event = 'loadIcon', help = 'Load icon file',
 			},
 			image = UI.NftImage {
 				backgroundColor = colors.black,
@@ -312,25 +329,43 @@ function page.container:setCategory(categoryName, animate)
 		local title = ellipsis(program.title, 8)
 
 		local width = math.max(icon.width + 2, #title + 2)
-		table.insert(self.children, UI.Icon({
-			width = width,
-			image = UI.NftImage({
-				x = math.floor((width - icon.width) / 2) + 1,
-				image = icon,
-			}),
-			button = UI.Button({
-				x = math.floor((width - #title - 2) / 2) + 1,
-				y = 4,
-				text = title,
-				backgroundColor = self:getProperty('backgroundColor'),
-				backgroundFocusColor = colors.gray,
-				textColor = colors.white,
-				textFocusColor = colors.white,
-				width = #title + 2,
-				event = 'button',
-				app = program,
-			}),
-		}))
+		if config.listMode then
+			table.insert(self.children, UI.Icon {
+				width = self.width - 2,
+				height = 1,
+				UI.Button {
+					x = 1, ex = -1,
+					text = program.title,
+					centered = false,
+					backgroundColor = self:getProperty('backgroundColor'),
+					backgroundFocusColor = colors.gray,
+					textColor = colors.white,
+					textFocusColor = colors.white,
+					event = 'button',
+					app = program,
+				}
+			})
+		else
+			table.insert(self.children, UI.Icon({
+				width = width,
+				image = UI.NftImage({
+					x = math.floor((width - icon.width) / 2) + 1,
+					image = icon,
+				}),
+				button = UI.Button({
+					x = math.floor((width - #title - 2) / 2) + 1,
+					y = 4,
+					text = title,
+					backgroundColor = self:getProperty('backgroundColor'),
+					backgroundFocusColor = colors.gray,
+					textColor = colors.white,
+					textFocusColor = colors.white,
+					width = #title + 2,
+					event = 'button',
+					app = program,
+				}),
+			}))
+		end
 	end
 
 	local gutter = 2
@@ -383,7 +418,7 @@ function page.container:setCategory(categoryName, animate)
 			col = col + child.width
 			if col + self.children[k + 1].width + gutter - 2 > self.width then
 				col = gutter
-				row = row + 5
+				row = row + (config.listMode and 1 or 5)
 			end
 		end
 	end
@@ -452,6 +487,9 @@ function page:eventHandler(event)
 	elseif event.type == 'network' then
 		shell.switchTab(shell.openTab('network'))
 
+	elseif event.type == 'help' then
+		shell.switchTab(shell.openTab('Help Overview'))
+
 	elseif event.type == 'focus_change' then
 		if event.focused.parent.UIElement == 'Icon' then
 			event.focused.parent:scrollIntoView()
@@ -486,6 +524,13 @@ function page:eventHandler(event)
 		end
 		self.editor:show({ category = category })
 
+	elseif event.type == 'display_mode' then
+		config.listMode = not config.listMode
+		Config.update('Overview', config)
+		loadApplications()
+		self:refresh()
+		self:draw()
+
 	elseif event.type == 'edit' then
 		local focused = page:getFocused()
 		if focused.app then
@@ -493,7 +538,7 @@ function page:eventHandler(event)
 		end
 
 	else
-		UI.Page.eventHandler(self, event)
+		return UI.Page.eventHandler(self, event)
 	end
 	return true
 end
@@ -594,10 +639,6 @@ function page.editor:eventHandler(event)
 	end
 	return true
 end
-
-UI:setPages({
-	main = page,
-})
 
 local function reload()
 	loadApplications()

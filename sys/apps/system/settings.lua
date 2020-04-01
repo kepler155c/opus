@@ -45,5 +45,6 @@ if settings then
 		end
 	end
 
-	return settingsTab
+	-- this needs lots of work - currently only works with booleans
+	--return settingsTab
 end

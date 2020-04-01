@@ -6,10 +6,11 @@ Shortcut keys
  * l: Lua application
  * f: Files
  * e: Edit an application (or right-click)
+ * n: Network
  * control-n: Add a new application
  * delete: Delete an application
 
 Adding a new application
 ========================
 The run entry can be either a disk file or a URL.
-Icons must be in NFT format with a height of 3 and a width of 3 to 8 characters.
+Icons must be in NFT format with a height of 3 and a width of 3 to 8 characters. Magenta is used for transparency.
