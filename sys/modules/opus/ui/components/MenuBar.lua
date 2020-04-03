@@ -81,6 +81,7 @@ function UI.MenuBar:eventHandler(event)
 			x = x,
 			y = y + 1,
 			lastFocus = event.button.uid,
+			menuUid = self.uid,
 		}
 		self.parent:add({ dropmenu = menu })
 

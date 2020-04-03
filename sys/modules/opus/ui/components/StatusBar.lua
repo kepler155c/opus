@@ -89,11 +89,13 @@ function UI.StatusBar:draw()
 	elseif type(self.values) == 'string' then
 		self:write(1, 1, Util.widthify(' ' .. self.values, self.width))
 	else
-		local s = ''
+		local x = 2
+		self:clear()
 		for _,c in ipairs(self.columns) do
-			s = s .. ' ' .. Util.widthify(tostring(self.values[c.key] or ''), c.cw)
+			local s = Util.widthify(tostring(self.values[c.key] or ''), c.cw)
+			self:write(x, 1, s, c.bg, c.fg)
+			x = x + c.cw + 1
 		end
-		self:write(1, 1, Util.widthify(s, self.width))
 	end
 end
 

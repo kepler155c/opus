@@ -40,9 +40,10 @@ function UI.DropMenu:layout()
 end
 
 function UI.DropMenu:enable()
+	local menuBar = self.parent:find(self.menuUid)
 	for _,c in pairs(self.children) do
-		if not c.spacer then
-			c.inactive = not self:getActive(c)
+		if not c.spacer and menuBar then
+			c.inactive = not menuBar:getActive(c)
 		end
 	end
 

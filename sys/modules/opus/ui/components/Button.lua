@@ -18,14 +18,14 @@ UI.Button.defaults = {
 	focusIndicator = ' ',
 	event = 'button_press',
 	accelerators = {
-		space = 'button_activate',
+		[ ' ' ] = 'button_activate',
 		enter = 'button_activate',
 		mouse_click = 'button_activate',
 	}
 }
 function UI.Button:setParent()
 	if not self.width and not self.ex then
-		self.width = #self.text + 2
+		self.width = self.noPadding and #self.text or #self.text + 2
 	end
 	UI.Window.setParent(self)
 end
@@ -41,7 +41,7 @@ function UI.Button:draw()
 	elseif self.inactive then
 		fg = self:getProperty('textInactiveColor')
 	end
-	local text = ind .. self.text .. ' '
+	local text = self.noPadding and self.text or ind .. self.text .. ' '
 	if self.centered then
 		self:clear(bg)
 		self:centeredWrite(1 + math.floor(self.height / 2), text, bg, fg)
@@ -59,7 +59,7 @@ end
 
 function UI.Button:eventHandler(event)
 	if event.type == 'button_activate' then
-		self:emit({ type = self.event, button = self })
+		self:emit({ type = self.event, button = self, element = self })
 		return true
 	end
 	return false

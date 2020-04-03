@@ -23,6 +23,7 @@ UI.TextEntry.defaults = {
 	focused = false,
 	textColor = colors.white,
 	shadowTextColor = colors.gray,
+	markBackgroundColor = colors.gray,
 	backgroundColor = colors.black, -- colors.lightGray,
 	backgroundFocusColor = colors.black, --lightGray,
 	height = 1,
@@ -84,7 +85,7 @@ function UI.TextEntry:draw()
 		end
 
 		if tx ~= tex then
-			self:write(tx + 2, 1, text:sub(tx + 1, tex), colors.gray, tc)
+			self:write(tx + 2, 1, text:sub(tx + 1, tex), self.markBackgroundColor, tc)
 		end
 	end
 	if self.focused then
@@ -103,6 +104,10 @@ end
 
 function UI.TextEntry:updateCursor()
 	self:setCursorPos(self.entry.pos - self.entry.scroll + 2, 1)
+end
+
+function UI.TextEntry:markAll()
+	self.entry:markAll()
 end
 
 function UI.TextEntry:focus()

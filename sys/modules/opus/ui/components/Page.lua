@@ -9,10 +9,12 @@ UI.Page.defaults = {
 	UIElement = 'Page',
 	accelerators = {
 		down = 'focus_next',
+		scroll_down = 'focus_next',
 		enter = 'focus_next',
 		tab = 'focus_next',
 		['shift-tab' ] = 'focus_prev',
 		up = 'focus_prev',
+		scroll_up = 'focus_prev',
 	},
 	backgroundColor = UI.colors.primary,
 	textColor = colors.white,

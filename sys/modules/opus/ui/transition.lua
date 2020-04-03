@@ -20,7 +20,7 @@ end
 
 function Transition.slideRight(args)
 	local ticks      = args.ticks or 10
-	local easing     = args.easing or'outQuint'
+	local easing     = args.easing or 'outQuint'
 	local pos        = { x = -args.canvas.width }
 	local tween      = Tween.new(ticks, pos, { x = 1 }, easing)
 

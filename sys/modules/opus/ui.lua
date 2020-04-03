@@ -73,16 +73,14 @@ function Manager:init()
 		monitor_resize = resize,
 
 		mouse_scroll = function(_, direction, x, y)
+			local ie = Input:translate('mouse_scroll', direction, x, y)
+
 			local currentPage = self:getActivePage()
 			if currentPage then
 				local event = currentPage:pointToChild(x, y)
-				local directions = {
-					[ -1 ] = 'up',
-					[  1 ] = 'down'
-				}
-				-- revisit - should send out scroll_up and scroll_down events
-				-- let the element convert them to up / down
-				event.element:emit({ type = 'key', key = directions[direction] })
+				event.type = ie.code
+				event.ie = { code = ie.code, x = event.x, y = event.y }
+				event.element:emit(event)
 				currentPage:sync()
 			end
 		end,
@@ -251,10 +249,21 @@ function Manager:click(target, ie)
 	local clickEvent
 
 	if ie.code == 'mouse_drag' then
+		local function getPosition(element, x, y)
+			repeat
+				x = x - element.x + 1
+				y = y - element.y + 1
+				element = element.parent
+			until not element
+			return x, y
+		end
+
+		local x, y = getPosition(self.lastClicked, ie.x, ie.y)
+
 		clickEvent = {
 			element = self.lastClicked,
-			x = ie.x,
-			y = ie.y,   -- this is not correct (should be relative to element)
+			x = x,
+			y = y,
 			dx = ie.dx,
 			dy = ie.dy,
 		}
@@ -560,6 +569,7 @@ end
 function UI.Window:setParent()
 	self.oh, self.ow = self.height, self.width
 	self.ox, self.oy = self.x, self.y
+	self.oex, self.oey = self.ex, self.ey
 
 	self:layout()
 	self:initChildren()
@@ -568,6 +578,7 @@ end
 function UI.Window:resize()
 	self.height, self.width = self.oh, self.ow
 	self.x, self.y = self.ox, self.oy
+	self.ex, self.ey = self.oex, self.oey
 
 	self:layout()
 
@@ -864,7 +875,6 @@ function UI.Window:release(child)
 end
 
 function UI.Window:pointToChild(x, y)
-	-- TODO: get rid of this offx/y mess and scroll canvas instead
 	x = x + self.offx - self.x + 1
 	y = y + self.offy - self.y + 1
 	if self.children then
