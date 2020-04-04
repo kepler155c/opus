@@ -3,8 +3,8 @@ local Tween  = require('opus.ui.tween')
 local Transition = { }
 
 function Transition.slideLeft(args)
-	local ticks      = args.ticks or 10
-	local easing     = args.easing or 'outQuint'
+	local ticks      = args.ticks or 8
+	local easing     = args.easing or 'inCirc'
 	local pos        = { x = args.ex }
 	local tween      = Tween.new(ticks, pos, { x = args.x }, easing)
 
@@ -19,8 +19,8 @@ function Transition.slideLeft(args)
 end
 
 function Transition.slideRight(args)
-	local ticks      = args.ticks or 10
-	local easing     = args.easing or 'outQuint'
+	local ticks      = args.ticks or 8
+	local easing     = args.easing or 'inCirc'
 	local pos        = { x = -args.canvas.width }
 	local tween      = Tween.new(ticks, pos, { x = 1 }, easing)
 
