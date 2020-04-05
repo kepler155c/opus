@@ -32,10 +32,6 @@ function UI.Page:enable()
 	end
 end
 
-function UI.Page:disable()
-	UI.Window.disable(self)
-end
-
 function UI.Page:sync()
 	if self.enabled then
 		self:checkFocus()
@@ -58,7 +54,6 @@ function UI.Page:pointToChild(x, y)
 		return UI.Window.pointToChild(self, x, y)
 	end
 
-	-- need to add offsets to this test
 	local function getPosition(element)
 		local x, y = 1, 1
 		repeat

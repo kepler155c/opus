@@ -687,31 +687,39 @@ function UI.Window:sync()
 end
 
 function UI.Window:enable(...)
-	self.enabled = true
-	if self.transitionHint then
-		self:addTransition(self.transitionHint)
-	end
+	if not self.enabled then
+		self.enabled = true
+		if self.transitionHint then
+			self:addTransition(self.transitionHint)
+		end
 
-	if self.modal then
-		self:raise()
-		self:capture(self)
-	end
+		if self.modal then
+			self:raise()
+			self:capture(self)
+		end
 
-	for child in self:eachChild() do
-		child:enable(...)
+		for child in self:eachChild() do
+			if not child.enabled then
+				child:enable(...)
+			end
+		end
 	end
 end
 
 function UI.Window:disable()
-	self.enabled = false
-	self.parent:dirty(true)
+	if self.enabled then
+		self.enabled = false
+		self.parent:dirty(true)
 
-	if self.modal then
-		self:release(self)
-	end
+		if self.modal then
+			self:release(self)
+		end
 
-	for child in self:eachChild() do
-		child:disable()
+		for child in self:eachChild() do
+			if child.enabled then
+				child:disable()
+			end
+		end
 	end
 end
 

@@ -171,6 +171,30 @@ local page = UI.Page {
 				y = 6, x = 2, height = 3, width = 8,
 			},
 		},
+		file_open = UI.FileSelect {
+			modal = true,
+			enable = function() end,
+			transitionHint = 'expandUp',
+			show = function(self)
+				UI.FileSelect.enable(self)
+				self:focusFirst()
+				self:draw()
+			end,
+			disable = function(self)
+				UI.FileSelect.disable(self)
+				self.parent:focusFirst()
+				-- need to recapture as we are opening a modal within another modal
+				self.parent:capture(self.parent)
+			end,
+			eventHandler = function(self, event)
+				if event.type == 'select_cancel' then
+					self:disable()
+				elseif event.type == 'select_file' then
+					self:disable()
+				end
+				return UI.FileSelect.eventHandler(self, event)
+			end,
+		},
 		notification = UI.Notification(),
 		statusBar = UI.StatusBar(),
 	},
@@ -412,7 +436,7 @@ function page.container:setCategory(categoryName, animate)
 			child.y = row
 		end
 
-		self:setViewHeight(row + 3)
+		self:setViewHeight(row + (config.listMode and 1 or 4))
 
 		if k < count then
 			col = col + child.width
@@ -615,12 +639,11 @@ function page.editor:eventHandler(event)
 			self:loadImage(filename)
 		end
 
+	elseif event.type == 'select_file' then
+		self:loadImage(event.file)
+
 	elseif event.type == 'loadIcon' then
-		local success, filename = shell.run('fileui.lua')
-		self.parent:dirty(true)
-		if success and filename then
-			self:loadImage(filename)
-		end
+		self.file_open:show()
 
 	elseif event.type == 'form_invalid' then
 		self.notification:error(event.message)

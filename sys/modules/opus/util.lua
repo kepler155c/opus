@@ -13,6 +13,7 @@ local _unpack   = table.unpack
 local _bor      = bit32.bor
 local _bxor     = bit32.bxor
 
+local byteArrayMT
 byteArrayMT = {
 	__tostring = function(a) return string.char(_unpack(a)) end,
 	__index = {
