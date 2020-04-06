@@ -1139,9 +1139,10 @@ function UI.Device:sync()
 		self.device.setCursorBlink(false)
 	end
 
-	self.currentPage:render(self.device)
 	if transitions then
 		self:runTransitions(transitions)
+	else
+		self.currentPage:render(self.device)
 	end
 
 	if self:getCursorBlink() then

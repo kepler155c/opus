@@ -89,6 +89,10 @@ local Browser = UI.Page {
 			{ key = 'totalSize', width = 6 },
 		},
 	},
+	question = UI.Question {
+		y = -2, x = -19,
+		label = 'Delete',
+	},
 	notification = UI.Notification { },
 	associations = UI.SlideOut {
 		menuBar = UI.MenuBar {
@@ -434,28 +438,25 @@ function Browser:eventHandler(event)
 
 	elseif event.type == 'delete' then
 		if self:hasMarked() then
-			local width = self.statusBar:getColumnWidth('status')
-			self.statusBar:setColumnWidth('status', UI.term.width)
-			self.statusBar:setValue('status', 'Delete marked? (y/n)')
-			self.statusBar:draw()
-			self.statusBar:sync()
-			local _, ch = os.pullEvent('char')
-			if ch == 'y' or ch == 'Y' then
-				for _,m in pairs(marked) do
-					pcall(function()
-						fs.delete(m.fullName)
-					end)
-				end
-			end
-			marked = { }
-			self.statusBar:setColumnWidth('status', width)
-			self.statusBar:setValue('status', '/' .. self.dir.name)
-			self:updateDirectory(self.dir)
-
-			self.statusBar:draw()
-			self.grid:draw()
-			self:setFocus(self.grid)
+			self.question:show()
 		end
+		return true
+
+	elseif event.type == 'question_yes' then
+		for _,m in pairs(marked) do
+			pcall(fs.delete, m.fullName)
+		end
+		marked = { }
+		self:updateDirectory(self.dir)
+
+		self.question:hide()
+		self.statusBar:draw()
+		self.grid:draw()
+		self:setFocus(self.grid)
+
+	elseif event.type == 'question_no' then
+		self.question:hide()
+		self:setFocus(self.grid)
 
 	elseif event.type == 'copy' or event.type == 'cut' then
 		if self:hasMarked() then
