@@ -20,7 +20,7 @@ UI.Chooser.defaults = {
 		left  = 'choice_prev',
 	}
 }
-function UI.Chooser:setParent()
+function UI.Chooser:layout()
 	if not self.width and not self.ex then
 		self.width = 1
 		for _,v in pairs(self.choices) do
@@ -30,7 +30,7 @@ function UI.Chooser:setParent()
 		end
 		self.width = self.width + 4
 	end
-	UI.Window.setParent(self)
+	UI.Window.layout(self)
 end
 
 function UI.Chooser:draw()

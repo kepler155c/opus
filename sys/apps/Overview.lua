@@ -1,4 +1,5 @@
 local Alt      = require('opus.alternate')
+local Array    = require('opus.array')
 local class    = require('opus.class')
 local Config   = require('opus.config')
 local Event    = require('opus.event')
@@ -86,30 +87,18 @@ local function parseIcon(iconText)
 	return s, m
 end
 
-UI.VerticalTabBar = class(UI.TabBar)
-function UI.VerticalTabBar:setParent()
-	self.x = 1
-	self.width = 8
-	self.height = nil
-	self.ey = -2
-	UI.TabBar.setParent(self)
-	for k,c in pairs(self.children) do
-		c.x = 1
-		c.y = k + 1
-		c.ox, c.oy = c.x, c.y
-		c.ow = 8
-		c.width = 8
-		c:reposition(c.x, c.y, c.width, c.height)
-	end
-end
-
-local cx = 9
-local cy = 1
-
 local page = UI.Page {
 	container = UI.Viewport {
-		x = cx,
-		y = cy,
+		x = 9, y = 1,
+	},
+	tabBar = UI.TabBar {
+		ey = -2,
+		width = 8,
+		selectedBackgroundColor = UI.colors.primary,
+		layout = function(self)
+			self.height = nil
+			UI.TabBar.layout(self)
+		end,
 	},
 	tray = UI.Window {
 		y = -1, width = 8,
@@ -128,11 +117,6 @@ local page = UI.Page {
 			text = '?', event = 'help',
 			backgroundFocusColor = colors.lightGray,
 		},
-		--[[
-		volume = UI.Button {
-			x = 3,
-			text = '\15', event = 'volume',
-		},]]
 	},
 	editor = UI.SlideOut {
 		y = -12, height = 12,
@@ -253,7 +237,7 @@ local function loadApplications()
 			return requirements[a.requires]
 		end
 
-		return true -- Util.startsWith(a.run, 'http') or shell.resolveProgram(a.run)
+		return true
 	end)
 
 	local categories = { }
@@ -263,6 +247,7 @@ local function loadApplications()
 			categories[f.category] = true
 			table.insert(buttons, {
 				text = f.category,
+				width = 8,
 				selected = config.currentCategory == f.category
 			})
 		end
@@ -270,14 +255,13 @@ local function loadApplications()
 	table.sort(buttons, function(a, b) return a.text < b.text end)
 	table.insert(buttons, 1, { text = 'Recent' })
 
-	Util.removeByValue(page.children, page.tabBar)
+	for k,v in pairs(buttons) do
+		v.x = 1
+		v.y = k + 1
+	end
 
-	page:add {
-		tabBar = UI.VerticalTabBar {
-			buttons = buttons,
-			selectedBackgroundColor = UI.colors.primary,
-		},
-	}
+	page.tabBar.children = { }
+	page.tabBar:addButtons(buttons)
 
 	--page.tabBar:selectTab(config.currentCategory or 'Apps')
 	page.container:setCategory(config.currentCategory or 'Apps')
@@ -292,7 +276,6 @@ UI.Icon.defaults = {
 function UI.Icon:eventHandler(event)
 	if event.type == 'mouse_click' then
 		self:setFocus(self.button)
-		--self:emit({ type = self.button.event, button = self.button })
 		return true
 	elseif event.type == 'mouse_doubleclick' then
 		self:emit({ type = self.button.event, button = self.button })
@@ -308,37 +291,23 @@ function page.container:setCategory(categoryName, animate)
 	self.children = { }
 	self:reset()
 
-	local function filter(it, f)
-		local ot = { }
-		for _,v in pairs(it) do
-			if f(v) then
-				table.insert(ot, v)
-			end
-		end
-		return ot
-	end
-
-	local filtered
+	local filtered = { }
 
 	if categoryName == 'Recent' then
-		filtered = { }
-
 		for _,v in ipairs(config.Recent) do
 			local app = Util.find(applications, 'key', v)
-			if app then -- and fs.exists(app.run) then
+			if app then
 				table.insert(filtered, app)
 			end
 		end
-
 	else
-		filtered = filter(applications, function(a)
-			return a.category == categoryName -- and fs.exists(a.run)
+		filtered = Array.filter(applications, function(a)
+			return a.category == categoryName
 		end)
 		table.sort(filtered, function(a, b) return a.title < b.title end)
 	end
 
 	for _,program in ipairs(filtered) do
-
 		local icon
 		if extSupport and program.iconExt then
 			icon = parseIcon(program.iconExt)
@@ -456,7 +425,6 @@ function page.container:setCategory(categoryName, animate)
 					child.tween:update(1)
 					child:move(math.floor(child.x), math.floor(child.y))
 				end
-				--os.sleep(.5)
 				i = i + 1
 				return i <= frames
 			end
@@ -584,11 +552,6 @@ function page.editor:show(app)
 	self:focusFirst()
 end
 
-function page.editor.form.image:draw()
-	self:clear()
-	UI.NftImage.draw(self)
-end
-
 function page.editor:updateApplications(app)
 	if not app.key then
 		app.key = SHA.compute(app.title)
@@ -652,8 +615,6 @@ function page.editor:eventHandler(event)
 		local values = self.form.values
 		self:hide()
 		self:updateApplications(values)
-		--page:refresh()
-		--page:draw()
 		config.currentCategory = values.category
 		Config.update('Overview', config)
 		os.queueEvent('overview_refresh')

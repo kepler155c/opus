@@ -13,8 +13,7 @@ function UI.Menu:postInit()
 	self.pageSize = #self.menuItems
 end
 
-function UI.Menu:setParent()
-	UI.Grid.setParent(self)
+function UI.Menu:layout()
 	self.itemWidth = 1
 	for _,v in pairs(self.values) do
 		if #v.prompt > self.itemWidth then
@@ -28,6 +27,7 @@ function UI.Menu:setParent()
 	else
 		self.width = self.itemWidth + 2
 	end
+	UI.Grid.layout(self)
 end
 
 function UI.Menu:center()

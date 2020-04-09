@@ -83,8 +83,8 @@ UI.Grid.defaults = {
 		[ 'control-f' ] = 'scroll_pageDown',
 	},
 }
-function UI.Grid:setParent()
-	UI.Window.setParent(self)
+function UI.Grid:layout()
+	UI.Window.layout(self)
 
 	for _,c in pairs(self.columns) do
 		c.cw = c.width

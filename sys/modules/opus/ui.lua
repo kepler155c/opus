@@ -54,10 +54,7 @@ function Manager:init()
 	local function resize(_, side)
 		local dev = self.devices[side or 'terminal']
 		if dev and dev.currentPage then
-			-- the parent doesn't have any children set...
-			-- that's why we have to resize both the parent and the current page
-			-- kinda makes sense
-			dev.currentPage.parent:resize()
+			dev:resize()
 
 			dev.currentPage:resize()
 			dev.currentPage:draw()
@@ -441,7 +438,7 @@ function UI.Window:init(args)
 	local defaults = args
 	local m = getmetatable(self)  -- get the class for this instance
 	repeat
-		if m.disable then
+		if m ~= Canvas then
 			defaults = UI:getDefaults(m, defaults)
 		end
 		m = m._base
@@ -561,6 +558,9 @@ function UI.Window:layout()
 	if not self.height then
 		self.height = self.parent.height - self.y + 1
 	end
+
+	self.width = math.max(self.width, 1)
+	self.height = math.max(self.height, 1)
 
 	self:reposition(self.x, self.y, self.width, self.height)
 end
@@ -905,7 +905,7 @@ function UI.Window:pointToChild(x, y)
 	}
 end
 
-UI.Window.docs.getFocusables = [[getFocusables(VOID)
+UI.Window.docs.getFocusables = [[getxables(VOID)
 Returns a list of children that can accept focus.]]
 function UI.Window:getFocusables()
 	local focusable = { }
@@ -929,7 +929,7 @@ function UI.Window:getFocusables()
 	end
 
 	if self.children then
-		getFocusable(self, self.x, self.y)
+		getFocusable(self)
 	end
 
 	return focusable
@@ -974,18 +974,8 @@ function UI.Window:scrollIntoView()
 	end
 end
 
-function UI.Window:addTransition(effect, args)
-	if self.parent then
-		args = args or { }
-		if not args.x then -- not good
-			args.x, args.y = self.x, self.y
-			args.width = self.width
-			args.height = self.height
-			args.canvas = self
-		end
-
-		self.parent:addTransition(effect, args)
-	end
+function UI.Window:addTransition(effect, args, canvas)
+	self.parent:addTransition(effect, args, canvas or self)
 end
 
 function UI.Window:emit(event)
@@ -1092,29 +1082,21 @@ function UI.Device:reset()
 	self.device.setCursorPos(1, 1)
 end
 
-function UI.Device:addTransition(effect, args)
+function UI.Device:addTransition(effect, args, canvas)
 	if not self.transitions then
 		self.transitions = { }
 	end
 
-	args = args or { }
-	args.ex = args.x + args.width - 1
-	args.ey = args.y + args.height - 1
-	args.canvas = args.canvas or self
-
 	if type(effect) == 'string' then
-		effect = Transition[effect]
-		if not effect then
-			error('Invalid transition')
-		end
+		effect = Transition[effect] or error('Invalid transition')
 	end
 
-	table.insert(self.transitions, { effect = effect, args = args })
+	table.insert(self.transitions, { effect = effect, args = args or { }, canvas = canvas })
 end
 
 function UI.Device:runTransitions(transitions)
 	for _,k in pairs(transitions) do
-		k.update = k.effect(k.args)
+		k.update = k.effect(k.canvas, k.args)
 	end
 	while true do
 		for _,k in ipairs(Util.keys(transitions)) do

@@ -23,11 +23,11 @@ UI.Button.defaults = {
 		mouse_click = 'button_activate',
 	}
 }
-function UI.Button:setParent()
+function UI.Button:layout()
 	if not self.width and not self.ex then
 		self.width = self.noPadding and #self.text or #self.text + 2
 	end
-	UI.Window.setParent(self)
+	UI.Window.layout(self)
 end
 
 function UI.Button:draw()

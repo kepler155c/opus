@@ -21,8 +21,9 @@ UI.Checkbox.defaults = {
 		mouse_click = 'checkbox_toggle',
 	}
 }
-function UI.Checkbox:postInit()
+function UI.Checkbox:layout()
 	self.width = self.label and #self.label + 4 or 3
+	UI.Window.layout(self)
 end
 
 function UI.Checkbox:draw()

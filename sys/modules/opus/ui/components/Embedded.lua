@@ -15,19 +15,21 @@ UI.Embedded.defaults = {
 		down = 'scroll_down',
 	}
 }
-function UI.Embedded:setParent()
-	UI.Window.setParent(self)
+function UI.Embedded:layout()
+	UI.Window.layout(self)
 
-	function self.render()
-		self:sync()
+	if not self.win then
+		function self.render()
+			self:sync()
+		end
+		self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
+		self.win.canvas = self
+		self.win.setMaxScroll(self.maxScroll)
+		self.win.setCursorPos(1, 1)
+		self.win.setBackgroundColor(self.backgroundColor)
+		self.win.setTextColor(self.textColor)
+		self.win.clear()
 	end
-	self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
-	self.win.canvas = self
-	self.win.setMaxScroll(self.maxScroll)
-	self.win.setCursorPos(1, 1)
-	self.win.setBackgroundColor(self.backgroundColor)
-	self.win.setTextColor(self.textColor)
-	self.win.clear()
 end
 
 function UI.Embedded:draw()

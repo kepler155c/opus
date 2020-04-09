@@ -13,7 +13,8 @@ UI.StatusBar.defaults = {
 	height = 1,
 	ey = -1,
 }
-function UI.StatusBar:adjustWidth()
+function UI.StatusBar:layout()
+	UI.Window.layout(self)
 	-- Can only have 1 adjustable width
 	if self.columns then
 		local w = self.width - #self.columns - 1
@@ -29,16 +30,6 @@ function UI.StatusBar:adjustWidth()
 			end
 		end
 	end
-end
-
-function UI.StatusBar:resize()
-	UI.Window.resize(self)
-	self:adjustWidth()
-end
-
-function UI.StatusBar:setParent()
-	UI.Window.setParent(self)
-	self:adjustWidth()
 end
 
 function UI.StatusBar:setStatus(status)

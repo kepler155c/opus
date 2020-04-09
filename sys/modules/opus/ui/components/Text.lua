@@ -8,11 +8,11 @@ UI.Text.defaults = {
 	value = '',
 	height = 1,
 }
-function UI.Text:setParent()
+function UI.Text:layout()
 	if not self.width and not self.ex then
 		self.width = #tostring(self.value)
 	end
-	UI.Window.setParent(self)
+	UI.Window.layout(self)
 end
 
 function UI.Text:draw()
