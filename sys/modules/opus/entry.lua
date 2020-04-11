@@ -366,6 +366,7 @@ local mappings = {
 --	[ 'control-y'           ] = Entry.paste,  -- well this won't work...
 
 	[ 'mouse_doubleclick'   ] = Entry.markWord,
+	[ 'mouse_tripleclick'   ] = Entry.markAll,
 	[ 'shift-left'          ] = Entry.markLeft,
 	[ 'shift-right'         ] = Entry.markRight,
 	[ 'mouse_down'          ] = Entry.markAnchor,

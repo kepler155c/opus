@@ -74,7 +74,9 @@ function UI.TextEntry:draw()
 		text = self.shadowText
 	end
 
-	self:write(1, 1, ' ' .. Util.widthify(text, self.width - 2) .. ' ', bg, tc)
+	local ss = self.entry.scroll > 0 and '\183' or ' '
+	self:write(2, 1, Util.widthify(text, self.width - 2) .. ' ', bg, tc)
+	self:write(1, 1, ss, bg, self.shadowTextColor)
 
 	if self.entry.mark.active then
 		local tx = math.max(self.entry.mark.x - self.entry.scroll, 0)

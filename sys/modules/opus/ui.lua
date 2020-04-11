@@ -465,6 +465,9 @@ function UI.Window:init(args)
 	until not m
 end
 
+UI.Window.docs.postInit = [[postInit(VOID)
+Called once the window has all the properties set.
+Override to calculate properties or to dynamically add children]]
 function UI.Window:postInit()
 	if self.parent then
 		-- this will cascade down the whole tree of elements starting at the
@@ -604,6 +607,8 @@ function UI.Window:reposition(x, y, w, h)
 	end
 end
 
+UI.Window.docs.raise = [[raise(VOID)
+Raise this window to the top]]
 function UI.Window:raise()
 	Array.removeByValue(self.parent.children, self)
 	table.insert(self.parent.children, self)
@@ -905,7 +910,7 @@ function UI.Window:pointToChild(x, y)
 	}
 end
 
-UI.Window.docs.getFocusables = [[getxables(VOID)
+UI.Window.docs.getFocusables = [[getFocusables(VOID)
 Returns a list of children that can accept focus.]]
 function UI.Window:getFocusables()
 	local focusable = { }

@@ -146,18 +146,26 @@ function input:translate(event, code, p1, p2)
 				 p1 == self.x and p2 == self.y and
 				 (clock - self.timer < .5) then
 
-				self.mch = 'mouse_doubleclick'
-				self.timer = nil
+				self.clickCount = self.clickCount + 1
+				if self.clickCount == 3 then
+					self.mch = 'mouse_tripleclick'
+					self.timer = nil
+					self.clickCount = 1
+				else
+					self.mch = 'mouse_doubleclick'
+				end
 			else
 				self.timer = os.clock()
 				self.x = p1
 				self.y = p2
+				self.clickCount = 1
 			end
 			self.mfired = input:toCode(self.mch, 255)
 		else
 			self.mch = 'mouse_up'
 			self.mfired = input:toCode(self.mch, 255)
 		end
+		_syslog(self.mfired)
 		return {
 			code = self.mfired,
 			button = code,
