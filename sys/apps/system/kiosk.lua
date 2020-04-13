@@ -4,7 +4,7 @@ local colors     = _G.colors
 local peripheral = _G.peripheral
 local settings   = _G.settings
 
-local tab = UI.Tab {
+return peripheral.find('monitor') and UI.Tab {
 	tabTitle = 'Kiosk',
 	description = 'Kiosk options',
 	form = UI.Form {
@@ -29,35 +29,29 @@ local tab = UI.Tab {
 		backgroundColor = colors.black,
 		value = 'Settings apply to kiosk mode selected during startup'
 	},
-}
+	enable = function(self)
+		local choices = { }
 
-function tab:enable()
-	local choices = {	}
+		peripheral.find('monitor', function(side)
+			table.insert(choices, { name = side, value = side })
+		end)
 
-	peripheral.find('monitor', function(side)
-		table.insert(choices, { name = side, value = side })
-	end)
+		self.form.monitor.choices = choices
+		self.form.monitor.value = settings.get('kiosk.monitor')
 
-	self.form.monitor.choices = choices
-	self.form.monitor.value = settings.get('kiosk.monitor')
+		self.form.textScale.value = settings.get('kiosk.textscale')
 
-	self.form.textScale.value = settings.get('kiosk.textscale')
-
-	UI.Tab.enable(self)
-end
-
-function tab:eventHandler(event)
-	if event.type == 'choice_change' then
-		if self.form.monitor.value then
-			settings.set('kiosk.monitor', self.form.monitor.value)
+		UI.Tab.enable(self)
+	end,
+	eventHandler = function(self, event)
+		if event.type == 'choice_change' then
+			if self.form.monitor.value then
+				settings.set('kiosk.monitor', self.form.monitor.value)
+			end
+			if self.form.textScale.value then
+				settings.set('kiosk.textscale', self.form.textScale.value)
+			end
+			settings.save('.settings')
 		end
-		if self.form.textScale.value then
-			settings.set('kiosk.textscale', self.form.textScale.value)
-		end
-		settings.save('.settings')
 	end
-end
-
-if peripheral.find('monitor') then
-	return tab
-end
+}

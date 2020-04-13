@@ -4,7 +4,7 @@ local Util = require('opus.util')
 local fs   = _G.fs
 local os   = _G.os
 
-local labelTab = UI.Tab {
+return UI.Tab {
 	tabTitle = 'Label',
 	description = 'Set the computer label',
 	labelText = UI.Text {
@@ -40,14 +40,11 @@ local labelTab = UI.Tab {
 			{ key = 'value', textColor = colors.yellow },
 		},
 	},
+	eventHandler = function(self, event)
+		if event.type == 'update_label' and self.label.value then
+			os.setComputerLabel(self.label.value)
+			self:emit({ type = 'success_message', message = 'Label updated' })
+			return true
+		end
+	end,
 }
-
-function labelTab:eventHandler(event)
-	if event.type == 'update_label' and self.label.value then
-		os.setComputerLabel(self.label.value)
-		self:emit({ type = 'success_message', message = 'Label updated' })
-		return true
-	end
-end
-
-return labelTab

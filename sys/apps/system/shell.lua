@@ -38,7 +38,7 @@ if not _colors.backgroundColor then
 	_colors.fileColor = colors.white
 end
 
-local tab = UI.Tab {
+return UI.Tab {
 	tabTitle = 'Shell',
 	description = 'Shell options',
 	grid1 = UI.ScrollingGrid {
@@ -54,6 +54,13 @@ local tab = UI.Tab {
 		columns = { { key = 'name' } },
 		values = allColors,
 		sortColumn = 'name',
+		getRowTextColor = function(self, row)
+			local selected = self.parent.grid1:getSelected()
+			if _colors[selected.name] == row.value then
+				return colors.yellow
+			end
+			return UI.Grid.getRowTextColor(self, row)
+		end
 	},
 	directory = UI.Checkbox {
 		x = 2, y = -2,
@@ -73,68 +80,56 @@ local tab = UI.Tab {
 	},
 	display = UI.Window {
 		x = 2, ex = -2, y = -8, height = 5,
+		draw = function(self)
+			self:clear(_colors.backgroundColor)
+			local offset = 0
+			if config.displayDirectory then
+				self:write(1, 1,
+					'==' .. os.getComputerLabel() .. ':/dir/etc',
+					_colors.directoryBackgroundColor, _colors.directoryTextColor)
+				offset = 1
+			end
+
+			self:write(1, 1 + offset, '$ ',
+				_colors.promptBackgroundColor, _colors.promptTextColor)
+
+			self:write(3, 1 + offset, 'ls /',
+				_colors.backgroundColor, _colors.commandTextColor)
+
+			self:write(1, 2 + offset, 'sys    usr',
+				_colors.backgroundColor, _colors.directoryColor)
+
+			self:write(1, 3 + offset, 'startup',
+				_colors.backgroundColor, _colors.fileColor)
+		end,
 	},
+	eventHandler = function(self, event)
+		if event.type =='checkbox_change' then
+			config.displayDirectory = not not event.checked
+			self.display:draw()
+
+		elseif event.type == 'grid_focus_row' and event.element == self.grid1 then
+			self.grid2:draw()
+
+		elseif event.type == 'grid_select' and event.element == self.grid2 then
+			_colors[tab.grid1:getSelected().name] = event.selected.value
+			self.display:draw()
+			self.grid2:draw()
+
+		elseif event.type == 'reset' then
+			config.color = defaults
+			config.displayDirectory = true
+			self.directory.value = true
+			_colors = Util.shallowCopy(defaults)
+
+			Config.update('shellprompt', config)
+			self:draw()
+
+		elseif event.type == 'update' then
+			config.color = _colors
+			Config.update('shellprompt', config)
+
+		end
+		return UI.Tab.eventHandler(self, event)
+	end
 }
-
-function tab.grid2:getRowTextColor(row)
-	local selected = tab.grid1:getSelected()
-	if _colors[selected.name] == row.value then
-		return colors.yellow
-	end
-	return UI.Grid.getRowTextColor(self, row)
-end
-
-function tab.display:draw()
-	self:clear(_colors.backgroundColor)
-	local offset = 0
-	if config.displayDirectory then
-		self:write(1, 1,
-			'==' .. os.getComputerLabel() .. ':/dir/etc',
-			_colors.directoryBackgroundColor, _colors.directoryTextColor)
-		offset = 1
-	end
-
-	self:write(1, 1 + offset, '$ ',
-		_colors.promptBackgroundColor, _colors.promptTextColor)
-
-	self:write(3, 1 + offset, 'ls /',
-		_colors.backgroundColor, _colors.commandTextColor)
-
-	self:write(1, 2 + offset, 'sys    usr',
-		_colors.backgroundColor, _colors.directoryColor)
-
-	self:write(1, 3 + offset, 'startup',
-		_colors.backgroundColor, _colors.fileColor)
-end
-
-function tab:eventHandler(event)
-	if event.type =='checkbox_change' then
-		config.displayDirectory = not not event.checked
-		self.display:draw()
-
-	elseif event.type == 'grid_focus_row' and event.element == self.grid1 then
-		self.grid2:draw()
-
-	elseif event.type == 'grid_select' and event.element == self.grid2 then
-		_colors[tab.grid1:getSelected().name] = event.selected.value
-		self.display:draw()
-		self.grid2:draw()
-
-	elseif event.type == 'reset' then
-		config.color = defaults
-		config.displayDirectory = true
-		self.directory.value = true
-		_colors = Util.shallowCopy(defaults)
-
-		Config.update('shellprompt', config)
-		self:draw()
-
-	elseif event.type == 'update' then
-		config.color = _colors
-		Config.update('shellprompt', config)
-
-	end
-	return UI.Tab.eventHandler(self, event)
-end
-
-return tab

@@ -82,12 +82,53 @@ local Browser = UI.Page {
 		},
 		sortColumn = 'name',
 		y = 2, ey = -2,
+		sortCompare = function(self, a, b)
+			if self.sortColumn == 'fsize' then
+				return a.size < b.size
+			elseif self.sortColumn == 'flags' then
+				return a.flags < b.flags
+			end
+			if a.isDir == b.isDir then
+				return a.name:lower() < b.name:lower()
+			end
+			return a.isDir
+		end,
+		getRowTextColor = function(_, file)
+			if file.marked then
+				return colors.green
+			end
+			if file.isDir then
+				return colors.cyan
+			end
+			if file.isReadOnly then
+				return colors.pink
+			end
+			return colors.white
+		end,
+		eventHandler = function(self, event)
+			if event.type == 'copy' then -- let copy be handled by parent
+				return false
+			end
+			return UI.ScrollingGrid.eventHandler(self, event)
+		end
 	},
 	statusBar = UI.StatusBar {
 		columns = {
 			{ key = 'status'               },
 			{ key = 'totalSize', width = 6 },
 		},
+		draw = function(self)
+			if self.parent.dir then
+				local info = '#:' .. Util.size(self.parent.dir.files)
+				local numMarked = Util.size(marked)
+				if numMarked > 0 then
+					info = info .. ' M:' .. numMarked
+				end
+				self:setValue('info', info)
+				self:setValue('totalSize', formatSize(self.parent.dir.totalSize))
+				UI.StatusBar.draw(self)
+			end
+		end,
 	},
 	question = UI.Question {
 		y = -2, x = -19,
@@ -181,51 +222,6 @@ function Browser.menuBar:getActive(menuItem)
 	return true
 end
 
-function Browser.grid:sortCompare(a, b)
-	if self.sortColumn == 'fsize' then
-		return a.size < b.size
-	elseif self.sortColumn == 'flags' then
-		return a.flags < b.flags
-	end
-	if a.isDir == b.isDir then
-		return a.name:lower() < b.name:lower()
-	end
-	return a.isDir
-end
-
-function Browser.grid:getRowTextColor(file)
-	if file.marked then
-		return colors.green
-	end
-	if file.isDir then
-		return colors.cyan
-	end
-	if file.isReadOnly then
-		return colors.pink
-	end
-	return colors.white
-end
-
-function Browser.grid:eventHandler(event)
-	if event.type == 'copy' then -- let copy be handled by parent
-		return false
-	end
-	return UI.ScrollingGrid.eventHandler(self, event)
-end
-
-function Browser.statusBar:draw()
-	if self.parent.dir then
-		local info = '#:' .. Util.size(self.parent.dir.files)
-		local numMarked = Util.size(marked)
-		if numMarked > 0 then
-			info = info .. ' M:' .. numMarked
-		end
-		self:setValue('info', info)
-		self:setValue('totalSize', formatSize(self.parent.dir.totalSize))
-		UI.StatusBar.draw(self)
-	end
-end
-
 function Browser:setStatus(status, ...)
 	self.notification:info(string.format(status, ...))
 end
@@ -261,7 +257,6 @@ function Browser:getDirectory(directory)
 end
 
 function Browser:updateDirectory(dir)
-
 	dir.size = 0
 	dir.totalSize = 0
 	Util.clear(dir.files)

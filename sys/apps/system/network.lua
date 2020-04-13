@@ -5,7 +5,7 @@ local UI     = require('opus.ui')
 local colors = _G.colors
 local device = _G.device
 
-local tab = UI.Tab {
+return UI.Tab {
 	tabTitle = 'Network',
 	description = 'Networking options',
 	info = UI.TextArea {
@@ -27,39 +27,35 @@ Reboot to take effect.]], Ansi.yellow, Ansi.reset)
 		x = 10, ex = -3, y = 3,
 		nochoice = 'auto',
 	},
-}
+	enable = function(self)
+		local width = 7
+		local choices = {
+			{ name = 'auto',    value = 'auto' },
+			{ name = 'disable', value = 'none' },
+		}
 
-function tab:enable()
-	local width = 7
-	local choices = {
-		{ name = 'auto',    value = 'auto' },
-		{ name = 'disable', value = 'none' },
-	}
+		for k,v in pairs(device) do
+			if v.isWireless and v.isWireless() and k ~= 'wireless_modem' then
+				table.insert(choices, { name = k, value = v.name })
+				width = math.max(width, #k)
+			end
+		end
 
-	for k,v in pairs(device) do
-		if v.isWireless and v.isWireless() and k ~= 'wireless_modem' then
-			table.insert(choices, { name = k, value = v.name })
-			width = math.max(width, #k)
+		self.modem.choices = choices
+		--self.modem.width = width + 4
+
+		local config = Config.load('os')
+		self.modem.value = config.wirelessModem or 'auto'
+
+		UI.Tab.enable(self)
+	end,
+	eventHandler = function(self, event)
+		if event.type == 'choice_change' then
+			local config = Config.load('os')
+			config.wirelessModem = self.modem.value
+			Config.update('os', config)
+			self:emit({ type = 'success_message', message = 'reboot to take effect' })
+			return true
 		end
 	end
-
-	self.modem.choices = choices
-	--self.modem.width = width + 4
-
-	local config = Config.load('os')
-	self.modem.value = config.wirelessModem or 'auto'
-
-	UI.Tab.enable(self)
-end
-
-function tab:eventHandler(event)
-	if event.type == 'choice_change' then
-		local config = Config.load('os')
-		config.wirelessModem = self.modem.value
-		Config.update('os', config)
-		self:emit({ type = 'success_message', message = 'reboot to take effect' })
-		return true
-	end
-end
-
-return tab
+}

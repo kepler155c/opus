@@ -4,7 +4,7 @@ local UI       = require('opus.ui')
 
 local colors   = _G.colors
 
-local passwordTab = UI.Tab {
+return UI.Tab {
 	tabTitle = 'Password',
 	description = 'Wireless network password',
 	[1] = UI.Window {
@@ -30,19 +30,17 @@ local passwordTab = UI.Tab {
 		textColor = colors.yellow,
 		inactive = true,
 		value = 'Add a password to enable other computers to connect to this one.',
-	}
-}
-function passwordTab:eventHandler(event)
-	if event.type == 'update_password' then
-		if not self.newPass.value or #self.newPass.value == 0 then
-			self:emit({ type = 'error_message', message = 'Invalid password' })
+	},
+	eventHandler = function(self, event)
+		if event.type == 'update_password' then
+			if not self.newPass.value or #self.newPass.value == 0 then
+				self:emit({ type = 'error_message', message = 'Invalid password' })
 
-		else
-			Security.updatePassword(SHA.compute(self.newPass.value))
-			self:emit({ type = 'success_message', message = 'Password updated' })
+			else
+				Security.updatePassword(SHA.compute(self.newPass.value))
+				self:emit({ type = 'success_message', message = 'Password updated' })
+			end
+			return true
 		end
-		return true
 	end
-end
-
-return passwordTab
+}

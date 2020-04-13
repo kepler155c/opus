@@ -41,15 +41,20 @@ end
 
 function Entry:updateScroll()
 	local ps = self.scroll
-	local value = _val(self.value)
-	if self.pos > #value then
-		self.pos = #value
+	local len = #_val(self.value)
+	if self.pos > len then
+		self.pos = len
 		self.scroll = 0 -- ??
 	end
 	if self.pos - self.scroll > self.width then
 		self.scroll = self.pos - self.width
 	elseif self.pos < self.scroll then
 		self.scroll = self.pos
+	end
+	if self.scroll > 0 then
+		if self.scroll + self.width  > len then
+			self.scroll = len - self.width
+		end
 	end
 	if ps ~= self.scroll then
 		self.textChanged = true
@@ -217,6 +222,10 @@ function Entry:paste(ie)
 	end
 end
 
+function Entry:forcePaste()
+	os.queueEvent('clipboard_paste')
+end
+
 function Entry:clearLine()
 	if #_val(self.value) > 0 then
 		self:reset()
@@ -363,7 +372,7 @@ local mappings = {
 	--[ 'control-d'           ] = Entry.cutNextWord,
 	[ 'control-x'           ] = Entry.cut,
 	[ 'paste'               ] = Entry.paste,
---	[ 'control-y'           ] = Entry.paste,  -- well this won't work...
+	[ 'control-y'           ] = Entry.forcePaste,  -- well this won't work...
 
 	[ 'mouse_doubleclick'   ] = Entry.markWord,
 	[ 'mouse_tripleclick'   ] = Entry.markAll,

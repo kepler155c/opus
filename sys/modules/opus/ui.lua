@@ -1096,6 +1096,14 @@ function UI.Device:addTransition(effect, args, canvas)
 		effect = Transition[effect] or error('Invalid transition')
 	end
 
+	-- there can be only one
+	for k,v in pairs(self.transitions) do
+		if v.canvas == canvas then
+			table.remove(self.transitions, k)
+			break
+		end
+	end
+
 	table.insert(self.transitions, { effect = effect, args = args or { }, canvas = canvas })
 end
 
