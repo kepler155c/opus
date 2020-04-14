@@ -28,7 +28,7 @@ local defaults = {
 local _colors = config.color or Util.shallowCopy(defaults)
 
 local allSettings = { }
-for k, v in pairs(defaults) do
+for k in pairs(defaults) do
 	table.insert(allSettings, { name = k })
 end
 
@@ -112,7 +112,7 @@ return UI.Tab {
 			self.grid2:draw()
 
 		elseif event.type == 'grid_select' and event.element == self.grid2 then
-			_colors[tab.grid1:getSelected().name] = event.selected.value
+			_colors[self.grid1:getSelected().name] = event.selected.value
 			self.display:draw()
 			self.grid2:draw()
 

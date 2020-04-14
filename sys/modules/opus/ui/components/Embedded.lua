@@ -21,6 +21,9 @@ function UI.Embedded:layout()
 	if not self.win then
 		function self.render()
 			self:sync()
+			if self.focused then
+				self:setCursorPos(self.win.getCursorPos())
+			end
 		end
 		self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
 		self.win.canvas = self
@@ -38,6 +41,9 @@ end
 
 function UI.Embedded:focus()
 	-- allow scrolling
+	if self.focused then
+		self:setCursorBlink(self.win.getCursorBlink())
+	end
 end
 
 function UI.Embedded:enable()
@@ -67,6 +73,7 @@ function UI.Embedded.example()
 	local term  = _G.term
 
 	return UI.Embedded {
+		y = 2, x = 2, ex = -2, ey = -2,
 		enable = function (self)
 			UI.Embedded.enable(self)
 			Event.addRoutine(function()
@@ -75,10 +82,11 @@ function UI.Embedded.example()
 				term.redirect(oterm)
 			end)
 		end,
-		eventHandler = function(_, event)
+		eventHandler = function(self, event)
 			if event.type == 'key' then
 				return true
 			end
+			return UI.Embedded.eventHandler(self, event)
 		end
 	}
 end

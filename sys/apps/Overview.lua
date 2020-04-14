@@ -102,20 +102,18 @@ local page = UI.Page {
 	},
 	tray = UI.Window {
 		y = -1, width = 8,
-		backgroundColor = colors.lightGray,
-		newApp = UI.Button {
+		backgroundColor = UI.colors.tertiary,
+		newApp = UI.FlatButton {
+			x = 2,
 			text = '+', event = 'new',
-			backgroundFocusColor = colors.lightGray,
 		},
-		mode = UI.Button {
-			x = 3,
+		mode = UI.FlatButton {
+			x = 4,
 			text = '=', event = 'display_mode',
-			backgroundFocusColor = colors.lightGray,
 		},
-		help = UI.Button {
-			x = 5,
+		help = UI.FlatButton {
+			x = 6,
 			text = '?', event = 'help',
-			backgroundFocusColor = colors.lightGray,
 		},
 	},
 	editor = UI.SlideOut {

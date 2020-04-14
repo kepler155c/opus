@@ -209,6 +209,15 @@ end
 
 function Manager:generateTheme(filename)
 	local t = { }
+
+	local function getName(d)
+		for c, n in pairs(colors) do
+			if n == d then
+				return 'colors.' .. c
+			end
+		end
+	end
+
 	for k,v in pairs(self) do
 		if type(v) == 'table' then
 			if v._preload then
@@ -221,17 +230,17 @@ function Manager:generateTheme(filename)
 						if not t[k] then
 							t[k] = { }
 						end
-						for c, n in pairs(colors) do
-							if n == d then
-								t[k][p] = 'colors.' .. c
-								break
-							end
-						end
+						t[k][p] = getName(d)
 					end
 				end
 			end
 		end
 	end
+	t.colors = {
+		primary = getName(self.colors.primary),
+		secondary = getName(self.colors.secondary),
+		tertiary = getName(self.colors.tertiary),
+	}
 	Util.writeFile(filename, textutils.serialize(t):gsub('(")', ''))
 end
 
@@ -409,8 +418,8 @@ end
 
 Manager.colors = {
 	primary = colors.cyan,
-	secondary = colors.blue,
-	tertiary = colors.blue,
+	secondary = colors.lightGray,
+	tertiary = colors.gray,
 }
 
 Manager.exitPullEvents = Event.exitPullEvents
@@ -652,7 +661,7 @@ function UI.Window:setCursorPos(x, y)
 end
 
 function UI.Window:setCursorBlink(blink)
-	self.parent:setCursorBlink(blink)
+	self.cursorBlink = blink
 end
 
 UI.Window.docs.draw = [[draw(VOID)
@@ -1072,7 +1081,6 @@ end
 
 function UI.Device:setCursorBlink(blink)
 	self.cursorBlink = blink
-	self.device.setCursorBlink(blink)
 end
 
 function UI.Device:setTextScale(textScale)
@@ -1130,9 +1138,7 @@ function UI.Device:sync()
 	local transitions = self.effectsEnabled and self.transitions
 	self.transitions = nil
 
-	if self:getCursorBlink() then
-		self.device.setCursorBlink(false)
-	end
+	self.device.setCursorBlink(false)
 
 	if transitions then
 		self:runTransitions(transitions)
@@ -1182,6 +1188,7 @@ end
 loadComponents()
 UI:loadTheme('usr/config/ui.theme')
 Util.merge(UI.Window.defaults, UI.theme.Window)
+Util.merge(UI.colors, UI.theme.colors)
 UI:setDefaultDevice(UI.Device({ device = term.current() }))
 
 return UI

@@ -58,10 +58,16 @@ local page = UI.Page {
 		},
 		[2] = UI.Tab {
 			tabTitle = 'Output',
+			backgroundColor = colors.black,
 			output = UI.Embedded {
+				y = 2,
 				maxScroll = 1000,
 				backgroundColor = colors.black,
 			},
+			draw = function(self)
+				self:write(1, 1, string.rep('\131', self.width), colors.black, UI.colors.primary)
+				self:drawChildren()
+			end,
 		},
 	},
 }

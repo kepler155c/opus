@@ -24,17 +24,10 @@ function UI.Page:postInit()
 	self.__target = self
 end
 
-function UI.Page:enable()
-	UI.Window.enable(self)
-
-	if not self.focused or not self.focused.enabled then
-		self:focusFirst()
-	end
-end
-
 function UI.Page:sync()
 	if self.enabled then
 		self:checkFocus()
+		self.parent:setCursorBlink(self.focused and self.focused.cursorBlink)
 		self.parent:sync()
 	end
 end
@@ -137,15 +130,7 @@ end
 
 function UI.Page:checkFocus()
 	if not self.focused or not self.focused.enabled then
-		local el = self.__target
-		while el do
-			local focusables = el:getFocusables()
-			if focusables[1] then
-				self:setFocus(focusables[1])
-				break
-			end
-			el = el.parent
-		end
+		self.__target:focusFirst()
 	end
 end
 

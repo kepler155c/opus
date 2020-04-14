@@ -165,7 +165,7 @@ function input:translate(event, code, p1, p2)
 			self.mch = 'mouse_up'
 			self.mfired = input:toCode(self.mch, 255)
 		end
-		_syslog(self.mfired)
+
 		return {
 			code = self.mfired,
 			button = code,

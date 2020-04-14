@@ -2,8 +2,9 @@ local UI   = require('opus.ui')
 local Util = require('opus.util')
 
 local shell  = _ENV.shell
+local multishell = _ENV.multishell
 
--- fileui [--path=path] [--exec=filename]
+-- fileui [--path=path] [--exec=filename] [--title=title]
 
 local page = UI.Page {
 	fileselect = UI.FileSelect { },
@@ -22,6 +23,10 @@ local page = UI.Page {
 
 local _, args = Util.parse(...)
 
+if args.title and multishell then
+	multishell.setTitle(multishell.getCurrent(), args.title)
+end
+
 UI:setPage(page, args.path)
 UI:start()
 UI.term:setCursorBlink(false)
@@ -31,5 +36,4 @@ if args.exec and page.selected then
 	return
 end
 
--- print('selected: ' .. tostring(selected))
 return page.selected

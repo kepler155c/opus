@@ -28,6 +28,7 @@ UI.TextEntry.defaults = {
 	backgroundFocusColor = colors.black, --lightGray,
 	height = 1,
 	limit = 6,
+	cursorBlink = true,
 	accelerators = {
 		[ 'control-c' ] = 'copy',
 	}
@@ -114,11 +115,6 @@ end
 
 function UI.TextEntry:focus()
 	self:draw()
-	if self.focused then
-		self:setCursorBlink(true)
-	else
-		self:setCursorBlink(false)
-	end
 end
 
 function UI.TextEntry:eventHandler(event)
