@@ -20,7 +20,6 @@ end
 
 function UI.TextArea:draw()
 	self:clear()
-	self.cursorX, self.cursorY = 1, 1
 	self:print(self.value)
 	self:drawChildren()
 end

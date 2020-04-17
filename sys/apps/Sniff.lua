@@ -12,7 +12,7 @@ local gridColumns = {}
 table.insert(gridColumns, { heading = '#',  key = 'id', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Port', key = 'portid', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Reply', key = 'replyid', width = 5, align = 'right' })
-if UI.defaultDevice.width > 50 then
+if UI.term.width > 50 then
 	table.insert(gridColumns, { heading = 'Dist', key = 'distance', width = 6, align = 'right' })
 end
 table.insert(gridColumns, { heading = 'Msg', key = 'packetStr' })
@@ -42,7 +42,7 @@ local page = UI.Page {
 
 	configSlide = UI.SlideOut {
 		y = -11,
-		titleBar = UI.TitleBar { title = 'Sniffer Config', event = 'config_close' },
+		titleBar = UI.TitleBar { title = 'Sniffer Config', event = 'config_close', backgroundColor = colors.black },
 		accelerators = { ['backspace'] = 'config_close' },
 		configTabs = UI.Tabs {
 			y = 2,

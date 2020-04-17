@@ -20,7 +20,7 @@ UI.Page.defaults = {
 	textColor = colors.white,
 }
 function UI.Page:postInit()
-	self.parent = self.parent or UI.defaultDevice
+	self.parent = self.parent or UI.term
 	self.__target = self
 end
 

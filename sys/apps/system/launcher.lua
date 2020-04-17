@@ -35,9 +35,10 @@ local tab = UI.Tab {
 		event = 'update',
 	},
 	labelText = UI.TextArea {
-		x = 2, ex = -2, y = 7, ey = -4,
+		x = 2, ex = -2, y = 6, ey = -4,
 		backgroundColor = colors.black,
 		textColor = colors.yellow,
+		marginLeft = 1, marginRight = 1, marginTop = 1,
 		value = 'Choose an application launcher',
 	},
 }

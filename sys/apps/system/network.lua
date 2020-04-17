@@ -9,8 +9,9 @@ return UI.Tab {
 	tabTitle = 'Network',
 	description = 'Networking options',
 	info = UI.TextArea {
-		x = 2, y = 6, ex = -2, ey = -2,
+		x = 2, y = 5, ex = -2, ey = -2,
 		backgroundColor = colors.black,
+		marginLeft = 1, marginRight = 1, marginTop = 1,
 		value = string.format(
 [[%sSet the primary modem used for wireless communications.%s
 

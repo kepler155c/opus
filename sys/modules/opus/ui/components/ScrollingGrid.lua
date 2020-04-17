@@ -29,6 +29,7 @@ function UI.ScrollingGrid:getViewArea()
 		height      = self.pageSize,           -- viewable height
 		totalHeight = Util.size(self.values),  -- total height
 		offsetY     = self.scrollOffset,       -- scroll offset
+		fill        = not self.disableHeader and self.headerBackgroundColor,
 	}
 end
 

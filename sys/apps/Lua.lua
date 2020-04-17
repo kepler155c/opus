@@ -382,11 +382,12 @@ function page:executeStatement(statement)
 	end
 end
 
-local args = Util.parse(...)
+local args = { ... }
 if args[1] then
 	command = 'args[1]'
 	sandboxEnv.args = args
 	page:setResult(args[1])
+	page:setPrompt(command)
 end
 
 UI:setPage(page)

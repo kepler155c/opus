@@ -117,5 +117,9 @@ function UI.Tabs.example()
 			index = 3,
 			tabTitle = 'tab3',
 		},
+		enable = function(self)
+			UI.Tabs.enable(self)
+			self:setActive(self.tab3, false)
+		end,
 	}
 end

@@ -1,4 +1,5 @@
 local class    = require('opus.class')
+local Event    = require('opus.event')
 local Terminal = require('opus.terminal')
 local UI       = require('opus.ui')
 
@@ -19,10 +20,16 @@ function UI.Embedded:layout()
 	UI.Window.layout(self)
 
 	if not self.win then
+		local t
 		function self.render()
-			self:sync()
-			if self.focused then
-				self:setCursorPos(self.win.getCursorPos())
+			if not t then
+				t = Event.onTimeout(0, function()
+					t = nil
+					if self.focused then
+						self:setCursorPos(self.win.getCursorPos())
+					end
+					self:sync()
+				end)
 			end
 		end
 		self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
@@ -68,7 +75,6 @@ function UI.Embedded:eventHandler(event)
 end
 
 function UI.Embedded.example()
-	local Event = require('opus.event')
 	local Util  = require('opus.util')
 	local term  = _G.term
 

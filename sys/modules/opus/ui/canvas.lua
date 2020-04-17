@@ -71,7 +71,7 @@ end
 
 -- resize the canvas buffer - not the canvas itself
 function Canvas:resizeBuffer(w, h)
-	for i = #self.lines, h do
+	for i = #self.lines + 1, h do
 		self.lines[i] = { }
 		self:clearLine(i)
 	end
@@ -297,40 +297,38 @@ function Canvas:applyPalette(palette)
 	self.palette = palette
 end
 
-function Canvas:render(device)
-	local offset = { x = 0, y = 0 }
-
-	-- WIP
-	local function getRegion(canvas)
-		local region
-		if canvas.parent then
-			region = getRegion(canvas.parent)
-		else
-			region = Region.new(self.x, self.y, self.ex, self.ey)
-		end
-		offset.x = offset.x + canvas.x - 1
-		offset.y = offset.y + canvas.y - 1
-		-- clip against parent
-		return region
-	end
-
-	-- this code works - but is all kinds of wrong
-	-- adding a margin to UI.Page will cause issues
-	-- and could be clipping issues
-	offset = { x = self.x - 1, y = self.y - 1 }
-	local parent = self.parent
-	while parent do
-		offset.x = offset.x + parent.x - 1
-		offset.y = offset.y + parent.y - 1
-		parent = parent.parent
-	end
-
-	-- TODO: need to clip if there is a parent
-	--self.regions = Region.new(self.x + offset.x, self.y + offset.y, self.ex + offset.x, self.ey + offset.y)
-	--self:__renderLayers(device, offset)
-
+-- either render directly to the device
+-- or use another canvas as a backing buffer
+function Canvas:render(device, doubleBuffer)
 	self.regions = Region.new(self.x, self.y, self.ex, self.ey)
-	self:__renderLayers(device, { x = self.x - 1, y = self.y - 1 })
+	self:__renderLayers(device, { x = self.x - 1, y = self.y - 1 }, doubleBuffer)
+
+	-- doubleBuffering to reduce the amount of
+	-- setCursorPos, blits
+	if doubleBuffer then
+		--[[
+		local drew = false
+		local bg = _rep(2,   device.width)
+		for k,v in pairs(device.lines) do
+			if v.dirty then
+				device.device.setCursorPos(device.x, device.y + k - 1)
+				device.device.blit(v.text, v.fg, bg)
+				drew = true
+			end
+		end
+		if drew then
+			local c = os.clock()
+			repeat until os.clock()-c > .1
+		end
+		]]
+		for k,v in pairs(device.lines) do
+			if v.dirty then
+				device.device.setCursorPos(device.x, device.y + k - 1)
+				device.device.blit(v.text, v.fg, v.bg)
+				v.dirty = false
+			end
+		end
+	end
 end
 
 -- regions are comprised of absolute values that correspond to the output device.
@@ -338,7 +336,7 @@ end
 -- canvas layer's stacking order is determined by the position within the array.
 -- layers in the beginning of the array are overlayed by layers further down in
 -- the array.
-function Canvas:__renderLayers(device, offset)
+function Canvas:__renderLayers(device, offset, doubleBuffer)
 	if self.children then
 		for i = #self.children, 1, -1 do
 			local canvas = self.children[i]
@@ -364,7 +362,7 @@ function Canvas:__renderLayers(device, offset)
 					canvas:__renderLayers(device, {
 						x = canvas.x + offset.x - 1 - (self.offx or 0),
 						y = canvas.y + offset.y - 1 - (self.offy or 0),
-					})
+					}, doubleBuffer)
 				end
 				canvas.regions = nil
 			end
@@ -377,19 +375,19 @@ function Canvas:__renderLayers(device, offset)
 			  y = region[2] - offset.y,
 			  ex = region[3] - offset.x,
 			  ey = region[4] - offset.y },
-			{ x = region[1], y = region[2] })
+			{ x = region[1], y = region[2] }, doubleBuffer)
 	end
 	self.regions = nil
 
 	self:clean()
 end
 
--- performance can probably be improved by using one more buffer tied to the device
-function Canvas:__blitRect(device, src, tgt)
+function Canvas:__blitRect(device, src, tgt, doubleBuffer)
 	src = src or { x = 1, y = 1, ex = self.ex - self.x + 1, ey = self.ey - self.y + 1 }
 	tgt = tgt or self
 
 	-- for visualizing updates on the screen
+	--[[
 	if Canvas.__visualize or self.visualize then
 		local drew
 		local t  = _rep(' ', src.ex-src.x + 1)
@@ -407,6 +405,7 @@ function Canvas:__blitRect(device, src, tgt)
 			repeat until os.clock()-c > .03
 		end
 	end
+	]]
 	for i = 0, src.ey - src.y do
 		local line = self.lines[src.y + i + (self.offy or 0)]
 		if line and line.dirty then
@@ -416,8 +415,13 @@ function Canvas:__blitRect(device, src, tgt)
 				fg = _sub(fg, src.x, src.ex)
 				bg = _sub(bg, src.x, src.ex)
 			end
-			device.setCursorPos(tgt.x, tgt.y + i)
-			device.blit(t, fg, bg)
+			if doubleBuffer then
+				Canvas.blit(device, tgt.x, tgt.y + i,
+					t, bg, fg)
+			else
+				device.setCursorPos(tgt.x, tgt.y + i)
+				device.blit(t, fg, bg)
+			end
 		end
 	end
 end

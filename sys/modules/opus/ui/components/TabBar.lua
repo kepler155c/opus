@@ -6,7 +6,7 @@ UI.TabBar = class(UI.MenuBar)
 UI.TabBar.defaults = {
 	UIElement = 'TabBar',
 	buttonClass = 'TabBarMenuItem',
-	backgroundColor = UI.colors.tertiary,
+	backgroundColor = colors.black,
 	selectedBackgroundColor = UI.colors.primary,
 	unselectedBackgroundColor = UI.colors.tertiary,
 }
@@ -32,7 +32,7 @@ function UI.TabBar:eventHandler(event)
 				self:emit({ type = 'tab_change', current = si, last = pi, tab = selected })
 			end
 		end
-		UI.MenuBar.draw(self)
+		self:draw(self)
 	end
 	return UI.MenuBar.eventHandler(self, event)
 end

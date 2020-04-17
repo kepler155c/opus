@@ -5,4 +5,5 @@ UI.MenuItem = class(UI.FlatButton)
 UI.MenuItem.defaults = {
 	UIElement = 'MenuItem',
 	noPadding = false,
+	textInactiveColor = colors.gray,
 }

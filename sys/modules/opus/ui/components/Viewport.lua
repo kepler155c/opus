@@ -47,11 +47,18 @@ function UI.Viewport:setScrollPosition(offy, offx) -- argh - reverse
 	end
 end
 
-function UI.Viewport:write(x, y, text, bg, tc)
+function UI.Viewport:blit(x, y, text, bg, fg)
 	if y > #self.lines then
 		self:resizeBuffer(self.width, y)
 	end
-	return UI.Window.write(self, x, y, text, bg, tc)
+	return UI.Window.blit(self, x, y, text, bg, fg)
+end
+
+function UI.Viewport:write(x, y, text, bg, fg)
+	if y > #self.lines then
+		self:resizeBuffer(self.width, y)
+	end
+	return UI.Window.write(self, x, y, text, bg, fg)
 end
 
 function UI.Viewport:setViewHeight(h)

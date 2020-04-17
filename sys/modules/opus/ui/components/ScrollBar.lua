@@ -22,6 +22,9 @@ function UI.ScrollBar:draw()
 
 	self:clear()
 
+	-- ...
+	self:write(1, 1, ' ', view.fill)
+
 	if view.totalHeight > view.height then
 		local maxScroll = view.totalHeight - view.height
 		local percent = view.offsetY / maxScroll

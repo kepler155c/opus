@@ -699,6 +699,31 @@ local function paragraphwrap(text, linewidth, res)
 end
 -- end word wrapping
 
+--[[
+	-- better wrapping - needs further testing before replacing the current wrapping
+	functions
+local function wrap(text, max)
+	local index = 1
+	local lines = { }
+	repeat
+		if #text <= max then
+			table.insert(lines, text)
+			text = ''
+		elseif text:sub(max+1, max+1) == ' ' then
+			table.insert(lines, text:sub(index, max))
+			text = text:sub(max + 2)
+		else
+			local x = text:sub(1, max)
+			local s = x:match('(.*) ') or x
+			text = text:sub(#s + 1)
+			table.insert(lines, s)
+		end
+		text = text:match('^%s*(.*)')
+	until not text or #text == 0
+	return lines
+end
+]]
+
 function Util.wordWrap(str, limit)
 	local longLines = Util.split(str)
 	local lines = { }

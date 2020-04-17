@@ -184,9 +184,7 @@ local Browser = UI.Page {
 				text = 'Add', event = 'add_association',
 			},
 		},
-		statusBar = UI.StatusBar {
-			backgroundColor = colors.cyan,
-		},
+		statusBar = UI.StatusBar { },
 	},
 	accelerators = {
 		[ 'control-q' ] = 'quit',
@@ -547,6 +545,4 @@ local args = Util.parse(...)
 Browser:setDir(args[1] or shell.dir())
 
 UI:setPage(Browser)
-
-Event.pullEvents()
-UI.term:reset()
+UI:start()

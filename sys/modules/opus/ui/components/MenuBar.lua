@@ -93,7 +93,8 @@ function UI.MenuBar.example()
 	return UI.MenuBar {
 		buttons = {
 			{ text = 'Choice1', event = 'event1' },
-			{ text = 'Choice2', event = 'event2' },
+			{ text = 'Choice2', event = 'event2', inactive = true },
+			{ text = 'Choice3', event = 'event3' },
 		}
 	}
 end

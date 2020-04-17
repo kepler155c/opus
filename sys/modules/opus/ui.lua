@@ -1,4 +1,5 @@
 local Array      = require('opus.array')
+local Blit       = require('opus.ui.blit')
 local class      = require('opus.class')
 local Event      = require('opus.event')
 local Input      = require('opus.input')
@@ -34,11 +35,16 @@ local textutils  = _G.textutils
 ]]
 
 --[[-- Top Level Manager --]]--
-local Manager = class()
-function Manager:init()
+local UI = { }
+function UI:init()
 	self.devices = { }
 	self.theme = { }
 	self.extChars = Util.getVersion() >= 1.76
+	self.colors = {
+		primary = colors.green,
+		secondary = colors.lightGray,
+		tertiary = colors.gray,
+	}
 
 	local function keyFunction(event, code, held)
 		local ie = Input:translate(event, code, held)
@@ -151,7 +157,7 @@ function Manager:init()
 		end)
 end
 
-function Manager:configure(appName, ...)
+function UI:configure(appName, ...)
 	local defaults = Util.loadTable('usr/config/' .. appName) or { }
 	if not defaults.device then
 		defaults.device = { }
@@ -193,11 +199,11 @@ function Manager:configure(appName, ...)
 	end
 end
 
-function Manager:disableEffects()
-	self.defaultDevice.effectsEnabled = false
+function UI:disableEffects()
+	self.term.effectsEnabled = false
 end
 
-function Manager:loadTheme(filename)
+function UI:loadTheme(filename)
 	if fs.exists(filename) then
 		local theme, err = Util.loadTable(filename)
 		if not theme then
@@ -207,7 +213,7 @@ function Manager:loadTheme(filename)
 	end
 end
 
-function Manager:generateTheme(filename)
+function UI:generateTheme(filename)
 	local t = { }
 
 	local function getName(d)
@@ -244,14 +250,14 @@ function Manager:generateTheme(filename)
 	Util.writeFile(filename, textutils.serialize(t):gsub('(")', ''))
 end
 
-function Manager:emitEvent(event)
+function UI:emitEvent(event)
 	local currentPage = self:getActivePage()
 	if currentPage and currentPage.focused then
 		return currentPage.focused:emit(event)
 	end
 end
 
-function Manager:click(target, ie)
+function UI:click(target, ie)
 	local clickEvent
 
 	if ie.code == 'mouse_drag' then
@@ -304,23 +310,22 @@ function Manager:click(target, ie)
 	target:sync()
 end
 
-function Manager:setDefaultDevice(dev)
-	self.defaultDevice = dev
+function UI:setDefaultDevice(dev)
 	self.term = dev
 end
 
-function Manager:addPage(name, page)
+function UI:addPage(name, page)
 	if not self.pages then
 		self.pages = { }
 	end
 	self.pages[name] = page
 end
 
-function Manager:setPages(pages)
+function UI:setPages(pages)
 	self.pages = pages
 end
 
-function Manager:getPage(pageName)
+function UI:getPage(pageName)
 	local page = self.pages[pageName]
 
 	if not page then
@@ -330,18 +335,18 @@ function Manager:getPage(pageName)
 	return page
 end
 
-function Manager:getActivePage(page)
+function UI:getActivePage(page)
 	if page then
 		return page.parent.currentPage
 	end
-	return self.defaultDevice.currentPage
+	return self.term.currentPage
 end
 
-function Manager:setActivePage(page)
+function UI:setActivePage(page)
 	page.parent.currentPage = page
 end
 
-function Manager:setPage(pageOrName, ...)
+function UI:setPage(pageOrName, ...)
 	local page = pageOrName
 
 	if type(pageOrName) == 'string' then
@@ -361,7 +366,6 @@ function Manager:setPage(pageOrName, ...)
 			page.previousPage = currentPage
 		end
 		self:setActivePage(page)
-		--page:clear(page.backgroundColor)
 		page:enable(...)
 		page:draw()
 		if page.focused then
@@ -372,27 +376,27 @@ function Manager:setPage(pageOrName, ...)
 	end
 end
 
-function Manager:getCurrentPage()
-	return self.defaultDevice.currentPage
+function UI:getCurrentPage()
+	return self.term.currentPage
 end
 
-function Manager:setPreviousPage()
-	if self.defaultDevice.currentPage.previousPage then
-		local previousPage = self.defaultDevice.currentPage.previousPage.previousPage
-		self:setPage(self.defaultDevice.currentPage.previousPage)
-		self.defaultDevice.currentPage.previousPage = previousPage
+function UI:setPreviousPage()
+	if self.term.currentPage.previousPage then
+		local previousPage = self.term.currentPage.previousPage.previousPage
+		self:setPage(self.term.currentPage.previousPage)
+		self.term.currentPage.previousPage = previousPage
 	end
 end
 
-function Manager:getDefaults(element, args)
+function UI:getDefaults(element, args)
 	local defaults = Util.deepCopy(element.defaults)
 	if args then
-		Manager:mergeProperties(defaults, args)
+		UI:mergeProperties(defaults, args)
 	end
 	return defaults
 end
 
-function Manager:mergeProperties(obj, args)
+function UI:mergeProperties(obj, args)
 	if args then
 		for k,v in pairs(args) do
 			if k == 'accelerators' then
@@ -408,7 +412,7 @@ function Manager:mergeProperties(obj, args)
 	end
 end
 
-function Manager:pullEvents(...)
+function UI:pullEvents(...)
 	local s, m = pcall(Event.pullEvents, ...)
 	self.term:reset()
 	if not s and m then
@@ -416,17 +420,11 @@ function Manager:pullEvents(...)
 	end
 end
 
-Manager.colors = {
-	primary = colors.cyan,
-	secondary = colors.lightGray,
-	tertiary = colors.gray,
-}
+UI.exitPullEvents = Event.exitPullEvents
+UI.quit = Event.exitPullEvents
+UI.start = UI.pullEvents
 
-Manager.exitPullEvents = Event.exitPullEvents
-Manager.quit = Event.exitPullEvents
-Manager.start = Manager.pullEvents
-
-local UI = Manager()
+UI:init()
 
 --[[-- Basic drawable area --]]--
 UI.Window = class(Canvas)
@@ -785,89 +783,19 @@ function UI.Window:print(text, bg, fg)
 	local marginLeft = self.marginLeft or 0
 	local marginRight = self.marginRight or 0
 	local width = self.width - marginLeft - marginRight
+	local cs = {
+		bg = bg or self:getProperty('backgroundColor'),
+		fg = fg or self:getProperty('textColor'),
+		palette = self.palette,
+	}
 
-	local function nextWord(line, cx)
-		local result = { line:find("(%w+)", cx) }
-		if #result > 1 and result[2] > cx then
-			return _sub(line, cx, result[2] + 1)
-		elseif #result > 0 and result[1] == cx then
-			result = { line:find("(%w+)", result[2]) }
-			if #result > 0 then
-				return _sub(line, cx, result[1] + 1)
-			end
-		end
-		if cx <= #line then
-			return _sub(line, cx, #line)
+	local y = (self.marginTop or 0) + 1
+	for _,line in pairs(Util.split(text)) do
+		for _, ln in ipairs(Blit(line, cs):wrap(width)) do
+			self:blit(marginLeft + 1, y, ln.text, ln.bg, ln.fg)
+			y = y + 1
 		end
 	end
-
-	local function pieces(f, bg, fg)
-		local pos = 1
-		local t = { }
-		while true do
-			local s = string.find(f, '\027', pos, true)
-			if not s then
-				break
-			end
-			if pos < s then
-				table.insert(t, _sub(f, pos, s - 1))
-			end
-			local seq = _sub(f, s)
-			seq = seq:match("\027%[([%d;]+)m")
-			local e = { }
-			for color in string.gmatch(seq, "%d+") do
-				color = tonumber(color)
-				if color == 0 then
-					e.fg = fg
-					e.bg = bg
-				elseif color > 20 then
-					e.bg = 2 ^ (color - 21)
-				else
-					e.fg = 2 ^ (color - 1)
-				end
-			end
-			table.insert(t, e)
-			pos = s + #seq + 3
-		end
-		if pos <= #f then
-			table.insert(t, _sub(f, pos))
-		end
-		return t
-	end
-
-	local lines = Util.split(text)
-	for k,line in pairs(lines) do
-		local fragments = pieces(line, bg, fg)
-		for _, fragment in ipairs(fragments) do
-			local lx = 1
-			if type(fragment) == 'table' then -- ansi sequence
-				fg = fragment.fg
-				bg = fragment.bg
-			else
-				while true do
-					local word = nextWord(fragment, lx)
-					if not word then
-						break
-					end
-					local w = word
-					if self.cursorX + #word > width then
-						self.cursorX = marginLeft + 1
-						self.cursorY = self.cursorY + 1
-						w = word:gsub('^ ', '')
-					end
-					self:write(self.cursorX, self.cursorY, w, bg, fg)
-					self.cursorX = self.cursorX + #w
-					lx = lx + #word
-				end
-			end
-		end
-		if lines[k + 1] then
-			self.cursorX = marginLeft + 1
-			self.cursorY = self.cursorY + 1
-		end
-	end
-
-	return self.cursorX, self.cursorY
 end
 
 UI.Window.docs.focus = [[focus(VOID)
@@ -1126,7 +1054,7 @@ function UI.Device:runTransitions(transitions)
 				transitions[k] = nil
 			end
 		end
-		self.currentPage:render(self.device)
+		self.currentPage:render(self, true)
 		if Util.empty(transitions) then
 			break
 		end
@@ -1143,7 +1071,7 @@ function UI.Device:sync()
 	if transitions then
 		self:runTransitions(transitions)
 	else
-		self.currentPage:render(self.device)
+		self.currentPage:render(self, true)
 	end
 
 	if self:getCursorBlink() then
@@ -1179,7 +1107,7 @@ local function loadComponents()
 				return self(...)
 			end
 		})
-		UI[name]._preload = function(self)
+		UI[name]._preload = function()
 			return load(name)
 		end
 	end

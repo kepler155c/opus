@@ -23,7 +23,7 @@ return UI.Tab {
 		x = 2, y = 2, ex = -2, ey = 4,
 	},
 	grid = UI.ScrollingGrid {
-		x = 2, y = 6, ex = -2, ey = -2,
+		x = 2, y = 5, ex = -2, ey = -2,
 		values = {
 			{ name = '',  value = ''                  },
 			{ name = 'CC version',  value = Util.getVersion()                  },

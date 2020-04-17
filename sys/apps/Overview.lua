@@ -95,6 +95,7 @@ local page = UI.Page {
 		ey = -2,
 		width = 8,
 		selectedBackgroundColor = UI.colors.primary,
+		backgroundColor = UI.colors.tertiary,
 		layout = function(self)
 			self.height = nil
 			UI.TabBar.layout(self)

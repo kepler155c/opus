@@ -25,10 +25,11 @@ return UI.Tab {
 		event = 'update_password',
 	},
 	info = UI.TextArea {
-		x = 2, ex = -2, y = 6, ey = -4,
+		x = 2, ex = -2, y = 5, ey = -4,
 		backgroundColor = colors.black,
 		textColor = colors.yellow,
 		inactive = true,
+		marginLeft = 1, marginRight = 1, marginTop = 1,
 		value = 'Add a password to enable other computers to connect to this one.',
 	},
 	eventHandler = function(self, event)
