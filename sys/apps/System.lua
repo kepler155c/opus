@@ -42,7 +42,7 @@ end
 
 function systemPage:eventHandler(event)
 	if event.type == 'quit' then
-		UI:exitPullEvents()
+		UI:quit()
 
 	elseif event.type == 'success_message' then
 		self.notification:success(event.message)
@@ -82,4 +82,4 @@ local plugins = loadDirectory(fs.combine(programDir, 'system'), { })
 systemPage.tabs.settings.grid:setValues(plugins)
 
 UI:setPage(systemPage)
-UI:pullEvents()
+UI:start()

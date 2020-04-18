@@ -111,7 +111,8 @@ local page = UI.Page {
 			event = 'slide_hide',
 		},
 		text = UI.TextArea {
-			x = 2, y = 2,
+			x = 1, y = 2,
+			marginLeft = 1,
 			value = [[
 
 In order to connect to another computer:
@@ -252,7 +253,7 @@ function page:eventHandler(event)
 		Config.update('network', config)
 
 	elseif event.type == 'quit' then
-		Event.exitPullEvents()
+		UI:quit()
 	end
 	UI.Page.eventHandler(self, event)
 end
@@ -290,4 +291,4 @@ if not device.wireless_modem then
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

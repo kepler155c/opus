@@ -5,7 +5,6 @@ local Util  = require('opus.util')
 local colors     = _G.colors
 local device     = _G.device
 local textutils  = _G.textutils
-local peripheral = _G.peripheral
 local multishell = _ENV.multishell
 
 local gridColumns = {}
@@ -280,7 +279,7 @@ function page.packetSlide:eventHandler(event)
 end
 
 function page.packetGrid:getDisplayValues(row)
-	local row = Util.shallowCopy(row)
+	row = Util.shallowCopy(row)
 	row.distance = Util.toBytes(Util.round(row.distance), 2)
 	return row
 end
@@ -356,7 +355,7 @@ function page:eventHandler(event)
 		self.packetSlide:show(event.selected)
 
 	elseif event.type == 'quit' then
-		Event.exitPullEvents()
+		UI:quit()
 
 	else return UI.Page.eventHandler(self, event)
 	end
@@ -386,4 +385,4 @@ if args[1] then
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

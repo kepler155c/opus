@@ -343,7 +343,7 @@ function Browser:eventHandler(event)
 	local file = self.grid:getSelected()
 
 	if event.type == 'quit' then
-		Event.exitPullEvents()
+		UI:quit()
 
 	elseif event.type == 'edit' and file then
 		self:run('edit', file.name)

@@ -194,4 +194,4 @@ page = UI.Page {
 }
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

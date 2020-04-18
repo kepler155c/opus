@@ -52,7 +52,7 @@ local page = UI.Page {
 			end
 		end
 		if event.type == 'quit' then
-			Event.exitPullEvents()
+			UI:quit()
 		end
 		UI.Page.eventHandler(self, event)
 	end
@@ -65,4 +65,4 @@ Event.onInterval(1, function()
 end)
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

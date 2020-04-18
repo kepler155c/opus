@@ -378,11 +378,11 @@ function page:executeStatement(statement)
 	end
 
 	if _exit then
-		UI:exitPullEvents()
+		UI:quit()
 	end
 end
 
-local args = { ... }
+local args = Util.parse(...)
 if args[1] then
 	command = 'args[1]'
 	sandboxEnv.args = args
@@ -391,4 +391,4 @@ if args[1] then
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

@@ -183,7 +183,7 @@ function page:eventHandler(event)
 		self.action.button:draw()
 
 	elseif event.type == 'quit' then
-		UI:exitPullEvents()
+		UI:quit()
 	end
 	UI.Page.eventHandler(self, event)
 end
@@ -195,4 +195,4 @@ Packages:downloadList()
 page:loadPackages()
 page:sync()
 
-UI:pullEvents()
+UI:start()
