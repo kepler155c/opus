@@ -1,10 +1,10 @@
 local fs = _G.fs
 
 local function deleteIfExists(path)
-  if fs.exists(path) then
-    fs.delete(path)
-    print("Deleted outdated file at: "..path)
-  end
+	if fs.exists(path) then
+		fs.delete(path)
+		print("Deleted outdated file at: "..path)
+	end
 end
 -- cleanup outdated files
 deleteIfExists('sys/apps/shell')
@@ -21,4 +21,4 @@ deleteIfExists('sys/autorun/apps.lua')
 deleteIfExists('sys/init/6.tl3.lua')
 
 -- remove this file
-deleteIfExists('sys/autorun/upgraded.lua')
+-- deleteIfExists('sys/autorun/upgraded.lua')

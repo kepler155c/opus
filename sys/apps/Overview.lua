@@ -1,4 +1,5 @@
 local Alt      = require('opus.alternate')
+local Array    = require('opus.array')
 local class    = require('opus.class')
 local Config   = require('opus.config')
 local Event    = require('opus.event')
@@ -9,7 +10,6 @@ local Tween    = require('opus.ui.tween')
 local UI       = require('opus.ui')
 local Util     = require('opus.util')
 
-local colors     = _G.colors
 local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
@@ -17,6 +17,12 @@ local pocket     = _G.pocket
 local shell      = _ENV.shell
 local term       = _G.term
 local turtle     = _G.turtle
+
+--[[
+	turtle: 39x13
+	computer: 51x19
+	pocket: 26x20
+]]
 
 if not _ENV.multishell then
 	error('multishell is required')
@@ -26,6 +32,9 @@ local REGISTRY_DIR = 'usr/.registry'
 local DEFAULT_ICON = NFT.parse("\0308\0317\153\153\153\153\153\
 \0307\0318\153\153\153\153\153\
 \0308\0317\153\153\153\153\153")
+local TRANS_ICON = NFT.parse("\0302\0312\32\32\32\32\32\
+\0302\0312\32\32\32\32\32\
+\0302\0312\32\32\32\32\32")
 
 -- overview
 local uid = _ENV.multishell.getCurrent()
@@ -65,6 +74,7 @@ local function parseIcon(iconText)
 			if icon.height > 3 or icon.width > 8 then
 				error('Must be an NFT image - 3 rows, 8 cols max')
 			end
+			NFT.transparency(icon)
 		end
 		return icon
 	end)
@@ -76,45 +86,38 @@ local function parseIcon(iconText)
 	return s, m
 end
 
-UI.VerticalTabBar = class(UI.TabBar)
-function UI.VerticalTabBar:setParent()
-	self.x = 1
-	self.width = 8
-	self.height = nil
-	self.ey = -2
-	UI.TabBar.setParent(self)
-	for k,c in pairs(self.children) do
-		c.x = 1
-		c.y = k + 1
-		c.ox, c.oy = c.x, c.y
-		c.ow = 8
-		c.width = 8
-	end
-end
-
-local cx = 9
-local cy = 1
-
 local page = UI.Page {
 	container = UI.Viewport {
-		x = cx,
-		y = cy,
+		x = 9, y = 1,
+	},
+	tabBar = UI.TabBar {
+		ey = -2,
+		width = 8,
+		selectedBackgroundColor = 'primary',
+		backgroundColor = 'tertiary',
+		layout = function(self)
+			self.height = nil
+			UI.TabBar.layout(self)
+		end,
 	},
 	tray = UI.Window {
 		y = -1, width = 8,
-		backgroundColor = colors.lightGray,
-		newApp = UI.Button {
+		backgroundColor = 'tertiary',
+		newApp = UI.FlatButton {
+			x = 2,
 			text = '+', event = 'new',
 		},
-		--[[
-		volume = UI.Button {
-			x = 3,
-			text = '\15', event = 'volume',
-		},]]
+		mode = UI.FlatButton {
+			x = 4,
+			text = '=', event = 'display_mode',
+		},
+		help = UI.FlatButton {
+			x = 6,
+			text = '?', event = 'help',
+		},
 	},
 	editor = UI.SlideOut {
 		y = -12, height = 12,
-		backgroundColor = colors.cyan,
 		titleBar = UI.TitleBar {
 			title = 'Edit Application',
 			event = 'slide_hide',
@@ -122,7 +125,7 @@ local page = UI.Page {
 		form = UI.Form {
 			y = 2, ey = -2,
 			[1] = UI.TextEntry {
-				formLabel = 'Title', formKey = 'title', limit = 11, help = 'Application title',
+				formLabel = 'Title', formKey = 'title', limit = 11, width = 13, help = 'Application title',
 				required = true,
 			},
 			[2] = UI.TextEntry {
@@ -130,22 +133,49 @@ local page = UI.Page {
 				required = true,
 			},
 			[3] = UI.TextEntry {
-				formLabel = 'Category', formKey = 'category', limit = 11, help = 'Category of application',
+				formLabel = 'Category', formKey = 'category', limit = 6, width = 8, help = 'Category of application',
 				required = true,
 			},
-			iconFile = UI.TextEntry {
-				x = 11, ex = -12, y = 7,
-				limit = 128, help = 'Path to icon file',
-				shadowText = 'Path to icon file',
+			editIcon = UI.Button {
+				x = 11, y = 6,
+				text = 'Edit', event = 'editIcon', help = 'Edit icon file',
 			},
 			loadIcon = UI.Button {
-				x = 11, y = 9,
+				x = 11, y = 8,
+				text = 'Load', event = 'loadIcon', help = 'Load icon file',
+			},
+			helpIcon = UI.Button {
+				x = 11, y = 8,
 				text = 'Load', event = 'loadIcon', help = 'Load icon file',
 			},
 			image = UI.NftImage {
-				backgroundColor = colors.black,
-				y = 7, x = 2, height = 3, width = 8,
+				backgroundColor = 'black',
+				y = 6, x = 2, height = 3, width = 8,
 			},
+		},
+		file_open = UI.FileSelect {
+			modal = true,
+			enable = function() end,
+			transitionHint = 'expandUp',
+			show = function(self)
+				UI.FileSelect.enable(self)
+				self:focusFirst()
+				self:draw()
+			end,
+			disable = function(self)
+				UI.FileSelect.disable(self)
+				self.parent:focusFirst()
+				-- need to recapture as we are opening a modal within another modal
+				self.parent:capture(self.parent)
+			end,
+			eventHandler = function(self, event)
+				if event.type == 'select_cancel' then
+					self:disable()
+				elseif event.type == 'select_file' then
+					self:disable()
+				end
+				return UI.FileSelect.eventHandler(self, event)
+			end,
 		},
 		notification = UI.Notification(),
 		statusBar = UI.StatusBar(),
@@ -205,7 +235,7 @@ local function loadApplications()
 			return requirements[a.requires]
 		end
 
-		return true -- Util.startsWith(a.run, 'http') or shell.resolveProgram(a.run)
+		return true
 	end)
 
 	local categories = { }
@@ -215,6 +245,7 @@ local function loadApplications()
 			categories[f.category] = true
 			table.insert(buttons, {
 				text = f.category,
+				width = 8,
 				selected = config.currentCategory == f.category
 			})
 		end
@@ -222,13 +253,13 @@ local function loadApplications()
 	table.sort(buttons, function(a, b) return a.text < b.text end)
 	table.insert(buttons, 1, { text = 'Recent' })
 
-	Util.removeByValue(page.children, page.tabBar)
+	for k,v in pairs(buttons) do
+		v.x = 1
+		v.y = k + 1
+	end
 
-	page:add {
-		tabBar = UI.VerticalTabBar {
-			buttons = buttons,
-		},
-	}
+	page.tabBar.children = { }
+	page.tabBar:addButtons(buttons)
 
 	--page.tabBar:selectTab(config.currentCategory or 'Apps')
 	page.container:setCategory(config.currentCategory or 'Apps')
@@ -243,7 +274,6 @@ UI.Icon.defaults = {
 function UI.Icon:eventHandler(event)
 	if event.type == 'mouse_click' then
 		self:setFocus(self.button)
-		--self:emit({ type = self.button.event, button = self.button })
 		return true
 	elseif event.type == 'mouse_doubleclick' then
 		self:emit({ type = self.button.event, button = self.button })
@@ -259,37 +289,23 @@ function page.container:setCategory(categoryName, animate)
 	self.children = { }
 	self:reset()
 
-	local function filter(it, f)
-		local ot = { }
-		for _,v in pairs(it) do
-			if f(v) then
-				table.insert(ot, v)
-			end
-		end
-		return ot
-	end
-
-	local filtered
+	local filtered = { }
 
 	if categoryName == 'Recent' then
-		filtered = { }
-
 		for _,v in ipairs(config.Recent) do
 			local app = Util.find(applications, 'key', v)
-			if app then -- and fs.exists(app.run) then
+			if app then
 				table.insert(filtered, app)
 			end
 		end
-
 	else
-		filtered = filter(applications, function(a)
-			return a.category == categoryName -- and fs.exists(a.run)
+		filtered = Array.filter(applications, function(a)
+			return a.category == categoryName
 		end)
 		table.sort(filtered, function(a, b) return a.title < b.title end)
 	end
 
 	for _,program in ipairs(filtered) do
-
 		local icon
 		if extSupport and program.iconExt then
 			icon = parseIcon(program.iconExt)
@@ -304,27 +320,43 @@ function page.container:setCategory(categoryName, animate)
 		local title = ellipsis(program.title, 8)
 
 		local width = math.max(icon.width + 2, #title + 2)
-		table.insert(self.children, UI.Icon({
-			width = width,
-			image = UI.NftImage({
-				x = math.floor((width - icon.width) / 2) + 1,
-				image = icon,
-				width = 5,
-				height = 3,
-			}),
-			button = UI.Button({
-				x = math.floor((width - #title - 2) / 2) + 1,
-				y = 4,
-				text = title,
-				backgroundColor = self.backgroundColor,
-				backgroundFocusColor = colors.gray,
-				textColor = colors.white,
-				textFocusColor = colors.white,
-				width = #title + 2,
-				event = 'button',
-				app = program,
-			}),
-		}))
+		if config.listMode then
+			table.insert(self.children, UI.Icon {
+				width = self.width - 2,
+				height = 1,
+				UI.Button {
+					x = 1, ex = -1,
+					text = program.title,
+					centered = false,
+					backgroundColor = self:getProperty('backgroundColor'),
+					backgroundFocusColor = 'gray',
+					textColor = 'white',
+					textFocusColor = 'white',
+					event = 'button',
+					app = program,
+				}
+			})
+		else
+			table.insert(self.children, UI.Icon({
+				width = width,
+				image = UI.NftImage({
+					x = math.floor((width - icon.width) / 2) + 1,
+					image = icon,
+				}),
+				button = UI.Button({
+					x = math.floor((width - #title - 2) / 2) + 1,
+					y = 4,
+					text = title,
+					backgroundColor = self:getProperty('backgroundColor'),
+					backgroundFocusColor = 'gray',
+					textColor = 'white',
+					textFocusColor = 'white',
+					width = #title + 2,
+					event = 'button',
+					app = program,
+				}),
+			}))
+		end
 	end
 
 	local gutter = 2
@@ -334,7 +366,8 @@ function page.container:setCategory(categoryName, animate)
 	local col, row = gutter, 2
 	local count = #self.children
 
-	local r = math.random(1, 5)
+	local r = math.random(1, 7)
+	local frames = 5
 	-- reposition all children
 	for k,child in ipairs(self.children) do
 		if r == 1 then
@@ -356,19 +389,27 @@ function page.container:setCategory(categoryName, animate)
 				child.x = self.width
 				child.y = self.height - 3
 			end
+		elseif r == 6 then
+			child.x = col
+			child.y = 1
+		elseif r == 7 then
+			child.x = 1
+			child.y = self.height - 3
 		end
-		child.tween = Tween.new(6, child, { x = col, y = row }, 'linear')
+		child.tween = Tween.new(frames, child, { x = col, y = row }, 'inQuad')
 
 		if not animate then
 			child.x = col
 			child.y = row
 		end
 
+		self:setViewHeight(row + (config.listMode and 1 or 4))
+
 		if k < count then
 			col = col + child.width
 			if col + self.children[k + 1].width + gutter - 2 > self.width then
 				col = gutter
-				row = row + 5
+				row = row + (config.listMode and 1 or 5)
 			end
 		end
 	end
@@ -378,15 +419,12 @@ function page.container:setCategory(categoryName, animate)
 		local function transition()
 			local i = 1
 			return function()
-				self:clear()
 				for _,child in pairs(self.children) do
 					child.tween:update(1)
-					child.x = math.floor(child.x)
-					child.y = math.floor(child.y)
-					child:draw()
+					child:move(math.floor(child.x), math.floor(child.y))
 				end
 				i = i + 1
-				return i < 7
+				return i <= frames
 			end
 		end
 		self:addTransition(transition)
@@ -439,6 +477,9 @@ function page:eventHandler(event)
 	elseif event.type == 'network' then
 		shell.switchTab(shell.openTab('network'))
 
+	elseif event.type == 'help' then
+		shell.switchTab(shell.openTab('Help Overview'))
+
 	elseif event.type == 'focus_change' then
 		if event.focused.parent.UIElement == 'Icon' then
 			event.focused.parent:scrollIntoView()
@@ -473,6 +514,13 @@ function page:eventHandler(event)
 		end
 		self.editor:show({ category = category })
 
+	elseif event.type == 'display_mode' then
+		config.listMode = not config.listMode
+		Config.update('Overview', config)
+		loadApplications()
+		self:refresh()
+		self:draw()
+
 	elseif event.type == 'edit' then
 		local focused = page:getFocused()
 		if focused.app then
@@ -480,7 +528,7 @@ function page:eventHandler(event)
 		end
 
 	else
-		UI.Page.eventHandler(self, event)
+		return UI.Page.eventHandler(self, event)
 	end
 	return true
 end
@@ -502,11 +550,6 @@ function page.editor:show(app)
 	self:focusFirst()
 end
 
-function page.editor.form.image:draw()
-	self:clear()
-	UI.NftImage.draw(self)
-end
-
 function page.editor:updateApplications(app)
 	if not app.key then
 		app.key = SHA.compute(app.title)
@@ -516,36 +559,51 @@ function page.editor:updateApplications(app)
 	loadApplications()
 end
 
+function page.editor:loadImage(filename)
+	local s, m = pcall(function()
+		local iconLines = Util.readFile(filename)
+		if not iconLines then
+			error('Must be an NFT image - 3 rows, 8 cols max')
+		end
+		local icon, m = parseIcon(iconLines)
+		if not icon then
+			error(m)
+		end
+		if extSupport then
+			self.form.values.iconExt = iconLines
+		else
+			self.form.values.icon = iconLines
+		end
+		self.form.image:setImage(icon)
+		self.form.image:draw()
+	end)
+	if not s and m then
+		local msg = m:gsub('.*: (.*)', '%1')
+		self.notification:error(msg)
+	end
+end
+
 function page.editor:eventHandler(event)
 	if event.type == 'form_cancel' or event.type == 'cancel' then
 		self:hide()
 
 	elseif event.type == 'focus_change' then
 		self.statusBar:setStatus(event.focused.help or '')
-		self.statusBar:draw()
+
+	elseif event.type == 'editIcon' then
+		local filename = '/tmp/editing.nft'
+		NFT.save(self.form.image.image or TRANS_ICON, filename)
+		local success = shell.run('pain.lua ' .. filename)
+		self.parent:dirty(true)
+		if success then
+			self:loadImage(filename)
+		end
+
+	elseif event.type == 'select_file' then
+		self:loadImage(event.file)
 
 	elseif event.type == 'loadIcon' then
-		local s, m = pcall(function()
-			local iconLines = Util.readFile(self.form.iconFile.value)
-			if not iconLines then
-				error('Must be an NFT image - 3 rows, 8 cols max')
-			end
-			local icon, m = parseIcon(iconLines)
-			if not icon then
-				error(m)
-			end
-			if extSupport then
-				self.form.values.iconExt = iconLines
-			else
-				self.form.values.icon = iconLines
-			end
-			self.form.image:setImage(icon)
-			self.form.image:draw()
-		end)
-		if not s and m then
-			local msg = m:gsub('.*: (.*)', '%1')
-			self.notification:error(msg)
-		end
+		self.file_open:show()
 
 	elseif event.type == 'form_invalid' then
 		self.notification:error(event.message)
@@ -554,8 +612,6 @@ function page.editor:eventHandler(event)
 		local values = self.form.values
 		self:hide()
 		self:updateApplications(values)
-		--page:refresh()
-		--page:draw()
 		config.currentCategory = values.category
 		Config.update('Overview', config)
 		os.queueEvent('overview_refresh')
@@ -564,10 +620,6 @@ function page.editor:eventHandler(event)
 	end
 	return true
 end
-
-UI:setPages({
-	main = page,
-})
 
 local function reload()
 	loadApplications()
@@ -594,5 +646,4 @@ end)
 loadApplications()
 
 UI:setPage(page)
-
-UI:pullEvents()
+UI:start()

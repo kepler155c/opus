@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Config = require('opus.config')
 
 local device     = _G.device

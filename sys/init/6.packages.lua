@@ -32,3 +32,23 @@ end
 
 help.setPath(table.concat(helpPaths, ':'))
 shell.setPath(table.concat(appPaths, ':'))
+
+local function runDir(directory)
+	local files = fs.list(directory)
+	table.sort(files)
+
+	for _,file in ipairs(files) do
+		os.sleep(0)
+		local result, err = shell.run(directory .. '/' .. file)
+		if not result and err then
+			_G.printError('\n' .. err)
+		end
+	end
+end
+
+for _, package in pairs(Packages:installedSorted()) do
+	local packageDir = 'packages/' .. package.name .. '/init'
+	if fs.exists(packageDir) and fs.isDir(packageDir) then
+		runDir(packageDir)
+	end
+end

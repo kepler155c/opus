@@ -2,17 +2,15 @@ local class  = require('opus.class')
 local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
-local colors = _G.colors
-
 UI.Slider = class(UI.Window)
 UI.Slider.defaults = {
 	UIElement = 'Slider',
 	height = 1,
 	barChar = UI.extChars and '\140' or '-',
-	barColor = colors.gray,
+	barColor = 'gray',
 	sliderChar = UI.extChars and '\143' or '\124',
-	sliderColor = colors.blue,
-	sliderFocusColor = colors.lightBlue,
+	sliderColor = 'blue',
+	sliderFocusColor = 'lightBlue',
 	leftBorder = UI.extChars and '\141' or '\124',
 	rightBorder = UI.extChars and '\142' or '\124',
 	value = 0,
@@ -57,8 +55,16 @@ end
 
 function UI.Slider:eventHandler(event)
 	if event.type == "mouse_down" or event.type == "mouse_drag" then
+
+		local pos = event.x - 1
+		if event.type == 'mouse_down' then
+			self.anchor = event.x - 1
+		else
+			pos = self.anchor + event.dx
+		end
+
 		local range = self.max - self.min
-		local i = (event.x - 1) / (self.width - 1)
+		local i = pos / (self.width - 1)
 		self.value = self.min + (i * range)
 		self:emit({ type = self.event, value = self.value, element = self })
 		self:draw()

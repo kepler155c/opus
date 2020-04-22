@@ -4,23 +4,26 @@ local Util = require('opus.util')
 local fs   = _G.fs
 local os   = _G.os
 
-local labelTab = UI.Tab {
+return UI.Tab {
 	tabTitle = 'Label',
 	description = 'Set the computer label',
 	labelText = UI.Text {
-		x = 3, y = 2,
+		x = 3, y = 3,
 		value = 'Label'
 	},
 	label = UI.TextEntry {
-		x = 9, y = 2, ex = -4,
+		x = 9, y = 3, ex = -4,
 		limit = 32,
 		value = os.getComputerLabel(),
 		accelerators = {
 			enter = 'update_label',
 		},
 	},
+	[1] = UI.Window {
+		x = 2, y = 2, ex = -2, ey = 4,
+	},
 	grid = UI.ScrollingGrid {
-		y = 3,
+		x = 2, y = 5, ex = -2, ey = -2,
 		values = {
 			{ name = '',  value = ''                  },
 			{ name = 'CC version',  value = Util.getVersion()                  },
@@ -30,20 +33,18 @@ local labelTab = UI.Tab {
 			{ name = 'Computer ID', value = tostring(os.getComputerID())       },
 			{ name = 'Day',         value = tostring(os.day())                 },
 		},
+		disableHeader = true,
 		inactive = true,
 		columns = {
 			{ key = 'name',  width = 12 },
-			{ key = 'value' },
+			{ key = 'value', textColor = colors.yellow },
 		},
 	},
+	eventHandler = function(self, event)
+		if event.type == 'update_label' and self.label.value then
+			os.setComputerLabel(self.label.value)
+			self:emit({ type = 'success_message', message = 'Label updated' })
+			return true
+		end
+	end,
 }
-
-function labelTab:eventHandler(event)
-	if event.type == 'update_label' and self.label.value then
-		os.setComputerLabel(self.label.value)
-		self:emit({ type = 'success_message', message = 'Label updated' })
-		return true
-	end
-end
-
-return labelTab

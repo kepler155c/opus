@@ -4,10 +4,7 @@ if fs.native then
 	return
 end
 
-_G.requireInjector(_ENV)
 local Util = require('opus.util')
-
--- TODO: support getDrive for virtual nodes
 
 fs.native = Util.shallowCopy(fs)
 
@@ -23,7 +20,6 @@ for k,fn in pairs(fs) do
 end
 
 function nativefs.list(node, dir)
-
 	local files
 	if fs.native.isDir(dir) then
 		files = fs.native.list(dir)
@@ -265,7 +261,6 @@ local function getfstype(fstype)
 end
 
 function fs.mount(path, fstype, ...)
-
 	local vfs = getfstype(fstype)
 	if not vfs then
 		error('Invalid file system type')

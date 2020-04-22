@@ -50,18 +50,20 @@ function input:toCode(ch, code)
 	   table.insert(result, 'alt')
 	end
 
-	if keyboard.state[keys.leftShift] or keyboard.state[keys.rightShift] or
-		 code == keys.leftShift or code == keys.rightShift then
-		if code and modifiers[code] then
-			table.insert(result, 'shift')
-		elseif #ch == 1 then
-			table.insert(result, ch:upper())
-		else
-			table.insert(result, 'shift')
+	if ch then -- some weird things happen with control/command on mac
+		if keyboard.state[keys.leftShift] or keyboard.state[keys.rightShift] or
+			code == keys.leftShift or code == keys.rightShift then
+			if code and modifiers[code] then
+				table.insert(result, 'shift')
+			elseif #ch == 1 then
+				table.insert(result, ch:upper())
+			else
+				table.insert(result, 'shift')
+				table.insert(result, ch)
+			end
+		elseif not code or not modifiers[code] then
 			table.insert(result, ch)
 		end
-	elseif not code or not modifiers[code] then
-		table.insert(result, ch)
 	end
 
 	return table.concat(result, '-')
@@ -118,6 +120,7 @@ function input:translate(event, code, p1, p2)
 		local buttons = { 'mouse_click', 'mouse_rightclick' }
 		self.mch = buttons[code]
 		self.mfired = nil
+		self.anchor = { x = p1, y = p2 }
 		return {
 			code = input:toCode('mouse_down', 255),
 			button = code,
@@ -132,6 +135,8 @@ function input:translate(event, code, p1, p2)
 			button = code,
 			x = p1,
 			y = p2,
+			dx = p1 - self.anchor.x,
+			dy = p2 - self.anchor.y,
 		}
 
 	elseif event == 'mouse_up' then
@@ -141,18 +146,26 @@ function input:translate(event, code, p1, p2)
 				 p1 == self.x and p2 == self.y and
 				 (clock - self.timer < .5) then
 
-				self.mch = 'mouse_doubleclick'
-				self.timer = nil
+				self.clickCount = self.clickCount + 1
+				if self.clickCount == 3 then
+					self.mch = 'mouse_tripleclick'
+					self.timer = nil
+					self.clickCount = 1
+				else
+					self.mch = 'mouse_doubleclick'
+				end
 			else
 				self.timer = os.clock()
 				self.x = p1
 				self.y = p2
+				self.clickCount = 1
 			end
 			self.mfired = input:toCode(self.mch, 255)
 		else
 			self.mch = 'mouse_up'
 			self.mfired = input:toCode(self.mch, 255)
 		end
+
 		return {
 			code = self.mfired,
 			button = code,

@@ -1,62 +1,63 @@
 local class    = require('opus.class')
+local Event    = require('opus.event')
 local Terminal = require('opus.terminal')
 local UI       = require('opus.ui')
-
-local colors = _G.colors
 
 UI.Embedded = class(UI.Window)
 UI.Embedded.defaults = {
 	UIElement = 'Embedded',
-	backgroundColor = colors.black,
-	textColor = colors.white,
+	backgroundColor = 'black',
+	textColor = 'white',
 	maxScroll = 100,
 	accelerators = {
 		up = 'scroll_up',
 		down = 'scroll_down',
 	}
 }
-function UI.Embedded:setParent()
-	UI.Window.setParent(self)
-
-	self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
-	self.win.setMaxScroll(self.maxScroll)
-
-	local canvas = self:getCanvas()
-	self.win.getCanvas().parent = canvas
-	table.insert(canvas.layers, self.win.getCanvas())
-	self.canvas = self.win.getCanvas()
-
-	self.win.setCursorPos(1, 1)
-	self.win.setBackgroundColor(self.backgroundColor)
-	self.win.setTextColor(self.textColor)
-	self.win.clear()
-end
-
 function UI.Embedded:layout()
 	UI.Window.layout(self)
-	if self.win then
-		self.win.reposition(self.x, self.y, self.width, self.height)
+
+	if not self.win then
+		local t
+		function self.render()
+			if not t then
+				t = Event.onTimeout(0, function()
+					t = nil
+					if self.focused then
+						self:setCursorPos(self.win.getCursorPos())
+					end
+					self:sync()
+				end)
+			end
+		end
+		self.win = Terminal.window(UI.term.device, self.x, self.y, self.width, self.height, false)
+		self.win.canvas = self
+		self.win.setMaxScroll(self.maxScroll)
+		self.win.setCursorPos(1, 1)
+		self.win.setBackgroundColor(self.backgroundColor)
+		self.win.setTextColor(self.textColor)
+		self.win.clear()
 	end
 end
 
 function UI.Embedded:draw()
-	self.canvas:dirty()
+	self:dirty()
+end
+
+function UI.Embedded:focus()
+	-- allow scrolling
+	if self.focused then
+		self:setCursorBlink(self.win.getCursorBlink())
+	end
 end
 
 function UI.Embedded:enable()
-	self.canvas:setVisible(true)
-	self.canvas:raise()
-	if self.visible then
-		-- the window will automatically update on changes
-		-- the canvas does not need to be rendereed
-		self.win.setVisible(true)
-	end
 	UI.Window.enable(self)
-	self.canvas:dirty()
+	self.win.setVisible(true)
+	self:dirty()
 end
 
 function UI.Embedded:disable()
-	self.canvas:setVisible(false)
 	self.win.setVisible(false)
 	UI.Window.disable(self)
 end
@@ -71,17 +72,12 @@ function UI.Embedded:eventHandler(event)
 	end
 end
 
-function UI.Embedded:focus()
-	-- allow scrolling
-end
-
 function UI.Embedded.example()
-	local Event = require('opus.event')
 	local Util  = require('opus.util')
 	local term  = _G.term
 
 	return UI.Embedded {
-		visible = true,
+		y = 2, x = 2, ex = -2, ey = -2,
 		enable = function (self)
 			UI.Embedded.enable(self)
 			Event.addRoutine(function()
@@ -90,10 +86,11 @@ function UI.Embedded.example()
 				term.redirect(oterm)
 			end)
 		end,
-		eventHandler = function(_, event)
+		eventHandler = function(self, event)
 			if event.type == 'key' then
 				return true
 			end
+			return UI.Embedded.eventHandler(self, event)
 		end
 	}
 end

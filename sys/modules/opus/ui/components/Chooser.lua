@@ -11,8 +11,8 @@ UI.Chooser.defaults = {
 	nochoice = 'Select',
 	backgroundFocusColor = colors.lightGray,
 	textInactiveColor = colors.gray,
-	leftIndicator = UI.extChars and '\17' or '<',
-	rightIndicator = UI.extChars and '\16' or '>',
+	leftIndicator = UI.extChars and '\171' or '<',
+	rightIndicator = UI.extChars and '\187' or '>',
 	height = 1,
 	accelerators = {
 		space = 'choice_next',
@@ -20,7 +20,7 @@ UI.Chooser.defaults = {
 		left  = 'choice_prev',
 	}
 }
-function UI.Chooser:setParent()
+function UI.Chooser:layout()
 	if not self.width and not self.ex then
 		self.width = 1
 		for _,v in pairs(self.choices) do
@@ -30,7 +30,7 @@ function UI.Chooser:setParent()
 		end
 		self.width = self.width + 4
 	end
-	UI.Window.setParent(self)
+	UI.Window.layout(self)
 end
 
 function UI.Chooser:draw()

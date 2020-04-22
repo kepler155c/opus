@@ -1,5 +1,3 @@
-_G.requireInjector(_ENV)
-
 local Peripheral = require('opus.peripheral')
 
 _G.device = Peripheral.getList()

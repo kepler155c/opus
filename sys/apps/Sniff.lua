@@ -5,14 +5,13 @@ local Util  = require('opus.util')
 local colors     = _G.colors
 local device     = _G.device
 local textutils  = _G.textutils
-local peripheral = _G.peripheral
 local multishell = _ENV.multishell
 
 local gridColumns = {}
 table.insert(gridColumns, { heading = '#',  key = 'id', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Port', key = 'portid', width = 5, align = 'right' })
 table.insert(gridColumns, { heading = 'Reply', key = 'replyid', width = 5, align = 'right' })
-if UI.defaultDevice.width > 50 then
+if UI.term.width > 50 then
 	table.insert(gridColumns, { heading = 'Dist', key = 'distance', width = 6, align = 'right' })
 end
 table.insert(gridColumns, { heading = 'Msg', key = 'packetStr' })
@@ -42,12 +41,13 @@ local page = UI.Page {
 
 	configSlide = UI.SlideOut {
 		y = -11,
-		titleBar = UI.TitleBar { title = 'Sniffer Config', event = 'config_close' },
+		titleBar = UI.TitleBar { title = 'Sniffer Config', event = 'config_close', backgroundColor = colors.black },
 		accelerators = { ['backspace'] = 'config_close' },
 		configTabs = UI.Tabs {
 			y = 2,
 			filterTab = UI.Tab {
 				tabTitle = 'Filter',
+				noFill = true,
 				filterGridText = UI.Text {
 					x = 2, y = 2,
 					value = 'ID filter',
@@ -130,7 +130,6 @@ local page = UI.Page {
 			title = 'Packet Information',
 			event = 'packet_close',
 		},
-		backgroundColor = colors.cyan,
 		accelerators = {
 			['backspace'] = 'packet_close',
 			['left'] = 'prev_packet',
@@ -280,7 +279,7 @@ function page.packetSlide:eventHandler(event)
 end
 
 function page.packetGrid:getDisplayValues(row)
-	local row = Util.shallowCopy(row)
+	row = Util.shallowCopy(row)
 	row.distance = Util.toBytes(Util.round(row.distance), 2)
 	return row
 end
@@ -356,7 +355,7 @@ function page:eventHandler(event)
 		self.packetSlide:show(event.selected)
 
 	elseif event.type == 'quit' then
-		Event.exitPullEvents()
+		UI:quit()
 
 	else return UI.Page.eventHandler(self, event)
 	end
@@ -386,4 +385,4 @@ if args[1] then
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

@@ -4,17 +4,9 @@ local UI    = require('opus.ui')
 UI.SlideOut = class(UI.Window)
 UI.SlideOut.defaults = {
 	UIElement = 'SlideOut',
-	pageType = 'modal',
+	transitionHint = 'expandUp',
+	modal = true,
 }
-function UI.SlideOut:layout()
-	UI.Window.layout(self)
-	if not self.canvas then
-		self.canvas = self:addLayer()
-	else
-		self.canvas:resize(self.width, self.height)
-	end
-end
-
 function UI.SlideOut:enable()
 end
 
@@ -27,24 +19,20 @@ function UI.SlideOut:toggle()
 end
 
 function UI.SlideOut:show(...)
-	self:addTransition('expandUp')
-	self.canvas:raise()
-	self.canvas:setVisible(true)
 	UI.Window.enable(self, ...)
 	self:draw()
-	self:capture(self)
 	self:focusFirst()
-end
-
-function UI.SlideOut:disable()
-	self.canvas:setVisible(false)
-	UI.Window.disable(self)
 end
 
 function UI.SlideOut:hide()
 	self:disable()
-	self:release(self)
-	self:refocus()
+end
+
+function UI.SlideOut:draw()
+	if not self.noFill then
+		self:fillArea(1, 1, self.width, self.height, string.rep('\127', self.width), 'black', 'gray')
+	end
+	self:drawChildren()
 end
 
 function UI.SlideOut:eventHandler(event)
@@ -59,24 +47,27 @@ function UI.SlideOut:eventHandler(event)
 end
 
 function UI.SlideOut.example()
-	-- for the transistion to work properly, the parent must have a canvas
-	return UI.ActiveLayer {
-		y = 2,
+	return UI.Window {
+		y = 3,
+		backgroundColor = 2048,
 		button = UI.Button {
 			x = 2, y = 5,
 			text = 'show',
 		},
 		slideOut = UI.SlideOut {
-			backgroundColor = _G.colors.yellow,
-			y = -4, height = 4, x = 3, ex = -3,
+			backgroundColor = 16,
+			y = -7, height = 4, x = 3, ex = -3,
+			titleBar = UI.TitleBar {
+				title = 'test',
+			},
 			button = UI.Button {
 				x = 2, y = 2,
 				text = 'hide',
+				--visualize = true,
 			},
 		},
 		eventHandler = function (self, event)
 			if event.type == 'button_press' then
-				self.slideOut.canvas.xxx = true
 				self.slideOut:toggle()
 			end
 		end,

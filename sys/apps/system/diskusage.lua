@@ -20,8 +20,8 @@ local tab = UI.Tab {
 	description = 'Visualise HDD and disks usage',
 
 	drives = UI.ScrollingGrid {
-		x = 2, y = 1,
-		ex = '47%', ey = -7,
+		x = 2, y = 2,
+		ex = '47%', ey = -8,
 		columns = {
 			{ heading = 'Drive', key = 'name' },
 			{ heading = 'Side' ,key = 'side', textColor = colors.yellow }
@@ -30,7 +30,7 @@ local tab = UI.Tab {
 	},
 	infos = UI.Grid {
 		x = '52%', y = 2,
-		ex = -2, ey = -4,
+		ex = -2, ey = -8,
 		disableHeader = true,
 		unfocusedBackgroundSelectedColor = colors.black,
 		inactive = true,
@@ -40,18 +40,23 @@ local tab = UI.Tab {
 			{ key = 'value', align = 'right', textColor = colors.yellow },
 		}
 	},
-
+	[1] = UI.Window {
+		x = 2, y = -6, ex = -2, ey = -2,
+		backgroundColor = colors.black,
+	},
 	progress = UI.ProgressBar {
-		x = 11, y = -2,
-		ex = -2,
+		x = 11, y = -3,
+		ex = -3,
 	},
 	percentage = UI.Text {
-		x = 11, y = -3,
-		ex = '47%',
-		align = 'center',
+		y = -4, width = 5,
+		x = 12,
+		--align = 'center',
+		backgroundColor = colors.black,
 	},
 	icon = UI.NftImage {
-		x = 2, y = -5,
+		x = 2, y = -6, ey = -2,
+		backgroundColor = colors.black,
 		image = NFT.parse(NftImages.blank)
 	},
 }

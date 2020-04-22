@@ -3,17 +3,16 @@ local Event = require('opus.event')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.StatusBar = class(UI.Window)
 UI.StatusBar.defaults = {
 	UIElement = 'StatusBar',
-	backgroundColor = colors.lightGray,
-	textColor = colors.gray,
+	backgroundColor = 'lightGray',
+	textColor = 'gray',
 	height = 1,
 	ey = -1,
 }
-function UI.StatusBar:adjustWidth()
+function UI.StatusBar:layout()
+	UI.Window.layout(self)
 	-- Can only have 1 adjustable width
 	if self.columns then
 		local w = self.width - #self.columns - 1
@@ -29,16 +28,6 @@ function UI.StatusBar:adjustWidth()
 			end
 		end
 	end
-end
-
-function UI.StatusBar:resize()
-	UI.Window.resize(self)
-	self:adjustWidth()
-end
-
-function UI.StatusBar:setParent()
-	UI.Window.setParent(self)
-	self:adjustWidth()
 end
 
 function UI.StatusBar:setStatus(status)
@@ -63,7 +52,7 @@ end
 
 function UI.StatusBar:timedStatus(status, timeout)
 	self:write(2, 1, Util.widthify(status, self.width-2), self.backgroundColor)
-	Event.on(timeout or 3, function()
+	Event.onTimeout(timeout or 3, function()
 		if self.enabled then
 			self:draw()
 			self:sync()
@@ -89,11 +78,13 @@ function UI.StatusBar:draw()
 	elseif type(self.values) == 'string' then
 		self:write(1, 1, Util.widthify(' ' .. self.values, self.width))
 	else
-		local s = ''
+		local x = 2
+		self:clear()
 		for _,c in ipairs(self.columns) do
-			s = s .. ' ' .. Util.widthify(tostring(self.values[c.key] or ''), c.cw)
+			local s = Util.widthify(tostring(self.values[c.key] or ''), c.cw)
+			self:write(x, 1, s, c.bg, c.fg)
+			x = x + c.cw + 1
 		end
-		self:write(1, 1, Util.widthify(s, self.width))
 	end
 end
 

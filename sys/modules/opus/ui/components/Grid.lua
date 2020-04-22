@@ -2,10 +2,8 @@ local class = require('opus.class')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
 local os     = _G.os
 local _rep   = string.rep
-local _sub   = string.sub
 
 local function safeValue(v)
 	local t = type(v)
@@ -23,18 +21,7 @@ function Writer:init(element, y)
 end
 
 function Writer:write(s, width, align, bg, fg)
-	local len = #tostring(s or '')
-	if len > width then
-		s = _sub(s, 1, width)
-	end
-	local padding = len < width and _rep(' ', width - len)
-	if padding then
-		if align == 'right' then
-			s = padding .. s
-		else
-			s = s .. padding
-		end
-	end
+	s = Util.widthify(s, width, align)
 	self.element:write(self.x, self.y, s, bg, fg)
 	self.x = self.x + width
 end
@@ -56,16 +43,16 @@ UI.Grid.defaults = {
 	disableHeader = false,
 	headerHeight = 1,
 	marginRight = 0,
-	textColor = colors.white,
-	textSelectedColor = colors.white,
-	backgroundColor = colors.black,
-	backgroundSelectedColor = colors.gray,
-	headerBackgroundColor = colors.cyan,
-	headerTextColor = colors.white,
-	headerSortColor = colors.yellow,
-	unfocusedTextSelectedColor = colors.white,
-	unfocusedBackgroundSelectedColor = colors.gray,
-	focusIndicator = UI.extChars and '\183' or '>',
+	textColor = 'white',
+	textSelectedColor = 'white',
+	backgroundColor = 'black',
+	backgroundSelectedColor = 'gray',
+	headerBackgroundColor = 'primary',
+	headerTextColor = 'white',
+	headerSortColor = 'yellow',
+	unfocusedTextSelectedColor = 'white',
+	unfocusedBackgroundSelectedColor = 'gray',
+	focusIndicator = UI.extChars and '\26' or '>',
 	sortIndicator = ' ',
 	inverseSortIndicator = UI.extChars and '\24' or '^',
 	values = { },
@@ -83,8 +70,8 @@ UI.Grid.defaults = {
 		[ 'control-f' ] = 'scroll_pageDown',
 	},
 }
-function UI.Grid:setParent()
-	UI.Window.setParent(self)
+function UI.Grid:layout()
+	UI.Window.layout(self)
 
 	for _,c in pairs(self.columns) do
 		c.cw = c.width
@@ -522,7 +509,7 @@ function UI.Grid.example()
 			values = values,
 			columns = {
 				{ heading = 'key', key = 'key', width = 6,  },
-				{ heading = 'value', key = 'value', textColor = colors.yellow },
+				{ heading = 'value', key = 'value', textColor = 'yellow' },
 			},
 		},
 		autospace = UI.Grid {

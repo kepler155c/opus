@@ -20,7 +20,7 @@ local aliasTab = UI.Tab {
 		},
 	},
 	grid = UI.Grid {
-		y = 5,
+		x = 2, y = 5, ex = -2, ey = -2,
 		sortColumn = 'alias',
 		columns = {
 			{ heading = 'Alias',   key = 'alias' },

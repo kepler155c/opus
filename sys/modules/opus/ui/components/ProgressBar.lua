@@ -1,39 +1,31 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.ProgressBar = class(UI.Window)
 UI.ProgressBar.defaults = {
 	UIElement = 'ProgressBar',
-	backgroundColor = colors.gray,
+	backgroundColor = 'gray',
 	height = 1,
-	progressColor = colors.lime,
+	progressColor = 'lime',
 	progressChar = UI.extChars and '\153' or ' ',
 	fillChar = ' ',
-	fillColor = colors.gray,
-	textColor = colors.green,
+	fillColor = 'gray',
+	textColor = 'green',
 	value = 0,
 }
 function UI.ProgressBar:draw()
 	local width = math.ceil(self.value / 100 * self.width)
 
-	local filler = string.rep(self.fillChar, self.width)
-	local progress = string.rep(self.progressChar, width)
-
-	for i = 1, self.height do
-		self:write(1, i, filler, nil, self.fillColor)
-		self:write(1, i, progress, self.progressColor)
-	end
+	self:fillArea(width + 1, 1, self.width - width, self.height, self.fillChar, nil, self.fillColor)
+	self:fillArea(1, 1, width, self.height, self.progressChar, self.progressColor)
 end
 
 function UI.ProgressBar.example()
-	local Event = require('opus.event')
 	return UI.ProgressBar {
-		x = 2, ex = -2, y = 2,
+		x = 2, ex = -2, y = 2, height = 2,
 		focus = function() end,
 		enable = function(self)
-			Event.onInterval(.25, function()
+			require('opus.event').onInterval(.25, function()
 				self.value = self.value == 100 and 0 or self.value + 5
 				self:draw()
 				self:sync()

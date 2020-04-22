@@ -4,7 +4,6 @@ local Socket = require('opus.socket')
 local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
-local colors     = _G.colors
 local device     = _G.device
 local network    = _G.network
 local os         = _G.os
@@ -56,6 +55,31 @@ local page = UI.Page {
 		columns = gridColumns,
 		sortColumn = 'label',
 		autospace = true,
+		getRowTextColor = function(self, row, selected)
+			if not row.active then
+				return 'lightGray'
+			end
+			return UI.Grid.getRowTextColor(self, row, selected)
+		end,
+		getDisplayValues = function(_, row)
+			row = Util.shallowCopy(row)
+			if row.uptime then
+				if row.uptime < 60 then
+					row.uptime = string.format("%ds", math.floor(row.uptime))
+				elseif row.uptime < 3600 then
+					row.uptime = string.format("%sm", math.floor(row.uptime / 60))
+				else
+					row.uptime = string.format("%sh", math.floor(row.uptime / 3600))
+				end
+			end
+			if row.fuel then
+				row.fuel = row.fuel > 0 and Util.toBytes(row.fuel) or ''
+			end
+			if row.distance then
+				row.distance = Util.toBytes(Util.round(row.distance, 1))
+			end
+			return row
+		end,
 	},
 	ports = UI.SlideOut {
 		titleBar = UI.TitleBar {
@@ -72,17 +96,22 @@ local page = UI.Page {
 			sortColumn = 'port',
 			autospace = true,
 		},
+		eventHandler = function(self, event)
+			if event.type == 'grid_select' then
+				shell.openForegroundTab('Sniff ' .. event.selected.port)
+			end
+			return UI.SlideOut.eventHandler(self, event)
+		end,
 	},
 	help = UI.SlideOut {
-		backgroundColor = colors.cyan,
 		x = 5, ex = -5, height = 8, y = -8,
 		titleBar = UI.TitleBar {
 			title = 'Network Help',
 			event = 'slide_hide',
 		},
 		text = UI.TextArea {
-			x = 2, y = 2,
-			backgroundColor = colors.cyan,
+			x = 1, y = 2,
+			marginLeft = 1,
 			value = [[
 
 In order to connect to another computer:
@@ -125,13 +154,6 @@ local function sendCommand(host, command)
 	else
 		page.notification:error('Failed to connect')
 	end
-end
-
-function page.ports:eventHandler(event)
-	if event.type == 'grid_select' then
-		shell.openForegroundTab('Sniff ' .. event.selected.port)
-	end
-	return UI.SlideOut.eventHandler(self, event)
 end
 
 function page.ports.grid:update()
@@ -230,7 +252,7 @@ function page:eventHandler(event)
 		Config.update('network', config)
 
 	elseif event.type == 'quit' then
-		Event.exitPullEvents()
+		UI:quit()
 	end
 	UI.Page.eventHandler(self, event)
 end
@@ -241,33 +263,6 @@ function page.menuBar:getActive(menuItem)
 		return not not device.wireless_modem
 	end
 	return menuItem.noCheck or not not t
-end
-
-function page.grid:getRowTextColor(row, selected)
-	if not row.active then
-		return colors.lightGray
-	end
-	return UI.Grid.getRowTextColor(self, row, selected)
-end
-
-function page.grid:getDisplayValues(row)
-	row = Util.shallowCopy(row)
-	if row.uptime then
-		if row.uptime < 60 then
-			row.uptime = string.format("%ds", math.floor(row.uptime))
-		elseif row.uptime < 3600 then
-			row.uptime = string.format("%sm", math.floor(row.uptime / 60))
-		else
-			row.uptime = string.format("%sh", math.floor(row.uptime / 3600))
-		end
-	end
-	if row.fuel then
-		row.fuel = row.fuel > 0 and Util.toBytes(row.fuel) or ''
-	end
-	if row.distance then
-		row.distance = Util.toBytes(Util.round(row.distance, 1))
-	end
-	return row
 end
 
 Event.onInterval(1, function()
@@ -295,4 +290,4 @@ if not device.wireless_modem then
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

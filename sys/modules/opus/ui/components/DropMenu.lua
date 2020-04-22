@@ -2,12 +2,10 @@ local class = require('opus.class')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.DropMenu = class(UI.MenuBar)
 UI.DropMenu.defaults = {
 	UIElement = 'DropMenu',
-	backgroundColor = colors.white,
+	backgroundColor = 'white',
 	buttonClass = 'DropMenuItem',
 }
 function UI.DropMenu:layout()
@@ -32,42 +30,53 @@ function UI.DropMenu:layout()
 	self.height = #self.children + 1
 	self.width = maxWidth + 2
 
-	if not self.canvas then
-		self.canvas = self:addLayer()
-	else
-		self.canvas:resize(self.width, self.height)
+	if self.x + self.width > self.parent.width then
+		self.x = self.parent.width - self.width + 1
 	end
+
+	self:reposition(self.x, self.y, self.width, self.height)
 end
 
 function UI.DropMenu:enable()
-end
+	local menuBar = self.parent:find(self.menuUid)
+	local hasActive
 
-function UI.DropMenu:show(x, y)
-	self.x, self.y = x, y
-	self.canvas:move(x, y)
-	self.canvas:setVisible(true)
+	for _,c in pairs(self.children) do
+		if not c.spacer and menuBar then
+			c.inactive = not menuBar:getActive(c)
+		end
+		if not c.inactive then
+			hasActive = true
+		end
+	end
+
+	-- jump through a lot of hoops if all selections are inactive
+	-- there's gotta be a better way
+	-- lots of exception code just to handle drop menus
+	self.focus = not hasActive and function() end
 
 	UI.Window.enable(self)
-
+	if self.focus then
+		self:setFocus(self)
+	else
+		self:focusFirst()
+	end
 	self:draw()
-	self:capture(self)
-	self:focusFirst()
 end
 
-function UI.DropMenu:hide()
-	self:disable()
-	self.canvas:setVisible(false)
-	self:release(self)
+function UI.DropMenu:disable()
+	UI.Window.disable(self)
+	self:remove()
 end
 
 function UI.DropMenu:eventHandler(event)
 	if event.type == 'focus_lost' and self.enabled then
-		if not Util.contains(self.children, event.focused) then
-			self:hide()
+		if not (Util.contains(self.children, event.focused) or event.focused == self) then
+			self:disable()
 		end
 	elseif event.type == 'mouse_out' and self.enabled then
-		self:hide()
-		self:refocus()
+		self:disable()
+		self:setFocus(self.parent:find(self.lastFocus))
 	else
 		return UI.MenuBar.eventHandler(self, event)
 	end
@@ -82,6 +91,15 @@ function UI.DropMenu.example()
 					{ text = 'Shell        s', event = 'shell'  },
 					{ spacer = true },
 					{ text = 'Quit        ^q', event = 'quit'   },
+			} },
+			{ text = 'Edit', dropdown = {
+				{ text = 'Copy',           event = 'run' },
+				{ text = 'Paste        s', event = 'shell'  },
+			} },
+			{ text = '\187',
+				x = -3,
+				dropdown = {
+					{ text = 'Associations', event = 'associate' },
 			} },
 		}
 	}

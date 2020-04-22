@@ -58,11 +58,16 @@ local page = UI.Page {
 		},
 		[2] = UI.Tab {
 			tabTitle = 'Output',
+			backgroundColor = 'black',
 			output = UI.Embedded {
-				visible = true,
+				y = 2,
 				maxScroll = 1000,
-				backgroundColor = colors.black,
+				backgroundColor = 'black',
 			},
+			draw = function(self)
+				self:write(1, 1, string.rep('\131', self.width), 'black', 'primary')
+				self:drawChildren()
+			end,
 		},
 	},
 }
@@ -157,7 +162,7 @@ function page:eventHandler(event)
 		local sz = #value
 		local pos = self.prompt.entry.pos
 		self:setPrompt(autocomplete(sandboxEnv, value, self.prompt.entry.pos))
-		self.prompt:setPosition(pos + #value - sz)
+		self.prompt:setPosition(pos + #(self.prompt.value or '') - sz)
 		self.prompt:updateCursor()
 
 	elseif event.type == 'device' then
@@ -196,7 +201,6 @@ function page:eventHandler(event)
 			command = nil
 			self.grid:setValues(t)
 			self.grid:setIndex(1)
-			self.grid:adjustWidth()
 			self:draw()
 		end
 		return true
@@ -243,7 +247,6 @@ function page:setResult(result)
 	end
 	self.grid:setValues(t)
 	self.grid:setIndex(1)
-	self.grid:adjustWidth()
 	self:draw()
 end
 
@@ -373,7 +376,7 @@ function page:executeStatement(statement)
 	end
 
 	if _exit then
-		UI:exitPullEvents()
+		UI:quit()
 	end
 end
 
@@ -382,7 +385,8 @@ if args[1] then
 	command = 'args[1]'
 	sandboxEnv.args = args
 	page:setResult(args[1])
+	page:setPrompt(command)
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

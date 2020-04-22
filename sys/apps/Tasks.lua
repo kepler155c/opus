@@ -3,6 +3,7 @@ local UI    = require('opus.ui')
 
 local kernel     = _G.kernel
 local multishell = _ENV.multishell
+local tasks      = multishell and multishell.getTabs and multishell.getTabs() or kernel.routines
 
 UI:configure('Tasks', ...)
 
@@ -21,7 +22,7 @@ local page = UI.Page {
 			{ heading = 'Status', key = 'status'    },
 			{ heading = 'Time',   key = 'timestamp' },
 		},
-		values = kernel.routines,
+		values = tasks,
 		sortColumn = 'uid',
 		autospace = true,
 		getDisplayValues = function (_, row)
@@ -51,7 +52,7 @@ local page = UI.Page {
 			end
 		end
 		if event.type == 'quit' then
-			Event.exitPullEvents()
+			UI:quit()
 		end
 		UI.Page.eventHandler(self, event)
 	end
@@ -64,4 +65,4 @@ Event.onInterval(1, function()
 end)
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

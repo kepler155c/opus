@@ -1,15 +1,11 @@
-local Canvas = require('opus.ui.canvas')
 local class  = require('opus.class')
 local UI     = require('opus.ui')
-
-local colors = _G.colors
 
 UI.Dialog = class(UI.SlideOut)
 UI.Dialog.defaults = {
 	UIElement = 'Dialog',
 	height = 7,
-	textColor = colors.black,
-	backgroundColor = colors.white,
+	noFill = true,
 	okEvent ='dialog_ok',
 	cancelEvent = 'dialog_cancel',
 }
@@ -18,22 +14,36 @@ function UI.Dialog:postInit()
 	self.titleBar = UI.TitleBar({ event = self.cancelEvent, title = self.title })
 end
 
-function UI.Dialog:show(...)
-	local canvas = self.parent:getCanvas()
-	self.oldPalette = canvas.palette
-	canvas:applyPalette(Canvas.darkPalette)
-	UI.SlideOut.show(self, ...)
-end
-
-function UI.Dialog:hide(...)
-	self.parent:getCanvas().palette = self.oldPalette
-	UI.SlideOut.hide(self, ...)
-	self.parent:draw()
-end
-
 function UI.Dialog:eventHandler(event)
 	if event.type == 'dialog_cancel' then
 		self:hide()
 	end
 	return UI.SlideOut.eventHandler(self, event)
+end
+
+function UI.Dialog.example()
+	return UI.Dialog {
+		title = 'Enter Starting Level',
+		height = 7,
+		form = UI.Form {
+			y = 3, x = 2, height = 4,
+			event = 'setStartLevel',
+			cancelEvent = 'slide_hide',
+			text = UI.Text {
+				x = 5, y = 1, width = 20,
+				textColor = 'gray',
+			},
+			textEntry = UI.TextEntry {
+				formKey = 'level',
+				x = 15, y = 1, width = 7,
+			},
+		},
+		statusBar = UI.StatusBar(),
+		enable = function(self)
+			require('opus.event').onTimeout(0, function()
+				self:show()
+				self:sync()
+			end)
+		end,
+	}
 end

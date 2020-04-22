@@ -9,7 +9,7 @@ kernel.hook('clipboard_copy', function(_, args)
 	keyboard.clipboard =  args[1]
 end)
 
-keyboard.addHotkey('shift-paste', function()
+local function queuePaste()
 	local data = keyboard.clipboard
 
 	if type(data) == 'table' then
@@ -20,4 +20,7 @@ keyboard.addHotkey('shift-paste', function()
 	if data then
 		os.queueEvent('paste', data)
 	end
-end)
+end
+
+kernel.hook('clipboard_paste', queuePaste)
+keyboard.addHotkey('shift-paste', queuePaste)

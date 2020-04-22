@@ -2,18 +2,17 @@ local Ansi   = require('opus.ansi')
 local Config = require('opus.config')
 local UI     = require('opus.ui')
 
-local colors = _G.colors
-
--- -t80x30
-
 if _G.http.websocket then
 	local config = Config.load('cloud')
 
 	local tab = UI.Tab {
 		tabTitle = 'Cloud',
 		description = 'Cloud Catcher options',
+		[1] = UI.Window {
+			x = 2, y = 2, ex = -2, ey = 4,
+		},
 		key = UI.TextEntry {
-			x = 3, ex = -3, y = 2,
+			x = 3, ex = -3, y = 3,
 			limit = 32,
 			value = config.key,
 			shadowText = 'Cloud key',
@@ -22,14 +21,15 @@ if _G.http.websocket then
 			},
 		},
 		button = UI.Button {
-			x = 3, y = 4,
-			text = 'Update',
+			x = -8, ex = -2, y = -2,
+			text = 'Apply',
 			event = 'update_key',
 		},
 		labelText = UI.TextArea {
-			x = 3, ex = -3, y = 6,
-			textColor = colors.yellow,
-			marginLeft = 0, marginRight = 0,
+			x = 2, ex = -2, y = 5, ey = -4,
+			textColor = 'yellow',
+			backgroundColor = 'black',
+			marginLeft = 1, marginRight = 1, marginTop = 1,
 			value = string.format(
 [[Use a non-changing cloud key. Note that only a single computer can use this session at one time.
 To obtain a key, visit:

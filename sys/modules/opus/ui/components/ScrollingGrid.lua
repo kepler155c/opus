@@ -29,6 +29,7 @@ function UI.ScrollingGrid:getViewArea()
 		height      = self.pageSize,           -- viewable height
 		totalHeight = Util.size(self.values),  -- total height
 		offsetY     = self.scrollOffset,       -- scroll offset
+		fill        = not self.disableHeader and self.headerBackgroundColor,
 	}
 end
 
@@ -56,4 +57,22 @@ function UI.ScrollingGrid:setIndex(index)
 		end
 	end
 	UI.Grid.setIndex(self, index)
+end
+
+function UI.ScrollingGrid.example()
+	local values = { }
+	for i = 1, 20 do
+		table.insert(values, { key = 'key' .. i, value = 'value' .. i })
+	end
+	return UI.ScrollingGrid {
+		values = values,
+		sortColumn = 'key',
+		columns = {
+			{ heading = 'key', key = 'key' },
+			{ heading = 'value', key = 'value' },
+		},
+		accelerators = {
+			grid_select = 'custom_select',
+		}
+	}
 end

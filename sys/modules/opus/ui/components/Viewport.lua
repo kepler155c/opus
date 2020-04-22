@@ -1,16 +1,15 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.Viewport = class(UI.Window)
 UI.Viewport.defaults = {
 	UIElement = 'Viewport',
-	backgroundColor = colors.cyan,
 	accelerators = {
 		down            = 'scroll_down',
 		up              = 'scroll_up',
 		home            = 'scroll_top',
+		left            = 'scroll_left',
+		right           = 'scroll_right',
 		[ 'end' ]       = 'scroll_bottom',
 		pageUp          = 'scroll_pageUp',
 		[ 'control-b' ] = 'scroll_pageUp',
@@ -18,53 +17,60 @@ UI.Viewport.defaults = {
 		[ 'control-f' ] = 'scroll_pageDown',
 	},
 }
-function UI.Viewport:layout()
-	UI.Window.layout(self)
-	if not self.canvas then
-		self.canvas = self:addLayer()
-	else
-		self.canvas:resize(self.width, self.height)
+function UI.Viewport:postInit()
+	if self.showScrollBar then
+		self.scrollBar = UI.ScrollBar()
 	end
 end
 
-function UI.Viewport:enable()
-	UI.Window.enable(self)
-	self.canvas:setVisible(true)
-end
-
-function UI.Viewport:disable()
-	UI.Window.disable(self)
-	self.canvas:setVisible(false)
-end
-
-function UI.Viewport:setScrollPosition(offset)
-	local oldOffset = self.offy
-	self.offy = math.max(offset, 0)
-	self.offy = math.min(self.offy, math.max(#self.canvas.lines, self.height) - self.height)
-	if self.offy ~= oldOffset then
+function UI.Viewport:setScrollPosition(offy, offx) -- argh - reverse
+	local oldOffy = self.offy
+	self.offy = math.max(offy, 0)
+	self.offy = math.min(self.offy, math.max(#self.lines, self.height) - self.height)
+	if self.offy ~= oldOffy then
 		if self.scrollBar then
 			self.scrollBar:draw()
 		end
-		self.canvas.offy = offset
-		self.canvas:dirty()
+		self.offy = offy
+		self:dirty(true)
+	end
+
+	local oldOffx = self.offx
+	self.offx = math.max(offx or 0, 0)
+	self.offx = math.min(self.offx, math.max(#self.lines[1], self.width) - self.width)
+	if self.offx ~= oldOffx then
+		if self.scrollBar then
+			--self.scrollBar:draw()
+		end
+		self.offx = offx or 0
+		self:dirty(true)
 	end
 end
 
-function UI.Viewport:write(x, y, text, bg, tc)
-	if y > #self.canvas.lines then
-		for i = #self.canvas.lines, y do
-			self.canvas.lines[i + 1] = { }
-			self.canvas:clearLine(i + 1, self.backgroundColor, self.textColor)
-		end
+function UI.Viewport:blit(x, y, text, bg, fg)
+	if y > #self.lines then
+		self:resizeBuffer(self.width, y)
 	end
-	return UI.Window.write(self, x, y, text, bg, tc)
+	return UI.Window.blit(self, x, y, text, bg, fg)
+end
+
+function UI.Viewport:write(x, y, text, bg, fg)
+	if y > #self.lines then
+		self:resizeBuffer(self.width, y)
+	end
+	return UI.Window.write(self, x, y, text, bg, fg)
+end
+
+function UI.Viewport:setViewHeight(h)
+	if h > #self.lines then
+		self:resizeBuffer(self.width, h)
+	end
 end
 
 function UI.Viewport:reset()
 	self.offy = 0
-	self.canvas.offy = 0
-	for i = self.height + 1, #self.canvas.lines do
-		self.canvas.lines[i] = nil
+	for i = self.height + 1, #self.lines do
+		self.lines[i] = nil
 	end
 end
 
@@ -72,26 +78,33 @@ function UI.Viewport:getViewArea()
 	return {
 		y           = (self.offy or 0) + 1,
 		height      = self.height,
-		totalHeight = #self.canvas.lines,
+		totalHeight = #self.lines,
 		offsetY     = self.offy or 0,
 	}
 end
 
 function UI.Viewport:eventHandler(event)
+	if #self.lines <= self.height then
+		return
+	end
 	if event.type == 'scroll_down' then
-		self:setScrollPosition(self.offy + 1)
+		self:setScrollPosition(self.offy + 1, self.offx)
 	elseif event.type == 'scroll_up' then
-		self:setScrollPosition(self.offy - 1)
+		self:setScrollPosition(self.offy - 1, self.offx)
+	elseif event.type == 'scroll_left' then
+		self:setScrollPosition(self.offy, self.offx - 1)
+	elseif event.type == 'scroll_right' then
+		self:setScrollPosition(self.offy, self.offx + 1)
 	elseif event.type == 'scroll_top' then
-		self:setScrollPosition(0)
+		self:setScrollPosition(0, 0)
 	elseif event.type == 'scroll_bottom' then
-		self:setScrollPosition(10000000)
+		self:setScrollPosition(10000000, 0)
 	elseif event.type == 'scroll_pageUp' then
-		self:setScrollPosition(self.offy - self.height)
+		self:setScrollPosition(self.offy - self.height, self.offx)
 	elseif event.type == 'scroll_pageDown' then
-		self:setScrollPosition(self.offy + self.height)
+		self:setScrollPosition(self.offy + self.height, self.offx)
 	elseif event.type == 'scroll_to' then
-		self:setScrollPosition(event.offset)
+		self:setScrollPosition(event.offset, 0)
 	else
 		return false
 	end

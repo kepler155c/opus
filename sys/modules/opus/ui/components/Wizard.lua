@@ -25,9 +25,6 @@ function UI.Wizard:postInit()
 	}
 
 	Util.merge(self, self.pages)
-	--for _, child in pairs(self.pages) do
-	--	child.ey = -2
-	--end
 end
 
 function UI.Wizard:add(pages)
@@ -50,9 +47,8 @@ end
 function UI.Wizard:enable(...)
 	self.enabled = true
 	self.index = 1
-	self.transitionHint = nil
 	local initial = self:getPage(1)
-	for _,child in pairs(self.children) do
+	for child in self:eachChild() do
 		if child == initial or not child.index then
 			child:enable(...)
 		else
@@ -93,12 +89,13 @@ function UI.Wizard:eventHandler(event)
 	elseif event.type == 'enable_view' then
 		local current = event.next or event.prev
 		if not current then error('property "index" is required on wizard pages') end
+		local hint
 
 		if event.current then
 			if event.next then
-				self.transitionHint = 'slideLeft'
+				hint = 'slideLeft'
 			elseif event.prev then
-				self.transitionHint = 'slideRight'
+				hint = 'slideRight'
 			end
 			event.current:disable()
 		end
@@ -117,6 +114,7 @@ function UI.Wizard:eventHandler(event)
 			self.nextButton.event = 'wizard_complete'
 		end
 		-- a new current view
+		current.transitionHint = hint
 		current:enable()
 		current:emit({ type = 'view_enabled', view = current })
 		self:draw()

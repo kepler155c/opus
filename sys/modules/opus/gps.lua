@@ -65,7 +65,7 @@ function GPS.locate(timeout, debug)
 	if debug then
 		print("Position is "..pos.x..","..pos.y..","..pos.z)
 	end
-	return vector.new(pos.x, pos.y, pos.z)
+	return pos and vector.new(pos.x, pos.y, pos.z)
 end
 
 function GPS.isAvailable()

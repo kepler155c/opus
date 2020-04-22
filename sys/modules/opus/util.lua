@@ -13,6 +13,7 @@ local _unpack   = table.unpack
 local _bor      = bit32.bor
 local _bxor     = bit32.bxor
 
+local byteArrayMT
 byteArrayMT = {
 	__tostring = function(a) return string.char(_unpack(a)) end,
 	__index = {
@@ -668,42 +669,31 @@ function Util.trimr(s)
 end
 -- end http://snippets.luacode.org/?p=snippets/trim_whitespace_from_string_76
 
--- word wrapping based on:
--- https://www.rosettacode.org/wiki/Word_wrap#Lua and
--- http://lua-users.org/wiki/StringRecipes
-local function paragraphwrap(text, linewidth, res)
-	linewidth = linewidth or 75
-	local spaceleft = linewidth
-	local line = { }
-
-	for word in text:gmatch("%S+") do
-		local len = #word + 1
-
-		--if colorMode then
-		--  word:gsub('()@([@%d])', function(pos, c) len = len - 2 end)
-		--end
-
-		if len > spaceleft then
-			table.insert(res, table.concat(line, ' '))
-			line = { word }
-			spaceleft = linewidth - len - 1
+local function wrap(text, max, lines)
+	local index = 1
+	repeat
+		if #text <= max then
+			table.insert(lines, text)
+			text = ''
+		elseif text:sub(max+1, max+1) == ' ' then
+			table.insert(lines, text:sub(index, max))
+			text = text:sub(max + 2)
 		else
-			table.insert(line, word)
-			spaceleft = spaceleft - len
+			local x = text:sub(1, max)
+			local s = x:match('(.*) ') or x
+			text = text:sub(#s + 1)
+			table.insert(lines, s)
 		end
-	end
-
-	table.insert(res, table.concat(line, ' '))
-	return table.concat(res, '\n')
+		text = text:match('^%s*(.*)')
+	until not text or #text == 0
+	return lines
 end
--- end word wrapping
 
 function Util.wordWrap(str, limit)
-	local longLines = Util.split(str)
 	local lines = { }
 
-	for _,line in ipairs(longLines) do
-		paragraphwrap(line, limit, lines)
+	for _,line in ipairs(Util.split(str)) do
+		wrap(line, limit, lines)
 	end
 
 	return lines

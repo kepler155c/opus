@@ -11,7 +11,7 @@ local systemPage = UI.Page {
 		settings = UI.Tab {
 			tabTitle = 'Category',
 			grid = UI.ScrollingGrid {
-				y = 2,
+				x = 2, y = 2, ex = -2, ey = -2,
 				columns = {
 					{ heading = 'Name',        key = 'name'        },
 					{ heading = 'Description', key = 'description' },
@@ -35,14 +35,14 @@ function systemPage.tabs.settings:eventHandler(event)
 			tab:disable()
 		end
 		systemPage.tabs:selectTab(tab)
-		self.parent:draw()
+		--self.parent:draw()
 		return true
 	end
 end
 
 function systemPage:eventHandler(event)
 	if event.type == 'quit' then
-		UI:exitPullEvents()
+		UI:quit()
 
 	elseif event.type == 'success_message' then
 		self.notification:success(event.message)
@@ -82,4 +82,4 @@ local plugins = loadDirectory(fs.combine(programDir, 'system'), { })
 systemPage.tabs.settings.grid:setValues(plugins)
 
 UI:setPage(systemPage)
-UI:pullEvents()
+UI:start()

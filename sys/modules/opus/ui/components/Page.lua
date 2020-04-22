@@ -1,60 +1,31 @@
-local Canvas = require('opus.ui.canvas')
 local class  = require('opus.class')
 local UI     = require('opus.ui')
 local Util   = require('opus.util')
-
-local colors = _G.colors
-
--- need to add offsets to this test
-local function getPosition(element)
-	local x, y = 1, 1
-	repeat
-		x = element.x + x - 1
-		y = element.y + y - 1
-		element = element.parent
-	until not element
-	return x, y
-end
 
 UI.Page = class(UI.Window)
 UI.Page.defaults = {
 	UIElement = 'Page',
 	accelerators = {
 		down = 'focus_next',
+		scroll_down = 'focus_next',
 		enter = 'focus_next',
 		tab = 'focus_next',
 		['shift-tab' ] = 'focus_prev',
 		up = 'focus_prev',
+		scroll_up = 'focus_prev',
 	},
-	backgroundColor = colors.cyan,
-	textColor = colors.white,
+	backgroundColor = 'primary',
+	textColor = 'white',
 }
 function UI.Page:postInit()
-	self.parent = self.parent or UI.defaultDevice
+	self.parent = self.parent or UI.term
 	self.__target = self
-	self.canvas = Canvas({
-		x = 1, y = 1, width = self.parent.width, height = self.parent.height,
-		isColor = self.parent.isColor,
-	})
-	self.canvas:clear(self.backgroundColor, self.textColor)
-end
-
-function UI.Page:enable()
-	self.canvas.visible = true
-	UI.Window.enable(self)
-
-	if not self.focused or not self.focused.enabled then
-		self:focusFirst()
-	end
-end
-
-function UI.Page:disable()
-	self.canvas.visible = false
-	UI.Window.disable(self)
 end
 
 function UI.Page:sync()
 	if self.enabled then
+		self:checkFocus()
+		self.parent:setCursorBlink(self.focused and self.focused.cursorBlink)
 		self.parent:sync()
 	end
 end
@@ -73,22 +44,23 @@ function UI.Page:pointToChild(x, y)
 	if self.__target == self then
 		return UI.Window.pointToChild(self, x, y)
 	end
-	x = x + self.offx - self.x + 1
-	y = y + self.offy - self.y + 1
---[[
-	-- this is supposed to fix when there are multiple sub canvases
-	local absX, absY = getPosition(self.__target)
-	if self.__target.canvas then
-		x = x - (self.__target.canvas.x - self.__target.x)
-		y = y - (self.__target.canvas.y - self.__target.y)
-		_syslog({'raw', self.__target.canvas.y, self.__target.y})
+
+	local function getPosition(element)
+		local x, y = 1, 1
+		repeat
+			x = element.x + x - 1
+			y = element.y + y - 1
+			element = element.parent
+		until not element
+		return x, y
 	end
-	]]
-	return self.__target:pointToChild(x, y)
+
+	local absX, absY = getPosition(self.__target)
+	return self.__target:pointToChild(x - absX + self.__target.x, y - absY + self.__target.y)
 end
 
 function UI.Page:getFocusables()
-	if self.__target == self or self.__target.pageType ~= 'modal' then
+	if self.__target == self or not self.__target.modal then
 		return UI.Window.getFocusables(self)
 	end
 	return self.__target:getFocusables()
@@ -149,10 +121,15 @@ function UI.Page:setFocus(child)
 	if not child.focused then
 		child.focused = true
 		child:emit({ type = 'focus_change', focused = child })
-		--self:emit({ type = 'focus_change', focused = child })
 	end
 
 	child:focus()
+end
+
+function UI.Page:checkFocus()
+	if not self.focused or not self.focused.enabled then
+		self.__target:focusFirst()
+	end
 end
 
 function UI.Page:eventHandler(event)

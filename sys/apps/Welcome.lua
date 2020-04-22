@@ -131,7 +131,7 @@ function page:eventHandler(event)
 		shell.openForegroundTab('PackageManager')
 
 	elseif event.type == 'wizard_complete' or event.type == 'cancel' then
-		UI.exitPullEvents()
+		UI:quit()
 
 	else
 		return UI.Page.eventHandler(self, event)
@@ -140,4 +140,4 @@ function page:eventHandler(event)
 end
 
 UI:setPage(page)
-UI:pullEvents()
+UI:start()

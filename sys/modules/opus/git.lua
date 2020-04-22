@@ -24,9 +24,9 @@ function git.list(repository)
 
 	local function getContents()
 		local dataUrl = string.format(TREE_URL, user, repo, branch)
-		local contents, msg = Util.httpGet(dataUrl,TREE_HEADERS)
+		local contents, msg = Util.httpGet(dataUrl, TREE_HEADERS)
 		if not contents then
-			error(_sformat('Failed to download %s\n%s', dataUrl, msg), 2)
+			error(string.format('Failed to download %s\n%s', dataUrl, msg), 2)
 		else
 			return json.decode(contents)
 		end

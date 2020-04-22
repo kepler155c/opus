@@ -3,7 +3,6 @@ local entry = require('opus.entry')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
 local _rep   = string.rep
 
 local function transform(directive)
@@ -19,15 +18,16 @@ UI.TextEntry = class(UI.Window)
 UI.TextEntry.docs = { }
 UI.TextEntry.defaults = {
 	UIElement = 'TextEntry',
-	--value = '',
 	shadowText = '',
 	focused = false,
-	textColor = colors.white,
-	shadowTextColor = colors.gray,
-	backgroundColor = colors.black, -- colors.lightGray,
-	backgroundFocusColor = colors.black, --lightGray,
+	textColor = 'white',
+	shadowTextColor = 'gray',
+	markBackgroundColor = 'gray',
+	backgroundColor = 'black',
+	backgroundFocusColor = 'black',
 	height = 1,
 	limit = 6,
+	cursorBlink = true,
 	accelerators = {
 		[ 'control-c' ] = 'copy',
 	}
@@ -74,7 +74,9 @@ function UI.TextEntry:draw()
 		text = self.shadowText
 	end
 
-	self:write(1, 1, ' ' .. Util.widthify(text, self.width - 2) .. ' ', bg, tc)
+	local ss = self.entry.scroll > 0 and '\183' or ' '
+	self:write(2, 1, Util.widthify(text, self.width - 2) .. ' ', bg, tc)
+	self:write(1, 1, ss, bg, self.shadowTextColor)
 
 	if self.entry.mark.active then
 		local tx = math.max(self.entry.mark.x - self.entry.scroll, 0)
@@ -85,7 +87,7 @@ function UI.TextEntry:draw()
 		end
 
 		if tx ~= tex then
-			self:write(tx + 2, 1, text:sub(tx + 1, tex), colors.gray, tc)
+			self:write(tx + 2, 1, text:sub(tx + 1, tex), self.markBackgroundColor, tc)
 		end
 	end
 	if self.focused then
@@ -106,13 +108,12 @@ function UI.TextEntry:updateCursor()
 	self:setCursorPos(self.entry.pos - self.entry.scroll + 2, 1)
 end
 
+function UI.TextEntry:markAll()
+	self.entry:markAll()
+end
+
 function UI.TextEntry:focus()
 	self:draw()
-	if self.focused then
-		self:setCursorBlink(true)
-	else
-		self:setCursorBlink(false)
-	end
 end
 
 function UI.TextEntry:eventHandler(event)

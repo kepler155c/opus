@@ -1,7 +1,6 @@
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
 local help   = _G.help
 
 UI:configure('Help', ...)
@@ -12,11 +11,11 @@ for _,topic in pairs(help.topics()) do
 end
 
 UI:addPage('main', UI.Page {
-	labelText = UI.Text {
+	UI.Text {
 		x = 3, y = 2,
 		value = 'Search',
 	},
-	filter = UI.TextEntry {
+	UI.TextEntry {
 		x = 10, y = 2, ex = -3,
 		limit = 32,
 	},
@@ -38,9 +37,7 @@ UI:addPage('main', UI.Page {
 
 		elseif event.type == 'grid_select' then
 			if self.grid:getSelected() then
-				local name = self.grid:getSelected().name
-
-				UI:setPage('topic', name)
+				UI:setPage('topic', self.grid:getSelected().name)
 			end
 
 		elseif event.type == 'text_change' then
@@ -57,6 +54,7 @@ UI:addPage('main', UI.Page {
 			self.grid:update()
 			self.grid:setIndex(1)
 			self.grid:draw()
+
 		else
 			return UI.Page.eventHandler(self, event)
 		end
@@ -64,13 +62,12 @@ UI:addPage('main', UI.Page {
 })
 
 UI:addPage('topic', UI.Page {
-	backgroundColor = colors.black,
+	backgroundColor = 'black',
 	titleBar = UI.TitleBar {
 		title = 'text',
 		event = 'back',
 	},
 	helpText = UI.TextArea {
-		backgroundColor = colors.black,
 		x = 2, ex = -1, y = 3, ey = -2,
 	},
 	accelerators = {
