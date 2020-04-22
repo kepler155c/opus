@@ -1,13 +1,11 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.FlatButton = class(UI.Button)
 UI.FlatButton.defaults = {
 	UIElement = 'FlatButton',
-	textColor = colors.black,
-	textFocusColor = colors.white,
+	textColor = 'black',
+	textFocusColor = 'white',
 	noPadding = true,
 }
 function UI.FlatButton:setParent()

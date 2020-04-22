@@ -5,7 +5,7 @@ UI.TabBarMenuItem = class(UI.Button)
 UI.TabBarMenuItem.defaults = {
 	UIElement = 'TabBarMenuItem',
 	event = 'tab_select',
-	textInactiveColor = colors.lightGray,
+	textInactiveColor = 'lightGray',
 }
 function UI.TabBarMenuItem:draw()
 	if self.selected then

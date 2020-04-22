@@ -14,7 +14,7 @@ function UI.TextArea:setText(text)
 	self:draw()
 end
 
-function UI.TextArea:focus()
+function UI.TextArea.focus()
 	-- allow keyboard scrolling
 end
 
@@ -25,6 +25,7 @@ function UI.TextArea:draw()
 end
 
 function UI.TextArea.example()
+	local Ansi = require('opus.ansi')
 	return UI.Window {
 		backgroundColor = 2048,
 		t1 = UI.TextArea {
@@ -33,14 +34,16 @@ function UI.TextArea.example()
 		},
 		t2 = UI.TextArea {
 			y = 5,
-			value = [[1
+			backgroundColor = 'green',
+			value = string.format([[now %%is the %stime %sfor%s all good men to come to the aid of their country.
+1
 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26
 3
 4
 5
 6
 7
-8]]
+8]], Ansi.yellow, Ansi.onred, Ansi.reset),
 		}
 	}
 end

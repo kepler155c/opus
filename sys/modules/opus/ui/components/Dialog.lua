@@ -1,8 +1,6 @@
 local class  = require('opus.class')
 local UI     = require('opus.ui')
 
-local colors = _G.colors
-
 UI.Dialog = class(UI.SlideOut)
 UI.Dialog.defaults = {
 	UIElement = 'Dialog',
@@ -33,7 +31,7 @@ function UI.Dialog.example()
 			cancelEvent = 'slide_hide',
 			text = UI.Text {
 				x = 5, y = 1, width = 20,
-				textColor = colors.gray,
+				textColor = 'gray',
 			},
 			textEntry = UI.TextEntry {
 				formKey = 'level',

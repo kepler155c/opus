@@ -3,13 +3,11 @@ local Event = require('opus.event')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.StatusBar = class(UI.Window)
 UI.StatusBar.defaults = {
 	UIElement = 'StatusBar',
-	backgroundColor = colors.lightGray,
-	textColor = colors.gray,
+	backgroundColor = 'lightGray',
+	textColor = 'gray',
 	height = 1,
 	ey = -1,
 }

@@ -1,14 +1,13 @@
 local Array      = require('opus.array')
 local Blit       = require('opus.ui.blit')
+local Canvas     = require('opus.ui.canvas')
 local class      = require('opus.class')
 local Event      = require('opus.event')
 local Input      = require('opus.input')
 local Transition = require('opus.ui.transition')
 local Util       = require('opus.util')
-local Canvas     = require('opus.ui.canvas')
 
 local _rep       = string.rep
-local _sub       = string.sub
 local colors     = _G.colors
 local device     = _G.device
 local fs         = _G.fs
@@ -191,11 +190,7 @@ function UI:configure(appName, ...)
 	end
 
 	if defaults.theme then
-		for k,v in pairs(defaults.theme) do
-			if self[k] and self[k].defaults then
-				Util.merge(self[k].defaults, v)
-			end
-		end
+		Util.deepMerge(self.theme, defaults.theme)
 	end
 end
 
@@ -217,6 +212,9 @@ function UI:generateTheme(filename)
 	local t = { }
 
 	local function getName(d)
+		if type(d) == 'string' then
+			return string.format("'%s'", d)
+		end
 		for c, n in pairs(colors) do
 			if n == d then
 				return 'colors.' .. c
@@ -434,7 +432,6 @@ UI.Window.defaults = {
 	UIElement = 'Window',
 	x = 1,
 	y = 1,
-	-- z = 0, -- eventually...
 	offx = 0,
 	offy = 0,
 	cursorX = 1,
@@ -771,11 +768,8 @@ function UI.Window:centeredWrite(y, text, bg, fg)
 	if #text >= self.width then
 		self:write(1, y, text, bg, fg)
 	else
-		local space = math.floor((self.width-#text) / 2)
-		local filler = _rep(' ', space + 1)
-		local str = _sub(filler, 1, space) .. text
-		str = str .. _sub(filler, self.width - #str + 1)
-		self:write(1, y, str, bg, fg)
+		local x = math.floor((self.width-#text) / 2) + 1
+		self:write(x, y, text, bg, fg)
 	end
 end
 
@@ -1076,6 +1070,9 @@ function UI.Device:sync()
 
 	if self:getCursorBlink() then
 		self.device.setCursorPos(self.cursorX, self.cursorY)
+		if self.isColor then
+			self.device.setTextColor(colors.orange)
+		end
 		self.device.setCursorBlink(true)
 	end
 end
@@ -1117,6 +1114,11 @@ loadComponents()
 UI:loadTheme('usr/config/ui.theme')
 Util.merge(UI.Window.defaults, UI.theme.Window)
 Util.merge(UI.colors, UI.theme.colors)
-UI:setDefaultDevice(UI.Device({ device = term.current() }))
+UI:setDefaultDevice(UI.Device())
+
+for k,v in pairs(UI.colors) do
+	Canvas.colorPalette[k] = Canvas.colorPalette[v]
+	Canvas.grayscalePalette[k] = Canvas.grayscalePalette[v]
+end
 
 return UI

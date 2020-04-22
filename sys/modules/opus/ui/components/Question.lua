@@ -15,13 +15,13 @@ function UI.Question:postInit()
     self.yes_button = UI.Button {
         x = x,
         text = 'Yes',
-        backgroundColor = UI.colors.primary,
+        backgroundColor = 'primary',
         event = 'question_yes',
     }
     self.no_button = UI.Button {
         x = x + 5,
         text = 'No',
-        backgroundColor = UI.colors.primary,
+        backgroundColor = 'primary',
         event = 'question_no',
     }
 end

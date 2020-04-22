@@ -1,16 +1,14 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.DropMenuItem = class(UI.Button)
 UI.DropMenuItem.defaults = {
 	UIElement = 'DropMenuItem',
-	textColor = colors.black,
-	backgroundColor = colors.white,
-	textFocusColor = colors.white,
-	textInactiveColor = colors.lightGray,
-	backgroundFocusColor = colors.lightGray,
+	textColor = 'black',
+	backgroundColor = 'white',
+	textFocusColor = 'white',
+	textInactiveColor = 'lightGray',
+	backgroundFocusColor = 'lightGray',
 }
 function UI.DropMenuItem:eventHandler(event)
 	if event.type == 'button_activate' then

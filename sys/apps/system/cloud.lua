@@ -2,8 +2,6 @@ local Ansi   = require('opus.ansi')
 local Config = require('opus.config')
 local UI     = require('opus.ui')
 
-local colors = _G.colors
-
 if _G.http.websocket then
 	local config = Config.load('cloud')
 
@@ -29,8 +27,8 @@ if _G.http.websocket then
 		},
 		labelText = UI.TextArea {
 			x = 2, ex = -2, y = 5, ey = -4,
-			textColor = colors.yellow,
-			backgroundColor = colors.black,
+			textColor = 'yellow',
+			backgroundColor = 'black',
 			marginLeft = 1, marginRight = 1, marginTop = 1,
 			value = string.format(
 [[Use a non-changing cloud key. Note that only a single computer can use this session at one time.

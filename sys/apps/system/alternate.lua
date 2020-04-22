@@ -2,8 +2,6 @@ local Array  = require('opus.array')
 local Config = require('opus.config')
 local UI     = require('opus.ui')
 
-local colors     = _G.colors
-
 local tab = UI.Tab {
 	tabTitle = 'Preferred',
 	description = 'Select preferred applications',
@@ -25,7 +23,7 @@ local tab = UI.Tab {
 		},
 		getRowTextColor = function(self, row)
 			if row == self.values[1] then
-				return colors.yellow
+				return 'yellow'
 			end
 			return UI.Grid.getRowTextColor(self, row)
 		end,

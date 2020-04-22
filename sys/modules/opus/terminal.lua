@@ -36,7 +36,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	local maxScroll = 100
 	local cx, cy = 1, 1
 	local blink = false
-	local bg, fg = parent.getBackgroundColor(), parent.getTextColor()
+	local _bg, _fg = parent.getBackgroundColor(), parent.getTextColor()
 
 	win.canvas = Canvas({
 		x       = sx,
@@ -45,6 +45,8 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		height  = h,
 		isColor = parent.isColor(),
 		offy    = 0,
+		bg      = _bg,
+		fg      = _fg,
 	})
 
 	local function update()
@@ -67,7 +69,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 
 	function win.write(str)
 		str = tostring(str) or ''
-		win.canvas:write(cx, cy +  win.canvas.offy, str, bg, fg)
+		win.canvas:write(cx, cy +  win.canvas.offy, str, win.canvas.bg, win.canvas.fg)
 		win.setCursorPos(cx + #str, cy)
 		update()
 	end
@@ -83,7 +85,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		for i = #win.canvas.lines, win.canvas.height + 1, -1 do
 			win.canvas.lines[i] = nil
 		end
-		win.canvas:clear(bg, fg)
+		win.canvas:clear()
 		update()
 	end
 
@@ -93,7 +95,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.clearLine()
-		win.canvas:clearLine(cy + win.canvas.offy, bg, fg)
+		win.canvas:clearLine(cy + win.canvas.offy)
 		win.setCursorPos(cx, cy)
 		update()
 	end
@@ -126,7 +128,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	win.isColour = win.isColor
 
 	function win.setTextColor(c)
-		fg = c
+		win.canvas.fg = c
 	end
 	win.setTextColour = win.setTextColor
 
@@ -146,7 +148,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	win.setPaletteColour = win.setPaletteColor
 
 	function win.setBackgroundColor(c)
-		bg = c
+		win.canvas.bg = c
 	end
 	win.setBackgroundColour = win.setBackgroundColor
 
@@ -160,7 +162,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 			local lines = #win.canvas.lines
 			for i = 1, n do
 				win.canvas.lines[lines + i] = { }
-				win.canvas:clearLine(lines + i, bg, fg)
+				win.canvas:clearLine(lines + i)
 			end
 			while #win.canvas.lines > maxScroll do
 				table.remove(win.canvas.lines, 1)
@@ -172,12 +174,12 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.getTextColor()
-		return fg
+		return win.canvas.fg
 	end
 	win.getTextColour = win.getTextColor
 
 	function win.getBackgroundColor()
-		return bg
+		return win.canvas.bg
 	end
 	win.getBackgroundColour = win.getBackgroundColor
 
@@ -201,7 +203,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	function win.restoreCursor()
 		if isVisible then
 			win.setCursorPos(cx, cy)
-			win.setTextColor(fg)
+			win.setTextColor(win.canvas.fg)
 			win.setCursorBlink(blink)
 		end
 	end

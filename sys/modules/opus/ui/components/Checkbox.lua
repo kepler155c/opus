@@ -1,8 +1,6 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.Checkbox = class(UI.Window)
 UI.Checkbox.defaults = {
 	UIElement = 'Checkbox',
@@ -11,9 +9,9 @@ UI.Checkbox.defaults = {
 	leftMarker = UI.extChars and '\124' or '[',
 	rightMarker = UI.extChars and '\124' or ']',
 	value = false,
-	textColor = colors.white,
-	backgroundColor = colors.black,
-	backgroundFocusColor = colors.lightGray,
+	textColor = 'white',
+	backgroundColor = 'black',
+	backgroundFocusColor = 'lightGray',
 	height = 1,
 	width = 3,
 	accelerators = {

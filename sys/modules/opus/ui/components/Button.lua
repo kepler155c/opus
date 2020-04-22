@@ -2,17 +2,15 @@ local class = require('opus.class')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.Button = class(UI.Window)
 UI.Button.defaults = {
 	UIElement = 'Button',
 	text = 'button',
-	backgroundColor = colors.lightGray,
-	backgroundFocusColor = colors.gray,
-	textFocusColor = colors.white,
-	textInactiveColor = colors.gray,
-	textColor = colors.black,
+	backgroundColor = 'lightGray',
+	backgroundFocusColor = 'gray',
+	textFocusColor = 'white',
+	textInactiveColor = 'gray',
+	textColor = 'black',
 	centered = true,
 	height = 1,
 	focusIndicator = ' ',
@@ -73,7 +71,7 @@ function UI.Button.example()
 		},
 		button2 = UI.Button {
 			x = 2, y = 4,
-			backgroundColor = colors.green,
+			backgroundColor = 'green',
 			event = 'custom_event',
 		},
 		button3 = UI.Button {

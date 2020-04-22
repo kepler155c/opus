@@ -3,7 +3,6 @@ local entry = require('opus.entry')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
 local _rep   = string.rep
 
 local function transform(directive)
@@ -21,11 +20,11 @@ UI.TextEntry.defaults = {
 	UIElement = 'TextEntry',
 	shadowText = '',
 	focused = false,
-	textColor = colors.white,
-	shadowTextColor = colors.gray,
-	markBackgroundColor = colors.gray,
-	backgroundColor = colors.black, -- colors.lightGray,
-	backgroundFocusColor = colors.black, --lightGray,
+	textColor = 'white',
+	shadowTextColor = 'gray',
+	markBackgroundColor = 'gray',
+	backgroundColor = 'black',
+	backgroundFocusColor = 'black',
 	height = 1,
 	limit = 6,
 	cursorBlink = true,

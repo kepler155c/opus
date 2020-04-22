@@ -4,36 +4,34 @@ local Sound = require('opus.sound')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.Notification = class(UI.Window)
 UI.Notification.defaults = {
 	UIElement = 'Notification',
-	backgroundColor = colors.gray,
+	backgroundColor = 'gray',
 	closeInd = UI.extChars and '\215' or '*',
 	height = 3,
 	timeout = 3,
 	anchor = 'bottom',
 }
-function UI.Notification:draw()
+function UI.Notification.draw()
 end
 
-function UI.Notification:enable()
+function UI.Notification.enable()
 end
 
 function UI.Notification:error(value, timeout)
-	self.backgroundColor = colors.red
+	self.backgroundColor = 'red'
 	Sound.play('entity.villager.no', .5)
 	self:display(value, timeout)
 end
 
 function UI.Notification:info(value, timeout)
-	self.backgroundColor = colors.lightGray
+	self.backgroundColor = 'lightGray'
 	self:display(value, timeout)
 end
 
 function UI.Notification:success(value, timeout)
-	self.backgroundColor = colors.green
+	self.backgroundColor = 'green'
 	self:display(value, timeout)
 end
 

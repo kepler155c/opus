@@ -669,42 +669,8 @@ function Util.trimr(s)
 end
 -- end http://snippets.luacode.org/?p=snippets/trim_whitespace_from_string_76
 
--- word wrapping based on:
--- https://www.rosettacode.org/wiki/Word_wrap#Lua and
--- http://lua-users.org/wiki/StringRecipes
-local function paragraphwrap(text, linewidth, res)
-	linewidth = linewidth or 75
-	local spaceleft = linewidth
-	local line = { }
-
-	for word in text:gmatch("%S+") do
-		local len = #word + 1
-
-		--if colorMode then
-		--  word:gsub('()@([@%d])', function(pos, c) len = len - 2 end)
-		--end
-
-		if len > spaceleft then
-			table.insert(res, table.concat(line, ' '))
-			line = { word }
-			spaceleft = linewidth - len - 1
-		else
-			table.insert(line, word)
-			spaceleft = spaceleft - len
-		end
-	end
-
-	table.insert(res, table.concat(line, ' '))
-	return table.concat(res, '\n')
-end
--- end word wrapping
-
---[[
-	-- better wrapping - needs further testing before replacing the current wrapping
-	functions
-local function wrap(text, max)
+local function wrap(text, max, lines)
 	local index = 1
-	local lines = { }
 	repeat
 		if #text <= max then
 			table.insert(lines, text)
@@ -722,14 +688,12 @@ local function wrap(text, max)
 	until not text or #text == 0
 	return lines
 end
-]]
 
 function Util.wordWrap(str, limit)
-	local longLines = Util.split(str)
 	local lines = { }
 
-	for _,line in ipairs(longLines) do
-		paragraphwrap(line, limit, lines)
+	for _,line in ipairs(Util.split(str)) do
+		wrap(line, limit, lines)
 	end
 
 	return lines

@@ -2,8 +2,6 @@ local Security = require('opus.security')
 local SHA      = require('opus.crypto.sha2')
 local UI       = require('opus.ui')
 
-local colors   = _G.colors
-
 return UI.Tab {
 	tabTitle = 'Password',
 	description = 'Wireless network password',
@@ -26,8 +24,8 @@ return UI.Tab {
 	},
 	info = UI.TextArea {
 		x = 2, ex = -2, y = 5, ey = -4,
-		backgroundColor = colors.black,
-		textColor = colors.yellow,
+		backgroundColor = 'black',
+		textColor = 'yellow',
 		inactive = true,
 		marginLeft = 1, marginRight = 1, marginTop = 1,
 		value = 'Add a password to enable other computers to connect to this one.',

@@ -2,8 +2,6 @@ local class  = require('opus.class')
 local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
-local colors = _G.colors
-
 UI.Page = class(UI.Window)
 UI.Page.defaults = {
 	UIElement = 'Page',
@@ -16,8 +14,8 @@ UI.Page.defaults = {
 		up = 'focus_prev',
 		scroll_up = 'focus_prev',
 	},
-	backgroundColor = UI.colors.primary,
-	textColor = colors.white,
+	backgroundColor = 'primary',
+	textColor = 'white',
 }
 function UI.Page:postInit()
 	self.parent = self.parent or UI.term

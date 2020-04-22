@@ -30,7 +30,7 @@ end
 
 function UI.SlideOut:draw()
 	if not self.noFill then
-		self:fillArea(1, 1, self.width, self.height, string.rep('\127', self.width), colors.black, colors.gray)
+		self:fillArea(1, 1, self.width, self.height, string.rep('\127', self.width), 'black', 'gray')
 	end
 	self:drawChildren()
 end

@@ -9,15 +9,20 @@ local colors = _G.colors
 
 local Canvas = class()
 
-Canvas.colorPalette = { }
-Canvas.darkPalette = { }
-Canvas.grayscalePalette = { }
-
-for n = 1, 16 do
-	Canvas.colorPalette[2 ^ (n - 1)]     = _sub("0123456789abcdef", n, n)
-	Canvas.grayscalePalette[2 ^ (n - 1)] = _sub("088888878877787f", n, n)
-	Canvas.darkPalette[2 ^ (n - 1)]      = _sub("8777777f77fff77f", n, n)
+local function genPalette(map)
+	local t = { }
+	local rcolors = Util.transpose(colors)
+	for n = 1, 16 do
+		local pow = 2 ^ (n - 1)
+		local ch = _sub(map, n, n)
+		t[pow] = ch
+		t[rcolors[pow]] = ch
+	end
+	return t
 end
+
+Canvas.colorPalette     = genPalette('0123456789abcdef')
+Canvas.grayscalePalette = genPalette('088888878877787f')
 
 --[[
 	A canvas can have more lines than canvas.height in order to scroll
@@ -119,19 +124,12 @@ function Canvas:copy()
 end
 
 function Canvas:addLayer(layer)
-	local canvas = Canvas({
-		x       = layer.x,
-		y       = layer.y,
-		width   = layer.width,
-		height  = layer.height,
-		isColor = self.isColor,
-	})
-	canvas.parent = self
+	layer.parent = self
 	if not self.children then
 		self.children = { }
 	end
-	table.insert(self.children, canvas)
-	return canvas
+	table.insert(self.children, 1, layer)
+	return layer
 end
 
 function Canvas:removeLayer()
@@ -177,54 +175,42 @@ end
 function Canvas:blit(x, y, text, bg, fg)
 	if y > 0 and y <= #self.lines and x <= self.width then
 		local width = #text
+		local tx, tex
 
-		-- fix ffs
 		if x < 1 then
-			text = _sub(text, 2 - x)
-			if bg then
-				bg = _sub(bg, 2 - x)
-			end
-			if fg then
-				fg = _sub(fg, 2 - x)
-			end
+			tx = 2 - x
 			width = width + x - 1
 			x = 1
 		end
 
 		if x + width - 1 > self.width then
-			text = _sub(text, 1, self.width - x + 1)
-			if bg then
-				bg = _sub(bg, 1, self.width - x + 1)
-			end
-			if fg then
-				fg = _sub(fg, 1, self.width - x + 1)
-			end
-			width = #text
+			tex = self.width - x + (tx or 1)
+			width = tex - (tx or 1) + 1
 		end
 
 		if width > 0 then
-
-			local function replace(sstr, pos, rstr)
-				if pos == 1 and width == self.width then
-					return rstr
-				elseif pos == 1 then
-					return rstr .. _sub(sstr, pos+width)
-				elseif pos + width > self.width then
-					return _sub(sstr, 1, pos-1) .. rstr
+			local function replace(sstr, rstr)
+				if tx or tex then
+					rstr = _sub(rstr, tx or 1, tex)
 				end
-				return _sub(sstr, 1, pos-1) .. rstr .. _sub(sstr, pos+width)
+				if x == 1 and width == self.width then
+					return rstr
+				elseif x == 1 then
+					return rstr .. _sub(sstr, x + width)
+				elseif x + width > self.width then
+					return _sub(sstr, 1, x - 1) .. rstr
+				end
+				return _sub(sstr, 1, x - 1) .. rstr .. _sub(sstr, x + width)
 			end
 
 			local line = self.lines[y]
-			if line then
-				line.dirty = true
-				line.text = replace(line.text, x, text, width)
-				if fg then
-					line.fg = replace(line.fg, x, fg, width)
-				end
-				if bg then
-					line.bg = replace(line.bg, x, bg, width)
-				end
+			line.dirty = true
+			line.text = replace(line.text, text)
+			if fg then
+				line.fg = replace(line.fg, fg)
+			end
+			if bg then
+				line.bg = replace(line.bg, bg)
 			end
 		end
 	end
@@ -383,9 +369,6 @@ function Canvas:__renderLayers(device, offset, doubleBuffer)
 end
 
 function Canvas:__blitRect(device, src, tgt, doubleBuffer)
-	src = src or { x = 1, y = 1, ex = self.ex - self.x + 1, ey = self.ey - self.y + 1 }
-	tgt = tgt or self
-
 	-- for visualizing updates on the screen
 	--[[
 	if Canvas.__visualize or self.visualize then
@@ -424,18 +407,6 @@ function Canvas:__blitRect(device, src, tgt, doubleBuffer)
 			end
 		end
 	end
-end
-
-if not ({ ... })[1] then
-	local UI = require('opus.ui')
-
-	UI:setPage(UI.Page {
-		button = UI.Button {
-			x = 5, y = 5,
-			text = 'abc'
-		}
-	})
-	UI:start()
 end
 
 return Canvas

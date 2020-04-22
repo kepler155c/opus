@@ -4,7 +4,6 @@ local Socket = require('opus.socket')
 local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
-local colors     = _G.colors
 local device     = _G.device
 local network    = _G.network
 local os         = _G.os
@@ -58,7 +57,7 @@ local page = UI.Page {
 		autospace = true,
 		getRowTextColor = function(self, row, selected)
 			if not row.active then
-				return colors.lightGray
+				return 'lightGray'
 			end
 			return UI.Grid.getRowTextColor(self, row, selected)
 		end,

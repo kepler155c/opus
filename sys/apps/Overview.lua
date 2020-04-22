@@ -10,7 +10,6 @@ local Tween    = require('opus.ui.tween')
 local UI       = require('opus.ui')
 local Util     = require('opus.util')
 
-local colors     = _G.colors
 local device     = _G.device
 local fs         = _G.fs
 local os         = _G.os
@@ -94,8 +93,8 @@ local page = UI.Page {
 	tabBar = UI.TabBar {
 		ey = -2,
 		width = 8,
-		selectedBackgroundColor = UI.colors.primary,
-		backgroundColor = UI.colors.tertiary,
+		selectedBackgroundColor = 'primary',
+		backgroundColor = 'tertiary',
 		layout = function(self)
 			self.height = nil
 			UI.TabBar.layout(self)
@@ -103,7 +102,7 @@ local page = UI.Page {
 	},
 	tray = UI.Window {
 		y = -1, width = 8,
-		backgroundColor = UI.colors.tertiary,
+		backgroundColor = 'tertiary',
 		newApp = UI.FlatButton {
 			x = 2,
 			text = '+', event = 'new',
@@ -150,7 +149,7 @@ local page = UI.Page {
 				text = 'Load', event = 'loadIcon', help = 'Load icon file',
 			},
 			image = UI.NftImage {
-				backgroundColor = colors.black,
+				backgroundColor = 'black',
 				y = 6, x = 2, height = 3, width = 8,
 			},
 		},
@@ -330,9 +329,9 @@ function page.container:setCategory(categoryName, animate)
 					text = program.title,
 					centered = false,
 					backgroundColor = self:getProperty('backgroundColor'),
-					backgroundFocusColor = colors.gray,
-					textColor = colors.white,
-					textFocusColor = colors.white,
+					backgroundFocusColor = 'gray',
+					textColor = 'white',
+					textFocusColor = 'white',
 					event = 'button',
 					app = program,
 				}
@@ -349,9 +348,9 @@ function page.container:setCategory(categoryName, animate)
 					y = 4,
 					text = title,
 					backgroundColor = self:getProperty('backgroundColor'),
-					backgroundFocusColor = colors.gray,
-					textColor = colors.white,
-					textFocusColor = colors.white,
+					backgroundFocusColor = 'gray',
+					textColor = 'white',
+					textFocusColor = 'white',
 					width = #title + 2,
 					event = 'button',
 					app = program,
@@ -590,7 +589,6 @@ function page.editor:eventHandler(event)
 
 	elseif event.type == 'focus_change' then
 		self.statusBar:setStatus(event.focused.help or '')
-		self.statusBar:draw()
 
 	elseif event.type == 'editIcon' then
 		local filename = '/tmp/editing.nft'

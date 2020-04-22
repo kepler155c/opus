@@ -150,7 +150,6 @@ page = UI.Page {
 				})
 			end
 			self.tabs.properties.grid:setValues(t)
-			self.tabs.properties.grid:update()
 			self.tabs.properties.grid:draw()
 
 			t = { }
@@ -162,7 +161,6 @@ page = UI.Page {
 				end
 			end
 			self.tabs.methodsTab.grid:setValues(t)
-			self.tabs.methodsTab.grid:update()
 			self.tabs.methodsTab.grid:draw()
 
 		elseif event.type == 'edit_property' then
@@ -184,7 +182,7 @@ page = UI.Page {
 			}
 			self.ox = math.max(self.ox + sizing[event.ie.code][1], 1)
 			self.oy = math.max(self.oy + sizing[event.ie.code][2], 1)
-			UI.term.device.clear()
+			UI.term:clear()
 			self:resize()
 			self:draw()
 		end

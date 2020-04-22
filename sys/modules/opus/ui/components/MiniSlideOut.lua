@@ -5,7 +5,7 @@ UI.MiniSlideOut = class(UI.SlideOut)
 UI.MiniSlideOut.defaults = {
 	UIElement = 'MiniSlideOut',
     noFill = true,
-    backgroundColor = UI.colors.primary,
+    backgroundColor = 'primary',
     height = 1,
 }
 function UI.MiniSlideOut:postInit()

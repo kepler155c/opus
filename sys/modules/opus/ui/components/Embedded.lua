@@ -3,13 +3,11 @@ local Event    = require('opus.event')
 local Terminal = require('opus.terminal')
 local UI       = require('opus.ui')
 
-local colors = _G.colors
-
 UI.Embedded = class(UI.Window)
 UI.Embedded.defaults = {
 	UIElement = 'Embedded',
-	backgroundColor = colors.black,
-	textColor = colors.white,
+	backgroundColor = 'black',
+	textColor = 'white',
 	maxScroll = 100,
 	accelerators = {
 		up = 'scroll_up',

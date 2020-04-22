@@ -1,15 +1,13 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.MenuBar = class(UI.Window)
 UI.MenuBar.defaults = {
 	UIElement = 'MenuBar',
 	buttons = { },
 	height = 1,
-	backgroundColor = UI.colors.secondary,
-	textColor = colors.black,
+	backgroundColor = 'secondary',
+	textColor = 'black',
 	spacing = 2,
 	lastx = 1,
 	buttonClass = 'MenuItem',

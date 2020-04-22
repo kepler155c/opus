@@ -2,8 +2,6 @@ local class = require('opus.class')
 local Sound = require('opus.sound')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.Form = class(UI.Window)
 UI.Form.defaults = {
 	UIElement = 'Form',
@@ -68,7 +66,7 @@ function UI.Form:createForm()
 				table.insert(self.children, UI.Text {
 					x = self.margin,
 					y = child.y,
-					textColor = colors.black,
+					textColor = 'black',
 					width = #child.formLabel,
 					value = child.formLabel,
 				})

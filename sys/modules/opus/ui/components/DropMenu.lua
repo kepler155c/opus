@@ -2,12 +2,10 @@ local class = require('opus.class')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
-local colors = _G.colors
-
 UI.DropMenu = class(UI.MenuBar)
 UI.DropMenu.defaults = {
 	UIElement = 'DropMenu',
-	backgroundColor = colors.white,
+	backgroundColor = 'white',
 	buttonClass = 'DropMenuItem',
 }
 function UI.DropMenu:layout()

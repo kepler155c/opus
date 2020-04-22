@@ -6,9 +6,9 @@ UI.TabBar = class(UI.MenuBar)
 UI.TabBar.defaults = {
 	UIElement = 'TabBar',
 	buttonClass = 'TabBarMenuItem',
-	backgroundColor = colors.black,
-	selectedBackgroundColor = UI.colors.primary,
-	unselectedBackgroundColor = UI.colors.tertiary,
+	backgroundColor = 'black',
+	selectedBackgroundColor = 'primary',
+	unselectedBackgroundColor = 'tertiary',
 }
 function UI.TabBar:enable()
 	UI.MenuBar.enable(self)

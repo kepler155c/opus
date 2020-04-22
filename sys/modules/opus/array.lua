@@ -1,3 +1,5 @@
+local Util = require('opus.util')
+
 local Array = { }
 
 function Array.filter(it, f)
@@ -18,5 +20,7 @@ function Array.removeByValue(t, e)
 		end
 	end
 end
+
+Array.find = Util.find
 
 return Array

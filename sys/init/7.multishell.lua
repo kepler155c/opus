@@ -1,3 +1,4 @@
+local Blit     = require('opus.ui.blit')
 local Config   = require('opus.config')
 local trace    = require('opus.trace')
 local Util     = require('opus.util')
@@ -45,6 +46,7 @@ local config = {
 Config.load('multishell', config)
 
 local _colors = parentTerm.isColor() and config.color or config.standard
+local palette = parentTerm.isColor() and Blit.colorPalette or Blit.grayscalePalette
 
 local function redrawMenu()
 	if not tabsDirty then
@@ -205,17 +207,11 @@ end)
 kernel.hook('multishell_redraw', function()
 	tabsDirty = false
 
-	local function write(x, text, bg, fg)
-		parentTerm.setBackgroundColor(bg)
-		parentTerm.setTextColor(fg)
-		parentTerm.setCursorPos(x, 1)
-		parentTerm.write(text)
-	end
-
-	local bg = _colors.tabBarBackgroundColor
-	parentTerm.setBackgroundColor(bg)
-	parentTerm.setCursorPos(1, 1)
-	parentTerm.clearLine()
+	local blit = Blit(w, {
+		bg = _colors.tabBarBackgroundColor,
+		fg = _colors.textColor,
+		palette = palette,
+	})
 
 	local currentTab = kernel.getFocused()
 
@@ -252,20 +248,25 @@ kernel.hook('multishell_redraw', function()
 			tabX = tabX + tab.width
 			if tab ~= currentTab then
 				local textColor = tab.isDead and _colors.errorColor or _colors.textColor
-				write(tab.sx, tab.title:sub(1, tab.width - 1),
+				blit:write(tab.sx, tab.title:sub(1, tab.width - 1),
 					_colors.backgroundColor, textColor)
 			end
 		end
 	end
 
 	if currentTab then
-		write(currentTab.sx - 1,
-			' ' .. currentTab.title:sub(1, currentTab.width - 1) .. ' ',
-			_colors.focusBackgroundColor, _colors.focusTextColor)
+		if currentTab.sx then
+			blit:write(currentTab.sx - 1,
+				' ' .. currentTab.title:sub(1, currentTab.width - 1) .. ' ',
+				_colors.focusBackgroundColor, _colors.focusTextColor)
+		end
 		if not currentTab.noTerminate then
-			write(w, closeInd, _colors.backgroundColor, _colors.focusTextColor)
+			blit:write(w, closeInd, nil, _colors.focusTextColor)
 		end
 	end
+
+	parentTerm.setCursorPos(1, 1)
+	parentTerm.blit(blit.text, blit.fg, blit.bg)
 
 	if currentTab and currentTab.window then
 		currentTab.window.restoreCursor()

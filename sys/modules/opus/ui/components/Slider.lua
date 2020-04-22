@@ -2,17 +2,15 @@ local class  = require('opus.class')
 local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
-local colors = _G.colors
-
 UI.Slider = class(UI.Window)
 UI.Slider.defaults = {
 	UIElement = 'Slider',
 	height = 1,
 	barChar = UI.extChars and '\140' or '-',
-	barColor = colors.gray,
+	barColor = 'gray',
 	sliderChar = UI.extChars and '\143' or '\124',
-	sliderColor = colors.blue,
-	sliderFocusColor = colors.lightBlue,
+	sliderColor = 'blue',
+	sliderFocusColor = 'lightBlue',
 	leftBorder = UI.extChars and '\141' or '\124',
 	rightBorder = UI.extChars and '\142' or '\124',
 	value = 0,

@@ -1,13 +1,11 @@
 local class = require('opus.class')
 local UI    = require('opus.ui')
 
-local colors = _G.colors
-
 UI.VerticalMeter = class(UI.Window)
 UI.VerticalMeter.defaults = {
 	UIElement = 'VerticalMeter',
-	backgroundColor = colors.gray,
-	meterColor = colors.lime,
+	backgroundColor = 'gray',
+	meterColor = 'lime',
 	width = 1,
 	value = 0,
 }
