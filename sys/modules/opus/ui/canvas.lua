@@ -361,7 +361,8 @@ function Canvas:__renderLayers(device, offset, doubleBuffer)
 			  y = region[2] - offset.y,
 			  ex = region[3] - offset.x,
 			  ey = region[4] - offset.y },
-			{ x = region[1], y = region[2] }, doubleBuffer)
+			{ x = region[1], y = region[2] },
+			doubleBuffer)
 	end
 	self.regions = nil
 

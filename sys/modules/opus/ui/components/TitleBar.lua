@@ -77,9 +77,7 @@ function UI.TitleBar.example()
 				x = 2, y = 3,
 				text = 'Press',
 			},
-			focus = function (self)
-				self:raise()
-			end,
+			focus = UI.Window.raise,
 		},
 		draw = function(self, isBG)
 			for i = 1, self.height do

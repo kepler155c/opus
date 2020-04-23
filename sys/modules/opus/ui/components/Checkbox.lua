@@ -12,6 +12,7 @@ UI.Checkbox.defaults = {
 	textColor = 'white',
 	backgroundColor = 'black',
 	backgroundFocusColor = 'lightGray',
+	event = 'checkbox_change',
 	height = 1,
 	width = 3,
 	accelerators = {
@@ -52,7 +53,7 @@ end
 function UI.Checkbox:eventHandler(event)
 	if event.type == 'checkbox_toggle' then
 		self.value = not self.value
-		self:emit({ type = 'checkbox_change', checked = self.value, element = self })
+		self:emit({ type = self.event, checked = self.value, element = self })
 		self:draw()
 		return true
 	end

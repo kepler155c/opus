@@ -138,19 +138,6 @@ function page:eventHandler(event)
 		self:executeStatement('_ENV')
 		command = nil
 
-	elseif event.type == 'hide_output' then
-		self.output:disable()
-
-		self.titleBar.oy = -1
-		self.titleBar.event = 'show_output'
-		self.titleBar.closeInd = '^'
-		self.titleBar:resize()
-
-		self.grid.ey = -2
-		self.grid:resize()
-
-		self:draw()
-
 	elseif event.type == 'tab_select' then
 		self:setFocus(self.prompt)
 
@@ -201,7 +188,7 @@ function page:eventHandler(event)
 			command = nil
 			self.grid:setValues(t)
 			self.grid:setIndex(1)
-			self:draw()
+			self.grid:draw()
 		end
 		return true
 
@@ -247,7 +234,7 @@ function page:setResult(result)
 	end
 	self.grid:setValues(t)
 	self.grid:setIndex(1)
-	self:draw()
+	self.grid:draw()
 end
 
 function page.grid:eventHandler(event)

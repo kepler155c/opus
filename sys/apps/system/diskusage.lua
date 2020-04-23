@@ -136,6 +136,19 @@ function tab:enable()
 	self:updateDrives()
 	self:updateInfo()
 	UI.Tab.enable(self)
+	self.handler = Event.on({ 'disk', 'disk_eject' }, function()
+		os.sleep(1)
+		if tab.enabled then
+			tab:updateDrives()
+			tab:updateInfo()
+			tab:sync()
+		end
+	end)
+end
+
+function tab:disable()
+	Event.off(self.handler)
+	UI.Tab.disable(self)
 end
 
 function tab:eventHandler(event)
@@ -146,12 +159,5 @@ function tab:eventHandler(event)
 	end
 	return true
 end
-
-Event.on({ 'disk', 'disk_eject' }, function()
-	os.sleep(1)
-	tab:updateDrives()
-	tab:updateInfo()
-	tab:sync()
-end)
 
 return tab
