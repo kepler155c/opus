@@ -267,6 +267,16 @@ function fs.mount(path, fstype, ...)
 	if not vfs then
 		error('Invalid file system type')
 	end
+
+-- hack - get the mount point for the path
+-- ie. if packages is mapped to disk/packages
+-- and a request to mount /packages/foo
+-- then use disk/packages/foo as the mountPoint
+local n = getNode(path)
+if n.fstype == 'linkfs' then
+	path = path:gsub(n.mountPoint, n.source, 1)
+end
+
 	local node = vfs.mount(path, ...)
 	if node then
 		local parts = splitpath(path)
@@ -279,9 +289,12 @@ function fs.mount(path, fstype, ...)
 			end
 			if not tp.nodes[d] then
 				tp.nodes[d] = Util.shallowCopy(tp)
+
+				-- another related hack
 				if tp.fstype == 'linkfs' then
 					tp.nodes[d].source = fs.combine(tp.nodes[d].source, d)
 				end
+
 				tp.nodes[d].nodes = { }
 				tp.nodes[d].mountPoint = fs.combine(tp.mountPoint, d)
 			end
