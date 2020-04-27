@@ -279,6 +279,9 @@ function fs.mount(path, fstype, ...)
 			end
 			if not tp.nodes[d] then
 				tp.nodes[d] = Util.shallowCopy(tp)
+				if tp.fstype == 'linkfs' then
+					tp.nodes[d].source = fs.combine(tp.nodes[d].source, d)
+				end
 				tp.nodes[d].nodes = { }
 				tp.nodes[d].mountPoint = fs.combine(tp.mountPoint, d)
 			end
