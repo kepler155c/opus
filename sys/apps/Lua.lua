@@ -10,10 +10,8 @@ local os         = _G.os
 local textutils  = _G.textutils
 local term       = _G.term
 
-local _exit
-
 local sandboxEnv = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
-sandboxEnv.exit = function() _exit = true end
+sandboxEnv.exit = function() UI:quit() end
 sandboxEnv._echo = function( ... ) return { ... } end
 _G.requireInjector(sandboxEnv)
 
@@ -362,10 +360,6 @@ function page:executeStatement(statement)
 		if m and not self.output.enabled then
 			self:emit({ type = 'show_output' })
 		end
-	end
-
-	if _exit then
-		UI:quit()
 	end
 end
 

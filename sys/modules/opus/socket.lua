@@ -6,12 +6,11 @@ local Util     = require('opus.util')
 
 local device    = _G.device
 local os        = _G.os
-local network   = _G.network
 
 local socketClass = { }
 
 function socketClass:read(timeout)
-	local data, distance = network.getTransport().read(self)
+	local data, distance = _G.network.getTransport().read(self)
 	if data then
 		return data, distance
 	end
@@ -26,7 +25,7 @@ function socketClass:read(timeout)
 		local e, id = os.pullEvent()
 
 		if e == 'transport_' .. self.uid then
-			data, distance = network.getTransport().read(self)
+			data, distance = _G.network.getTransport().read(self)
 			if data then
 				os.cancelTimer(timerId)
 				return data, distance
@@ -47,7 +46,7 @@ end
 
 function socketClass:write(data)
 	if self.connected then
-		network.getTransport().write(self, {
+		_G.network.getTransport().write(self, {
 			type = 'DATA',
 			seq = self.wseq,
 			data = data,
@@ -58,7 +57,7 @@ end
 
 function socketClass:ping()
 	if self.connected then
-		network.getTransport().ping(self)
+		_G.network.getTransport().ping(self)
 		return true
 	end
 end
@@ -72,7 +71,7 @@ function socketClass:close()
 		self.connected = false
 	end
 	device.wireless_modem.close(self.sport)
-	network.getTransport().close(self)
+	_G.network.getTransport().close(self)
 end
 
 local Socket = { }
@@ -127,9 +126,9 @@ function Socket.connect(host, port, options)
 	local socket = newSocket(host == os.getComputerID())
 	socket.dhost = tonumber(host)
 	if options and options.keypair then
-		socket.privKey, socket.pubKey = unpack(options.keypair)
+		socket.privKey, socket.pubKey = table.unpack(options.keypair)
 	else
-		socket.privKey, socket.pubKey = network.getKeyPair()
+		socket.privKey, socket.pubKey = _G.network.getKeyPair()
 	end
 	local identifier = options and options.identifier or Security.getIdentifier()
 
@@ -159,7 +158,7 @@ function Socket.connect(host, port, options)
 				socket.remotePubKey = Util.hexToByteArray(msg.pk)
 				socket.options = msg.options or { }
 				setupCrypto(socket, true)
-				network.getTransport().open(socket)
+				_G.network.getTransport().open(socket)
 				return socket
 
 			elseif msg.type == 'NOPASS' then
@@ -192,7 +191,7 @@ local function trusted(socket, msg, options)
 			if data and data.ts and tonumber(data.ts) then
 				if math.abs(os.epoch('utc') - data.ts) < 4096 then
 					socket.remotePubKey = Util.hexToByteArray(data.pk)
-					socket.privKey, socket.pubKey = network.getKeyPair()
+					socket.privKey, socket.pubKey = _G.network.getKeyPair()
 					setupCrypto(socket)
 					return true
 				end
@@ -241,7 +240,7 @@ function Socket.server(port, options)
 					options = socket.options.ENCRYPT and { ENCRYPT = true },
 				})
 
-				network.getTransport().open(socket)
+				_G.network.getTransport().open(socket)
 				return socket
 
 			else

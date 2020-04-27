@@ -19,6 +19,10 @@ for k,fn in pairs(fs) do
 	end
 end
 
+function nativefs.resolve(_, dir)
+	return dir
+end
+
 function nativefs.list(node, dir)
 	local files
 	if fs.native.isDir(dir) then
@@ -137,7 +141,7 @@ end
 fs.getNode = getNode
 
 local methods = { 'delete', 'getFreeSpace', 'exists', 'isDir', 'getSize',
-	'isReadOnly', 'makeDir', 'getDrive', 'list', 'open' }
+	'isReadOnly', 'makeDir', 'getDrive', 'list', 'open', 'attributes' }
 
 for _,m in pairs(methods) do
 	fs[m] = function(dir, ...)
@@ -145,6 +149,12 @@ for _,m in pairs(methods) do
 		local node = getNode(dir)
 		return node.fs[m](node, dir, ...)
 	end
+end
+
+-- if a link, return the source for this link
+function fs.resolve(dir)
+	local n = getNode(dir)
+	return n.fs.resolve and n.fs.resolve(n, dir) or dir
 end
 
 function fs.complete(partial, dir, includeFiles, includeSlash)
@@ -268,14 +278,11 @@ function fs.mount(path, fstype, ...)
 		error('Invalid file system type')
 	end
 
--- hack - get the mount point for the path
--- ie. if packages is mapped to disk/packages
--- and a request to mount /packages/foo
--- then use disk/packages/foo as the mountPoint
-local n = getNode(path)
-if n.fstype == 'linkfs' then
-	path = path:gsub(n.mountPoint, n.source, 1)
-end
+	-- get the mount point for the path
+	-- ie. if packages is mapped to disk/packages
+	-- and a request to mount /packages/foo
+	-- then use disk/packages/foo as the mountPoint
+	path = fs.resolve(path)
 
 	local node = vfs.mount(path, ...)
 	if node then
@@ -290,8 +297,7 @@ end
 			if not tp.nodes[d] then
 				tp.nodes[d] = Util.shallowCopy(tp)
 
-				-- another related hack
-				if tp.fstype == 'linkfs' then
+				if tp.nodes[d].source then
 					tp.nodes[d].source = fs.combine(tp.nodes[d].source, d)
 				end
 

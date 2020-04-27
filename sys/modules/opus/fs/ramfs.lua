@@ -9,13 +9,26 @@ function ramfs.mount(_, nodeType)
 		return {
 			nodes = { },
 			size = 0,
+			created = os.epoch('utc'),
+			modification = os.epoch('utc'),
 		}
 	elseif nodeType == 'file' then
 		return {
 			size = 0,
+			created = os.epoch('utc'),
+			modification = os.epoch('utc'),
 		}
 	end
 	error('ramfs syntax: [directory, file]')
+end
+
+function ramfs.attributes(node)
+	return {
+		created = node.created,
+		isDir = not not node.nodes,
+		modification = node.modification,
+		size = node.size,
+	}
 end
 
 function ramfs.delete(node, dir)

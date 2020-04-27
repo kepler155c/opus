@@ -11,6 +11,17 @@ function urlfs.mount(_, url)
 	end
 	return {
 		url = url,
+		created = os.epoch('utc'),
+		modification = os.epoch('utc'),
+	}
+end
+
+function urlfs.attributes(node)
+	return {
+		created = node.created,
+		isDir = false,
+		modification = node.modification,
+		size = node.size or 0,
 	}
 end
 

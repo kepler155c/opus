@@ -151,7 +151,7 @@ if action == 'uninstall' then
 	runScript(manifest.uninstall)
 
 	local packageDir = fs.combine('packages', name)
-	fs.delete(packageDir)
+	fs.delete(fs.resolve(packageDir))
 	print('removed: ' .. packageDir)
 	return
 end

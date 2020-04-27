@@ -6,7 +6,6 @@ local fs = _G.fs
 local netfs = { }
 
 local function remoteCommand(node, msg)
-
 	for _ = 1, 2 do
 		if not node.socket then
 			node.socket = Socket.connect(node.id, 139)
@@ -33,17 +32,17 @@ local function remoteCommand(node, msg)
 	error('netfs: Connection failed', 2)
 end
 
-local methods = { 'delete', 'exists', 'getFreeSpace', 'makeDir', 'list', 'listEx' }
+local methods = { 'delete', 'exists', 'getFreeSpace', 'makeDir', 'list', 'listEx', 'attributes' }
 
-local function resolveDir(dir, node)
+local function resolve(node, dir)
 	-- TODO: Wrong ! (does not support names with dashes)
 	dir = dir:gsub(node.mountPoint, '', 1)
-	return fs.combine(node.directory, dir)
+	return fs.combine(node.source, dir)
 end
 
 for _,m in pairs(methods) do
 	netfs[m] = function(node, dir)
-		dir = resolveDir(dir, node)
+		dir = resolve(node, dir)
 
 		return remoteCommand(node, {
 			fn = m,
@@ -52,14 +51,14 @@ for _,m in pairs(methods) do
 	end
 end
 
-function netfs.mount(_, id, directory)
+function netfs.mount(_, id, source)
 	if not id or not tonumber(id) then
 		error('ramfs syntax: computerId [directory]')
 	end
 	return {
 		id = tonumber(id),
 		nodes = { },
-		directory = directory or '',
+		source = source or '',
 	}
 end
 
@@ -68,7 +67,7 @@ function netfs.getDrive()
 end
 
 function netfs.complete(node, partial, dir, includeFiles, includeSlash)
-	dir = resolveDir(dir, node)
+	dir = resolve(node, dir)
 
 	return remoteCommand(node, {
 		fn = 'complete',
@@ -77,8 +76,8 @@ function netfs.complete(node, partial, dir, includeFiles, includeSlash)
 end
 
 function netfs.copy(node, s, t)
-	s = resolveDir(s, node)
-	t = resolveDir(t, node)
+	s = resolve(node, s)
+	t = resolve(node, t)
 
 	return remoteCommand(node, {
 		fn = 'copy',
@@ -87,37 +86,37 @@ function netfs.copy(node, s, t)
 end
 
 function netfs.isDir(node, dir)
-	if dir == node.mountPoint and node.directory == '' then
+	if dir == node.mountPoint and node.source == '' then
 		return true
 	end
 	return remoteCommand(node, {
 		fn = 'isDir',
-		args = { resolveDir(dir, node) },
+		args = { resolve(node, dir) },
 	})
 end
 
 function netfs.isReadOnly(node, dir)
-	if dir == node.mountPoint and node.directory == '' then
+	if dir == node.mountPoint and node.source == '' then
 		return false
 	end
 	return remoteCommand(node, {
 		fn = 'isReadOnly',
-		args = { resolveDir(dir, node) },
+		args = { resolve(node, dir) },
 	})
 end
 
 function netfs.getSize(node, dir)
-	if dir == node.mountPoint and node.directory == '' then
+	if dir == node.mountPoint and node.source == '' then
 		return 0
 	end
 	return remoteCommand(node, {
 		fn = 'getSize',
-		args = { resolveDir(dir, node) },
+		args = { resolve(node, dir) },
 	})
 end
 
 function netfs.find(node, spec)
-	spec = resolveDir(spec, node)
+	spec = resolve(node, spec)
 	local list = remoteCommand(node, {
 		fn = 'find',
 		args = { spec },
@@ -131,8 +130,8 @@ function netfs.find(node, spec)
 end
 
 function netfs.move(node, s, t)
-	s = resolveDir(s, node)
-	t = resolveDir(t, node)
+	s = resolve(node, s)
+	t = resolve(node, t)
 
 	return remoteCommand(node, {
 		fn = 'move',
@@ -141,7 +140,7 @@ function netfs.move(node, s, t)
 end
 
 function netfs.open(node, fn, fl)
-	fn = resolveDir(fn, node)
+	fn = resolve(node, fn)
 
 	local vfh = remoteCommand(node, {
 		fn = 'open',
