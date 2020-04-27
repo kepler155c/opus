@@ -6,3 +6,6 @@ UI.WizardPage.defaults = {
 	UIElement = 'WizardPage',
 	ey = -2,
 }
+function UI.WizardPage.validate()
+	return true
+end

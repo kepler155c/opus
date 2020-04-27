@@ -37,9 +37,3 @@ function UI.TabBar:eventHandler(event)
 	return UI.MenuBar.eventHandler(self, event)
 end
 
-function UI.TabBar:selectTab(text)
-	local menuItem = Util.find(self.children, 'text', text)
-	if menuItem then
-		menuItem.selected = true
-	end
-end

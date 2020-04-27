@@ -6,7 +6,7 @@ local colors = _G.colors
 local device = _G.device
 
 return UI.Tab {
-	tabTitle = 'Network',
+	title = 'Network',
 	description = 'Networking options',
 	info = UI.TextArea {
 		x = 2, y = 5, ex = -2, ey = -2,

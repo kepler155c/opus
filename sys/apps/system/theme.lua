@@ -17,7 +17,7 @@ for k,v in pairs(UI.colors) do
 end
 
 return UI.Tab {
-	tabTitle = 'Theme',
+	title = 'Theme',
 	description = 'Theme colors',
 	grid1 = UI.ScrollingGrid {
 		y = 2, ey = -10, x = 2, ex = -17,

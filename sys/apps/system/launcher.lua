@@ -7,7 +7,7 @@ local fs     = _G.fs
 local config = Config.load('multishell')
 
 local tab = UI.Tab {
-	tabTitle = 'Launcher',
+	title = 'Launcher',
 	description = 'Set the application launcher',
 	[1] = UI.Window {
 		x = 2, y = 2, ex = -2, ey = 5,

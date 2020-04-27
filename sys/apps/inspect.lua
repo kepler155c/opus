@@ -49,7 +49,7 @@ page = UI.Page {
 		backgroundColor = colors.red,
 		y = '50%',
 		properties = UI.Tab {
-			tabTitle = 'Properties',
+			title = 'Properties',
 			grid = UI.ScrollingGrid {
 				headerBackgroundColor = colors.red,
 				sortColumn = 'key',
@@ -64,7 +64,7 @@ page = UI.Page {
 		},
 		methodsTab = UI.Tab {
 			index = 2,
-			tabTitle = 'Methods',
+			title = 'Methods',
 			grid = UI.ScrollingGrid {
 				ex = '50%',
 				headerBackgroundColor = colors.red,
@@ -85,7 +85,7 @@ page = UI.Page {
 		},
 		events = UI.Tab {
 			index = 1,
-			tabTitle = 'Events',
+			title = 'Events',
 			UI.MenuBar {
 				y = -1,
 				backgroundColor = colors.red,

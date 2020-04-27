@@ -46,7 +46,7 @@ local page = UI.Page {
 		configTabs = UI.Tabs {
 			y = 2,
 			filterTab = UI.Tab {
-				tabTitle = 'Filter',
+				title = 'Filter',
 				noFill = true,
 				filterGridText = UI.Text {
 					x = 2, y = 2,
@@ -93,7 +93,7 @@ local page = UI.Page {
 				},
 			},
 			modemTab = UI.Tab {
-				tabTitle = 'Modem',
+				title = 'Modem',
 				channelGrid = UI.ScrollingGrid {
 					x = 2, y = 2,
 					width = 12, height = 5,

@@ -33,7 +33,7 @@ function UI.Image:draw()
 			for x = 1, #line do
 				local ch = lookup:find(line:sub(x, x))
 				if ch then
-					self:write(x, y, ' ', 2 ^ (ch -1))
+					self:write(x, y, ' ', 2 ^ (ch - 1))
 				end
 			end
 		end
@@ -47,6 +47,7 @@ end
 
 function UI.Image.example()
 	return UI.Image {
+		backgroundColor = 'primary',
 		filename = 'test.paint',
 	}
 end

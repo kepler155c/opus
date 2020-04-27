@@ -39,7 +39,7 @@ if not _colors.backgroundColor then
 end
 
 return UI.Tab {
-	tabTitle = 'Shell',
+	title = 'Shell',
 	description = 'Shell options',
 	grid1 = UI.ScrollingGrid {
 		y = 2, ey = -10, x = 2, ex = -17,

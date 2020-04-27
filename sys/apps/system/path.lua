@@ -3,7 +3,7 @@ local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
 local tab = UI.Tab {
-	tabTitle = 'Path',
+	title = 'Path',
 	description = 'Set the shell path',
 	tabClose = true,
 	[1] = UI.Window {

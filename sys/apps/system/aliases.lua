@@ -4,7 +4,7 @@ local UI     = require('opus.ui')
 local kernel = _G.kernel
 
 local aliasTab = UI.Tab {
-	tabTitle = 'Aliases',
+	title = 'Aliases',
 	description = 'Shell aliases',
 	alias = UI.TextEntry {
 		x = 2, y = 2, ex = -2,

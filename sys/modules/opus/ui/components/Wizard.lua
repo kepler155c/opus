@@ -15,52 +15,50 @@ function UI.Wizard:postInit()
 	}
 	self.previousButton = UI.Button {
 		x = -18, y = -1,
-		text = '< Back',
+		text = '\17 Back',
 		event = 'previousView',
 	}
 	self.nextButton = UI.Button {
 		x = -9, y = -1,
-		text = 'Next >',
+		text = 'Next \16',
 		event = 'nextView',
 	}
 
 	Util.merge(self, self.pages)
 end
 
-function UI.Wizard:add(pages)
-	Util.merge(self.pages, pages)
-	Util.merge(self, pages)
-
-	for _, child in pairs(self.pages) do
-		child.ey = child.ey or -2
+function UI.Wizard:getPages()
+	local t = { }
+	for child in self:eachChild() do
+		if type(child) == 'table' and child.UIElement == 'WizardPage' then
+			table.insert(t, child)
+		end
 	end
-
-	if self.parent then
-		self:initChildren()
-	end
+	return t
 end
 
 function UI.Wizard:getPage(index)
-	return Util.find(self.pages, 'index', index)
+	local pages = self:getPages()
+	return Util.find(pages, 'index', index)
 end
 
-function UI.Wizard:enable(...)
+function UI.Wizard:enable()
 	self.enabled = true
 	self.index = 1
-	local initial = self:getPage(1)
 	for child in self:eachChild() do
-		if child == initial or not child.index then
-			child:enable(...)
-		else
+		if child.UIElement ~= 'WizardPage' then
+			child:enable()
+		elseif child.enabled then
 			child:disable()
 		end
 	end
+	local initial = self:getPage(1)
 	self:emit({ type = 'enable_view', next = initial })
 end
 
 function UI.Wizard:isViewValid()
 	local currentView = self:getPage(self.index)
-	return not currentView.validate and true or currentView:validate()
+	return currentView:validate()
 end
 
 function UI.Wizard:eventHandler(event)
@@ -107,7 +105,7 @@ function UI.Wizard:eventHandler(event)
 		end
 
 		if self:getPage(self.index + 1) then
-			self.nextButton.text = 'Next >'
+			self.nextButton.text = 'Next \16'
 			self.nextButton.event = 'nextView'
 		else
 			self.nextButton.text = 'Accept'
@@ -124,29 +122,27 @@ end
 function UI.Wizard.example()
 	return UI.Wizard {
 		ey = -2,
-		pages = {
-			splash = UI.WizardPage {
-				index = 1,
-				intro = UI.TextArea {
-					inactive = true,
-					x = 3, ex = -3, y = 2, ey = -2,
-					value = 'sample text',
-				},
+		splash = UI.WizardPage {
+			index = 1,
+			intro = UI.TextArea {
+				inactive = true,
+				x = 3, ex = -3, y = 2, ey = -2,
+				value = 'sample text',
 			},
-			label = UI.WizardPage {
-				index = 2,
-				intro = UI.TextArea {
-					inactive = true,
-					x = 3, ex = -3, y = 2, ey = -2,
-					value = 'sample more text',
-				},
+		},
+		label = UI.WizardPage {
+			index = 2,
+			intro = UI.TextArea {
+				inactive = true,
+				x = 3, ex = -3, y = 2, ey = -2,
+				value = 'sample more text',
 			},
-			password = UI.WizardPage {
-				index = 3,
-				text = UI.TextEntry {
-					x = 12, ex = -3, y = 2,
-					shadowText = 'tet',
-				},
+		},
+		password = UI.WizardPage {
+			index = 3,
+			text = UI.TextEntry {
+				x = 12, ex = -3, y = 2,
+				shadowText = 'tet',
 			},
 		},
 	}

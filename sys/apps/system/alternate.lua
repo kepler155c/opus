@@ -3,7 +3,7 @@ local Config = require('opus.config')
 local UI     = require('opus.ui')
 
 local tab = UI.Tab {
-	tabTitle = 'Preferred',
+	title = 'Preferred',
 	description = 'Select preferred applications',
 	apps = UI.ScrollingGrid {
 		x = 2, y = 2,

@@ -10,6 +10,13 @@ if not fs.exists('usr/autorun') then
 	fs.makeDir('usr/autorun')
 end
 
+-- move the fstab out of config so that the config directory
+-- can be remapped to another disk (and for consistency)
+if fs.exists('usr/config/fstab') and not fs.exists('usr/etc/fstab') then
+	fs.move('usr/config/fstab', 'usr/etc/fstab')
+end
+fs.loadTab('usr/etc/fstab')
+
 -- TODO: Temporary
 local upgrade = Util.readTable('usr/config/shell')
 if upgrade and (not upgrade.upgraded or upgrade.upgraded ~= 1) then
@@ -45,5 +52,3 @@ shell.setPath(table.concat(path, ':'))
 
 --_G.LUA_PATH = config.lua_path
 --_G.settings.set('mbs.shell.require_path', config.lua_path)
-
-fs.loadTab('usr/config/fstab')

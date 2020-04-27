@@ -16,7 +16,7 @@ local NftImages = {
 }
 
 local tab = UI.Tab {
-	tabTitle = 'Disks Usage',
+	title = 'Disks Usage',
 	description = 'Visualise HDD and disks usage',
 
 	drives = UI.ScrollingGrid {
@@ -138,11 +138,9 @@ function tab:enable()
 	UI.Tab.enable(self)
 	self.handler = Event.on({ 'disk', 'disk_eject' }, function()
 		os.sleep(1)
-		if tab.enabled then
-			tab:updateDrives()
-			tab:updateInfo()
-			tab:sync()
-		end
+		tab:updateDrives()
+		tab:updateInfo()
+		tab:sync()
 	end)
 end
 

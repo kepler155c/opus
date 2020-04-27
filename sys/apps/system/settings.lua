@@ -8,7 +8,7 @@ local transform = {
 }
 
 return settings and UI.Tab {
-	tabTitle = 'Settings',
+	title = 'Settings',
 	description = 'Computercraft settings',
 	grid = UI.Grid {
 		x = 2, y = 2, ex = -2, ey = -2,

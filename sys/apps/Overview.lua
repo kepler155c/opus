@@ -29,12 +29,14 @@ if not _ENV.multishell then
 end
 
 local REGISTRY_DIR = 'usr/.registry'
-local DEFAULT_ICON = NFT.parse("\0308\0317\153\153\153\153\153\
-\0307\0318\153\153\153\153\153\
-\0308\0317\153\153\153\153\153")
-local TRANS_ICON = NFT.parse("\0302\0312\32\32\32\32\32\
+
+-- icon:gsub('.', function(b) return '\\' .. b:byte() end)
+local DEFAULT_ICON = NFT.parse('\30\55\31\48\136\140\140\140\132\
+\30\48\31\55\149\31\48\128\128\128\30\55\149\
+\30\55\31\48\138\143\143\143\133')
+local TRANS_ICON = NFT.parse('\0302\0312\32\32\32\32\32\
 \0302\0312\32\32\32\32\32\
-\0302\0312\32\32\32\32\32")
+\0302\0312\32\32\32\32\32')
 
 -- overview
 local uid = _ENV.multishell.getCurrent()

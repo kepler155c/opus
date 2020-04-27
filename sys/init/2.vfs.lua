@@ -134,6 +134,8 @@ local function getNode(dir)
 	return node
 end
 
+fs.getNode = getNode
+
 local methods = { 'delete', 'getFreeSpace', 'exists', 'isDir', 'getSize',
 	'isReadOnly', 'makeDir', 'getDrive', 'list', 'open' }
 

@@ -3,7 +3,7 @@ local UI     = require('opus.ui')
 local Util   = require('opus.util')
 
 local tab = UI.Tab {
-	tabTitle = 'Requires',
+	title = 'Requires',
 	description = 'Require path',
 	tabClose = true,
 	entry = UI.TextEntry {

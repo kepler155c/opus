@@ -6,7 +6,7 @@ if _G.http.websocket then
 	local config = Config.load('cloud')
 
 	local tab = UI.Tab {
-		tabTitle = 'Cloud',
+		title = 'Cloud',
 		description = 'Cloud Catcher options',
 		[1] = UI.Window {
 			x = 2, y = 2, ex = -2, ey = 4,

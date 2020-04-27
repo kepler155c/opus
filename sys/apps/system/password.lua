@@ -3,7 +3,7 @@ local SHA      = require('opus.crypto.sha2')
 local UI       = require('opus.ui')
 
 return UI.Tab {
-	tabTitle = 'Password',
+	title = 'Password',
 	description = 'Wireless network password',
 	[1] = UI.Window {
 		x = 2, y = 2, ex = -2, ey = 4,

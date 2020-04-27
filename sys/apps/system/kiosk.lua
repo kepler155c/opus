@@ -5,7 +5,7 @@ local peripheral = _G.peripheral
 local settings   = _G.settings
 
 return peripheral.find('monitor') and UI.Tab {
-	tabTitle = 'Kiosk',
+	title = 'Kiosk',
 	description = 'Kiosk options',
 	form = UI.Form {
 		x = 2, y = 2, ex = -2, ey = 5,

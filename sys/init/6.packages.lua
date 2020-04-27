@@ -14,7 +14,7 @@ for name in pairs(Packages:installed()) do
 	local packageDir = fs.combine('packages', name)
 
 	table.insert(appPaths, 1, '/' .. packageDir)
-	local apiPath = fs.combine(packageDir, 'apis')
+	local apiPath = fs.combine(packageDir, 'apis') -- TODO: rename dir to 'modules' (someday)
 	if fs.exists(apiPath) then
 		fs.mount(fs.combine('rom/modules/main', name), 'linkfs', apiPath)
 	end

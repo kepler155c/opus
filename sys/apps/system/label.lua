@@ -5,7 +5,7 @@ local fs   = _G.fs
 local os   = _G.os
 
 return UI.Tab {
-	tabTitle = 'Label',
+	title = 'Label',
 	description = 'Set the computer label',
 	labelText = UI.Text {
 		x = 3, y = 3,

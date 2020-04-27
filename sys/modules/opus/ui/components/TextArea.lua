@@ -8,11 +8,12 @@ UI.TextArea.defaults = {
 	value = '',
 	showScrollBar = true,
 }
-function UI.TextArea:setText(text)
+function UI.TextArea:setValue(text)
 	self:reset()
 	self.value = text
 	self:draw()
 end
+UI.TextArea.setText = UI.TextArea.setValue -- deprecate
 
 function UI.TextArea.focus()
 	-- allow keyboard scrolling

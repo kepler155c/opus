@@ -45,8 +45,9 @@ local page = UI.Page {
 	},
 	tabs = UI.Tabs {
 		y = 3,
-		[1] = UI.Tab {
-			tabTitle = 'Formatted',
+		formatted = UI.Tab {
+			title = 'Formatted',
+			index = 1,
 			grid = UI.ScrollingGrid {
 				columns = {
 					{ heading = 'Key',   key = 'name'  },
@@ -56,8 +57,9 @@ local page = UI.Page {
 				autospace = true,
 			},
 		},
-		[2] = UI.Tab {
-			tabTitle = 'Output',
+		output = UI.Tab {
+			title = 'Output',
+			index = 2,
 			backgroundColor = 'black',
 			output = UI.Embedded {
 				y = 2,
@@ -72,8 +74,8 @@ local page = UI.Page {
 	},
 }
 
-page.grid = page.tabs[1].grid
-page.output = page.tabs[2].output
+page.grid = page.tabs.formatted.grid
+page.output = page.tabs.output.output
 
 function page:setPrompt(value, focus)
 	self.prompt:setValue(value)
@@ -142,7 +144,7 @@ function page:eventHandler(event)
 		self:setFocus(self.prompt)
 
 	elseif event.type == 'show_output' then
-		self.tabs:selectTab(self.tabs[2])
+		self.tabs:selectTab(self.tabs.output)
 
 	elseif event.type == 'autocomplete' then
 		local value = self.prompt.value or ''

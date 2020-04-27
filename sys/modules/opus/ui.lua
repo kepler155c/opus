@@ -675,7 +675,7 @@ function UI.Window:drawChildren()
 end
 
 UI.Window.docs.getDoc = [[getDoc(STRING method)
-Gets the documentation for a method.]]
+Get the documentation for a method.]]
 function UI.Window:getDoc(method)
 	local m = getmetatable(self)  -- get the class for this instance
 	repeat
@@ -743,6 +743,8 @@ function UI.Window:clear(bg, fg)
 	Canvas.clear(self, bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
 end
 
+UI.Window.docs.clearLine = [[clearLine(NUMBER y, opt COLOR bg)
+Clears the specified line.]]
 function UI.Window:clearLine(y, bg)
 	self:write(1, y, _rep(' ', self.width), bg)
 end
@@ -760,6 +762,10 @@ function UI.Window:fillArea(x, y, width, height, fillChar, bg, fg)
 	end
 end
 
+UI.Window.docs.write = [[write(NUMBER x, NUMBER y, String text, opt COLOR bg, opt COLOR fg)
+Write text to the canvas.
+If colors are not specified, the colors from the base class will be used.
+If the base class does not have colors defined, colors will be inherited from the parent container.]]
 function UI.Window:write(x, y, text, bg, fg)
 	Canvas.write(self, x, y, text, bg or self:getProperty('backgroundColor'), fg or self:getProperty('textColor'))
 end
