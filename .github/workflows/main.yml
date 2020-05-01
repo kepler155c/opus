@@ -24,11 +24,12 @@ jobs:
 
     # Runs a single command using the runners shell
     - name: Run a one-line script
-      run: echo date > .opus_version
+      run: echo `date` > .opus_version
 
     - name: Update version file
       uses: alexesprit/action-update-file@master
       with:
+        branch: develop-1.8
         file-path: .opus_version
         commit-msg: Update version date
         github-token: ${{ secrets.GITHUB_TOKEN }}
