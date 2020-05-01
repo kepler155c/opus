@@ -6,15 +6,11 @@ local shell = _ENV.shell
 
 local URL = 'https://raw.githubusercontent.com/kepler155c/opus/%s/.opus_version'
 
-local function notifyUpdate(config)
-    print('Opus has been updated to: ' .. config.current)
-    read()
-end
-
 if fs.exists('.opus_version') then
     local f = fs.open('.opus_version')
     local date = f.readLine()
     f.close()
+    date = type(date) == 'string' and Util.split(date)[1]
 
     if type(date) == 'string' and #date > 0 then
         local today = os.date('%j')
@@ -44,7 +40,10 @@ if fs.exists('.opus_version') then
                     if config.opus ~= c and config.skip ~= c then
                         config.current = c
                         Config.update('version', config)
-                        notifyUpdate(config)
+                        print('New version available')
+                        if _ENV.multishell then
+                            shell.openForegroundTab('Version')
+                        end
                     end
                 end
             end)
