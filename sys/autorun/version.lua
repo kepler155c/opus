@@ -7,7 +7,7 @@ local shell = _ENV.shell
 local URL = 'https://raw.githubusercontent.com/kepler155c/opus/%s/.opus_version'
 
 if fs.exists('.opus_version') then
-    local f = fs.open('.opus_version')
+    local f = fs.open('.opus_version', 'r')
     local date = f.readLine()
     f.close()
     date = type(date) == 'string' and Util.split(date)[1]
