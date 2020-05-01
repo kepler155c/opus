@@ -23,13 +23,13 @@ jobs:
     - uses: actions/checkout@v2
 
     # Runs a single command using the runners shell
-    - name: Run a one-line script
+    - name: Generate version file
       run: echo `date` > .opus_version
 
     - name: Update version file
-      uses: alexesprit/action-update-file@master
+      uses: github-actions-x/commit@v2.6
       with:
-        file-path: .opus_version
-        commit-msg: Update version date
         github-token: ${{ secrets.GITHUB_TOKEN }}
-        branch: develop-1.8
+        push-branch: 'develop-1.8'
+        commit-message: 'Update version file'
+        files: .opus_version
