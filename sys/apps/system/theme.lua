@@ -12,7 +12,7 @@ for k,v in pairs(colors) do
 end
 
 local allSettings = { }
-for k,v in pairs(UI.colors) do
+for k,v in pairs(UI.theme.colors) do
 	allSettings[k] = { name = k, value = v }
 end
 

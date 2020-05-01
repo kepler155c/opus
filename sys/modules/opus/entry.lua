@@ -47,13 +47,13 @@ function Entry:updateScroll()
 		self.scroll = 0 -- ??
 	end
 	if self.pos - self.scroll > self.width then
-		self.scroll = self.pos - self.width
+		self.scroll = math.max(0, self.pos - self.width)
 	elseif self.pos < self.scroll then
 		self.scroll = self.pos
 	end
 	if self.scroll > 0 then
 		if self.scroll + self.width  > len then
-			self.scroll = len - self.width
+			self.scroll = math.max(0, len - self.width)
 		end
 	end
 	if ps ~= self.scroll then

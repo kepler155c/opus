@@ -7,9 +7,10 @@ Shell usage:
 > package list
 > package install <name>
 > package update <name>
+> package updateall
 > package uninstall <name>
 
-Package definitions are located in usr/apps/packages. This file can be modified to add custom packages.
+Package definitions are located in usr/config/packages. This file can be modified to add custom packages.
 
 Current stable packages
 =======================

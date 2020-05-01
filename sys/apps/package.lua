@@ -16,9 +16,8 @@ local function makeSandbox()
 end
 
 local function Syntax(msg)
-	_G.printError(msg)
-	print('\nSyntax: Package list | install [name] ... |  update [name] | uninstall [name]')
-	error(0)
+	print('Syntax: package list | install [name] ... |  update [name] | updateall | uninstall [name]\n')
+	error(msg)
 end
 
 local function progress(max)
@@ -76,6 +75,11 @@ local function install(name, isUpdate, ignoreDeps)
 	local packageDir = fs.combine('packages', name)
 
 	local list = Git.list(manifest.repository)
+	-- clear out contents before install/update
+	-- TODO: figure out whether to run
+	-- install/uninstall for the package
+	fs.delete(packageDir)
+
 	local showProgress = progress(Util.size(list))
 
 	local getList = { }
@@ -151,7 +155,7 @@ if action == 'uninstall' then
 	runScript(manifest.uninstall)
 
 	local packageDir = fs.combine('packages', name)
-	fs.delete(fs.resolve(packageDir))
+	fs.delete(packageDir)
 	print('removed: ' .. packageDir)
 	return
 end

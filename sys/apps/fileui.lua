@@ -17,7 +17,7 @@ local page = UI.Page {
 			UI:quit()
 		end
 
-		return UI.FileSelect.eventHandler(self, event)
+		return UI.Page.eventHandler(self, event)
 	end,
 }
 

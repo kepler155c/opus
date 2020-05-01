@@ -37,13 +37,14 @@ local textutils  = _G.textutils
 local UI = { }
 function UI:init()
 	self.devices = { }
-	self.theme = { }
-	self.extChars = Util.getVersion() >= 1.76
-	self.colors = {
-		primary = colors.green,
-		secondary = colors.lightGray,
-		tertiary = colors.gray,
+	self.theme = {
+		colors = {
+			primary = colors.green,
+			secondary = colors.lightGray,
+			tertiary = colors.gray,
+		}
 	}
+	self.extChars = Util.getVersion() >= 1.76
 
 	local function keyFunction(event, code, held)
 		local ie = Input:translate(event, code, held)
@@ -205,6 +206,10 @@ function UI:loadTheme(filename)
 			error(err)
 		end
 		Util.deepMerge(self.theme, theme)
+	end
+	for k,v in pairs(self.theme.colors) do
+		Canvas.colorPalette[k] = Canvas.colorPalette[v]
+		Canvas.grayscalePalette[k] = Canvas.grayscalePalette[v]
 	end
 end
 
@@ -920,6 +925,13 @@ function UI.Window:addTransition(effect, args, canvas)
 	self.parent:addTransition(effect, args, canvas or self)
 end
 
+UI.Window.docs.emit = [[emit(TABLE event)
+Send an event to the element. The event handler for the element is called.
+If the event handler returns true, then no further processing is done.
+If the event handler does not return true, then the event is sent to the parent element
+and continues up the element tree.
+If an accelerator is defined, the accelerated event is processed in the same manner.
+Accelerators are useful for making events unique.]]
 function UI.Window:emit(event)
 	local parent = self
 	while parent do
@@ -1118,13 +1130,6 @@ end
 
 loadComponents()
 UI:loadTheme('usr/config/ui.theme')
-Util.merge(UI.Window.defaults, UI.theme.Window)
-Util.merge(UI.colors, UI.theme.colors)
 UI:setDefaultDevice(UI.Device())
-
-for k,v in pairs(UI.colors) do
-	Canvas.colorPalette[k] = Canvas.colorPalette[v]
-	Canvas.grayscalePalette[k] = Canvas.grayscalePalette[v]
-end
 
 return UI

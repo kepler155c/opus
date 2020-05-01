@@ -40,7 +40,7 @@ function UI.Chooser:draw()
 	local value = choice and choice.name or self.nochoice
 
 	self:write(1, 1, self.leftIndicator, self.backgroundColor, colors.black)
-	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width-4) .. ' ', bg, fg)
+	self:write(2, 1, ' ' .. Util.widthify(tostring(value), self.width - 4) .. ' ', bg, fg)
 	self:write(self.width, 1, self.rightIndicator, self.backgroundColor, colors.black)
 end
 
@@ -54,7 +54,7 @@ function UI.Chooser:eventHandler(event)
 		local choice
 		if not k then k = 0 end
 		if k and k < #self.choices then
-			choice = self.choices[k+1]
+			choice = self.choices[k + 1]
 		else
 			choice = self.choices[1]
 		end
@@ -62,11 +62,12 @@ function UI.Chooser:eventHandler(event)
 		self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
 		self:draw()
 		return true
+
 	elseif event.type == 'choice_prev' then
 		local _,k = Util.find(self.choices, 'value', self.value)
 		local choice
 		if k and k > 1 then
-			choice = self.choices[k-1]
+			choice = self.choices[k - 1]
 		else
 			choice = self.choices[#self.choices]
 		end
@@ -74,6 +75,7 @@ function UI.Chooser:eventHandler(event)
 		self:emit({ type = 'choice_change', value = self.value, element = self, choice = choice })
 		self:draw()
 		return true
+
 	elseif event.type == 'mouse_click' or event.type == 'mouse_doubleclick' then
 		if event.x == 1 then
 			self:emit({ type = 'choice_prev' })
