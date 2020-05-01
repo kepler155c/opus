@@ -29,7 +29,7 @@ jobs:
     - name: Update version file
       uses: alexesprit/action-update-file@master
       with:
-        branch: develop-1.8
         file-path: .opus_version
         commit-msg: Update version date
         github-token: ${{ secrets.GITHUB_TOKEN }}
+        branch: develop-1.8
