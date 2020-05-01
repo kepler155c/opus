@@ -42,7 +42,7 @@ if fs.exists('.opus_version') then
                         Config.update('version', config)
                         print('New version available')
                         if _ENV.multishell then
-                            shell.openForegroundTab('Version')
+                            shell.openForegroundTab('sys/apps/Version.lua')
                         end
                     end
                 end
