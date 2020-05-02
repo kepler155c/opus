@@ -25,7 +25,7 @@ jobs:
     - name: Create version file
       run: |
         echo `date` > .opus_version
-        git log -8 --pretty=format:'%s (%cr)' >> .opus_version
+        git log >> .opus_version
 
     - name: Commit version file
       uses: alexesprit/action-update-file@master
