@@ -12,23 +12,22 @@ if fs.exists('.opus_version') then
     f.close()
     date = type(date) == 'string' and Util.split(date)[1]
 
+    local today = os.date('%j')
+    local config = Config.load('version', {
+        packages = date,
+        checked = today,
+    })
+
+    -- check if packages need an update
+    if date ~= config.packages then
+        config.packages = date
+        Config.update('version', config)
+        print('Updating packages')
+        shell.run('package updateall')
+        os.reboot()
+    end
+
     if type(date) == 'string' and #date > 0 then
-        local today = os.date('%j')
-        local config = Config.load('version', {
-            opus = date,
-            packages = date,
-            checked = today,
-        })
-
-        -- check if packages need an update
-        if config.opus ~= config.packages then
-            config.packages = config.opus
-            Config.update('version', config)
-            print('Updating packages')
-            shell.run('package updateall')
-            os.reboot()
-        end
-
         if config.checked ~= today then
             config.checked = today
             Config.update('version', config)
@@ -38,7 +37,7 @@ if fs.exists('.opus_version') then
                 if c then
                     local lines = Util.split(c)
                     local revdate = table.remove(lines, 1)
-                    if config.opus ~= revdate and config.skip ~= revdate then
+                    if date ~= revdate and config.skip ~= revdate then
                         config.current = revdate
                         config.details = table.concat(lines, '\n')
                         Config.update('version', config)
