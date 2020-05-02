@@ -17,7 +17,7 @@ UI:setPage(UI.Page {
     },
     UI.TextArea {
         x = 2, y = 4, ey = -8,
-        text = config.details,
+        value = config.details,
     },
     UI.Button {
         x = 2, y = -6, width = 21,
