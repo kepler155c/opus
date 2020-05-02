@@ -36,9 +36,11 @@ if fs.exists('.opus_version') then
             pcall(function()
                 local c = Util.httpGet(string.format(URL, _G.OPUS_BRANCH))
                 if c then
-                    c = Util.split(c)[1]
-                    if config.opus ~= c and config.skip ~= c then
-                        config.current = c
+                    local lines = Util.split(c)
+                    local revdate = table.remove(lines, 1)
+                    if config.opus ~= revdate and config.skip ~= revdate then
+                        config.current = revdate
+                        config.details = table.concat(lines, '\n')
                         Config.update('version', config)
                         print('New version available')
                         if _ENV.multishell then

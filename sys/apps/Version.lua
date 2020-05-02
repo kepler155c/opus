@@ -9,22 +9,28 @@ if not config.current then
 end
 
 UI:setPage(UI.Page {
+    UI.Text {
+        x = 2, y = 2, ex = -2,
+        align = 'center',
+        value = 'Opus has been updated.',
+        textColor = 'yellow',
+    },
     UI.TextArea {
-        x = 2, y = 2, ey = -2,
-        value = 'A new version of Opus is available.'
+        x = 2, y = 4, ey = -8,
+        text = config.details,
     },
     UI.Button {
-        x = 2, y = 5, width = 21,
+        x = 2, y = -6, width = 21,
         event = 'skip',
         text = 'Skip this version',
     },
     UI.Button {
-        x = 2, y = 7, width = 21,
+        x = 2, y = -4, width = 21,
         event = 'remind',
         text = 'Remind me tomorrow',
     },
     UI.Button {
-        x = 2, y = 9, width = 21,
+        x = 2, y = -2, width = 21,
         event = 'update',
         text = 'Update'
     },
