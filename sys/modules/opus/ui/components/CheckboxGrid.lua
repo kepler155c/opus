@@ -11,11 +11,12 @@ end
 
 UI.CheckboxGrid = class(UI.Grid)
 UI.CheckboxGrid.defaults = {
-  UIElement = 'CheckboxGrid',
-  checkedKey = 'checked',
-  accelerators = {
-    space = 'grid_toggle',
-  },
+	UIElement = 'CheckboxGrid',
+	checkedKey = 'checked',
+	accelerators = {
+		space = 'grid_toggle',
+		key_enter = 'grid_toggle',
+	},
 }
 function UI.CheckboxGrid:drawRow(sb, row, focused, bg, fg)
 	local ind = focused and self.focusIndicator or ' '
@@ -31,7 +32,7 @@ function UI.CheckboxGrid:drawRow(sb, row, focused, bg, fg)
 end
 
 function UI.CheckboxGrid:eventHandler(event)
-	if event.type == 'key_enter' and self.selected then
+	if event.type == 'grid_toggle' and self.selected then
 		self.selected.checked = not self.selected.checked
 		self:draw()
 		self:emit({ type = 'grid_check', checked = self.selected, element = self })
