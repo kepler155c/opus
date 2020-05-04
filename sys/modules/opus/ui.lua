@@ -75,11 +75,11 @@ function UI:init()
 		term_resize = resize,
 		monitor_resize = resize,
 
-		mouse_scroll = function(_, direction, x, y)
+		mouse_scroll = function(_, direction, x, y, side)
 			local ie = Input:translate('mouse_scroll', direction, x, y)
 
 			local currentPage = self:getActivePage()
-			if currentPage then
+			if currentPage and currentPage.parent.device.side == side then
 				local event = currentPage:pointToChild(x, y)
 				event.type = ie.code
 				event.ie = { code = ie.code, x = event.x, y = event.y }
@@ -97,23 +97,21 @@ function UI:init()
 			end
 		end,
 
-		mouse_click = function(_, button, x, y)
+		mouse_click = function(_, button, x, y, side)
 			local ie = Input:translate('mouse_click', button, x, y)
 
 			local currentPage = self:getActivePage()
-			if currentPage then
-				if not currentPage.parent.device.side then
-					local event = currentPage:pointToChild(x, y)
-					if event.element.focus and not event.element.inactive then
-						currentPage:setFocus(event.element)
-						currentPage:sync()
-					end
-					self:click(currentPage, ie)
+			if currentPage and currentPage.parent.device.side == side then
+				local event = currentPage:pointToChild(x, y)
+				if event.element.focus and not event.element.inactive then
+					currentPage:setFocus(event.element)
+					currentPage:sync()
 				end
+				self:click(currentPage, ie)
 			end
 		end,
 
-		mouse_up = function(_, button, x, y)
+		mouse_up = function(_, button, x, y, side)
 			local ie = Input:translate('mouse_up', button, x, y)
 			local currentPage = self:getActivePage()
 
@@ -124,18 +122,16 @@ function UI:init()
 					args = { event.element },
 					focused = true })
 
-			elseif ie and currentPage then
-				if not currentPage.parent.device.side then
-					self:click(currentPage, ie)
-				end
+			elseif ie and currentPage and currentPage.parent.device.side == side then
+				self:click(currentPage, ie)
 			end
 		end,
 
-		mouse_drag = function(_, button, x, y)
+		mouse_drag = function(_, button, x, y, side)
 			local ie = Input:translate('mouse_drag', button, x, y)
 			local currentPage = self:getActivePage()
 
-			if ie and currentPage then
+			if ie and currentPage and currentPage.parent.device.side == side then
 				self:click(currentPage, ie)
 			end
 		end,
