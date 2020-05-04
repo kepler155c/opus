@@ -1,6 +1,6 @@
-Sat May 2 05:16:44 UTC 2020
-commit 5afb21b68ec1ddb9d79393277a586ceda9abbbb5
+Mon May 4 22:45:08 UTC 2020
+commit d7f41f2bce51bd481b24bc6614b43af42f486f11
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Fri May 1 23:16:10 2020 -0600
+Date:   Mon May 4 16:41:35 2020 -0600
 
-    more work on update notification
+    multishell/kernel support for windows on different devices
