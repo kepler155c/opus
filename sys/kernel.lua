@@ -50,13 +50,19 @@ function kernel.hook(event, fn)
 	end
 end
 
--- you can only unhook from within the function that hooked
+-- you *should* only unhook from within the function that hooked
 function kernel.unhook(event, fn)
-	local eventHooks = kernel.hooks[event]
-	if eventHooks then
-		Array.removeByValue(eventHooks, fn)
-		if #eventHooks == 0 then
-			kernel.hooks[event] = nil
+	if type(event) == 'table' then
+		for _,v in pairs(event) do
+			kernel.unhook(v, fn)
+		end
+	else
+		local eventHooks = kernel.hooks[event]
+		if eventHooks then
+			Array.removeByValue(eventHooks, fn)
+			if #eventHooks == 0 then
+				kernel.hooks[event] = nil
+			end
 		end
 	end
 end
@@ -107,6 +113,9 @@ function Routine:resume(event, ...)
 		end
 		if coroutine.status(self.co) == 'dead' then
 			Array.removeByValue(kernel.routines, self)
+			if self.onDestroy then
+				self.onDestroy(self)
+			end
 			if #kernel.routines > 0 then
 				switch(kernel.routines[1])
 			end

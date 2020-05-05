@@ -296,40 +296,46 @@ kernel.hook('term_resize', function(_, eventData)
 end)
 
 kernel.hook('mouse_click', function(_, eventData)
-	local x, y = eventData[2], eventData[3]
+	if not eventData[4] then
+		local x, y = eventData[2], eventData[3]
 
-	if y == 1 then
-		if x == 1 then
-			multishell.setFocus(overviewId)
-		elseif x == w then
-			local currentTab = kernel.getFocused()
-			if currentTab then
-				multishell.terminate(currentTab.uid)
-			end
-		else
-			for _,tab in pairs(kernel.routines) do
-				if not tab.hidden and tab.sx then
-					if x >= tab.sx and x <= tab.ex then
-						multishell.setFocus(tab.uid)
-						break
+		if y == 1 then
+			if x == 1 then
+				multishell.setFocus(overviewId)
+			elseif x == w then
+				local currentTab = kernel.getFocused()
+				if currentTab then
+					multishell.terminate(currentTab.uid)
+				end
+			else
+				for _,tab in pairs(kernel.routines) do
+					if not tab.hidden and tab.sx then
+						if x >= tab.sx and x <= tab.ex then
+							multishell.setFocus(tab.uid)
+							break
+						end
 					end
 				end
 			end
+			return true
 		end
-		return true
+		eventData[3] = eventData[3] - 1
 	end
-	eventData[3] = eventData[3] - 1
 end)
 
 kernel.hook({ 'mouse_up', 'mouse_drag' }, function(_, eventData)
-	eventData[3] = eventData[3] - 1
+	if not eventData[4] then
+		eventData[3] = eventData[3] - 1
+	end
 end)
 
 kernel.hook('mouse_scroll', function(_, eventData)
-	if eventData[3] == 1 then
-		return true
+	if not eventData[4] then
+		if eventData[3] == 1 then
+			return true
+		end
+		eventData[3] = eventData[3] - 1
 	end
-	eventData[3] = eventData[3] - 1
 end)
 
 kernel.hook('kernel_ready', function()
