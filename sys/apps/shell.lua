@@ -10,6 +10,10 @@ local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(_ENV) do
 	sandboxEnv[k] = v
 end
+sandboxEnv.package = nil
+sandboxEnv.require = nil
+sandboxEnv.arg = nil
+sandboxEnv._ENV = nil
 sandboxEnv.shell = shell
 
 _G.requireInjector(_ENV)
@@ -291,7 +295,9 @@ function shell.setEnv(name, value)
 end
 
 function shell.getEnv()
-	return sandboxEnv
+	local env = Util.shallowCopy(sandboxEnv)
+	_G.requireInjector(env)
+	return env
 end
 
 function shell.setAlias( _sCommand, _sProgram )

@@ -151,7 +151,7 @@ function kernel.newRoutine(args)
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
-	routine.env = args.env or Util.shallowCopy(shell.getEnv())
+	routine.env = args.env or shell.getEnv()
 
 	return routine
 end
