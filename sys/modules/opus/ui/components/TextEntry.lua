@@ -26,7 +26,6 @@ UI.TextEntry.defaults = {
 	backgroundColor = 'black',
 	backgroundFocusColor = 'black',
 	height = 1,
-	limit = 6,
 	cursorBlink = true,
 	accelerators = {
 		[ 'control-c' ] = 'copy',
