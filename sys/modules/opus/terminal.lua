@@ -36,7 +36,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	local maxScroll = 100
 	local cx, cy = 1, 1
 	local blink = false
-	local _bg, _fg = parent.getBackgroundColor(), parent.getTextColor()
+	local _bg, _fg = colors.black, colors.white
 
 	win.canvas = Canvas({
 		x       = sx,

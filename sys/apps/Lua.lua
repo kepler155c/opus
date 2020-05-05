@@ -1,6 +1,3 @@
--- Lua may be called from outside of shell - inject a require
-_G.requireInjector(_ENV)
-
 local History    = require('opus.history')
 local UI         = require('opus.ui')
 local Util       = require('opus.util')

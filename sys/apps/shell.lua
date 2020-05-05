@@ -6,7 +6,7 @@ local fs         = _G.fs
 local settings   = _G.settings
 local shell      = _ENV.shell
 
-local sandboxEnv = setmetatable({ }, { __index = _G })
+local sandboxEnv = { }
 for k,v in pairs(_ENV) do
 	sandboxEnv[k] = v
 end
@@ -47,10 +47,11 @@ local function tokenise( ... )
 	return tWords
 end
 
-local function run(env, ...)
+local function run(...)
 	local args = tokenise(...)
 	local command = table.remove(args, 1) or error('No such program')
 	local isUrl = not not command:match("^(https?:)")
+	local env = shell.makeEnv()
 
 	local path, loadFn
 	if isUrl then
@@ -92,10 +93,7 @@ function shell.run(...)
 		oldTitle = _ENV.multishell.getTitle(_ENV.multishell.getCurrent())
 	end
 
-	local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
-	_G.requireInjector(env)
-
-	local r = { trace(run, env, ...) }
+	local r = { trace(run, ...) }
 
 	if _ENV.multishell then
 		_ENV.multishell.setTitle(_ENV.multishell.getCurrent(), oldTitle or 'shell')
@@ -294,8 +292,8 @@ function shell.setEnv(name, value)
 	sandboxEnv[name] = value
 end
 
-function shell.getEnv()
-	local env = Util.shallowCopy(sandboxEnv)
+function shell.makeEnv()
+	local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
 	_G.requireInjector(env)
 	return env
 end
@@ -323,7 +321,7 @@ function shell.newTab(tabInfo, ...)
 
 	if path then
 		tabInfo.path = path
-		tabInfo.env = Util.shallowCopy(sandboxEnv)
+		tabInfo.env = shell.makeEnv()
 		tabInfo.args = args
 		tabInfo.title = fs.getName(path):match('([^%.]+)')
 
@@ -336,16 +334,16 @@ function shell.newTab(tabInfo, ...)
 	return nil, 'No such program'
 end
 
-function shell.openTab( ... )
+function shell.openTab(...)
 	-- needs to use multishell.launch .. so we can run with stock multishell
 	local tWords = tokenise( ... )
 	local sCommand = tWords[1]
 	if sCommand then
 		local sPath = shell.resolveProgram(sCommand)
 		if sPath == "sys/apps/shell.lua" then
-			return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), sPath, table.unpack(tWords, 2))
+			return _ENV.multishell.launch(shell.makeEnv(), sPath, table.unpack(tWords, 2))
 		else
-			return _ENV.multishell.launch(Util.shallowCopy(sandboxEnv), "sys/apps/shell.lua", sCommand, table.unpack(tWords, 2))
+			return _ENV.multishell.launch(shell.makeEnv(), "sys/apps/shell.lua", sCommand, table.unpack(tWords, 2))
 		end
 	end
 end
@@ -364,10 +362,7 @@ end
 
 local tArgs = { ... }
 if #tArgs > 0 then
-	local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
-	_G.requireInjector(env)
-
-	return run(env, ...)
+	return run(...)
 end
 
 local Config   = require('opus.config')

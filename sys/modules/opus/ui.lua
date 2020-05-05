@@ -119,7 +119,7 @@ function UI:init()
 				local event = currentPage:pointToChild(x, y)
 				_ENV.multishell.openTab({
 					path = 'sys/apps/Lua.lua',
-					args = { event.element },
+					args = { event.element, self, _ENV },
 					focused = true })
 
 			elseif ie and currentPage and currentPage.parent.device.side == side then

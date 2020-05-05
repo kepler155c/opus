@@ -139,6 +139,8 @@ function kernel.getShell()
 	return shell
 end
 
+kernel.makeEnv = shell.makeEnv
+
 function kernel.newRoutine(args)
 	kernel.UID = kernel.UID + 1
 
@@ -151,7 +153,7 @@ function kernel.newRoutine(args)
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
-	routine.env = args.env or shell.getEnv()
+	routine.env = args.env or shell.makeEnv()
 
 	return routine
 end

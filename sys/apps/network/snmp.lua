@@ -31,7 +31,7 @@ local function snmpConnection(socket)
 			socket:write('pong')
 
 		elseif msg.type == 'script' then
-			local env = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
+			local env = kernel.makeEnv()
 			local fn, err = load(msg.args, 'script', nil, env)
 			if fn then
 				kernel.run({
@@ -45,7 +45,7 @@ local function snmpConnection(socket)
 
 		elseif msg.type == 'scriptEx' then
 			local s, m = pcall(function()
-				local env = setmetatable(Util.shallowCopy(_ENV), { __index = _G })
+				local env = kernel.makeEnv()
 				local fn, m = load(msg.args, 'script', nil, env)
 				if not fn then
 					error(m)
