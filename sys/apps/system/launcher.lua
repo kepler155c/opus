@@ -26,7 +26,6 @@ local tab = UI.Tab {
 	},
 	custom = UI.TextEntry {
 		x = 13, ex = -3, y = 4,
-		limit = 128,
 		shadowText = 'File name',
 	},
 	button = UI.Button {

@@ -177,7 +177,6 @@ local Browser = UI.Page {
 				formLabel = 'Program', formKey = 'value',
 				shadowText = 'program',
 				required = true,
-				limit = 128,
 			},
 			add = UI.Button {
 				x = -11, y = 1,

@@ -114,7 +114,7 @@ function Routine:resume(event, ...)
 		if coroutine.status(self.co) == 'dead' then
 			Array.removeByValue(kernel.routines, self)
 			if self.onDestroy then
-				self.onDestroy(self)
+				pcall(self.onDestroy, self)
 			end
 			if #kernel.routines > 0 then
 				switch(kernel.routines[1])

@@ -50,7 +50,6 @@ function UI.FileSelect:postInit()
 	}
 	self.path = UI.TextEntry {
 		x = 2, y = -2, ex = -11,
-		limit = 256,
 		accelerators = {
 			enter = 'path_enter',
 		}

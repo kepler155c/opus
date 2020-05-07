@@ -27,7 +27,6 @@ return settings and UI.Tab {
 		form = UI.Form {
 			y = 2,
 			value = UI.TextEntry {
-				limit = 256,
 				formIndex = 1,
 				formLabel = 'Value',
 				formKey = 'value',

@@ -13,7 +13,6 @@ local aliasTab = UI.Tab {
 	},
 	path = UI.TextEntry {
 		y = 3, x = 2, ex = -2,
-		limit = 256,
 		shadowText = 'Program path',
 		accelerators = {
 			enter = 'new_alias',

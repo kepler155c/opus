@@ -29,7 +29,6 @@ local page = UI.Page {
 	prompt = UI.TextEntry {
 		y = 2,
 		shadowText = 'enter command',
-		limit = 1024,
 		accelerators = {
 			enter               = 'command_enter',
 			up                  = 'history_back',

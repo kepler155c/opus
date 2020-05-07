@@ -8,7 +8,6 @@ local tab = UI.Tab {
 	tabClose = true,
 	entry = UI.TextEntry {
 		x = 2, y = 2, ex = -2,
-		limit = 256,
 		shadowText = 'Enter new require path',
 		accelerators = {
 			enter = 'update_path',
