@@ -39,7 +39,7 @@ local page = UI.Page {
 	},
 	accelerators = {
 		[ 'control-q' ] = 'quit',
-		space = 'activate',
+		[ ' ' ] = 'activate',
 		t = 'terminate',
 	},
 	eventHandler = function (self, event)

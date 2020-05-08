@@ -30,7 +30,7 @@ end
 
 local REGISTRY_DIR = 'usr/.registry'
 
--- icon:gsub('.', function(b) return '\\' .. b:byte() end)
+-- iconExt:gsub('.', function(b) return '\\' .. b:byte() end)
 local DEFAULT_ICON = NFT.parse('\30\55\31\48\136\140\140\140\132\
 \30\48\31\55\149\31\48\128\128\128\30\55\149\
 \30\55\31\48\138\143\143\143\133')

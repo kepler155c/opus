@@ -16,7 +16,7 @@ UI.Checkbox.defaults = {
 	height = 1,
 	width = 3,
 	accelerators = {
-		space = 'checkbox_toggle',
+		[ ' ' ] = 'checkbox_toggle',
 		mouse_click = 'checkbox_toggle',
 	}
 }

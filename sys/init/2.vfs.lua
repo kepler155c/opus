@@ -100,6 +100,26 @@ end
 function nativefs.delete(node, dir)
 	if node.mountPoint == dir then
 		fs.unmount(dir)
+		-- hack here
+		-- if a file is mounted over an existing directory
+		-- ie. sys/apps/MOUNT.LUA
+		-- then sys and sys/apps are created as temp nodes
+		-- therefore, trying to delete sys will was only
+		-- removing the node and not deleting the directory
+		-- Need a better way to backfill nodes in a way
+		-- that preserves the vfs functionality
+
+		-- perhaps a flag that denotes that this is a
+		-- file/directory is the actual mount
+
+		-- this hack will not fix
+		-- rm packages/common
+		-- where packages is linked from a drive
+		-- and urls are mounted under packages/common
+		-- (as the fstype will be linkfs)
+		if node.fstype == 'nativefs' then
+			fs.native.delete(dir)
+		end
 	else
 		fs.native.delete(dir)
 	end

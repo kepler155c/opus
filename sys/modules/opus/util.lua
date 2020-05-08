@@ -730,24 +730,6 @@ function Util.parse(...)
 	return args, options
 end
 
-function Util.args(arg)
-	local options, args = { }, { }
-
-	local k = 1
-	while k <= #arg do
-		local v = arg[k]
-		if _ssub(v, 1, 1) == '-' then
-			local opt = _ssub(v, 2)
-			options[opt] = arg[k + 1]
-			k = k + 1
-		else
-			table.insert(args, v)
-		end
-		k = k + 1
-	end
-	return options, args
-end
-
 -- http://lua-users.org/wiki/AlternativeGetOpt
 local function getopt( arg, options )
 	local tab = {}

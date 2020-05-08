@@ -14,7 +14,7 @@ UI.CheckboxGrid.defaults = {
 	UIElement = 'CheckboxGrid',
 	checkedKey = 'checked',
 	accelerators = {
-		space = 'grid_toggle',
+		[ ' ' ] = 'grid_toggle',
 		key_enter = 'grid_toggle',
 	},
 }

@@ -15,7 +15,7 @@ UI.Chooser.defaults = {
 	rightIndicator = UI.extChars and '\187' or '>',
 	height = 1,
 	accelerators = {
-		space = 'choice_next',
+		[ ' ' ] = 'choice_next',
 		right = 'choice_next',
 		left  = 'choice_prev',
 	}
