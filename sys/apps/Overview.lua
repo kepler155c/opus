@@ -477,7 +477,7 @@ function page:eventHandler(event)
 		shell.switchTab(shell.openTab(Alt.get('files')))
 
 	elseif event.type == 'network' then
-		shell.switchTab(shell.openTab('network'))
+		shell.switchTab(shell.openTab('Network'))
 
 	elseif event.type == 'help' then
 		shell.switchTab(shell.openTab('Help Overview'))
