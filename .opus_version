@@ -1,6 +1,6 @@
-Thu May 7 00:01:52 UTC 2020
-commit c24411717ae504aa93fda9d35dcd58d4dcf17473
+Fri May 8 03:35:29 UTC 2020
+commit 8b14399a20e9e36bb1c67a023a884d5bb0eaa912
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Wed May 6 18:01:10 2020 -0600
+Date:   Thu May 7 21:34:50 2020 -0600
 
-    optionally show value for slider component - remove some unneeded limits for textEntries
+    a temporary fix for vfs/delete
