@@ -1,6 +1,6 @@
-Fri May 8 03:35:29 UTC 2020
-commit 8b14399a20e9e36bb1c67a023a884d5bb0eaa912
-Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Thu May 7 21:34:50 2020 -0600
+Fri May 8 17:10:11 UTC 2020
+commit db9c05fa89465f677da02c4ad51a22ce24c2d40f
+Author: devomaa <25231103+devomaa@users.noreply.github.com>
+Date:   Fri May 8 20:09:32 2020 +0300
 
-    a temporary fix for vfs/delete
+    Update Overview.lua to work with N hotkey (#33)
