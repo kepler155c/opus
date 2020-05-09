@@ -42,17 +42,16 @@ local function telnetHost(socket, mode)
 	end
 
 	local shellThread = kernel.run({
-		terminal = win,
 		window = win,
 		title = mode .. ' client',
 		hidden = true,
-		co = coroutine.create(function()
-			Util.run(_ENV, Alt.get('shell'), table.unpack(termInfo.program))
+		fn = function()
+			Util.run(kernel.makeEnv(), Alt.get('shell'), table.unpack(termInfo.program))
 			if socket.queue then
 				socket:write(socket.queue)
 			end
 			socket:close()
-		end)
+		end,
 	})
 
 	Event.addRoutine(function()

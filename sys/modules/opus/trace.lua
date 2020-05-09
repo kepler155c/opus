@@ -37,6 +37,22 @@ local function trim_traceback(target, marker)
 	for line in target:gmatch("([^\n]*)\n?") do ttarget[#ttarget + 1] = line end
 	for line in marker:gmatch("([^\n]*)\n?") do tmarker[#tmarker + 1] = line end
 
+--[[
+	TODO : fix this trace
+	Anavrins - if you could take a look, it would be appreciated
+	-- basically i want the stack logged in a more readable
+	-- format and the normal code/error message to be returned
+
+	-- unsure why the traceback method concatenates the stack
+	-- when it can just be returned as a table - would make
+	-- filtering much simpler
+
+	-- the following seems to reduce the stacktrace way too
+	-- much - losing most of the relevant call stack
+
+	-- i have modified this a bit from the original - not sure
+	-- if my changes are causing the issues or not
+
 	-- Trim identical suffixes
 	local t_len, m_len = #ttarget, #tmarker
 	while t_len >= 3 and ttarget[t_len] == tmarker[m_len] do
@@ -50,7 +66,7 @@ local function trim_traceback(target, marker)
 		table.remove(ttarget, t_len)
 		t_len = t_len - 1
 	end
-
+]]
 	ttarget[#ttarget] = nil -- remove 2 calls added by the added xpcall
 	ttarget[#ttarget] = nil
 
@@ -84,6 +100,7 @@ return function (fn, ...)
 			if trace[i] == "stack traceback:" then trace_starts = i; break end
 		end
 
+		_G._syslog('')
 		for _, line in pairs(trace) do
 			_G._syslog(line)
 		end

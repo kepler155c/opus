@@ -79,7 +79,7 @@ return function(env)
 
 	-- place package and require function into env
 	env.package = {
-		path   = env.LUA_PATH  or _G.LUA_PATH  or DEFAULT_PATH,
+		path   = env.LUA_PATH or _G.LUA_PATH or DEFAULT_PATH,
 		config = '/\n:\n?\n!\n-',
 		preload = { },
 		loaded = {

@@ -104,12 +104,12 @@ function nativefs.delete(node, dir)
 		-- if a file is mounted over an existing directory
 		-- ie. sys/apps/MOUNT.LUA
 		-- then sys and sys/apps are created as temp nodes
-		-- therefore, trying to delete sys will was only
+		-- therefore, trying to delete sys was only
 		-- removing the node and not deleting the directory
 		-- Need a better way to backfill nodes in a way
 		-- that preserves the vfs functionality
 
-		-- perhaps a flag that denotes that this is a
+		-- perhaps a flag that denotes that this
 		-- file/directory is the actual mount
 
 		-- this hack will not fix

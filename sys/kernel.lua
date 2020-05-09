@@ -1,5 +1,6 @@
 local Array    = require('opus.array')
 local Terminal = require('opus.terminal')
+local trace    = require('opus.trace')
 local Util     = require('opus.util')
 
 _G.kernel = {
@@ -67,8 +68,6 @@ function kernel.unhook(event, fn)
 	end
 end
 
-local Routine = { }
-
 local function switch(routine, previous)
 	if routine then
 		if previous and previous.window then
@@ -86,6 +85,8 @@ local function switch(routine, previous)
 	end
 end
 
+local Routine = { }
+
 function Routine:resume(event, ...)
 	if not self.co or coroutine.status(self.co) == 'dead' then
 		return
@@ -95,35 +96,30 @@ function Routine:resume(event, ...)
 		local previousTerm = term.redirect(self.terminal)
 
 		local previous = kernel.running
-		kernel.running = self -- stupid shell set title
+		kernel.running = self
 		local ok, result = coroutine.resume(self.co, event, ...)
 		kernel.running = previous
 
-		if ok then
-			self.filter = result
-		else
-			_G.printError(result)
-		end
-
+		self.filter = result
 		self.terminal = term.current()
 		term.redirect(previousTerm)
 
-		if not ok and self.haltOnError then
-			error(result, -1)
-		end
-		if coroutine.status(self.co) == 'dead' then
-			Array.removeByValue(kernel.routines, self)
-			if self.onDestroy then
-				pcall(self.onDestroy, self)
-			end
-			if #kernel.routines > 0 then
-				switch(kernel.routines[1])
-			end
-			if self.haltOnExit then
-				kernel.halt()
-			end
-		end
 		return ok, result
+	end
+end
+
+-- override if any post processing is required
+-- routine:cleanup must be called explicitly if overridden
+function Routine:onExit(status, message) -- self, status, message
+	if not status and message ~= 'Terminated' then
+		_G.printError(message)
+	end
+end
+
+function Routine:cleanup()
+	Array.removeByValue(kernel.routines, self)
+	if #kernel.routines > 0 then
+		switch(kernel.routines[1])
 	end
 end
 
@@ -147,15 +143,24 @@ function kernel.newRoutine(args)
 	local routine = setmetatable({
 		uid = kernel.UID,
 		timestamp = os.clock(),
-		terminal = kernel.window,
 		window = kernel.window,
 		title = 'untitled',
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
 	routine.env = args.env or shell.makeEnv()
+	routine.terminal = routine.terminal or routine.window
 
 	return routine
+end
+
+local function xprun(env, path, ...)
+	setmetatable(env, { __index = _G })
+	local fn, m = loadfile(path, env)
+	if fn then
+		return trace(fn, ...)
+	end
+	return fn, m
 end
 
 function kernel.launch(routine)
@@ -165,14 +170,13 @@ function kernel.launch(routine)
 		if routine.fn then
 			result, err = Util.runFunction(routine.env, routine.fn, table.unpack(routine.args or { } ))
 		elseif routine.path then
-			result, err = Util.run(routine.env, routine.path, table.unpack(routine.args or { } ))
+			result, err = xprun(routine.env, routine.path, table.unpack(routine.args or { } ))
 		else
 			err = 'kernel: invalid routine'
 		end
 
-		if not result and err ~= 'Terminated' then
-			error(err or 'Error occurred', 2)
-		end
+		pcall(routine.onExit, routine, result, err)
+		routine:cleanup()
 	end)
 
 	table.insert(kernel.routines, routine)
@@ -203,8 +207,6 @@ function kernel.raise(uid)
 		end
 
 		switch(routine, previous)
---		local previous = eventData[2]
---			local routine = kernel.find(previous)
 		return true
 	end
 	return false
@@ -232,8 +234,8 @@ function kernel.find(uid)
 	return Util.find(kernel.routines, 'uid', uid)
 end
 
-function kernel.halt()
-	os.queueEvent('kernel_halt')
+function kernel.halt(status, message)
+	os.queueEvent('kernel_halt', status, message)
 end
 
 function kernel.event(event, eventData)
@@ -275,15 +277,20 @@ function kernel.event(event, eventData)
 end
 
 function kernel.start()
-	local s, m = pcall(function()
+	local s, m
+	pcall(function()
 		repeat
 			local eventData = { os.pullEventRaw() }
 			local event = table.remove(eventData, 1)
 			kernel.event(event, eventData)
+			if event == 'kernel_halt' then
+				s = eventData[1]
+				m = eventData[2]
+			end
 		until event == 'kernel_halt'
 	end)
 
-	if not s then
+	if not s and m then
 		kernel.window.setVisible(true)
 		term.redirect(kernel.window)
 		print('\nCrash detected\n')
@@ -320,15 +327,15 @@ local function init(...)
 			term.redirect(kernel.window)
 			shell.run('sys/apps/autorun.lua')
 
-			local shellWindow = window.create(kernel.terminal, 1, 1, w, h, false)
+			local win = window.create(kernel.terminal, 1, 1, w, h, true)
 			local s, m = kernel.run({
 				title = args[1],
 				path = 'sys/apps/shell.lua',
 				args = args,
-				haltOnExit = true,
-				haltOnError = true,
-				terminal = shellWindow,
-				window = shellWindow,
+				window = win,
+				onExit = function(_, s, m)
+					kernel.halt(s, m)
+				end,
 			})
 			if s then
 				kernel.raise(s.uid)
@@ -342,8 +349,12 @@ end
 kernel.run({
 	fn = init,
 	title = 'init',
-	haltOnError = true,
 	args = { ... },
+	onExit = function(_, status, message)
+		if not status then
+			kernel.halt(status, message)
+		end
+	end,
 })
 
 kernel.start()

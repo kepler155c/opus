@@ -1,6 +1,5 @@
 local Blit     = require('opus.ui.blit')
 local Config   = require('opus.config')
-local trace    = require('opus.trace')
 local Util     = require('opus.util')
 
 local colors     = _G.colors
@@ -103,48 +102,25 @@ function multishell.launch( tProgramEnv, sProgramPath, ... )
 	})
 end
 
-local function xprun(env, path, ...)
-	setmetatable(env, { __index = _G })
-	local fn, m = loadfile(path, env)
-	if fn then
-		return trace(fn, ...)
-	end
-	return fn, m
-end
-
 function multishell.openTab(tab)
 	if not tab.title and tab.path then
 		tab.title = fs.getName(tab.path):match('([^%.]+)')
 	end
 	tab.title = tab.title or 'untitled'
 	tab.window = tab.window or window.create(parentTerm, 1, 2, w, h - 1, false)
-	tab.terminal = tab.terminal or tab.window
-
-	local routine = kernel.newRoutine(tab)
-
-	routine.co = coroutine.create(function()
-		local result, err
-
-		if tab.fn then
-			result, err = Util.runFunction(routine.env, tab.fn, table.unpack(tab.args or { } ))
-		elseif tab.path then
-			result, err = xprun(routine.env, tab.path, table.unpack(tab.args or { } ))
-		else
-			err = 'multishell: invalid tab'
-		end
-
+	tab.onExit = function(self, result, err)
 		if not result and err and err ~= 'Terminated' or (err and err ~= 0) then
-			tab.terminal.setBackgroundColor(colors.black)
+			self.terminal.setBackgroundColor(colors.black)
 			if tonumber(err) then
-				tab.terminal.setTextColor(colors.orange)
+				self.terminal.setTextColor(colors.orange)
 				print('Process exited with error code: ' .. err)
 			elseif err then
 				printError(tostring(err))
 			end
-			tab.terminal.setTextColor(colors.white)
+			self.terminal.setTextColor(colors.white)
 			print('\nPress enter to close')
-			routine.isDead = true
-			routine.hidden = false
+			self.isDead = true
+			self.hidden = false
 			redrawMenu()
 			while true do
 				local e, code = os.pullEventRaw('key')
@@ -153,9 +129,9 @@ function multishell.openTab(tab)
 				end
 			end
 		end
-	end)
+	end
 
-	kernel.launch(routine)
+	local routine = kernel.run(tab)
 
 	if tab.focused then
 		multishell.setFocus(routine.uid)
@@ -256,9 +232,10 @@ kernel.hook('multishell_redraw', function()
 
 	if currentTab then
 		if currentTab.sx then
+			local textColor = currentTab.isDead and _colors.errorColor or _colors.focusTextColor
 			blit:write(currentTab.sx - 1,
 				' ' .. currentTab.title:sub(1, currentTab.width - 1) .. ' ',
-				_colors.focusBackgroundColor, _colors.focusTextColor)
+				_colors.focusBackgroundColor, textColor)
 		end
 		if not currentTab.noTerminate then
 			blit:write(w, closeInd, nil, _colors.focusTextColor)
