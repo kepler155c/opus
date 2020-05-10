@@ -33,7 +33,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	local win = { }
-	local maxScroll = 100
+	local maxScroll
 	local cx, cy = 1, 1
 	local blink = false
 	local _bg, _fg = colors.black, colors.white
@@ -164,7 +164,7 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 				win.canvas.lines[lines + i] = { }
 				win.canvas:clearLine(lines + i)
 			end
-			while #win.canvas.lines > maxScroll do
+			while #win.canvas.lines > (maxScroll or win.canvas.height) do
 				table.remove(win.canvas.lines, 1)
 			end
 			scrollTo(#win.canvas.lines)
@@ -213,8 +213,39 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 	end
 
 	function win.reposition(x, y, width, height)
-		win.canvas.x, win.canvas.y = x, y
-		win.canvas:resize(width or win.canvas.width, height or win.canvas.height)
+		if not maxScroll then
+			win.canvas:move(x, y)
+			win.canvas:resize(width or win.canvas.width, height or win.canvas.height)
+			return
+		end
+
+		-- special processing for scrolling terminal like windows
+		local delta = height - win.canvas.height
+
+		if delta > 0 then -- grow
+			for _ = 1, delta do
+				win.canvas.lines[#win.canvas.lines + 1] = { }
+				win.canvas:clearLine(#win.canvas.lines)
+			end
+
+		elseif delta < 0 then -- shrink
+			for _ = delta + 1, 0 do
+				if cy < win.canvas.height then
+					win.canvas.lines[#win.canvas.lines] = nil
+				else
+					cy = cy - 1
+					win.canvas.offy = win.canvas.offy + 1
+				end
+			end
+		end
+
+		win.canvas:resizeBuffer(width, #win.canvas.lines)
+
+		win.canvas.height = height
+		win.canvas.width = width
+		win.canvas:move(x, y)
+
+		update()
 	end
 
 	--[[ Additional methods ]]--

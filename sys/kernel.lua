@@ -109,7 +109,6 @@ function Routine:resume(event, ...)
 end
 
 -- override if any post processing is required
--- routine:cleanup must be called explicitly if overridden
 function Routine:onExit(status, message) -- self, status, message
 	if not status and message ~= 'Terminated' then
 		_G.printError(message)
@@ -177,13 +176,17 @@ function kernel.launch(routine)
 
 		pcall(routine.onExit, routine, result, err)
 		routine:cleanup()
+
+		if not result then
+			error(err)
+		end
 	end)
 
 	table.insert(kernel.routines, routine)
 
 	local s, m = routine:resume()
 
-	return not s and s or routine.uid, m
+	return s and routine.uid, m
 end
 
 function kernel.run(args)
@@ -278,7 +281,7 @@ end
 
 function kernel.start()
 	local s, m
-	pcall(function()
+	local s2, m2 = pcall(function()
 		repeat
 			local eventData = { os.pullEventRaw() }
 			local event = table.remove(eventData, 1)
@@ -290,11 +293,11 @@ function kernel.start()
 		until event == 'kernel_halt'
 	end)
 
-	if not s and m then
+	if (not s and m) or (not s2 and m2) then
 		kernel.window.setVisible(true)
 		term.redirect(kernel.window)
 		print('\nCrash detected\n')
-		_G.printError(m)
+		_G.printError(m or m2)
 	end
 	term.redirect(kernel.terminal)
 end

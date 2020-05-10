@@ -20,7 +20,7 @@ local multishell = { }
 
 shell.setEnv('multishell', multishell)
 
-multishell.term = parentTerm --deprecated use device.terminal
+kernel.window.reposition(1, 2, w, h - 1)
 
 local config = {
 	standard = {

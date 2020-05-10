@@ -666,6 +666,7 @@ local function shellRead(history)
 			end
 
 		elseif event == "term_resize" then
+			terminal.reposition(1, 1, oldTerm.getSize())
 			entry.width = term.getSize() - 3
 			entry:updateScroll()
 			redraw()
@@ -680,7 +681,7 @@ end
 local history = History.load('usr/.shell_history', 25)
 
 term.setBackgroundColor(_colors.backgroundColor)
-term.clear()
+--term.clear()
 
 if settings.get("motd.enabled") then
 	shell.run("motd")

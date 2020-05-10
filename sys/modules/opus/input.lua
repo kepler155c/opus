@@ -189,11 +189,22 @@ function input:translate(event, code, p1, p2)
 	end
 end
 
-function input:test()
+if not ({ ...})[1] then
+	local colors = _G.colors
+	local term = _G.term
+
 	while true do
-		local ch = self:translate(os.pullEvent())
+		local e = { os.pullEvent() }
+		local ch = input:translate(table.unpack(e))
 		if ch then
-			Util.print(ch)
+			term.setTextColor(colors.white)
+			print(table.unpack(e))
+			term.setTextColor(colors.lime)
+			local t = { }
+			for k,v in pairs(ch) do
+				table.insert(t, k .. ':' .. v)
+			end
+			print('--> ' .. table.concat(t, ' ') .. '\n')
 		end
 	end
 end

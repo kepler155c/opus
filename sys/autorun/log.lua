@@ -4,21 +4,10 @@
 
 local kernel     = _G.kernel
 local keyboard   = _G.device.keyboard
-local multishell = _ENV.multishell
 local os         = _G.os
-local term       = _G.term
 
 local function systemLog()
 	local routine = kernel.getCurrent()
-
-	if multishell and multishell.openTab then
-		local w, h = kernel.window.getSize()
-		kernel.window.reposition(1, 2, w, h - 1)
-
-		routine.terminal = kernel.window
-		routine.window = kernel.window
-		term.redirect(kernel.window)
-	end
 
 	kernel.hook('mouse_scroll', function(_, eventData)
 		local dir, y = eventData[1], eventData[3]
