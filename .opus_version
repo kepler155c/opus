@@ -1,6 +1,11 @@
-Sun May 10 20:04:56 UTC 2020
-commit a3a819256f4c4441a550eff1d06592e70a49f9ec
+Mon May 11 23:26:36 UTC 2020
+commit 8279c1ae12b1417380c348f39f735a47395d12a9
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Sun May 10 14:04:20 2020 -0600
+Date:   Mon May 11 17:25:58 2020 -0600
 
-    fix resizing scrolling terminals
+    environments, error messages, and stack traces, oh my!
+    Changed the way processes are launched.
+    multishell.openTab and kernel.run now accept the current environment as a parameter.
+    That new process inherits a copy of the passed environment.
+    Reduces complexity as the calling process is not required to create a suitable env.
+    Stack traces have been greatly improved and now include the stack for coroutines that error.
