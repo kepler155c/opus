@@ -8,7 +8,6 @@ local kernel     = _G.kernel
 local keys       = _G.keys
 local os         = _G.os
 local printError = _G.printError
-local shell      = _ENV.shell
 local window     = _G.window
 
 local parentTerm = _G.device.terminal
@@ -18,7 +17,7 @@ local tabsDirty = false
 local closeInd = Util.getVersion() >= 1.76 and '\215' or '*'
 local multishell = { }
 
-shell.setEnv('multishell', multishell)
+_ENV.multishell = multishell
 
 kernel.window.reposition(1, 2, w, h - 1)
 
@@ -93,22 +92,21 @@ function multishell.getTabs()
 	return kernel.routines
 end
 
-function multishell.launch( tProgramEnv, sProgramPath, ... )
+function multishell.launch(env, path, ...)
 	-- backwards compatibility
-	return multishell.openTab({
-		env = tProgramEnv,
-		path = sProgramPath,
+	return multishell.openTab(env, {
+		path = path,
 		args = { ... },
 	})
 end
 
-function multishell.openTab(tab)
+function multishell.openTab(env, tab)
 	if not tab.title and tab.path then
 		tab.title = fs.getName(tab.path):match('([^%.]+)')
 	end
 	tab.title = tab.title or 'untitled'
 	tab.window = tab.window or window.create(parentTerm, 1, 2, w, h - 1, false)
-	tab.onExit = function(self, result, err)
+	tab.onExit = tab.onExit or function(self, result, err)
 		if not result and err and err ~= 'Terminated' or (err and err ~= 0) then
 			self.terminal.setBackgroundColor(colors.black)
 			if tonumber(err) then
@@ -131,14 +129,17 @@ function multishell.openTab(tab)
 		end
 	end
 
-	local routine = kernel.run(tab)
+	local routine, message = kernel.run(env, tab)
 
-	if tab.focused then
-		multishell.setFocus(routine.uid)
-	else
-		redrawMenu()
+	if routine then
+		if tab.focused then
+			multishell.setFocus(routine.uid)
+		else
+			redrawMenu()
+		end
 	end
-	return routine.uid
+
+	return routine and routine.uid, message
 end
 
 function multishell.hideTab(tabId)
@@ -316,15 +317,22 @@ kernel.hook('mouse_scroll', function(_, eventData)
 end)
 
 kernel.hook('kernel_ready', function()
-	overviewId = multishell.openTab({
-		path = config.launcher or 'sys/apps/Overview.lua',
+	overviewId = multishell.openTab(_ENV, {
+		path = 'sys/apps/shell.lua',
+		args = { config.launcher or 'sys/apps/Overview.lua' },
 		isOverview = true,
 		noTerminate = true,
 		focused = true,
 		title = '+',
+		onExit = function(_, s, m)
+			if not s then
+				kernel.halt(s, m)
+			end
+		end,
 	})
+	multishell.setTitle(overviewId, '+')
 
-	multishell.openTab({
+	multishell.openTab(_ENV, {
 		path = 'sys/apps/shell.lua',
 		args = { 'sys/apps/autorun.lua' },
 		title = 'Autorun',

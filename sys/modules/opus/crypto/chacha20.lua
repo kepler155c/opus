@@ -100,7 +100,7 @@ local function crypt(data, key, nonce, cntr, round)
 	cntr = tonumber(cntr) or 1
 	round = tonumber(round) or 20
 
-	local throttle = Util.throttle(function() _syslog('throttle') end)
+	local throttle = Util.throttle()
 	local out = {}
 	local state = initState(key, nonce, cntr)
 	local blockAmt = math.floor(#data/64)

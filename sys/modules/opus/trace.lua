@@ -32,95 +32,63 @@ local function traceback(x)
 	end
 end
 
-local function trim_traceback(target, marker)
-	local ttarget, tmarker = {}, {}
-	for line in target:gmatch("([^\n]*)\n?") do ttarget[#ttarget + 1] = line end
-	for line in marker:gmatch("([^\n]*)\n?") do tmarker[#tmarker + 1] = line end
+local function trim_traceback(target)
+	local t = { }
+	local filters = {
+		"%[C%]: in function 'xpcall'",
+		"(...tail calls...)",
+		"xpcall: $",
+		"trace.lua:%d+:",
+	}
 
---[[
-	TODO : fix this trace
-	Anavrins - if you could take a look, it would be appreciated
-	-- basically i want the stack logged in a more readable
-	-- format and the normal code/error message to be returned
-
-	-- unsure why the traceback method concatenates the stack
-	-- when it can just be returned as a table - would make
-	-- filtering much simpler
-
-	-- the following seems to reduce the stacktrace way too
-	-- much - losing most of the relevant call stack
-
-	-- i have modified this a bit from the original - not sure
-	-- if my changes are causing the issues or not
-
-	-- Trim identical suffixes
-	local t_len, m_len = #ttarget, #tmarker
-	while t_len >= 3 and ttarget[t_len] == tmarker[m_len] do
-		table.remove(ttarget, t_len)
-		t_len, m_len = t_len - 1, m_len - 1
+	local function matchesFilter(line)
+		for _, filter in pairs(filters) do
+			if line:match(filter) then
+				return true
+			end
+		end
 	end
 
-	-- Trim elements from this file and xpcall invocations
-	while t_len >= 1 and ttarget[t_len]:find("^\tstack_trace%.lua:%d+:") or
-				ttarget[t_len] == "\t[C]: in function 'xpcall'" or ttarget[t_len] == "  xpcall: " do
-		table.remove(ttarget, t_len)
-		t_len = t_len - 1
+	for line in target:gmatch("([^\n]*)\n?") do
+		if not matchesFilter(line) then
+			table.insert(t, line)
+		end
 	end
-]]
-	ttarget[#ttarget] = nil -- remove 2 calls added by the added xpcall
-	ttarget[#ttarget] = nil
 
-	return ttarget
+	return t
 end
 
---- Run a function with
 return function (fn, ...)
-	-- So this is rather grim: we need to get the full traceback and current one and remove
-	-- the common prefix
-	local trace
-	local args = { ... }
-
 	-- xpcall in Lua 5.1 does not accept parameters
 	-- which is not ideal
+	local args = { ... }
 	local res = table.pack(xpcall(function()
 		return fn(table.unpack(args))
 	end, traceback))
 
-	if not res[1] then 
-		trace = traceback("trace.lua:1:")
-	end
 	local ok, err = res[1], res[2]
 
 	if not ok and err ~= nil then
-		trace = trim_traceback(err, trace)
+		local trace = trim_traceback(err)
 
-		-- Find the position where the stack traceback actually starts
-		local trace_starts
-		for i = #trace, 1, -1 do
-			if trace[i] == "stack traceback:" then trace_starts = i; break end
-		end
-
-		_G._syslog('')
-		for _, line in pairs(trace) do
-			_G._syslog(line)
-		end
-
-		-- If this traceback is more than 15 elements long, keep the first 9, last 5
-		-- and put an ellipsis between the rest
-		local max = 10
-		if trace_starts and #trace - trace_starts > max then
-			local keep_starts = trace_starts + 7
-			for i = #trace - trace_starts - max, 0, -1 do
-				table.remove(trace, keep_starts + i)
+		err = { }
+		while true do
+			local line = table.remove(trace, 1)
+			if not line or line == 'stack traceback:' then
+				break
 			end
-			table.insert(trace, keep_starts, "  ...")
+			table.insert(err, line)
+		end
+		err = table.concat(err, '\n')
+
+		_G._syslog('\n' .. err .. '\n' .. 'stack traceback:')
+		for _, v in ipairs(trace) do
+			if v ~= 'stack traceback:' then
+				_G._syslog(v:gsub("in function", "in"))
+			end
 		end
 
-		for k, line in pairs(trace) do
-			trace[k] = line:gsub("in function", " in")
-		end
-
-		return false, table.remove(trace, 1), table.concat(trace, "\n")
+		return ok, err
 	end
 
 	return table.unpack(res, 1, res.n)

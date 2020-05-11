@@ -10,9 +10,8 @@ if multishell and multishell.getTabs then
 		local tab = kernel.getFocused()
 		if tab and not tab.noTerminate then
 			multishell.terminate(tab.uid)
-			multishell.openTab({
+			multishell.openTab(tab.env, {
 				path = tab.path,
-				env = tab.env,
 				args = tab.args,
 				focused = true,
 			})

@@ -39,7 +39,7 @@ local function systemLog()
 	keyboard.removeHotkey('control-d')
 end
 
-kernel.run({
+kernel.run(_ENV, {
 	title = 'System Log',
 	fn = systemLog,
 	noTerminate = true,

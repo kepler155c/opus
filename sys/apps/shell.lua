@@ -6,16 +6,6 @@ local fs         = _G.fs
 local settings   = _G.settings
 local shell      = _ENV.shell
 
-local sandboxEnv = { }
-for k,v in pairs(_ENV) do
-	sandboxEnv[k] = v
-end
-sandboxEnv.package = nil
-sandboxEnv.require = nil
-sandboxEnv.arg = nil
-sandboxEnv._ENV = nil
-sandboxEnv.shell = shell
-
 _G.requireInjector(_ENV)
 
 local trace = require('opus.trace')
@@ -51,7 +41,7 @@ local function run(...)
 	local args = tokenise(...)
 	local command = table.remove(args, 1) or error('No such program')
 	local isUrl = not not command:match("^(https?:)")
-	local env = shell.makeEnv()
+	local env = shell.makeEnv(_ENV)
 
 	local path, loadFn
 	if isUrl then
@@ -64,7 +54,7 @@ local function run(...)
 
 	local fn, err = loadFn(path, env)
 	if not fn then
-		error(err)
+		error(err, -1)
 	end
 
 	if _ENV.multishell then
@@ -287,13 +277,9 @@ function shell.getRunningInfo()
 	return tProgramStack[#tProgramStack]
 end
 
-function shell.setEnv(name, value)
-	_ENV[name] = value
-	sandboxEnv[name] = value
-end
-
-function shell.makeEnv()
-	local env = setmetatable(Util.shallowCopy(sandboxEnv), { __index = _G })
+-- convenience function for making a runnable env
+function shell.makeEnv(env)
+	env = setmetatable(Util.shallowCopy(env), { __index = _G })
 	_G.requireInjector(env)
 	return env
 end
@@ -321,7 +307,6 @@ function shell.newTab(tabInfo, ...)
 
 	if path then
 		tabInfo.path = path
-		tabInfo.env = shell.makeEnv()
 		tabInfo.args = args
 		tabInfo.title = fs.getName(path):match('([^%.]+)')
 
@@ -329,23 +314,19 @@ function shell.newTab(tabInfo, ...)
 			table.insert(tabInfo.args, 1, tabInfo.path)
 			tabInfo.path = 'sys/apps/shell.lua'
 		end
-		return _ENV.multishell.openTab(tabInfo)
+		return _ENV.multishell.openTab(_ENV, tabInfo)
 	end
 	return nil, 'No such program'
 end
 
-function shell.openTab(...)
-	-- needs to use multishell.launch .. so we can run with stock multishell
-	local tWords = tokenise( ... )
-	local sCommand = tWords[1]
-	if sCommand then
-		local sPath = shell.resolveProgram(sCommand)
-		if sPath == "sys/apps/shell.lua" then
-			return _ENV.multishell.launch(shell.makeEnv(), sPath, table.unpack(tWords, 2))
-		else
-			return _ENV.multishell.launch(shell.makeEnv(), "sys/apps/shell.lua", sCommand, table.unpack(tWords, 2))
-		end
+if not _ENV.multishell then
+	function shell.newTab()
+		error('Multishell is not available')
 	end
+end
+
+function shell.openTab(...)
+	return shell.newTab({ }, ...)
 end
 
 function shell.openForegroundTab( ... )

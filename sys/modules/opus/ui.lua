@@ -117,7 +117,7 @@ function UI:init()
 
 			if ie.code == 'control-shift-mouse_click' then -- hack
 				local event = currentPage:pointToChild(x, y)
-				_ENV.multishell.openTab({
+				_ENV.multishell.openTab(_ENV, {
 					path = 'sys/apps/Lua.lua',
 					args = { event.element, self, _ENV },
 					focused = true })

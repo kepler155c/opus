@@ -108,6 +108,38 @@ function Routine:resume(event, ...)
 	end
 end
 
+function Routine:run()
+	self.co = self.co or coroutine.create(function()
+		local result, err, fn
+
+		if self.fn then
+			fn = self.fn
+			_G.setfenv(fn, self.env)
+		elseif self.path then
+			fn, err = loadfile(self.path, self.env)
+		elseif self.chunk then
+			fn, err = load(self.chunk, self.title, nil, self.env)
+		end
+
+		if fn then
+			result, err = trace(fn, table.unpack(self.args or { } ))
+		else
+			err = err or 'kernel: invalid routine'
+		end
+
+		pcall(self.onExit, self, result, err)
+		self:cleanup()
+
+		if not result then
+			error(err)
+		end
+	end)
+
+	table.insert(kernel.routines, self)
+
+	return self:resume()
+end
+
 -- override if any post processing is required
 function Routine:onExit(status, message) -- self, status, message
 	if not status and message ~= 'Terminated' then
@@ -134,9 +166,14 @@ function kernel.getShell()
 	return shell
 end
 
-kernel.makeEnv = shell.makeEnv
+-- each routine inherits the parent's env
+function kernel.makeEnv(env)
+	env = setmetatable(Util.shallowCopy(env or _ENV), { __index = _G })
+	_G.requireInjector(env)
+	return env
+end
 
-function kernel.newRoutine(args)
+function kernel.newRoutine(env, args)
 	kernel.UID = kernel.UID + 1
 
 	local routine = setmetatable({
@@ -147,52 +184,16 @@ function kernel.newRoutine(args)
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
-	routine.env = args.env or shell.makeEnv()
+	routine.env = args.env or kernel.makeEnv(env)
 	routine.terminal = routine.terminal or routine.window
 
 	return routine
 end
 
-local function xprun(env, path, ...)
-	setmetatable(env, { __index = _G })
-	local fn, m = loadfile(path, env)
-	if fn then
-		return trace(fn, ...)
-	end
-	return fn, m
-end
-
-function kernel.launch(routine)
-	routine.co = routine.co or coroutine.create(function()
-		local result, err
-
-		if routine.fn then
-			result, err = Util.runFunction(routine.env, routine.fn, table.unpack(routine.args or { } ))
-		elseif routine.path then
-			result, err = xprun(routine.env, routine.path, table.unpack(routine.args or { } ))
-		else
-			err = 'kernel: invalid routine'
-		end
-
-		pcall(routine.onExit, routine, result, err)
-		routine:cleanup()
-
-		if not result then
-			error(err)
-		end
-	end)
-
-	table.insert(kernel.routines, routine)
-
-	local s, m = routine:resume()
-
-	return s and routine.uid, m
-end
-
-function kernel.run(args)
-	local routine = kernel.newRoutine(args)
-	kernel.launch(routine)
-	return routine
+function kernel.run(env, args)
+	local routine = kernel.newRoutine(env, args)
+	local s, m = routine:run()
+	return s and routine, m
 end
 
 function kernel.raise(uid)
@@ -314,9 +315,10 @@ local function init(...)
 	for _,file in ipairs(files) do
 		local level = file:match('(%d).%S+.lua') or 99
 		if tonumber(level) <= runLevel then
+			-- All init programs run under the original shell
 			local s, m = shell.run(fs.combine(dir, file))
 			if not s then
-				error(m)
+				error(m, -1)
 			end
 			os.sleep(0)
 		end
@@ -331,7 +333,7 @@ local function init(...)
 			shell.run('sys/apps/autorun.lua')
 
 			local win = window.create(kernel.terminal, 1, 1, w, h, true)
-			local s, m = kernel.run({
+			local s, m = kernel.run(_ENV, {
 				title = args[1],
 				path = 'sys/apps/shell.lua',
 				args = args,
@@ -349,7 +351,7 @@ local function init(...)
 	end
 end
 
-kernel.run({
+kernel.run(_ENV, {
 	fn = init,
 	title = 'init',
 	args = { ... },

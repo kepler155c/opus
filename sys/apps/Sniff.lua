@@ -255,7 +255,7 @@ function page.packetSlide:eventHandler(event)
 		page:setFocus(page.packetGrid)
 
 	elseif event.type == 'packet_lua' then
-		multishell.openTab({ path = 'sys/apps/Lua.lua', args = { self.currentPacket.message }, focused = true })
+		multishell.openTab(_ENV, { path = 'sys/apps/Lua.lua', args = { self.currentPacket.message }, focused = true })
 
 	elseif event.type == 'prev_packet' then
 		local c = self.currentPacket

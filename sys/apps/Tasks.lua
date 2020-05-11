@@ -12,6 +12,7 @@ local page = UI.Page {
 		buttons = {
 			{ text = 'Activate',  event = 'activate'  },
 			{ text = 'Terminate', event = 'terminate' },
+			{ text = 'Inspect',   event = 'inspect'   },
 		},
 	},
 	grid = UI.ScrollingGrid {
@@ -49,6 +50,12 @@ local page = UI.Page {
 				multishell.setFocus(t.uid)
 			elseif event.type == 'terminate' then
 				multishell.terminate(t.uid)
+			elseif event.type == 'inspect' then
+				multishell.openTab(_ENV, {
+					path = 'sys/apps/Lua.lua',
+					args = { t },
+					focused = true,
+				})
 			end
 		end
 		if event.type == 'quit' then

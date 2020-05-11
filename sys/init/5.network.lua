@@ -15,7 +15,7 @@ do
 end
 
 local function startNetwork()
-	kernel.run({
+	kernel.run(_ENV, {
 		title = 'Net daemon',
 		path = 'sys/apps/netdaemon.lua',
 		hidden = true,

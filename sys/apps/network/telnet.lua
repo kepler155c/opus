@@ -41,12 +41,12 @@ local function telnetHost(socket, mode)
 		end
 	end
 
-	local shellThread = kernel.run({
+	local shellThread = kernel.run(_ENV, {
 		window = win,
 		title = mode .. ' client',
 		hidden = true,
 		fn = function()
-			Util.run(kernel.makeEnv(), Alt.get('shell'), table.unpack(termInfo.program))
+			Util.run(kernel.makeEnv(_ENV), Alt.get('shell'), table.unpack(termInfo.program))
 			if socket.queue then
 				socket:write(socket.queue)
 			end

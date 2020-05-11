@@ -58,6 +58,14 @@ function Routine:resume(event, ...)
 		else
 			s, m = coroutine.resume(self.co, event, ...)
 		end
+
+		if not s and event ~= 'terminate' then
+			if m and debug and debug.traceback then
+				local t = (debug.traceback(self.co, 1)) or ''
+				m = m .. '\n' .. t:match('%d\n(.+)')
+			end
+		end
+
 		if self:isDead() then
 			self.co = nil
 			self.filter = nil
