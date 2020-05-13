@@ -52,8 +52,8 @@ local function run(...)
 		loadFn = loadfile
 	end
 
-	local fn, err = loadFn(path, env)
-	if not fn then
+	local bill, err = loadFn(path, env)
+	if not bill then
 		error(err, -1)
 	end
 
@@ -68,7 +68,7 @@ local function run(...)
 	}
 
 	env[ "arg" ] = { [0] = path, table.unpack(args) }
-	local r = { fn(table.unpack(args)) }
+	local r = { bill(table.unpack(args)) }
 
 	tProgramStack[#tProgramStack] = nil
 

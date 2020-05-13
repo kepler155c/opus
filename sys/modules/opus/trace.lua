@@ -32,14 +32,27 @@ local function traceback(x)
 	end
 end
 
-local function trim_traceback(target)
-	local t = { }
+local function trim_traceback(stack)
+	local trace = { }
 	local filters = {
 		"%[C%]: in function 'xpcall'",
 		"(...tail calls...)",
 		"xpcall: $",
 		"trace.lua:%d+:",
+		"stack traceback:",
 	}
+
+	for line in stack:gmatch("([^\n]*)\n?") do table.insert(trace, line) end
+
+	local err = { }
+	while true do
+		local line = table.remove(trace, 1)
+		if not line or line == 'stack traceback:' then
+			break
+		end
+		table.insert(err, line)
+	end
+	err = table.concat(err, '\n')
 
 	local function matchesFilter(line)
 		for _, filter in pairs(filters) do
@@ -49,13 +62,15 @@ local function trim_traceback(target)
 		end
 	end
 
-	for line in target:gmatch("([^\n]*)\n?") do
+	local t = { }
+	for _, line in pairs(trace) do
 		if not matchesFilter(line) then
+			line = line:gsub("in function", "in")
 			table.insert(t, line)
 		end
 	end
 
-	return t
+	return err, t
 end
 
 return function (fn, ...)
@@ -66,29 +81,15 @@ return function (fn, ...)
 		return fn(table.unpack(args))
 	end, traceback))
 
-	local ok, err = res[1], res[2]
-
-	if not ok and err ~= nil then
-		local trace = trim_traceback(err)
-
-		err = { }
-		while true do
-			local line = table.remove(trace, 1)
-			if not line or line == 'stack traceback:' then
-				break
-			end
-			table.insert(err, line)
-		end
-		err = table.concat(err, '\n')
+	if not res[1] and res[2] ~= nil then
+		local err, trace = trim_traceback(res[2])
 
 		_G._syslog('\n' .. err .. '\n' .. 'stack traceback:')
 		for _, v in ipairs(trace) do
-			if v ~= 'stack traceback:' then
-				_G._syslog(v:gsub("in function", "in"))
-			end
+			_G._syslog(v)
 		end
 
-		return ok, err
+		return res[1], err, trace
 	end
 
 	return table.unpack(res, 1, res.n)

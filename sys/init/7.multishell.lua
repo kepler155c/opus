@@ -106,17 +106,34 @@ function multishell.openTab(env, tab)
 	end
 	tab.title = tab.title or 'untitled'
 	tab.window = tab.window or window.create(parentTerm, 1, 2, w, h - 1, false)
-	tab.onExit = tab.onExit or function(self, result, err)
-		if not result and err and err ~= 'Terminated' or (err and err ~= 0) then
-			self.terminal.setBackgroundColor(colors.black)
+	tab.onExit = tab.onExit or function(self, result, err, stack)
+		if not result and err and err ~= 'Terminated' then
+			self.terminal.setTextColor(colors.white)
+			self.terminal.setCursorBlink(false)
+			print('\nThe program terminated with an error.\n')
 			if tonumber(err) then
-				self.terminal.setTextColor(colors.orange)
-				print('Process exited with error code: ' .. err)
+				printError('Process exited with error code: ' .. err)
 			elseif err then
 				printError(tostring(err))
 			end
-			self.terminal.setTextColor(colors.white)
-			print('\nPress enter to close')
+			if type(stack) == 'table' and #stack > 0 then
+				local _, cy = self.terminal.getCursorPos()
+				local _, th = self.terminal.getSize()
+				self.terminal.setTextColor(colors.white)
+				if cy < th - 4 then
+					print('\nstack traceback:')
+					for _, v in ipairs(stack or { }) do
+						_, cy = self.terminal.getCursorPos()
+						if cy > th - 3 then
+							print(' ...')
+							break
+						end
+						print(v)
+					end
+				end
+			end
+			self.terminal.setTextColor(parentTerm.isColor() and colors.yellow or colors.white)
+			_G.write('\nPress enter to close')
 			self.isDead = true
 			self.hidden = false
 			redrawMenu()

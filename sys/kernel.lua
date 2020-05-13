@@ -110,7 +110,7 @@ end
 
 function Routine:run()
 	self.co = self.co or coroutine.create(function()
-		local result, err, fn
+		local result, err, fn, stack
 
 		if self.fn then
 			fn = self.fn
@@ -122,12 +122,12 @@ function Routine:run()
 		end
 
 		if fn then
-			result, err = trace(fn, table.unpack(self.args or { } ))
+			result, err, stack = trace(fn, table.unpack(self.args or { } ))
 		else
 			err = err or 'kernel: invalid routine'
 		end
 
-		pcall(self.onExit, self, result, err)
+		pcall(self.onExit, self, result, err, stack)
 		self:cleanup()
 
 		if not result then
