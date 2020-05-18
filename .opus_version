@@ -1,6 +1,6 @@
-Wed May 13 03:26:26 UTC 2020
-commit 90ce2bb1a52ed416a2506f0ae96184ba442a00c6
+Mon May 18 01:37:10 UTC 2020
+commit a7e331822622f973a736826b258019babc924af4
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Tue May 12 21:25:37 2020 -0600
+Date:   Sun May 17 19:36:33 2020 -0600
 
-    Improved error messages
+    add standard lua os methods, another fix for vfs links within links, allow write on urlfs mounted files
