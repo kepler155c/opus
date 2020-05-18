@@ -5,15 +5,19 @@ local fs = _G.fs
 
 local urlfs = { }
 
-function urlfs.mount(_, url)
+function urlfs.mount(path, url, force)
 	if not url then
 		error('URL is required')
 	end
-	return {
-		url = url,
-		created = os.epoch('utc'),
-		modification = os.epoch('utc'),
-	}
+
+	-- only mount if the file does not exist already
+	if not fs.exists(path) or force then
+		return {
+			url = url,
+			created = os.epoch('utc'),
+			modification = os.epoch('utc'),
+		}
+	end
 end
 
 function urlfs.attributes(node)
@@ -38,7 +42,7 @@ function urlfs.getSize(node)
 end
 
 function urlfs.isReadOnly()
-	return true
+	return false
 end
 
 function urlfs.isDir()

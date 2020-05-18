@@ -144,6 +144,9 @@ function multishell.openTab(env, tab)
 				end
 			end
 		end
+		if tab.chainExit then
+			tab.chainExit(self, result, err, stack)
+		end
 	end
 
 	local routine, message = kernel.run(env, tab)

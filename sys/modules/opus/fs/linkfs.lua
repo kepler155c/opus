@@ -5,7 +5,7 @@ local linkfs = { }
 -- TODO: implement broken links
 
 local methods = { 'exists', 'getFreeSpace', 'getSize', 'attributes',
-	'isDir', 'isReadOnly', 'list', 'listEx', 'makeDir', 'open', 'getDrive' }
+	'isDir', 'isReadOnly', 'list', 'makeDir', 'open', 'getDrive' }
 
 for _,m in pairs(methods) do
 	linkfs[m] = function(node, dir, ...)
@@ -18,13 +18,16 @@ function linkfs.resolve(node, dir)
 	return dir:gsub(node.mountPoint, node.source, 1)
 end
 
-function linkfs.mount(_, source)
+function linkfs.mount(path, source)
 	if not source then
 		error('Source is required')
 	end
 	source = fs.combine(source, '')
 	if not fs.exists(source) then
 		error('Source is missing')
+	end
+	if path == source then
+		return
 	end
 	if fs.isDir(source) then
 		return {

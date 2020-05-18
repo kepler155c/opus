@@ -52,8 +52,8 @@ local function run(...)
 		loadFn = loadfile
 	end
 
-	local bill, err = loadFn(path, env)
-	if not bill then
+	local funkshun, err = loadFn(path, env)
+	if not funkshun then
 		error(err, -1)
 	end
 
@@ -68,7 +68,7 @@ local function run(...)
 	}
 
 	env[ "arg" ] = { [0] = path, table.unpack(args) }
-	local r = { bill(table.unpack(args)) }
+	local r = { funkshun(table.unpack(args)) }
 
 	tProgramStack[#tProgramStack] = nil
 
@@ -659,7 +659,7 @@ local function shellRead(history)
 	return entry.value or ''
 end
 
-local history = History.load('usr/.shell_history', 25)
+local history = History.load('usr/.shell_history', 100)
 
 term.setBackgroundColor(_colors.backgroundColor)
 --term.clear()

@@ -89,6 +89,7 @@ return function(env)
 			os     = os,
 			string = string,
 			table  = table,
+			debug  = debug,
 		},
 		loaders = {
 			preloadSearcher,
