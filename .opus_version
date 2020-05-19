@@ -1,6 +1,6 @@
-Mon May 18 01:37:10 UTC 2020
-commit a7e331822622f973a736826b258019babc924af4
+Tue May 19 23:09:30 UTC 2020
+commit 985830fcfda832bfa4d2597297319490fe104c9d
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Sun May 17 19:36:33 2020 -0600
+Date:   Tue May 19 17:09:10 2020 -0600
 
-    add standard lua os methods, another fix for vfs links within links, allow write on urlfs mounted files
+    better fuzzy matching + vfs type flag in Files
