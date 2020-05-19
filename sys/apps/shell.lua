@@ -52,8 +52,8 @@ local function run(...)
 		loadFn = loadfile
 	end
 
-	local funkshun, err = loadFn(path, env)
-	if not funkshun then
+	local O_v_O, err = loadFn(path, env)
+	if not O_v_O then
 		error(err, -1)
 	end
 
@@ -68,7 +68,7 @@ local function run(...)
 	}
 
 	env[ "arg" ] = { [0] = path, table.unpack(args) }
-	local r = { funkshun(table.unpack(args)) }
+	local r = { O_v_O(table.unpack(args)) }
 
 	tProgramStack[#tProgramStack] = nil
 

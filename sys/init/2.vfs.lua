@@ -166,6 +166,13 @@ function fs.complete(partial, dir, includeFiles, includeSlash)
 	return fs.native.complete(partial, dir, includeFiles, includeSlash)
 end
 
+local displayFlags = {
+	urlfs  = 'U',
+	linkfs = 'L',
+	ramfs  = 'T',
+	netfs  = 'N',
+}
+
 function fs.listEx(dir)
   dir = fs.combine(dir, '')
 	local node = getNode(dir)
@@ -176,20 +183,22 @@ function fs.listEx(dir)
 	local t = { }
 	local files = node.fs.list(node, dir)
 
-	pcall(function()
-		for _,f in ipairs(files) do
+	for _,f in ipairs(files) do
+		pcall(function()
 			local fullName = fs.combine(dir, f)
+			local n = fs.getNode(fullName)
 			local file = {
 				name = f,
 				isDir = fs.isDir(fullName),
 				isReadOnly = fs.isReadOnly(fullName),
+				fstype = n.mountPoint == fullName and displayFlags[n.fstype],
 			}
 			if not file.isDir then
 				file.size = fs.getSize(fullName)
 			end
 			table.insert(t, file)
-		end
-	end)
+		end)
+	end
 	return t
 end
 

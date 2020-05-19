@@ -1,3 +1,4 @@
+local fuzzy = require('opus.fuzzy')
 local UI    = require('opus.ui')
 local Util  = require('opus.util')
 
@@ -42,13 +43,13 @@ UI:addPage('main', UI.Page {
 
 		elseif event.type == 'text_change' then
 			if not event.text then
-				self.grid.values = topics
+				self.grid.sortColumn = 'lname'
 			else
-				self.grid.values = { }
-				for _,f in pairs(topics) do
-					if string.find(f.lname, event.text:lower()) then
-						table.insert(self.grid.values, f)
-					end
+				self.grid.sortColumn = 'score'
+				self.grid.inverseSort = false
+				local pattern = event.text:lower()
+				for _,v in pairs(self.grid.values) do
+					v.score = -fuzzy(v.lname, pattern)
 				end
 			end
 			self.grid:update()

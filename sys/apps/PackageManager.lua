@@ -41,7 +41,7 @@ local page = UI.Page {
 	},
 	description = UI.TextArea {
 		x = 16, y = 3, ey = -5,
-		marginRight = 0, marginLeft = 0,
+		marginRight = 2, marginLeft = 0,
 	},
 	action = UI.SlideOut {
 		titleBar = UI.TitleBar {
@@ -140,9 +140,9 @@ function page:eventHandler(event)
 	elseif event.type == 'grid_focus_row' then
 		local manifest = event.selected.manifest
 
-		self.description.value = string.format('%s%s\n\n%s%s',
+		self.description:setValue(string.format('%s%s\n\n%s%s',
 			Ansi.yellow, manifest.title,
-			Ansi.white, manifest.description)
+			Ansi.white, manifest.description))
 		self.description:draw()
 		self:updateSelection(event.selected)
 

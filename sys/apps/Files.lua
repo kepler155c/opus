@@ -77,8 +77,8 @@ local Browser = UI.Page {
 	grid = UI.ScrollingGrid {
 		columns = {
 			{ heading = 'Name', key = 'name'             },
-			{                   key = 'flags', width = 2 },
-			{ heading = 'Size', key = 'fsize', width = 5 },
+			{                   key = 'flags', width = 3, textColor = 'lightGray' },
+			{ heading = 'Size', key = 'fsize', width = 5, textColor = 'yellow' },
 		},
 		sortColumn = 'name',
 		y = 2, ey = -2,
@@ -211,7 +211,7 @@ function Browser:enable()
 	self:setFocus(self.grid)
 end
 
-function Browser.menuBar:getActive(menuItem)
+function Browser.menuBar.getActive(_, menuItem)
 	local file = Browser.grid:getSelected()
 	if menuItem.flags == FILE then
 		return file and not file.isDir
@@ -223,7 +223,7 @@ function Browser:setStatus(status, ...)
 	self.notification:info(string.format(status, ...))
 end
 
-function Browser:unmarkAll()
+function Browser.unmarkAll()
 	for _,m in pairs(marked) do
 		m.marked = false
 	end
@@ -263,10 +263,11 @@ function Browser:updateDirectory(dir)
 		dir.size = #files
 		for _, file in pairs(files) do
 			file.fullName = fs.combine(dir.name, file.name)
-			file.flags = ''
+			file.flags = file.fstype or ' '
 			if not file.isDir then
 				dir.totalSize = dir.totalSize + file.size
 				file.fsize = formatSize(file.size)
+				file.flags = file.flags .. ' '
 			else
 				if config.showDirSizes then
 					file.size = fs.getSize(file.fullName, true)
@@ -274,11 +275,9 @@ function Browser:updateDirectory(dir)
 					dir.totalSize = dir.totalSize + file.size
 					file.fsize = formatSize(file.size)
 				end
-				file.flags = 'D'
+				file.flags = file.flags .. 'D'
 			end
-			if file.isReadOnly then
-				file.flags = file.flags .. 'R'
-			end
+			file.flags = file.flags .. (file.isReadOnly and 'R' or ' ')
 			if config.showHidden or file.name:sub(1, 1) ~= '.' then
 				dir.files[file.fullName] = file
 			end
@@ -467,7 +466,7 @@ function Browser:eventHandler(event)
 
 	elseif event.type == 'paste' then
 		for _,m in pairs(copied) do
-			local s, m = pcall(function()
+			pcall(function()
 				if cutMode then
 					fs.move(m.fullName, fs.combine(self.dir.name, m.name))
 				else
