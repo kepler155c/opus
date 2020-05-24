@@ -1,5 +1,20 @@
 local fs = _G.fs
 
+-- override bios function to include the actual filename
+function _G.loadfile(filename, env)
+    -- Support the previous `loadfile(filename, env)` form instead.
+    if type(mode) == "table" and env == nil then
+        mode, env = nil, mode
+    end
+
+    local file = fs.open(filename, "r")
+    if not file then return nil, "File not found" end
+
+    local func, err = load(file.readAll(), '@' .. filename, mode, env)
+    file.close()
+    return func, err
+end
+
 local sandboxEnv = setmetatable({ }, { __index = _G })
 for k,v in pairs(_ENV) do
 	sandboxEnv[k] = v

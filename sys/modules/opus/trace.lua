@@ -12,6 +12,10 @@ local function traceback(x)
 		return x
 	end
 
+	if x and x:match(':%d+: 0$') then
+		return x
+	end
+
 	if debug_traceback then
 		-- The parens are important, as they prevent a tail call occuring, meaning
 		-- the stack level is preserved. This ensures the code behaves identically
@@ -65,7 +69,7 @@ local function trim_traceback(stack)
 	local t = { }
 	for _, line in pairs(trace) do
 		if not matchesFilter(line) then
-			line = line:gsub("in function", "in")
+			line = line:gsub("in function", "in"):gsub('%w+/', '')
 			table.insert(t, line)
 		end
 	end
@@ -84,9 +88,15 @@ return function (fn, ...)
 	if not res[1] and res[2] ~= nil then
 		local err, trace = trim_traceback(res[2])
 
-		_G._syslog('\n' .. err .. '\n' .. 'stack traceback:')
-		for _, v in ipairs(trace) do
-			_G._syslog(v)
+		if #trace > 0 then
+			_G._syslog('\n' .. err .. '\n' .. 'stack traceback:')
+			for _, v in ipairs(trace) do
+				_G._syslog(v)
+			end
+		end
+
+		if err:match(':%d+: 0$') then
+			return true
 		end
 
 		return res[1], err, trace
