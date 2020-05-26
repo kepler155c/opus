@@ -1,3 +1,5 @@
+-- https://www.lua.org/manual/5.1/manual.html#pdf-require
+
 local function split(str, pattern)
 	local t = { }
 	local function helper(line) table.insert(t, line) return "" end
@@ -65,14 +67,14 @@ return function(env)
 			local sPath = string.gsub(pattern, "%?", fname)
 			-- TODO: if there's no shell, we should not be checking relative paths below
 			-- as they will resolve to root directory
-			if env.shell and
-				type(env.shell.getRunningProgram) == 'function' and
-				sPath:sub(1, 1) ~= "/" then
+			if env.shell
+				and type(env.shell.getRunningProgram) == 'function'
+				and sPath:sub(1, 1) ~= "/" then
 
 				sPath = fs.combine(fs.getDir(env.shell.getRunningProgram() or ''), sPath)
 			end
 			if fs.exists(sPath) and not fs.isDir(sPath) then
-				return loadfile(sPath, env)
+				return loadfile(fs.combine(sPath, ''), env)
 			end
 		end
 	end

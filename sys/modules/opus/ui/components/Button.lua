@@ -19,6 +19,8 @@ UI.Button.defaults = {
 		[ ' ' ] = 'button_activate',
 		enter = 'button_activate',
 		mouse_click = 'button_activate',
+		mouse_doubleclick = 'button_activate',
+		mouse_tripleclick = 'button_activate',
 	}
 }
 function UI.Button:layout()

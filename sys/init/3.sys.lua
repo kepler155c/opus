@@ -42,5 +42,5 @@ end
 
 -- non-standard - will raise error instead
 os.exit = function(code)
-	error(code)
+	error(code or 0)
 end

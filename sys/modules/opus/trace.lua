@@ -78,8 +78,6 @@ local function trim_traceback(stack)
 end
 
 return function (fn, ...)
-	-- xpcall in Lua 5.1 does not accept parameters
-	-- which is not ideal
 	local args = { ... }
 	local res = table.pack(xpcall(function()
 		return fn(table.unpack(args))
@@ -88,15 +86,15 @@ return function (fn, ...)
 	if not res[1] and res[2] ~= nil then
 		local err, trace = trim_traceback(res[2])
 
+		if err:match(':%d+: 0$') then
+			return true
+		end
+
 		if #trace > 0 then
 			_G._syslog('\n' .. err .. '\n' .. 'stack traceback:')
 			for _, v in ipairs(trace) do
 				_G._syslog(v)
 			end
-		end
-
-		if err:match(':%d+: 0$') then
-			return true
 		end
 
 		return res[1], err, trace
