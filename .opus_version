@@ -1,6 +1,6 @@
-Fri May 29 02:15:34 UTC 2020
-commit 92972236409f2161487a332355188ff0c95eaaf5
+Fri May 29 04:55:19 UTC 2020
+commit 41c0758857a105728f26e982f6c588ada75803bc
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Thu May 28 20:15:19 2020 -0600
+Date:   Thu May 28 22:54:53 2020 -0600
 
-    proper fix for builtin broken http.get - try 2
+    Merge branch 'develop-1.8' of https://github.com/kepler155c/opus into develop-1.8
