@@ -13,6 +13,35 @@ local _unpack   = table.unpack
 local _bor      = bit32.bor
 local _bxor     = bit32.bxor
 
+if not http.safeGet then -- really no good place to put this hack
+	local reqs = { }
+
+	local function wrapRequest(_url, ...)
+		local ok, err = http.request(...)
+		if ok then
+			while true do
+				local event, param1, param2, param3 = os.pullEvent()
+
+				if event == "http_success"
+					and param1 == _url
+					and not reqs[tostring(param2)] then
+
+					reqs[tostring(param2)] = true
+					return param2
+
+				elseif event == "http_failure" and param1 == _url then
+					return nil, param2, param3
+				end
+			end
+		end
+		return nil, err
+	end
+
+	http.safeGet = function(_url, _headers, _binary)
+		return wrapRequest(_url, _url, nil, _headers, _binary)
+	end
+end
+
 local byteArrayMT
 byteArrayMT = {
 	__tostring = function(a) return string.char(_unpack(a)) end,
