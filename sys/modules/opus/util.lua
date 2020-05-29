@@ -536,7 +536,7 @@ end
 
 --[[ loading and running functions ]] --
 function Util.httpGet(url, headers, isBinary)
-	local h, msg = http.get(url, headers, isBinary)
+	local h, msg = http.safeGet(url, headers, isBinary)
 	if h then
 		local contents = h.readAll()
 		h.close()
