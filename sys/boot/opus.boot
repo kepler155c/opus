@@ -1,7 +1,7 @@
 local fs = _G.fs
 
 -- override bios function to include the actual filename
-function _G.loadfile(filename, env)
+function _G.loadfile(filename, mode, env)
     -- Support the previous `loadfile(filename, env)` form instead.
     if type(mode) == "table" and env == nil then
         mode, env = nil, mode

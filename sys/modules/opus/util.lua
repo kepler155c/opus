@@ -13,6 +13,7 @@ local _unpack   = table.unpack
 local _bor      = bit32.bor
 local _bxor     = bit32.bxor
 
+-- support multiple simultaneous gets for same url
 if not http.safeGet then -- really no good place to put this hack
 	local reqs = { }
 
