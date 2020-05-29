@@ -1,6 +1,6 @@
-Fri May 29 02:10:25 UTC 2020
-commit 7b225a7747c84e907160cba5c7e3a256ebf51ce6
+Fri May 29 02:15:34 UTC 2020
+commit 92972236409f2161487a332355188ff0c95eaaf5
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Thu May 28 20:10:01 2020 -0600
+Date:   Thu May 28 20:15:19 2020 -0600
 
-    proper fix for builtin broken http.get
+    proper fix for builtin broken http.get - try 2
