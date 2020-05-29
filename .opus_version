@@ -1,6 +1,6 @@
-Tue May 26 03:48:55 UTC 2020
-commit a4f4f34576e4c512ca0b40a397d1aa564cf27135
+Fri May 29 02:10:25 UTC 2020
+commit 7b225a7747c84e907160cba5c7e3a256ebf51ce6
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Mon May 25 21:48:37 2020 -0600
+Date:   Thu May 28 20:10:01 2020 -0600
 
-    minor cleanup
+    proper fix for builtin broken http.get
