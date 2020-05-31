@@ -29,10 +29,8 @@ local focusedRoutineEvents = Util.transpose {
 }
 
 _G._syslog = function(pattern, ...)
-	local oldTerm = term.redirect(kernel.window)
 	kernel.window.scrollBottom()
-	Util.print(pattern, ...)
-	term.redirect(oldTerm)
+	kernel.window.print(Util.tostring(pattern, ...))
 end
 
 -- any function that runs in a kernel hook does not run in

@@ -100,13 +100,33 @@ function multishell.launch(env, path, ...)
 	})
 end
 
+local function chain(orig, fn)
+	if not orig then
+		return fn
+	end
+
+	if type(orig) == 'table' then
+		table.insert(orig, fn)
+		return orig
+	end
+
+	return setmetatable({ orig, fn }, {
+		__call = function(self, ...)
+			for _,v in pairs(self) do
+				v(...)
+			end
+		end
+	})
+end
+
 function multishell.openTab(env, tab)
 	if not tab.title and tab.path then
 		tab.title = fs.getName(tab.path):match('([^%.]+)')
 	end
 	tab.title = tab.title or 'untitled'
 	tab.window = tab.window or window.create(parentTerm, 1, 2, w, h - 1, false)
-	tab.onExit = tab.onExit or function(self, result, err, stack)
+		-- require('opus.terminal').window(parentTerm, 1, 2, w, h - 1, false)
+	tab.onExit = chain(tab.onExit, function(self, result, err, stack)
 		if not result and err and err ~= 'Terminated' then
 			self.terminal.setTextColor(colors.white)
 			self.terminal.setCursorBlink(false)
@@ -144,10 +164,7 @@ function multishell.openTab(env, tab)
 				end
 			end
 		end
-		if tab.chainExit then
-			tab.chainExit(self, result, err, stack)
-		end
-	end
+	end)
 
 	local routine, message = kernel.run(env, tab)
 

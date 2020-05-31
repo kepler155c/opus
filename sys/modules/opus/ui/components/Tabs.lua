@@ -6,6 +6,10 @@ UI.Tabs = class(UI.Window)
 UI.Tabs.docs = { }
 UI.Tabs.defaults = {
 	UIElement = 'Tabs',
+	selectedBackgroundColor = 'primary',
+	unselectedBackgroundColor = 'tertiary',
+	unselectedTextColor = 'lightGray',
+	selectedTextColor = 'black',
 }
 function UI.Tabs:postInit()
 	self:add(self)

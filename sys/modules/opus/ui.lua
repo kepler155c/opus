@@ -763,7 +763,7 @@ function UI.Window:fillArea(x, y, width, height, fillChar, bg, fg)
 	end
 end
 
-UI.Window.docs.write = [[write(NUMBER x, NUMBER y, String text, opt COLOR bg, opt COLOR fg)
+UI.Window.docs.write = [[write(NUMBER x, NUMBER y, STRING text, opt COLOR bg, opt COLOR fg)
 Write text to the canvas.
 If colors are not specified, the colors from the base class will be used.
 If the base class does not have colors defined, colors will be inherited from the parent container.]]

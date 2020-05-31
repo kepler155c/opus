@@ -277,6 +277,79 @@ function Terminal.window(parent, sx, sy, w, h, isVisible)
 		return parent
 	end
 
+	function win.writeX(sText)
+		-- expect(1, sText, "string", "number")
+		local nLinesPrinted = 0
+		local function newLine()
+			if cy + 1 <= win.canvas.height then
+				cx, cy = 1, cy + 1
+			else
+				cx, cy = 1, win.canvas.height
+				win.scroll(1)
+			end
+			nLinesPrinted = nLinesPrinted + 1
+		end
+
+		-- Print the line with proper word wrapping
+		sText = tostring(sText)
+		while #sText > 0 do
+			local whitespace = string.match(sText, "^[ \t]+")
+			if whitespace then
+				-- Print whitespace
+				win.write(whitespace)
+				sText = string.sub(sText, #whitespace + 1)
+			end
+
+			local newline = string.match(sText, "^\n")
+			if newline then
+				-- Print newlines
+				newLine()
+				sText = string.sub(sText, 2)
+			end
+
+			local text = string.match(sText, "^[^ \t\n]+")
+			if text then
+				sText = string.sub(sText, #text + 1)
+				if #text > win.canvas.width then
+					-- Print a multiline word
+					while #text > 0 do
+						if cx > win.canvas.width then
+							newLine()
+						end
+						win.write(text)
+						text = string.sub(text, win.canvas.width - cx + 2)
+					end
+				else
+					-- Print a word normally
+					if cx + #text - 1 > win.canvas.width then
+						newLine()
+					end
+					win.write(text)
+				end
+			end
+		end
+
+		return nLinesPrinted
+	end
+
+	function win.print(...)
+		local vis = isVisible
+		isVisible = false
+		local nLinesPrinted = 0
+		local nLimit = select("#", ...)
+		for n = 1, nLimit do
+			local s = tostring(select(n, ...))
+			if n < nLimit then
+				s = s .. "\t"
+			end
+			nLinesPrinted = nLinesPrinted + win.writeX(s)
+		end
+		nLinesPrinted = nLinesPrinted + win.writeX("\n")
+		isVisible = vis
+		update()
+		return nLinesPrinted
+	end
+
 	win.canvas:clear()
 
 	return win
