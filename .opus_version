@@ -1,6 +1,6 @@
-Mon Jun 1 05:50:45 UTC 2020
-commit 4796e9e77ad8edb47f536fa44e6b28b81c542931
+Mon Jun 1 22:53:28 UTC 2020
+commit f951f10df5c0f2bf15d4ed51ce8eed9486efad94
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Sun May 31 23:50:30 2020 -0600
+Date:   Mon Jun 1 16:53:09 2020 -0600
 
-    ramfs bugfixes
+    Merge branch 'develop-1.8' of https://github.com/kepler155c/opus into develop-1.8
