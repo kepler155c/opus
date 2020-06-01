@@ -154,6 +154,9 @@ function ramfs.open(node, fn, fl)
 
 		local ctr = 0
 		return {
+			readAll = function()
+				return string.char(table.unpack(c))
+			end,
 			read = function(n)
 				if n and n > 1 and ctr < node.size then
 					-- some programs open in rb, when it should have

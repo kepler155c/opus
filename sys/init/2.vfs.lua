@@ -223,12 +223,12 @@ function fs.copy(s, t)
 		end
 
 	else
-		local sf = Util.readFile(s)
+		local sf = Util.readFile(s, 'rb')
 		if not sf then
 			error('No such file')
 		end
 
-		Util.writeFile(t, sf)
+		Util.writeFile(t, sf, 'wb')
 	end
 end
 

@@ -669,6 +669,10 @@ if settings.get("motd.enabled") then
 end
 
 while not bExit do
+	local cx = term.getCursorPos()
+	if cx ~= 1 then
+		print()
+	end
 	if config.displayDirectory then
 		term.setTextColour(_colors.directoryTextColor)
 		term.setBackgroundColor(_colors.directoryBackgroundColor)

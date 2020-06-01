@@ -493,7 +493,7 @@ function Util.backup(fname)
 	fs.copy(fname, backup)
 end
 
-function Util.writeFile(fname, data)
+function Util.writeFile(fname, data, flags)
 	if not fname or not data then error('Util.writeFile: invalid parameters', 2) end
 
 	if fs.exists(fname) then
@@ -505,7 +505,7 @@ function Util.writeFile(fname, data)
 		end
 	end
 
-	local file = io.open(fname, "w")
+	local file = io.open(fname, flags or "w")
 	if not file then
 		error('Unable to open ' .. fname, 2)
 	end

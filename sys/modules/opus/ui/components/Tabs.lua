@@ -32,6 +32,7 @@ function UI.Tabs:add(children)
 	if not self.tabBar then
 		self.tabBar = UI.TabBar({
 			buttons = buttons,
+			backgroundColor = self.barBackgroundColor,
 		})
 	else
 		self.tabBar:addButtons(buttons)
