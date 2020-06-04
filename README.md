@@ -1,5 +1,7 @@
 # Opus OS for computercraft
 
+<img src="https://github.com/kepler155c/opus-wiki/blob/master/assets/images/opus.gif?raw=true" width="540" height="360">
+
 ## Features
 * Multitasking OS - run programs in separate tabs
 * Telnet (wireless remote shell)
