@@ -106,7 +106,7 @@ local function install(name, isUpdate, ignoreDeps)
 
 	if Config.load('package').compression then
 		local c = Tar.tar_string(packageDir)
-		Util.writeFile(name .. '.tar.lzw', LZW.compress(c), 'wb')
+		Util.writeFile(packageDir  .. '.tar.lzw', LZW.compress(c), 'wb')
 		fs.delete(packageDir)
 	end
 end

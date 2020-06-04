@@ -214,7 +214,7 @@ local function tar_stream(tar_handle, root, files)
 			local abs = fs.combine(root, rel)
 			for _,f in ipairs(fs.list(abs)) do
 				local fullName = fs.combine(abs, f)
-				if fs.native.isDir(fullName) then -- skip virtual dirs
+				if fs.isDir(fullName) then -- skip virtual dirs
 					recurse(fs.combine(rel, f))
 				else
 					table.insert(files, fs.combine(rel, f))
