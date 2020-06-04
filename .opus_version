@@ -1,6 +1,6 @@
-Thu Jun 4 03:12:10 UTC 2020
-commit 704ef46b621279a893e8b185a0791ea20c1a3f2d
-Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Wed Jun 3 21:11:54 2020 -0600
+Thu Jun 4 04:31:09 UTC 2020
+commit 7dfa80f5f32ea6bdc80e278c60f4378c4e018900
+Author: kepler155c <kepler155c@gmail.com>
+Date:   Wed Jun 3 22:30:54 2020 -0600
 
-    packages stored in compressed state - experimental (with config option)
+    Update README.md
