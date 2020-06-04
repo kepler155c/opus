@@ -20,7 +20,7 @@ local function loadDirectory(dir)
 	return plugins
 end
 
-local programDir = fs.getDir(shell.getRunningProgram())
+local programDir = fs.getDir(_ENV.arg[0])
 local plugins = loadDirectory(fs.combine(programDir, 'system'), { })
 
 local page = UI.Page {
