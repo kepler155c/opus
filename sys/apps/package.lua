@@ -165,6 +165,7 @@ if action == 'uninstall' then
 
 	local packageDir = fs.combine('packages', name)
 	fs.delete(packageDir)
+	fs.delete(packageDir  .. '.tar.lzw')
 	print('removed: ' .. packageDir)
 	return
 end

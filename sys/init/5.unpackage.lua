@@ -4,6 +4,10 @@ local Util = require('opus.util')
 
 local fs = _G.fs
 
+if not fs.exists('packages') or not fs.isDir('packages') then
+	return
+end
+
 for _, name in pairs(fs.list('packages')) do
 	local fullName = fs.combine('packages', name)
 	local packageName = name:match('(.+)%.tar%.lzw$')
