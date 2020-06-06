@@ -1,6 +1,6 @@
-Sat Jun 6 03:38:47 UTC 2020
-commit 6c5cc508b1884d080b5940f819a53d54333f8dd6
+Sat Jun 6 17:00:23 UTC 2020
+commit 2d942ef00170a174352f86b7d498e9e1e54577b7
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Fri Jun 5 21:38:26 2020 -0600
+Date:   Sat Jun 6 11:00:07 2020 -0600
 
-    moonscript support + cleanup
+    experimental packages fix https://github.com/kepler155c/opus/issues/35
