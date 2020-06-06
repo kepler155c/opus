@@ -109,6 +109,9 @@ function urlfs.open(node, fn, fl)
 		}
 	end
 	return {
+		readAll = function()
+			return c
+		end,
 		read = function()
 			ctr = ctr + 1
 			return c:sub(ctr, ctr):byte()

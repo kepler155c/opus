@@ -64,8 +64,11 @@ function UI.QuickSelect:enable()
 		local files = fs.list(dir)
 		for _,f in ipairs(files) do
 			local fullName = fs.combine(dir, f)
-			if fs.native.isDir(fullName) then -- skip virtual dirs
-				if f ~= '.git' then recurse(fullName) end
+			if fs.isDir(fullName) then
+				-- skip virtual dirs
+				if f ~= '.git' and fs.native.isDir(fullName) then
+					recurse(fullName)
+				end
 			else
 				_insert(self.grid.values, {
 					name = f,

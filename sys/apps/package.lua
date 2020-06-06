@@ -1,9 +1,9 @@
 local BulkGet  = require('opus.bulkget')
 local Config   = require('opus.config')
 local Git      = require('opus.git')
-local LZW  = require('opus.compress.lzw')
+local LZW      = require('opus.compress.lzw')
 local Packages = require('opus.packages')
-local Tar  = require('opus.compress.tar')
+local Tar      = require('opus.compress.tar')
 local Util     = require('opus.util')
 
 local fs       = _G.fs

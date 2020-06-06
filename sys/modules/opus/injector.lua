@@ -43,9 +43,9 @@ return function(env)
 				return env.package.preload[modname](modname, env)
 			end
 		end
-	end
+	--end
 
-	local function loadedSearcher(modname)
+	--local function loadedSearcher(modname)
 		if env.package.loaded[modname] then
 			return function()
 				return env.package.loaded[modname]
@@ -95,7 +95,7 @@ return function(env)
 		},
 		loaders = {
 			preloadSearcher,
-			loadedSearcher,
+			--loadedSearcher,
 			pathSearcher,
 		}
 	}
@@ -104,10 +104,8 @@ return function(env)
 		for _,searcher in ipairs(env.package.loaders) do
 			local fn, msg = searcher(modname)
 			if fn then
-				local module, msg2 = fn(modname, env)
-				if not module then
-					error(msg2 or (modname .. ' module returned nil'), 2)
-				end
+				local module = fn(modname, env) or true
+
 				env.package.loaded[modname] = module
 				return module
 			end
