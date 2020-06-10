@@ -20,7 +20,7 @@ local w, h = term.getSize()
 kernel.terminal = term.current()
 
 kernel.window = Terminal.window(kernel.terminal, 1, 1, w, h, false)
-kernel.window.setMaxScroll(100)
+kernel.window.setMaxScroll(200)
 
 local focusedRoutineEvents = Util.transpose {
 	'char', 'key', 'key_up',

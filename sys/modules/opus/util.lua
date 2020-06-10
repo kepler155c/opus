@@ -596,7 +596,6 @@ function Util.loadUrl(url, env)  -- loadfile equivalent
 end
 
 function Util.runUrl(env, url, ...)   -- os.run equivalent
-	setmetatable(env, { __index = _G })
 	local fn, m = Util.loadUrl(url, env)
 	if fn then
 		return pcall(fn, ...)
@@ -606,7 +605,6 @@ end
 
 function Util.run(env, path, ...)
 	if type(env) ~= 'table' then error('Util.run: env must be a table', 2) end
-	setmetatable(env, { __index = _G })
 	local fn, m = loadfile(path, env)
 	if fn then
 		return pcall(fn, ...)
@@ -616,7 +614,6 @@ end
 
 function Util.runFunction(env, fn, ...)
 	setfenv(fn, env)
-	setmetatable(env, { __index = _G })
 	return pcall(fn, ...)
 end
 

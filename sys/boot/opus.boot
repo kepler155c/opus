@@ -1,5 +1,10 @@
 local fs = _G.fs
 
+-- override bios function to use the global scope of the current env
+function _G.loadstring(string, chunkname)
+	return load(string, chunkname, nil, getfenv(2)._G)
+end
+
 -- override bios function to include the actual filename
 function _G.loadfile(filename, mode, env)
     -- Support the previous `loadfile(filename, env)` form instead.
@@ -20,11 +25,16 @@ for k,v in pairs(_ENV) do
 	sandboxEnv[k] = v
 end
 
+-- Install require shim
+_G.requireInjector = loadfile('sys/modules/opus/injector.lua', _ENV)()
+
 local function run(file, ...)
 	local env = setmetatable({ }, { __index = _G })
 	for k,v in pairs(sandboxEnv) do
 		env[k] = v
 	end
+
+	_G.requireInjector(env)
 
 	local s, m = loadfile(file, env)
 	if s then
@@ -35,9 +45,6 @@ end
 
 _G._syslog = function() end
 _G.OPUS_BRANCH = 'develop-1.8'
-
--- Install require shim
-_G.requireInjector = run('sys/modules/opus/injector.lua')
 
 local s, m = pcall(run, 'sys/apps/shell.lua', 'sys/kernel.lua', ...)
 

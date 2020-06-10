@@ -83,6 +83,18 @@ function nativefs.isDir(node, dir)
 	return fs.native.isDir(dir)
 end
 
+function nativefs.attributes(node, path)
+	if node.mountPoint == path then
+		return {
+			created = node.created or os.epoch('utc'),
+			modification = node.modification or os.epoch('utc'),
+			isDir = not not node.nodes,
+			size = node.size or 0,
+		}
+	end
+	return fs.native.attributes(path)
+end
+
 function nativefs.exists(node, dir)
 	if node.mountPoint == dir then
 		return true
@@ -307,12 +319,16 @@ function fs.mount(path, fstype, ...)
 				tp.nodes[d] = Util.shallowCopy(tp)
 				tp.nodes[d].nodes = { }
 				tp.nodes[d].mountPoint = fs.combine(tp.mountPoint, d)
+				tp.nodes[d].created = os.epoch('utc')
+				tp.nodes[d].modification = os.epoch('utc')
 			end
 			tp = tp.nodes[d]
 		end
 
 		node.fs = vfs
 		node.fstype = fstype
+		node.created = node.created or os.epoch('utc')
+		node.modification = node.modification or os.epoch('utc')
 		if not targetName then
 			node.mountPoint = ''
 			fs.nodes = node

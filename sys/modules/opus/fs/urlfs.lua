@@ -20,8 +20,8 @@ function urlfs.mount(path, url, force)
 	end
 end
 
-function urlfs.attributes(node)
-	return {
+function urlfs.attributes(node, path)
+	return path == node.mountPoint and {
 		created = node.created,
 		isDir = false,
 		modification = node.modification,
@@ -29,16 +29,18 @@ function urlfs.attributes(node)
 	}
 end
 
-function urlfs.delete(_, dir)
-	fs.unmount(dir)
+function urlfs.delete(node, path)
+	if path == node.mountPoint then
+		fs.unmount(path)
+	end
 end
 
-function urlfs.exists()
-	return true
+function urlfs.exists(node, path)
+	return path == node.mountPoint
 end
 
-function urlfs.getSize(node)
-	return node.size or 0
+function urlfs.getSize(node, path)
+	return path == node.mountPoint and node.size or 0
 end
 
 function urlfs.isReadOnly()
@@ -65,14 +67,6 @@ function urlfs.open(node, fn, fl)
 
 	local c = node.cache
 	if not c then
-		--[[
-		if node.url:match("^(rttps?:)") then
-			local s, response = rttp.get(node.url)
-			c = s and response.statusCode == 200 and response.data
-		else
-			c = Util.httpGet(node.url)
-		end
-		]]--
 		c = Util.httpGet(node.url)
 		if c then
 			node.cache = c

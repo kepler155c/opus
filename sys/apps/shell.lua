@@ -6,7 +6,7 @@ local fs         = _G.fs
 local settings   = _G.settings
 local shell      = _ENV.shell
 
-_G.requireInjector(_ENV)
+--_G.requireInjector(_ENV)
 
 local trace = require('opus.trace')
 local Util = require('opus.util')
@@ -42,6 +42,11 @@ local function run(...)
 	local command = table.remove(args, 1) or error('No such program')
 	local isUrl = not not command:match("^(https?:)")
 	local env = shell.makeEnv(_ENV)
+
+	if command:match('(.+)%.moon$') then
+		table.insert(args, 1, command)
+		command = 'moon'
+	end
 
 	local path, loadFn
 	if isUrl then
