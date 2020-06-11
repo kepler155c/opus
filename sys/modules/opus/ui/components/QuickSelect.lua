@@ -58,8 +58,8 @@ function UI.QuickSelect:applyFilter(filter)
 	self.grid:setIndex(1)
 end
 
-function UI.QuickSelect:enable()
-	self.grid.values = { }
+function UI.QuickSelect.getFiles()
+	local t = { }
 	local function recurse(dir)
 		local files = fs.list(dir)
 		for _,f in ipairs(files) do
@@ -70,7 +70,7 @@ function UI.QuickSelect:enable()
 					recurse(fullName)
 				end
 			else
-				_insert(self.grid.values, {
+				_insert(t, {
 					name = f,
 					dir = dir,
 					lname = f:lower(),
@@ -80,6 +80,11 @@ function UI.QuickSelect:enable()
 		end
 	end
 	recurse('')
+	return t
+end
+
+function UI.QuickSelect:enable()
+	self.grid.values = self:getFiles()
 	self:applyFilter()
 	self.filterEntry:reset()
 	UI.Window.enable(self)

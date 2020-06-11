@@ -6,8 +6,6 @@ local fs         = _G.fs
 local settings   = _G.settings
 local shell      = _ENV.shell
 
---_G.requireInjector(_ENV)
-
 local trace = require('opus.trace')
 local Util = require('opus.util')
 
@@ -37,43 +35,72 @@ local function tokenise( ... )
 	return tWords
 end
 
+local defaultHandlers = {
+	urlHandler = function(args, env)
+		return args[1]:match("^(https?:)") and {
+			title = fs.getName(args[1]),
+			path  = table.remove(args, 1),
+			args  = args,
+			load  = Util.loadUrl,
+			env   = env,
+		}
+	end,
+
+	pathHandler = function(args, env)
+		local command = table.remove(args, 1)
+		return {
+			title = fs.getName(command):match('([^%.]+)'),
+			path  = shell.resolveProgram(command) or error('No such program'),
+			args  = args,
+			load  = loadfile,
+			env   = env,
+		}
+	end,
+}
+
+function shell.getHandlers()
+	if parentShell and parentShell.getHandlers then
+		return parentShell.getHandlers()
+	end
+	return defaultHandlers
+end
+
+local handlers = shell.getHandlers()
+
+function shell.registerHandler(fn)
+	table.insert(handlers, 1, fn)
+end
+
+local function handleCommand(args, env)
+	for _,v in pairs(handlers) do
+		local pi = v(args, env)
+		if pi then
+			return pi
+		end
+	end
+end
+
 local function run(...)
 	local args = tokenise(...)
-	local command = table.remove(args, 1) or error('No such program')
-	local isUrl = not not command:match("^(https?:)")
-	local env = shell.makeEnv(_ENV)
-
-	if command:match('(.+)%.moon$') then
-		table.insert(args, 1, command)
-		command = 'moon'
+	if #args == 0 then
+		error('No such program')
 	end
 
-	local path, loadFn
-	if isUrl then
-		path = command
-		loadFn = Util.loadUrl
-	else
-		path = shell.resolveProgram(command) or error('No such program')
-		loadFn = loadfile
-	end
+	local pi = handleCommand(args, shell.makeEnv(_ENV))
 
-	local O_v_O, err = loadFn(path, env)
+	local O_v_O, err = pi.load(pi.path, pi.env)
 	if not O_v_O then
 		error(err, -1)
 	end
 
 	if _ENV.multishell then
-		_ENV.multishell.setTitle(_ENV.multishell.getCurrent(), fs.getName(path):match('([^%.]+)'))
+		_ENV.multishell.setTitle(_ENV.multishell.getCurrent(), pi.title)
 	end
 
-	tProgramStack[#tProgramStack + 1] = {
-		path = path, -- path:match("^https?://([^/:]+:?[0-9]*/?.*)$")
-		env = env,
-		args = args,
-	}
+	tProgramStack[#tProgramStack + 1] = pi
 
-	env[ "arg" ] = { [0] = path, table.unpack(args) }
-	local r = { O_v_O(table.unpack(args)) }
+	pi.env[ "arg" ] = { [0] = pi.path, table.unpack(pi.args) }
+	local r = { O_v_O(table.unpack(pi.args)) }
 
 	tProgramStack[#tProgramStack] = nil
 

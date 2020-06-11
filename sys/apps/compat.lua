@@ -13,13 +13,12 @@ Util.merge(env, _ENV)
 env._G = env
 
 env.arg = { ... }
-env.arg[0] = shell.resolveProgram(table.remove(env.arg, 1))
+env.arg[0] = shell.resolveProgram(table.remove(env.arg, 1) or error('file name is required'))
 
 _G.requireInjector(env, fs.getDir(env.arg[0]))
 
 local s, m = Util.run(env, env.arg[0], table.unpack(env.arg))
 
 if not s then
-    error(m)
+    error(m, -1)
 end
-

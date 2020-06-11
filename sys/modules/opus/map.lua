@@ -8,6 +8,7 @@ Map.merge = Util.merge
 Map.shallowCopy = Util.shallowCopy
 Map.find = Util.find
 Map.filter = Util.filter
+Map.transpose = Util.transpose
 
 function Map.removeMatches(t, values)
 	local function matchAll(entry)
