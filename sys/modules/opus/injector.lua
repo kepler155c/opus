@@ -38,7 +38,7 @@ do
 	end
 end
 
-local DEFAULT_PATH   = table.concat(defaultPath, ';')
+local DEFAULT_PATH = table.concat(defaultPath, ';')
 
 local fs     = _G.fs
 local os     = _G.os
@@ -59,15 +59,9 @@ return function(env, programDir)
 
 		for pattern in string.gmatch(env.package.path, "[^;]+") do
 			local sPath = string.gsub(pattern, "%?", fname)
-			-- TODO: if there's no shell, we should not be checking relative paths below
-			-- as they will resolve to root directory
+
 			if programDir and sPath:sub(1, 1) ~= "/" then
 				sPath = fs.combine(programDir, sPath)
-			elseif env.shell
-				and type(env.shell.getRunningProgram) == 'function'
-				and sPath:sub(1, 1) ~= "/" then
-
-				sPath = fs.combine(fs.getDir(env.shell.getRunningProgram() or ''), sPath)
 			end
 			if fs.exists(sPath) and not fs.isDir(sPath) then
 				return loadfile(fs.combine(sPath, ''), env)
@@ -131,6 +125,4 @@ return function(env, programDir)
 		end
 		error('Unable to find module ' .. modname, 2)
 	end
-
-	return env.require -- backwards compatible
 end

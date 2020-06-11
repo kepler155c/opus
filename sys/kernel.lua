@@ -165,9 +165,9 @@ function kernel.getShell()
 end
 
 -- each routine inherits the parent's env
-function kernel.makeEnv(env)
+function kernel.makeEnv(env, dir)
 	env = setmetatable(Util.shallowCopy(env or _ENV), { __index = _G })
-	_G.requireInjector(env)
+	_G.requireInjector(env, dir)
 	return env
 end
 
@@ -182,7 +182,7 @@ function kernel.newRoutine(env, args)
 	}, { __index = Routine })
 
 	Util.merge(routine, args)
-	routine.env = args.env or kernel.makeEnv(env)
+	routine.env = args.env or kernel.makeEnv(env, routine.path and fs.getDir(routine.path))
 	routine.terminal = routine.terminal or routine.window
 
 	return routine

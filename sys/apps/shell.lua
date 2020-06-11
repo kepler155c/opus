@@ -36,24 +36,26 @@ local function tokenise( ... )
 end
 
 local defaultHandlers = {
-	urlHandler = function(args, env)
+	function(args, env)
 		return args[1]:match("^(https?:)") and {
 			title = fs.getName(args[1]),
 			path  = table.remove(args, 1),
 			args  = args,
 			load  = Util.loadUrl,
-			env   = env,
+			env   = shell.makeEnv(env),
 		}
 	end,
 
-	pathHandler = function(args, env)
-		local command = table.remove(args, 1)
+	function(args, env)
+		local command = shell.resolveProgram(table.remove(args, 1))
+			or error('No such program')
+
 		return {
 			title = fs.getName(command):match('([^%.]+)'),
-			path  = shell.resolveProgram(command) or error('No such program'),
+			path  = command,
 			args  = args,
 			load  = loadfile,
-			env   = env,
+			env   = shell.makeEnv(env, fs.getDir(command)),
 		}
 	end,
 }
@@ -86,7 +88,7 @@ local function run(...)
 		error('No such program')
 	end
 
-	local pi = handleCommand(args, shell.makeEnv(_ENV))
+	local pi = handleCommand(args, _ENV)
 
 	local O_v_O, err = pi.load(pi.path, pi.env)
 	if not O_v_O then
@@ -310,9 +312,9 @@ function shell.getRunningInfo()
 end
 
 -- convenience function for making a runnable env
-function shell.makeEnv(env)
+function shell.makeEnv(env, dir)
 	env = setmetatable(Util.shallowCopy(env), { __index = _G })
-	_G.requireInjector(env)
+	_G.requireInjector(env, dir)
 	return env
 end
 

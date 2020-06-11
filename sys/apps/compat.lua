@@ -3,7 +3,7 @@ local Util = require('opus.util')
 -- some programs expect to be run in the global scope
 -- ie. busted, moonscript
 
--- create a new sandbox mimicing pure lua
+-- create a new environment mimicing pure lua
 
 local fs    = _G.fs
 local shell = _ENV.shell
