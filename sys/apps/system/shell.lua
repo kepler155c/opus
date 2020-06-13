@@ -18,9 +18,7 @@ local defaults = {
 	textColor = colors.white,
 	commandTextColor = colors.yellow,
 	directoryTextColor  = colors.orange,
-	directoryBackgroundColor = colors.black,
 	promptTextColor = colors.blue,
-	promptBackgroundColor = colors.black,
 	directoryColor = colors.green,
 	fileColor = colors.white,
 	backgroundColor = colors.black,
@@ -86,12 +84,12 @@ return UI.Tab {
 			if config.displayDirectory then
 				self:write(1, 1,
 					'==' .. os.getComputerLabel() .. ':/dir/etc',
-					_colors.directoryBackgroundColor, _colors.directoryTextColor)
+					_colors.backgroundColor, _colors.directoryTextColor)
 				offset = 1
 			end
 
 			self:write(1, 1 + offset, '$ ',
-				_colors.promptBackgroundColor, _colors.promptTextColor)
+				_colors.backgroundColor, _colors.promptTextColor)
 
 			self:write(3, 1 + offset, 'ls /',
 				_colors.backgroundColor, _colors.commandTextColor)

@@ -1,13 +1,12 @@
 local parentShell = _ENV.shell
-
 _ENV.shell = { }
 
-local fs         = _G.fs
-local settings   = _G.settings
-local shell      = _ENV.shell
-
 local trace = require('opus.trace')
-local Util = require('opus.util')
+local Util  = require('opus.util')
+
+local fs       = _G.fs
+local settings = _G.settings
+local shell    = _ENV.shell
 
 local DIR = (parentShell and parentShell.dir()) or ""
 local PATH = (parentShell and parentShell.path()) or ".:/rom/programs"
@@ -17,16 +16,16 @@ local tCompletionInfo = (parentShell and parentShell.getCompletionInfo()) or {}
 local bExit = false
 local tProgramStack = {}
 
-local function tokenise( ... )
-	local sLine = table.concat( { ... }, " " )
-	local tWords = {}
+local function tokenise(...)
+	local sLine = table.concat({ ... }, ' ')
+	local tWords = { }
 	local bQuoted = false
-	for match in string.gmatch( sLine .. "\"", "(.-)\"" ) do
+	for match in string.gmatch(sLine .. "\"", "(.-)\"") do
 		if bQuoted then
-			table.insert( tWords, match )
+			table.insert(tWords, match)
 		else
-			for m in string.gmatch( match, "[^ \t]+" ) do
-				table.insert( tWords, m )
+			for m in string.gmatch(match, "[^ \t]+") do
+				table.insert(tWords, m)
 			end
 		end
 		bQuoted = not bQuoted
@@ -36,26 +35,27 @@ local function tokenise( ... )
 end
 
 local defaultHandlers = {
-	function(args, env)
-		return args[1]:match("^(https?:)") and {
-			title = fs.getName(args[1]),
-			path  = table.remove(args, 1),
+	function(env, command, args)
+		return command:match("^(https?:)") and {
+			title = fs.getName(command),
+			path  = command,
 			args  = args,
 			load  = Util.loadUrl,
-			env   = shell.makeEnv(env),
+			env   = env,
 		}
 	end,
 
-	function(args, env)
-		local command = shell.resolveProgram(table.remove(args, 1))
+	function(env, command, args)
+		command = env.shell.resolveProgram(command)
 			or error('No such program')
 
+		_G.requireInjector(env, fs.getDir(command))
 		return {
 			title = fs.getName(command):match('([^%.]+)'),
 			path  = command,
 			args  = args,
 			load  = loadfile,
-			env   = shell.makeEnv(env, fs.getDir(command)),
+			env   = env,
 		}
 	end,
 }
@@ -73,9 +73,9 @@ function shell.registerHandler(fn)
 	table.insert(handlers, 1, fn)
 end
 
-local function handleCommand(args, env)
+local function handleCommand(env, command, args)
 	for _,v in pairs(handlers) do
-		local pi = v(args, env)
+		local pi = v(env, command, args)
 		if pi then
 			return pi
 		end
@@ -88,7 +88,7 @@ local function run(...)
 		error('No such program')
 	end
 
-	local pi = handleCommand(args, _ENV)
+	local pi = handleCommand(shell.makeEnv(_ENV), table.remove(args, 1), args)
 
 	local O_v_O, err = pi.load(pi.path, pi.env)
 	if not O_v_O then
@@ -144,13 +144,9 @@ function shell.resolve( _sPath )
 	end
 end
 
-function shell.resolveProgram( _sCommand )
+function shell.resolveProgram(_sCommand)
 	if tAliases[_sCommand] ~= nil then
 		_sCommand = tAliases[_sCommand]
-	end
-
-	if _sCommand:match("^(https?:)") then
-		return _sCommand
 	end
 
 	local path = shell.resolve(_sCommand)
@@ -161,32 +157,22 @@ function shell.resolveProgram( _sCommand )
 		return path .. '.lua'
 	end
 
-	-- If the path is a global path, use it directly
-	local sStartChar = string.sub( _sCommand, 1, 1 )
-	if sStartChar == "/" or sStartChar == "\\" then
-		local sPath = fs.combine( "", _sCommand )
-		if fs.exists( sPath ) and not fs.isDir( sPath ) then
-			return sPath
-		end
-		return nil
-	end
-
 	-- Otherwise, look on the path variable
-	for sPath in string.gmatch(PATH or '', "[^:]+") do
-		sPath = fs.combine(sPath, _sCommand )
-		if fs.exists( sPath ) and not fs.isDir( sPath ) then
-			return sPath
-		end
-		if fs.exists(sPath .. '.lua') then
-			return sPath .. '.lua'
+	if not _sCommand:find('/') then
+		for sPath in string.gmatch(PATH or '', "[^:]+") do
+			sPath = fs.combine(sPath, _sCommand )
+			if fs.exists(sPath) and not fs.isDir(sPath) then
+				return sPath
+			end
+			if fs.exists(sPath .. '.lua') then
+				return sPath .. '.lua'
+			end
 		end
 	end
-	-- Not found
-	return nil
 end
 
-function shell.programs( _bIncludeHidden )
-	local tItems = {}
+function shell.programs(_bIncludeHidden)
+	local tItems = { }
 
 	-- Add programs from the path
 	for sPath in string.gmatch(PATH, "[^:]+") do
@@ -203,96 +189,82 @@ function shell.programs( _bIncludeHidden )
 	end
 
 	-- Sort and return
-	local tItemList = {}
-	for sItem in pairs( tItems ) do
-		table.insert( tItemList, sItem )
+	local tItemList = { }
+	for sItem in pairs(tItems) do
+		table.insert(tItemList, sItem)
 	end
-	table.sort( tItemList )
+	table.sort(tItemList)
 	return tItemList
 end
 
-local function completeProgram( sLine )
-	if #sLine > 0 and string.sub( sLine, 1, 1 ) == "/" then
+function shell.completeProgram(sLine)
+	if #sLine > 0 and string.sub(sLine, 1, 1) == '/' then
 		-- Add programs from the root
-		return fs.complete( sLine, "", true, false )
-	else
-		local tResults = {}
-		local tSeen = {}
+		return fs.complete(sLine, '', true, false)
+	end
 
-		-- Add aliases
-		for sAlias in pairs( tAliases ) do
-			if #sAlias > #sLine and string.sub( sAlias, 1, #sLine ) == sLine then
-				local sResult = string.sub( sAlias, #sLine + 1 )
-				if not tSeen[ sResult ] then
-					table.insert( tResults, sResult )
-					tSeen[ sResult ] = true
-				end
+	local tResults = { }
+	local tSeen = { }
+
+	-- Add aliases
+	for sAlias in pairs( tAliases ) do
+		if #sAlias > #sLine and string.sub(sAlias, 1, #sLine) == sLine then
+			local sResult = string.sub(sAlias, #sLine + 1)
+			if not tSeen[sResult] then
+				table.insert(tResults, sResult .. ' ')
+				tSeen[sResult] = true
 			end
 		end
+	end
 
-		-- Add programs from the path
-		local tPrograms = shell.programs()
-		for n=1,#tPrograms do
-			local sProgram = tPrograms[n]
-			if #sProgram > #sLine and string.sub( sProgram, 1, #sLine ) == sLine then
-				local sResult = string.sub( sProgram, #sLine + 1 )
-				if not tSeen[ sResult ] then
-					table.insert( tResults, sResult )
-					tSeen[ sResult ] = true
-				end
+	-- Add programs from the path
+	local tPrograms = shell.programs()
+	for n=1,#tPrograms do
+		local sProgram = tPrograms[n]
+		if #sProgram >= #sLine and string.sub(sProgram, 1, #sLine) == sLine then
+			local sResult = string.sub(sProgram, #sLine + 1)
+			if not tSeen[sResult] then
+				table.insert(tResults, sResult .. ' ')
+				tSeen[sResult] = true
 			end
 		end
-
-		-- Sort and return
-		table.sort( tResults )
-		return tResults
 	end
-end
 
-local function completeProgramArgument( sProgram, nArgument, sPart, tPreviousParts )
-	local tInfo = tCompletionInfo[ sProgram ]
-	if tInfo then
-		return tInfo.fnComplete( shell, nArgument, sPart, tPreviousParts )
-	end
-	return nil
+	-- Sort and return
+	table.sort(tResults)
+	return tResults
 end
 
 function shell.complete(sLine)
-	if #sLine > 0 then
-		local tWords = tokenise( sLine )
-		local nIndex = #tWords
-		if string.sub( sLine, #sLine, #sLine ) == " " then
-			nIndex = nIndex + 1
-		end
-		if nIndex == 1 then
-			local sBit = tWords[1] or ""
-			local sPath = shell.resolveProgram( sBit )
-			if tCompletionInfo[ sPath ] then
-				return { " " }
-			else
-				local tResults = completeProgram( sBit )
-				for n=1,#tResults do
-					local sResult = tResults[n]
-					local cPath = shell.resolveProgram( sBit .. sResult )
-					if tCompletionInfo[ cPath ] then
-						tResults[n] = sResult .. " "
-					end
-				end
-				return tResults
-			end
-
-		elseif nIndex > 1 then
-			local sPath = shell.resolveProgram( tWords[1] )
-			local sPart = tWords[nIndex] or ""
-			local tPreviousParts = tWords
-			tPreviousParts[nIndex] = nil
-			return completeProgramArgument( sPath , nIndex - 1, sPart, tPreviousParts )
-		end
+	local tWords = tokenise(sLine)
+	local nIndex = #tWords
+	if string.sub(sLine, #sLine, #sLine) == ' ' and #Util.trim(sLine) > 0 then
+		nIndex = nIndex + 1
 	end
-end
 
-function shell.completeProgram( sProgram )
-	return completeProgram( sProgram )
+	if nIndex == 0 then
+		return fs.complete('', shell.dir(), true, false)
+
+	elseif nIndex == 1 then
+		local results = shell.completeProgram(tWords[1] or '')
+		for _, v in pairs(fs.complete(table.concat(tWords, ' '), shell.dir(), true, false)) do
+			table.insert(results, v)
+		end
+		return results
+
+	else
+		local sPath = shell.resolveProgram(tWords[1])
+		local sPart = tWords[nIndex] or ''
+		local tPreviousParts = tWords
+		tPreviousParts[nIndex] = nil
+		local results
+		local tInfo = tCompletionInfo[sPath]
+		if tInfo then
+			results = tInfo.fnComplete(shell, nIndex - 1, sPart, tPreviousParts)
+		end
+		return results and #results > 0 and results
+			or fs.complete(sPart, shell.dir(), true, false)
+	end
 end
 
 function shell.setCompletionFunction(sProgram, fnComplete)
@@ -318,11 +290,11 @@ function shell.makeEnv(env, dir)
 	return env
 end
 
-function shell.setAlias( _sCommand, _sProgram )
+function shell.setAlias(_sCommand, _sProgram)
 	tAliases[_sCommand] = _sProgram
 end
 
-function shell.clearAlias( _sCommand )
+function shell.clearAlias(_sCommand)
 	tAliases[_sCommand] = nil
 end
 
@@ -394,23 +366,16 @@ local textutils = _G.textutils
 
 local oldTerm
 local terminal  = term.current()
+local _len      = string.len
 local _rep      = string.rep
 local _sub      = string.sub
-
-if not terminal.scrollUp then
-	terminal = Terminal.window(term.current())
-	terminal.setMaxScroll(200)
-	oldTerm = term.redirect(terminal)
-end
 
 local config = {
 	color = {
 		textColor = colors.white,
 		commandTextColor = colors.yellow,
 		directoryTextColor  = colors.orange,
-		directoryBackgroundColor = colors.black,
 		promptTextColor = colors.blue,
-		promptBackgroundColor = colors.black,
 		directoryColor = colors.green,
 		fileColor = colors.white,
 		backgroundColor = colors.black,
@@ -427,43 +392,15 @@ if not _colors.backgroundColor then
   _colors.fileColor = colors.white
 end
 
-local palette = { }
-for n = 1, 16 do
-	palette[2 ^ (n - 1)] = _sub("0123456789abcdef", n, n)
+if not terminal.scrollUp then
+	terminal = Terminal.window(term.current())
+	terminal.setMaxScroll(200)
+	oldTerm = term.redirect(terminal)
+	term.setBackgroundColor(_colors.backgroundColor)
+	term.clear()
 end
 
-if not term.isColor() then
-	_colors = { }
-	for k, v in pairs(config.color) do
-		_colors[k] = Terminal.colorToGrayscale(v)
-	end
-	for n = 1, 16 do
-		palette[2 ^ (n - 1)] = _sub("088888878877787f", n, n)
-	end
-end
-
-local function autocompleteArgument(program, words)
-	local word = ''
-	if #words > 1 then
-		word = words[#words]
-	end
-
-	local tInfo = tCompletionInfo[program]
-	return tInfo.fnComplete(shell, #words - 1, word, words)
-end
-
-local function autocompleteAnything(line, words)
-	local results = shell.complete(line)
-
-	if results and #results == 0 and #words == 1 then
-		results = nil
-	end
-	if not results then
-		results = fs.complete(words[#words] or '', shell.dir(), true, false)
-	end
-
-	return results
-end
+local palette = terminal.canvas.palette
 
 local function autocomplete(line)
 	local words = { }
@@ -477,14 +414,7 @@ local function autocomplete(line)
 		words = { '' }
 	end
 
-	local results
-
-	local program = shell.resolveProgram(words[1])
-	if tCompletionInfo[program] then
-		results = autocompleteArgument(program, words) or { }
-	else
-		results = autocompleteAnything(line, words) or { }
-	end
+	local results = shell.complete(line) or { }
 
 	Util.filterInplace(results, function(f)
 		return not Util.key(results, f .. '/')
@@ -497,8 +427,8 @@ local function autocomplete(line)
 	if #results == 1 then
 		words[#words] = results[1]
 		return table.concat(words, ' ')
-	elseif #results > 1 then
 
+	elseif #results > 1 then
 		local function someComplete()
 			-- ugly (complete as much as possible)
 			local word = words[#words] or ''
@@ -507,16 +437,16 @@ local function autocomplete(line)
 				local ch
 				for _,f in ipairs(results) do
 					if #f < i then
-						words[#words] = string.sub(f, 1, i - 1)
+						words[#words] = _sub(f, 1, i - 1)
 						return table.concat(words, ' ')
 					end
 					if not ch then
-						ch = string.sub(f, i, i)
-					elseif string.sub(f, i, i) ~= ch then
+						ch = _sub(f, i, i)
+					elseif _sub(f, i, i) ~= ch then
 						if i == #word + 1 then
 							return
 						end
-						words[#words] = string.sub(f, 1, i - 1)
+						words[#words] = _sub(f, 1, i - 1)
 						return table.concat(words, ' ')
 					end
 				end
@@ -559,10 +489,9 @@ local function autocomplete(line)
 			local tw = term.getSize()
 			local nMaxLen = tw / 8
 			for _,sItem in pairs(results) do
-				nMaxLen = math.max(string.len(sItem) + 1, nMaxLen)
+				nMaxLen = math.max(_len(sItem) + 1, nMaxLen)
 			end
-			local w = term.getSize()
-			local nCols = math.floor(w / nMaxLen)
+			local nCols = math.floor(tw / nMaxLen)
 			if #tDirs < nCols then
 				for _ = #tDirs + 1, nCols do
 					table.insert(tDirs, '')
@@ -577,11 +506,9 @@ local function autocomplete(line)
 		end
 
 		term.setTextColour(_colors.promptTextColor)
-		term.setBackgroundColor(_colors.promptBackgroundColor)
 		term.write("$ " )
 
 		term.setTextColour(_colors.commandTextColor)
-		term.setBackgroundColor(_colors.backgroundColor)
 		return line
 	end
 end
@@ -608,17 +535,16 @@ local function shellRead(history)
 		term.setCursorPos(3, cy)
 		entry.value = entry.value or ''
 		local filler = #entry.value < lastLen
-			and string.rep(' ', lastLen - #entry.value)
+			and _rep(' ', lastLen - #entry.value)
 			or ''
-		local str = string.sub(entry.value, entry.scroll + 1, entry.width + entry.scroll) .. filler
+		local str = _sub(entry.value, entry.scroll + 1, entry.width + entry.scroll) .. filler
 		local fg = _rep(palette[_colors.commandTextColor], #str)
 		local bg = _rep(palette[_colors.backgroundColor], #str)
 		if entry.mark.active then
-			local sx = entry.mark.x - entry.scroll + 1
-			local ex = entry.mark.ex - entry.scroll + 1
-			bg = string.rep('f', sx - 1) ..
-				string.rep('7', ex - sx) ..
-				string.rep('f', #str - ex + 1)
+			bg = _rep('f', entry.mark.x) ..
+				_rep('7', entry.mark.ex - entry.mark.x) ..
+				_rep('f', #entry.value - entry.mark.ex + #filler + 1)
+			bg = _sub(bg, entry.scroll + 1, entry.scroll + #str)
 		end
 		term.blit(str, fg, bg)
 		updateCursor()
@@ -689,34 +615,26 @@ local function shellRead(history)
 	end
 
 	print()
-	term.setCursorBlink( false )
+	term.setCursorBlink(false)
 	return entry.value or ''
 end
 
 local history = History.load('usr/.shell_history', 100)
 
 term.setBackgroundColor(_colors.backgroundColor)
---term.clear()
 
-if settings.get("motd.enabled") then
+if settings.get("motd.enable") then
 	shell.run("motd")
 end
 
 while not bExit do
-	local cx = term.getCursorPos()
-	if cx ~= 1 then
-		print()
-	end
 	if config.displayDirectory then
 		term.setTextColour(_colors.directoryTextColor)
-		term.setBackgroundColor(_colors.directoryBackgroundColor)
 		print('==' .. os.getComputerLabel() .. ':/' .. DIR)
 	end
 	term.setTextColour(_colors.promptTextColor)
-	term.setBackgroundColor(_colors.promptBackgroundColor)
 	term.write("$ " )
 	term.setTextColour(_colors.commandTextColor)
-	term.setBackgroundColor(_colors.backgroundColor)
 	local sLine = shellRead(history)
 	if bExit then -- terminated
 		break
@@ -728,6 +646,11 @@ while not bExit do
 	term.setTextColour(_colors.textColor)
 	if #sLine > 0 then
 		local result, err = shell.run(sLine)
+		local cx = term.getCursorPos()
+		if cx ~= 1 then
+			print()
+		end
+		term.setBackgroundColor(_colors.backgroundColor)
 		if not result and err then
 			_G.printError(err)
 		end

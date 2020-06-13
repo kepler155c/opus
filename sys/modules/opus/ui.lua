@@ -989,6 +989,7 @@ function UI.Device:postInit()
 		self.device.setTextScale = function() end
 	end
 
+	self._obg = term.getBackgroundColor()
 	self.device.setTextScale(self.textScale)
 	self.width, self.height = self.device.getSize()
 	self.isColor = self.device.isColor()
@@ -1025,8 +1026,7 @@ function UI.Device:setTextScale(textScale)
 end
 
 function UI.Device:reset()
-	self.device.setBackgroundColor(colors.black)
-	self.device.setTextColor(colors.white)
+	self.device.setBackgroundColor(self._obg)
 	self.device.clear()
 	self.device.setCursorPos(1, 1)
 end

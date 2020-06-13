@@ -222,7 +222,7 @@ function Entry:paste(ie)
 	end
 end
 
-function Entry:forcePaste()
+function Entry.forcePaste()
 	os.queueEvent('clipboard_paste')
 end
 
@@ -234,7 +234,9 @@ end
 
 function Entry:markBegin()
 	if not self.mark.active then
-		self.mark.active = true
+		if #_val(self.value) > 0 then
+			self.mark.active = true
+		end
 		self.mark.anchor = { x = self.pos }
 	end
 end
@@ -271,6 +273,8 @@ function Entry:markLeft()
 	self:markBegin()
 	if self:moveLeft() then
 		self:markFinish()
+	else
+		self.mark.continue = self.mark.active
 	end
 end
 
@@ -278,6 +282,8 @@ function Entry:markRight()
 	self:markBegin()
 	if self:moveRight() then
 		self:markFinish()
+	else
+		self.mark.continue = self.mark.active
 	end
 end
 
@@ -305,6 +311,8 @@ function Entry:markNextWord()
 	self:markBegin()
 	if self:moveWordRight() then
 		self:markFinish()
+	else
+		self.mark.continue = self.mark.active
 	end
 end
 
@@ -312,6 +320,8 @@ function Entry:markPrevWord()
 	self:markBegin()
 	if self:moveWordLeft() then
 		self:markFinish()
+	else
+		self.mark.continue = self.mark.active
 	end
 end
 
@@ -330,6 +340,8 @@ function Entry:markHome()
 	self:markBegin()
 	if self:moveHome() then
 		self:markFinish()
+	else
+		self.mark.continue = self.mark.active
 	end
 end
 
@@ -337,6 +349,8 @@ function Entry:markEnd()
 	self:markBegin()
 	if self:moveEnd() then
 		self:markFinish()
+	else
+		self.mark.continue = self.mark.active
 	end
 end
 
