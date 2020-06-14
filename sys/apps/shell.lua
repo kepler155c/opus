@@ -149,26 +149,30 @@ function shell.resolveProgram(_sCommand)
 		_sCommand = tAliases[_sCommand]
 	end
 
-	local path = shell.resolve(_sCommand)
-	if fs.exists(path) and not fs.isDir(path) then
-		return path
-	end
-	if fs.exists(path .. '.lua') then
-		return path .. '.lua'
+	local function check(f)
+		return fs.exists(f) and not fs.isDir(f) and f
 	end
 
-	-- Otherwise, look on the path variable
-	if not _sCommand:find('/') then
-		for sPath in string.gmatch(PATH or '', "[^:]+") do
-			sPath = fs.combine(sPath, _sCommand )
-			if fs.exists(sPath) and not fs.isDir(sPath) then
-				return sPath
-			end
-			if fs.exists(sPath .. '.lua') then
-				return sPath .. '.lua'
+	local function inPath()
+		-- Otherwise, look on the path variable
+		if not _sCommand:find('/') then
+			for sPath in string.gmatch(PATH or '', "[^:]+") do
+				sPath = fs.combine(sPath, _sCommand )
+				if fs.exists(sPath) and not fs.isDir(sPath) then
+					return sPath
+				end
+				if fs.exists(sPath .. '.lua') then
+					return sPath .. '.lua'
+				end
 			end
 		end
 	end
+
+	return check(_sCommand)
+		or check(_sCommand .. '.lua')
+		or check(shell.resolve(_sCommand))
+		or check(shell.resolve(_sCommand) .. '.lua')
+		or inPath()
 end
 
 function shell.programs(_bIncludeHidden)
