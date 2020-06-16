@@ -1,6 +1,6 @@
-Sun Jun 14 02:26:34 UTC 2020
-commit 7df4a47ba041c411598a874346058c09d2b3ef7b
+Tue Jun 16 01:54:59 UTC 2020
+commit 42bd4b2b69eff2a610c2fcdd53cb500f3af7afab
 Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Sat Jun 13 20:26:17 2020 -0600
+Date:   Mon Jun 15 19:54:42 2020 -0600
 
-    oops
+    remove preferred apps/alternates - same can be accomplished using aliases
