@@ -1,4 +1,3 @@
-local Alt    = require('opus.alternate')
 local Config = require('opus.config')
 local Event  = require('opus.event')
 local pastebin = require('opus.http.pastebin')
@@ -351,7 +350,7 @@ function Browser:eventHandler(event)
 		self:setStatus('Started cloud edit')
 
 	elseif event.type == 'shell' then
-		self:run(Alt.get('shell'))
+		self:run('shell')
 
 	elseif event.type == 'refresh' then
 		self:updateDirectory(self.dir)

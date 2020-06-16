@@ -1,4 +1,3 @@
-local Alt      = require('opus.alternate')
 local Array    = require('opus.array')
 local class    = require('opus.class')
 local Config   = require('opus.config')
@@ -469,13 +468,13 @@ function page:eventHandler(event)
 		shell.switchTab(shell.openTab(event.button.app.run))
 
 	elseif event.type == 'shell' then
-		shell.switchTab(shell.openTab(Alt.get('shell')))
+		shell.switchTab(shell.openTab('shell'))
 
 	elseif event.type == 'lua' then
-		shell.switchTab(shell.openTab(Alt.get('lua')))
+		shell.switchTab(shell.openTab('Lua'))
 
 	elseif event.type == 'files' then
-		shell.switchTab(shell.openTab(Alt.get('files')))
+		shell.switchTab(shell.openTab('Files'))
 
 	elseif event.type == 'network' then
 		shell.switchTab(shell.openTab('Network'))

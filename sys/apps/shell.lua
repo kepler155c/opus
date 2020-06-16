@@ -131,7 +131,14 @@ function shell.exit()
 end
 
 function shell.dir() return DIR end
-function shell.setDir(d) DIR = d end
+function shell.setDir(d)
+	d = fs.combine(d, '')
+	if not fs.isDir(d) then
+		error("Not a directory", 2)
+	end
+	DIR = d
+end
+
 function shell.path() return PATH end
 function shell.setPath(p) PATH = p end
 
@@ -155,24 +162,29 @@ function shell.resolveProgram(_sCommand)
 
 	local function inPath()
 		-- Otherwise, look on the path variable
-		if not _sCommand:find('/') then
-			for sPath in string.gmatch(PATH or '', "[^:]+") do
-				sPath = fs.combine(sPath, _sCommand )
-				if fs.exists(sPath) and not fs.isDir(sPath) then
-					return sPath
-				end
-				if fs.exists(sPath .. '.lua') then
-					return sPath .. '.lua'
-				end
+		for sPath in string.gmatch(PATH or '', "[^:]+") do
+			sPath = fs.combine(sPath, _sCommand )
+			if check(sPath) then
+				return sPath
+			end
+			if check(sPath .. '.lua') then
+				return sPath .. '.lua'
 			end
 		end
 	end
 
-	return check(_sCommand)
-		or check(_sCommand .. '.lua')
-		or check(shell.resolve(_sCommand))
+	if not _sCommand:find('/') then
+		return inPath()
+	end
+
+	-- so... even if you are in the rom directory and you run:
+	-- 'packages/common/edit.lua', allow this even though it
+	-- does not use a leading slash. Ideally, fs.combine would
+	-- provide the leading slash... but it does not.
+	return check(shell.resolve(_sCommand))
 		or check(shell.resolve(_sCommand) .. '.lua')
-		or inPath()
+		or check(_sCommand)
+		or check(_sCommand .. '.lua')
 end
 
 function shell.programs(_bIncludeHidden)

@@ -79,8 +79,38 @@ function ramfs.list(node, dir)
 end
 
 function ramfs.open(node, fn, fl)
-	if fl ~= 'r' and fl ~= 'w' and fl ~= 'rb' and fl ~= 'wb' then
+	local modes = Util.transpose { 'r', 'w', 'rb', 'wb', 'a' }
+	if not modes[fl] then
 		error('Unsupported mode')
+	end
+
+	if fl == 'a' then
+		if node.mountPoint ~= fn then
+			fl = 'w'
+		else
+			local c = type(node.contents) == 'table'
+				and string.char(table.unpack(node.contents))
+				or node.contents
+				or ''
+
+			return {
+				write = function(str)
+					c = c .. str
+				end,
+				writeLine = function(str)
+					c = c .. str .. '\n'
+				end,
+				flush = function()
+					node.contents = c
+					node.size = #c
+				end,
+				close = function()
+					node.contents = c
+					node.size = #c
+					c = nil
+				end,
+			}
+		end
 	end
 
 	if fl == 'r' then
