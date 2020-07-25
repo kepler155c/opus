@@ -1,6 +1,8 @@
-Tue Jun 16 01:54:59 UTC 2020
-commit 42bd4b2b69eff2a610c2fcdd53cb500f3af7afab
-Author: kepler155c@gmail.com <kepler155c@gmail.com>
-Date:   Mon Jun 15 19:54:42 2020 -0600
+Sat Jul 25 00:37:13 UTC 2020
+commit 45f1bd1c5de42841aee47d64ec003bb1f41a4360
+Author: Kan18 <24967425+Kan18@users.noreply.github.com>
+Date:   Fri Jul 24 20:36:57 2020 -0400
 
-    remove preferred apps/alternates - same can be accomplished using aliases
+    Put pastebin link in the right case (Fixes #40) (#41)
+    
+    Pastebin recently removed support for case-insensitive links with no warning. This puts the original casing of the paste ID in README.md, instead of all-lowercase. Some other things might also need to be changed!
