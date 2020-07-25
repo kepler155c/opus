@@ -1,8 +1,9 @@
-Sat Jul 25 00:37:13 UTC 2020
-commit 45f1bd1c5de42841aee47d64ec003bb1f41a4360
+Sat Jul 25 00:41:35 UTC 2020
+commit 816ea366abc21ab1d65a57137fb25902a615034d
 Author: Kan18 <24967425+Kan18@users.noreply.github.com>
-Date:   Fri Jul 24 20:36:57 2020 -0400
+Date:   Fri Jul 24 20:41:21 2020 -0400
 
-    Put pastebin link in the right case (Fixes #40) (#41)
+    TLCO fix & boot file extension change (#37)
     
-    Pastebin recently removed support for case-insensitive links with no warning. This puts the original casing of the paste ID in README.md, instead of all-lowercase. Some other things might also need to be changed!
+    This commit fixes the TLCO boot option (which hasn't been working for a
+    while now), and also changes boot file extensions from .boot to .lua.
