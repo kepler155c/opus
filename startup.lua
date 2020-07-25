@@ -29,9 +29,10 @@ local function loadBootOptions()
 			preload = { },
 			menu = {
 				{ prompt = os.version() },
-				{ prompt = 'Opus'         , args = { '/sys/boot/opus.boot' } },
-				{ prompt = 'Opus Shell'   , args = { '/sys/boot/opus.boot', 'sys/apps/shell.lua' } },
-				{ prompt = 'Opus Kiosk'   , args = { '/sys/boot/kiosk.boot' } },
+				{ prompt = 'Opus'         , args = { '/sys/boot/opus.lua' } },
+				{ prompt = 'Opus Shell'   , args = { '/sys/boot/opus.lua', '/sys/apps/shell.lua' } },
+				{ prompt = 'Opus Kiosk'   , args = { '/sys/boot/kiosk.lua' } },
+				{ prompt = 'Opus TLCO'    , args = { '/sys/boot/tlco.lua' } },
 			},
 		}))
 		f.close()
@@ -40,6 +41,20 @@ local function loadBootOptions()
 	local f = fs.open('.startup.boot', 'r')
 	local options = textutils.unserialize(f.readAll())
 	f.close()
+
+	-- Backwards compatibility for .startup.boot files created before sys/boot files' extensions were changed
+	local changed = false
+	for _, item in pairs(options.menu) do
+		if item.args and item.args[1]:match("/?sys/boot/%l+%.boot") then
+			item.args[1] = item.args[1]:gsub("%.boot", "%.lua")
+			changed = true
+		end
+	end
+	if changed then 
+		local f = fs.open(".startup.boot", "w")
+		f.write(textutils.serialize(options))
+		f.close()
+	end
 
 	return options
 end
