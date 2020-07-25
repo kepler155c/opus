@@ -16,5 +16,5 @@
 
 ## Install
 ```
-pastebin run uzghlbnc
+pastebin run UzGHLbNC
 ```
