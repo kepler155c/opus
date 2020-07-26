@@ -1,9 +1,6 @@
-Sat Jul 25 00:41:35 UTC 2020
-commit 816ea366abc21ab1d65a57137fb25902a615034d
-Author: Kan18 <24967425+Kan18@users.noreply.github.com>
-Date:   Fri Jul 24 20:41:21 2020 -0400
+Sun Jul 26 00:52:58 UTC 2020
+commit c24a5a71151b7c6ecd85da8637e9b1eb599d5fbb
+Author: kepler155c@gmail.com <kepler155c@gmail.com>
+Date:   Sat Jul 25 18:52:41 2020 -0600
 
-    TLCO fix & boot file extension change (#37)
-    
-    This commit fixes the TLCO boot option (which hasn't been working for a
-    while now), and also changes boot file extensions from .boot to .lua.
+    help cleanup
