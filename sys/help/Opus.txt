@@ -6,17 +6,7 @@ Shortcut Keys
  * Control-d: Show/toggle logging screen
  * Control-c: Copy (in most applications)
  * Control-shift-v: Paste from internal clipboard
- * Control-shift-doubleclick: Open in Lua the clicked UI element
-
-Wireless Networking
-===================
-To establish one-way trust between two computers with modems, run the following in a shell prompt:
-
-On the target computer, run:
-> password
-
-On the source computer, run:
-> trust <target computer ID>
+ * Control-shift-click: Open the clicked UI element in Lua
 
 Running Custom Programs
 =======================

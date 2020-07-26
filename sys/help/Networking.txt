@@ -1,0 +1,9 @@
+Wireless Networking
+===================
+To establish one-way trust between two computers with modems, run the following in a shell prompt:
+
+On the target computer, run:
+> password
+
+On the source computer, run:
+> trust <target computer ID>

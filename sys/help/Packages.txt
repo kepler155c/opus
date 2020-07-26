@@ -1,0 +1,13 @@
+Opus applications are grouped into packages with a common theme.
+
+To install a package, use either the System -> Packages program or the package command line program.
+
+Shell usage:
+
+> package list
+> package install <name>
+> package update <name>
+> package updateall
+> package uninstall <name>
+
+Package definitions are located in usr/config/packages. This file can be modified to add custom packages.
