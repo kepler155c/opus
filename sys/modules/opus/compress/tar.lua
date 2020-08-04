@@ -181,7 +181,7 @@ local function untar(filename, destdir, verbose)
 	local tar_handle = io.open(filename, "rb")
 	if not tar_handle then return nil, "Error opening file "..filename end
 
-	local ok, err = untar_stream(filename, destdir, verbose)
+	local ok, err = untar_stream(tar_handle, destdir, verbose)
 
 	tar_handle:close()
 	return ok, err
