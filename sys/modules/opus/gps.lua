@@ -20,13 +20,12 @@ function GPS.locate(timeout, debug)
 
 	local modem = device.wireless_modem
 	local closeChannel = false
-	local selfID = os.getComputerID()
-	if not modem.isOpen(selfID) then
-		modem.open(selfID)
+	if not modem.isOpen(GPS.CHANNEL_GPS) then
+		modem.open(GPS.CHANNEL_GPS)
 		closeChannel = true
 	end
 
-	modem.transmit(GPS.CHANNEL_GPS, selfID, "PING")
+	modem.transmit(GPS.CHANNEL_GPS, GPS.CHANNEL_GPS, "PING")
 
 	local fixes = {}
 	local pos = nil
@@ -34,7 +33,7 @@ function GPS.locate(timeout, debug)
 	while true do
 		local e, side, chan, reply, msg, dist = os.pullEvent()
 		if e == "modem_message" then
-			if side == modem.side and chan == selfID and reply == GPS.CHANNEL_GPS and dist then
+			if side == modem.side and chan == GPS.CHANNEL_GPS and reply == GPS.CHANNEL_GPS and dist then
 				if type(msg) == "table" and #msg == 3 and tonumber(msg[1]) and tonumber(msg[2]) and tonumber(msg[3]) then
 					local fix = {
 						position = vector.new(unpack(msg)),
@@ -60,7 +59,7 @@ function GPS.locate(timeout, debug)
 	end
 
 	if closeChannel then
-		modem.close(selfID)
+		modem.close(GPS.CHANNEL_GPS)
 	end
 	if debug then
 		print("Position is "..pos.x..","..pos.y..","..pos.z)
