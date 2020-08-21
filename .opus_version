@@ -1,8 +1,7 @@
-Tue Aug 4 02:00:27 UTC 2020
-commit f4494d6103c0a82f6ab35d771c70a9c63afa72d1
-Author: Kan18 <24967425+Kan18@users.noreply.github.com>
-Date:   Mon Aug 3 22:00:11 2020 -0400
+Fri Aug 21 23:15:30 UTC 2020
+commit f36e5470b12b5e36a5f747f5767b0a6423ea178e
+Author: Anavrins <xAnavrins@users.noreply.github.com>
+Date:   Fri Aug 21 19:15:07 2020 -0400
 
-    Fix untar (#42)
-    
-    small fix - untar_stream is supposed to be getting the handle, not the filename
+    Anonymize GPS
+    Damn you gollark!
