@@ -47,7 +47,9 @@ return UI.Tab {
       hosts[event.selected.id] = nil
       Util.writeTable('usr/.known_hosts', hosts)
       self:reload()
-      return true
+    else
+      return UI.Tab.eventHandler(self, event)
     end
+    return true
   end
 }
