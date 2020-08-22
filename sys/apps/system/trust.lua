@@ -40,5 +40,14 @@ return UI.Tab {
   enable = function(self)
     self:reload()
     UI.Tab.enable(self)
+  end,
+  eventHandler = function(self, event)
+    if event.type == 'grid_select' then
+      local hosts = Util.readTable('usr/.known_hosts')
+      hosts[event.selected.id] = nil
+      Util.writeTable('usr/.known_hosts', hosts)
+      self:reload()
+      return true
+    end
   end
 }
