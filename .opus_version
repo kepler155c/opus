@@ -1,7 +1,13 @@
-Fri Aug 21 23:15:30 UTC 2020
-commit f36e5470b12b5e36a5f747f5767b0a6423ea178e
-Author: Anavrins <xAnavrins@users.noreply.github.com>
-Date:   Fri Aug 21 19:15:07 2020 -0400
+Mon Aug 24 05:20:57 UTC 2020
+commit a77deb72ec575fe34c2866e5daea9683e629ace2
+Author: Kan18 <24967425+Kan18@users.noreply.github.com>
+Date:   Mon Aug 24 01:20:42 2020 -0400
 
-    Anonymize GPS
-    Damn you gollark!
+    Add a one-time password system (#47)
+    
+    This commit adds a one-time password system. Users can generate
+    passwords by using the `genotp` command (or manually queuing a set_otp
+    event with the SHA-256 hash of the one-time password they want to set)
+    and these passwords will be valid, along with the normal password,
+    either until the computer shuts down (or the net daemon is killed), a
+    new one-time password is generated, or the one-time password is used.
