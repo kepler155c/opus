@@ -21,7 +21,7 @@ if mon then
 
 	parallel.waitForAny(
 		function()
-			os.run(_ENV, '/sys/boot/opus.boot')
+			os.run(_ENV, '/sys/boot/opus.lua')
 		end,
 
 		function()
@@ -36,5 +36,5 @@ if mon then
 		end
 	)
 else
-	os.run(_ENV, '/sys/boot/opus.boot')
+	os.run(_ENV, '/sys/boot/opus.lua')
 end
