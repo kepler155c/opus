@@ -1,6 +1,6 @@
-Mon Aug 24 05:41:40 UTC 2020
-commit ac91d8ed089e7aa13b8723953b9c67f8538accd0
-Author: Boom <boom@flyingpackets.net>
-Date:   Mon Aug 24 01:41:25 2020 -0400
+Mon Oct 26 21:19:01 UTC 2020
+commit 37c4ca102c02d96f615f19d7838cb5a9eaccb7de
+Author: Anavrins <xAnavrins@users.noreply.github.com>
+Date:   Mon Oct 26 17:18:37 2020 -0400
 
-    Trust manager (#46)
+    Maybe fix github actions
