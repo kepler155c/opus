@@ -28,7 +28,7 @@ jobs:
         git log >> .opus_version
 
     - name: Commit version file
-      uses: alexesprit/action-update-file@master
+      uses: alexesprit/action-update-file@main
       with:
         branch: 'develop-1.8'
         file-path: .opus_version
