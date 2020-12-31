@@ -348,7 +348,7 @@ function page:executeStatement(statement)
 	term.redirect(oterm)
 	counter = counter + 1
 
-	if s and m then
+	if s and type(m) ~= "nil" then
 		self:setResult(m)
 	else
 		self.grid:setValues({ })
