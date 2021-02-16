@@ -612,6 +612,11 @@ local function shellRead(history)
 					end
 				end
 
+			elseif ie.code == 'control-l' then
+				term.clear()
+				term.setCursorPos(1, 0) -- Y:0 ?
+				break
+
 			else
 				entry:process(ie)
 				entry.value = entry.value or ''
