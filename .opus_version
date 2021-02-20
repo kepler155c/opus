@@ -1,6 +1,6 @@
-Tue Feb 16 02:29:37 UTC 2021
-commit 2b75fbd1eee93c88b8a9b0030ef35d06f88be42c
-Author: Anavrins <xAnavrins@users.noreply.github.com>
-Date:   Mon Feb 15 21:28:57 2021 -0500
+Sat Feb 20 00:57:40 UTC 2021
+commit bff84370b24967b55ab3ed649085046e9bfd5412
+Author: Tomo <68489118+Tomodachi94@users.noreply.github.com>
+Date:   Fri Feb 19 16:57:25 2021 -0800
 
-    fix: up-to-date package on master branch
+    Create issue templates (#50)
