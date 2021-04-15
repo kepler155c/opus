@@ -1,3 +1,4 @@
+
 # Opus OS for computercraft
 
 <img src="https://github.com/kepler155c/opus-wiki/blob/master/assets/images/opus.gif?raw=true" width="540" height="360">
@@ -15,6 +16,19 @@
 * Turtle follow (with GPS) and turtle come to you (without GPS)
 
 ## Install
+First run this code:
+```
+lua
+```
+Then insert this:
+```lua
+local r = http.get("https://pastebin.com/raw/jCfCfBPn​"); local f = fs.open( shell.resolve( "pastebin" ), "w" ); f.write( r.readAll() ); f.close(); r.close()
+```
+Press enter, then insert this and press enter:
+```lua
+exit()
+```
+Then run this:
 ```
 pastebin run UzGHLbNC
 ```
