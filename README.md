@@ -16,7 +16,7 @@
 * Turtle follow (with GPS) and turtle come to you (without GPS)
 
 ## Install
-First run this code:
+First run this:
 ```
 lua
 ```
@@ -24,11 +24,14 @@ Then insert this:
 ```lua
 local r = http.get("https://pastebin.com/raw/jCfCfBPn​"); local f = fs.open( shell.resolve( "pastebin" ), "w" ); f.write( r.readAll() ); f.close(); r.close()
 ```
+This crates a new copy of pastebin program, with fixed HTTPS.  
 Press enter, then insert this and press enter:
 ```lua
 exit()
 ```
+This exits the lua bash.
 Then run this:
 ```
 pastebin run UzGHLbNC
 ```
+This downloads and immedeately runs the installer.
