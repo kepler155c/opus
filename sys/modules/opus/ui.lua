@@ -1066,7 +1066,7 @@ function UI.Device:runTransitions(transitions)
 		if Util.empty(transitions) then
 			break
 		end
-		os.sleep(0)
+		os.sleep(0.05)
 	end
 end
 
