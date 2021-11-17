@@ -85,8 +85,14 @@ local page = UI.Page {
 			title = 'Ports',
 			event = 'ports_hide',
 		},
-		grid = UI.ScrollingGrid {
+		menuBar = UI.MenuBar {
 			y = 2,
+			buttons = {
+				{ text = 'Refresh', event = 'ports_update'   },
+			}
+		},
+		grid = UI.ScrollingGrid {
+			y = 3,
 			columns = {
 				{ heading = 'Port',       key = 'port'       },
 				{ heading = 'State',      key = 'state'      },
@@ -214,11 +220,16 @@ function page:eventHandler(event)
 		self.ports.grid:update()
 		self.ports:show()
 
-		self.portsHandler = Event.onInterval(3, function()
+		-- self.portsHandler = Event.onInterval(3, function()
+		-- 	self.ports.grid:update()
+		-- 	self.ports.grid:draw()
+		-- 	self:sync()
+		-- end)
+
+	elseif event.type == 'ports_update' then
 			self.ports.grid:update()
 			self.ports.grid:draw()
 			self:sync()
-		end)
 
 	elseif event.type == 'ports_hide' then
 		Event.off(self.portsHandler)
