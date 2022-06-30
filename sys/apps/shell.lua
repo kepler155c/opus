@@ -173,15 +173,12 @@ function shell.resolveProgram(_sCommand)
 		end
 	end
 
-	if not _sCommand:find('/') then
-		return inPath()
-	end
-
 	-- so... even if you are in the rom directory and you run:
 	-- 'packages/common/edit.lua', allow this even though it
 	-- does not use a leading slash. Ideally, fs.combine would
 	-- provide the leading slash... but it does not.
-	return check(shell.resolve(_sCommand))
+	return (not _sCommand:find('/')) and inPath()
+                or check(shell.resolve(_sCommand))
 		or check(shell.resolve(_sCommand) .. '.lua')
 		or check(_sCommand)
 		or check(_sCommand .. '.lua')
