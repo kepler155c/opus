@@ -1,7 +1,6 @@
-Wed Nov 17 04:00:09 UTC 2021
-commit 7d9029c70643a85e2034747048dd1c83d7a78180
-Author: xAnavrins <xanavrins@gmail.com>
-Date:   Tue Nov 16 22:59:19 2021 -0500
+Mon Jul 4 04:09:12 UTC 2022
+commit 3150525ee2024fc605669093b89f75f0c741a81f
+Author: Kan18 <24967425+Kan18@users.noreply.github.com>
+Date:   Mon Jul 4 00:08:59 2022 -0400
 
-    Reduce peripheral calls in Network app
-    Add a manual refresh button instead
+    Fix #48 (shell resolving issue) (#58)
