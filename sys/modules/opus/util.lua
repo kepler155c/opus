@@ -177,6 +177,12 @@ function Util.getVersion()
 	end
 	if not version and _G._HOST then
 		version = tonumber(_G._HOST:match('[%d]+%.?[%d][%d]'))
+
+		-- stopgap fix for icons breaking on 1.100.x CC versions
+		-- TODO: Make this cleaner and more resiliant
+		if version == 1.1 then
+			version = 1.999
+		end
 	end
 
 	return version or 1.7
