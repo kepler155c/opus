@@ -14,7 +14,7 @@ local parentTerm = _G.device.terminal
 local w,h = parentTerm.getSize()
 local overviewId
 local tabsDirty = false
-local closeInd = Util.getVersion() >= 1.76 and '\215' or '*'
+local closeInd = Util.supportsExtChars() and '\215' or '*'
 local multishell = { }
 
 _ENV.multishell = multishell

@@ -51,7 +51,7 @@ local config = {
 }
 Config.load('Overview', config)
 
-local extSupport = Util.getVersion() >= 1.76
+local extSupport = Util.supportsExtChars()
 
 local applications = { }
 local buttons = { }
