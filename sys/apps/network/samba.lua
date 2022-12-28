@@ -60,7 +60,7 @@ local function sambaConnection(socket)
 end
 
 local function sanitizeLabel(computer)
-	return (computer.id.."_"..computer.label:gsub("[%c%.\"'/%*]", "")):sub(64)
+	return (computer.id.."_"..computer.label:gsub("[%c%.\"'/%*]", "")):sub(1, 40)
 end
 
 Event.addRoutine(function()
