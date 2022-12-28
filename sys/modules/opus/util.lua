@@ -173,7 +173,7 @@ function Util.getVersion()
 	local versionString = _G._HOST or _G._CC_VERSION
 	local versionMajor, versionMinor = versionString:match("(%d+)%.(%d+)")
 	-- ex.: 1.89 would return 1, 89
-	return versionMajor, versionMinor
+	return tonumber(versionMajor), tonumber(versionMinor)
 end
 
 function Util.compareVersion(major, minor)
