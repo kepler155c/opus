@@ -4,7 +4,7 @@ local acceptableCharacters = {}
 for c = 0, 127 do
   local char = string.char(c)
   -- exclude potentially ambiguous characters
-  if char:match("[1-9a-zA-Z]") and char:match("[^OIl]") end
+  if char:match("[1-9a-zA-Z]") and char:match("[^OIl]") then
     table.insert(acceptableCharacters, char)
   end
 end
