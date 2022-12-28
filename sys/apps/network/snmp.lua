@@ -197,19 +197,19 @@ end
 local function cleanNetwork()
 	for _,c in pairs(_G.network) do
 		local elapsed = os.clock()-c.timestamp
-		if c.active and elapsed > 90 then
+		if c.active and elapsed > 50 then
 			c.active = false
 			os.queueEvent('network_detach', c)
 		end
 	end
 end
 
--- every 60 seconds, send out this computer's info
+-- every 30 seconds, send out this computer's info
 -- send with offset so that messages are evenly distributed and do not all come at once
-Event.onTimeout(math.random() * 60, function()
+Event.onTimeout(math.random() * 30, function()
 	sendInfo()
 	cleanNetwork()
-	Event.onInterval(60, function()
+	Event.onInterval(30, function()
 		sendInfo()
 		cleanNetwork()
 	end)
@@ -223,4 +223,4 @@ Event.on('turtle_response', function()
 end)
 
 -- send info early so that computers show soon after booting
-Event.onTimeout(math.random() * 4 + 1, sendInfo)
+Event.onTimeout(math.random() * 2 + 1, sendInfo)
