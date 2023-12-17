@@ -59,6 +59,10 @@ local function sambaConnection(socket)
 	print('samba: Connection closed')
 end
 
+local function sanitizeLabel(computer)
+	return (computer.id.."_"..computer.label:gsub("[%c%.\"'/%*]", "")):sub(1, 40)
+end
+
 Event.addRoutine(function()
 	print('samba: listening on port 139')
 
@@ -79,10 +83,10 @@ Event.addRoutine(function()
 end)
 
 Event.on('network_attach', function(_, computer)
-	fs.mount(fs.combine('network', computer.label), 'netfs', computer.id)
+	fs.mount(fs.combine('network', sanitizeLabel(computer)), 'netfs', computer.id)
 end)
 
 Event.on('network_detach', function(_, computer)
-	print('samba: detaching ' .. computer.label)
-	fs.unmount(fs.combine('network', computer.label))
+	print('samba: detaching ' .. sanitizeLabel(computer))
+	fs.unmount(fs.combine('network', sanitizeLabel(computer)))
 end)

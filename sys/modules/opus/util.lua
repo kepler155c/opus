@@ -170,16 +170,19 @@ function Util.print(pattern, ...)
 end
 
 function Util.getVersion()
-	local version
+	local versionString = _G._HOST or _G._CC_VERSION
+	local versionMajor, versionMinor = versionString:match("(%d+)%.(%d+)")
+	-- ex.: 1.89 would return 1, 89
+	return tonumber(versionMajor), tonumber(versionMinor)
+end
 
-	if _G._CC_VERSION then
-		version = tonumber(_G._CC_VERSION:match('[%d]+%.?[%d][%d]'))
-	end
-	if not version and _G._HOST then
-		version = tonumber(_G._HOST:match('[%d]+%.?[%d][%d]'))
-	end
+function Util.compareVersion(major, minor)
+	local currentMajor, currentMinor = Util.getVersion()
+	return currentMajor > major or currentMajor == major and currentMinor >= minor
+end
 
-	return version or 1.7
+function Util.supportsExtChars()
+	return Util.compareVersion(1, 76)
 end
 
 function Util.getMinecraftVersion()

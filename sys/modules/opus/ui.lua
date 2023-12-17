@@ -44,7 +44,7 @@ function UI:init()
 			tertiary = colors.gray,
 		}
 	}
-	self.extChars = Util.getVersion() >= 1.76
+	self.extChars = Util.supportsExtChars()
 
 	local function keyFunction(event, code, held)
 		local ie = Input:translate(event, code, held)

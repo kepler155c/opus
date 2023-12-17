@@ -152,7 +152,7 @@ local function getSlots()
 end
 
 local function sendInfo()
-	if os.clock() - infoTimer >= 1 then -- don't flood
+	if os.clock() - infoTimer >= 5 then -- don't flood
 		infoTimer = os.clock()
 		info.label = os.getComputerLabel()
 		info.uptime = math.floor(os.clock())
@@ -194,16 +194,25 @@ local function sendInfo()
 	end
 end
 
--- every 10 seconds, send out this computer's info
-Event.onInterval(10, function()
-	sendInfo()
+local function cleanNetwork()
 	for _,c in pairs(_G.network) do
 		local elapsed = os.clock()-c.timestamp
-		if c.active and elapsed > 15 then
+		if c.active and elapsed > 50 then
 			c.active = false
 			os.queueEvent('network_detach', c)
 		end
 	end
+end
+
+-- every 30 seconds, send out this computer's info
+-- send with offset so that messages are evenly distributed and do not all come at once
+Event.onTimeout(math.random() * 30, function()
+	sendInfo()
+	cleanNetwork()
+	Event.onInterval(30, function()
+		sendInfo()
+		cleanNetwork()
+	end)
 end)
 
 Event.on('turtle_response', function()
@@ -213,4 +222,5 @@ Event.on('turtle_response', function()
 	end
 end)
 
-Event.onTimeout(1, sendInfo)
+-- send info early so that computers show soon after booting
+Event.onTimeout(math.random() * 2 + 1, sendInfo)
